@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* =========================================================================
+   Designing Minds — Relume-style wireframe theme (Tailwind v4, CSS-first)
+   ========================================================================= */
+
+@theme {
+  --color-ink: #111113;
+  --color-ink-soft: #3d3d42;
+  --color-muted: #6c6c74;
+  --color-line: #d9d9de;
+  --color-line-strong: #b9b9c0;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f3f3f1;
+  --color-surface-sunk: #ebebe7;
+  --color-ph: #e4e4e1;
+  --color-ph-glyph: #b6b6b1;
+
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    line-height: 1.55;
+    @apply bg-surface text-ink;
+  }
+
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  h1 {
+    @apply font-semibold leading-[1.12] tracking-[-0.02em] text-[clamp(2.4rem,5.2vw,3.9rem)];
+  }
+  h2 {
+    @apply font-semibold leading-[1.12] tracking-[-0.02em] text-[clamp(1.9rem,3.6vw,2.85rem)];
+  }
+  h3 {
+    @apply font-semibold leading-[1.15] tracking-[-0.02em] text-[clamp(1.35rem,2.2vw,1.7rem)];
+  }
+  h4 {
+    @apply font-semibold leading-snug text-[1.12rem];
+  }
+
+  /* Native accordion marker reset — the one thing utilities can't express */
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+}
+
+@layer components {
+  /* Vertical rhythm for full-bleed page sections. */
+  .section {
+    @apply py-14 sm:py-20 lg:py-28;
+  }
+  .section-tight {
+    @apply py-10 sm:py-12 lg:py-16;
+  }
+
+  /* Intro / lead paragraph. */
+  .lead {
+    @apply text-[clamp(1.05rem,1.6vw,1.2rem)] text-ink-soft;
+  }
+
+  /* Bordered surface card. */
+  .card {
+    @apply rounded-[10px] border border-line bg-surface;
+  }
+
+  /* Form control (input / select / textarea). */
+  .field {
+    @apply w-full min-h-[46px] rounded-md border border-line-strong bg-surface px-3.5 py-2.5 focus:outline focus:outline-2 focus:outline-ink focus:-outline-offset-1;
+  }
+}

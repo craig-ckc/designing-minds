@@ -1,0 +1,21 @@
+{
+  "name": "designing-minds-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:web\" \"npm:dev:admin\"",
+    "dev:web": "npm run dev --workspace @designing-minds/web",
+    "dev:admin": "npm run dev --workspace @designing-minds/admin",
+    "build": "npm run sync-content && npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "sync-content": "node scripts/sync-content.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
