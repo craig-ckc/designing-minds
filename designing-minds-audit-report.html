@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Designing Minds Full Site Audit Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #647086;
+      --line: #d8dee9;
+      --paper: #ffffff;
+      --soft: #f5f7fb;
+      --brand: #b94f89;
+      --brand-dark: #7c2d5c;
+      --blue: #2457a6;
+      --green: #157a4f;
+      --amber: #9a5b00;
+      --red: #b3261e;
+      --shadow: 0 18px 50px rgba(23, 32, 51, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #eef2f7;
+      line-height: 1.55;
+    }
+
+    a { color: var(--blue); }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 18px 56px;
+    }
+
+    header {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 34px;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow {
+      color: var(--brand-dark);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.15;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(34px, 5vw, 58px);
+      max-width: 850px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 25px;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    p { margin: 0 0 12px; }
+
+    .subtitle {
+      max-width: 860px;
+      color: var(--muted);
+      font-size: 18px;
+      margin-top: 18px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: #31405a;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      padding: 26px;
+      margin-top: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      padding: 18px;
+      min-height: 122px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .finding {
+      border-left: 5px solid var(--line);
+      background: #fbfcff;
+      padding: 16px 18px;
+      margin: 12px 0;
+    }
+
+    .critical { border-left-color: var(--red); }
+    .high { border-left-color: var(--amber); }
+    .medium { border-left-color: var(--blue); }
+    .good { border-left-color: var(--green); }
+
+    .label {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .label.critical { background: var(--red); border-left: 0; }
+    .label.high { background: var(--amber); border-left: 0; }
+    .label.medium { background: var(--blue); border-left: 0; }
+    .label.good { background: var(--green); border-left: 0; }
+
+    ul, ol {
+      margin: 8px 0 0 20px;
+      padding: 0;
+    }
+
+    li { margin: 7px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--soft);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    code {
+      background: #edf1f7;
+      padding: 2px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.93em;
+    }
+
+    .callout {
+      background: #fff7e8;
+      border: 1px solid #ebc77e;
+      padding: 15px 18px;
+      margin-top: 14px;
+    }
+
+    .sources {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      header, section { padding: 20px; }
+      .span-3, .span-4, .span-6, .span-8 { grid-column: span 12; }
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <p class="eyebrow">Full Website Audit</p>
+      <h1>Designing Minds site audit and platform migration report</h1>
+      <p class="subtitle">Audit of the public Designing Minds website at <a href="https://designingminds.co.za/">designingminds.co.za</a>, including Home, About, Shop, Contact, Cart, Downloads, Privacy Policy, Terms route, sitemap, robots.txt, and a representative product page. The site is a WordPress, WooCommerce, Elementor build for CAPS-aligned printable tests. The recommended direction is a static-first Vite + React + Tailwind implementation deployed on Vercel.</p>
+      <div class="meta">
+        <span class="pill">Audit date: 19 June 2026</span>
+        <span class="pill">Scope: public site + shop flow sample</span>
+        <span class="pill">Current stack: WordPress / PHP / Apache</span>
+        <span class="pill">Target stack: Vite / React / Tailwind / Vercel</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>Executive Summary</h2>
+      <div class="grid">
+        <div class="metric span-3"><strong>C-</strong><span>Overall audit grade. The business offer is clear, but the site has heavy payloads, weak metadata, broken links, and accessibility structure issues.</span></div>
+        <div class="metric span-3"><strong>86-93</strong><span>Stylesheet links on audited public pages. This is excessive for a content and digital-products site.</span></div>
+        <div class="metric span-3"><strong>103-115</strong><span>Script tags on Home, About, Shop, Privacy, and representative product pages.</span></div>
+        <div class="metric span-3"><strong>404</strong><span>The footer Terms & Conditions link resolves to a not-found page.</span></div>
+      </div>
+
+      <div class="finding critical">
+        <span class="label critical">Critical</span>
+        <h3>Static migration is justified for the whole public site</h3>
+        <p>The public pages and product catalog are mostly structured content: grade categories, product cards, bundles, FAQs, policies, contact details, and checkout/download entry points. A Vite/React static build would remove PHP runtime dependency for most public pages, reduce asset weight, and simplify deployment. The only workflows needing backend design are payment, email, account/download access, and form submissions.</p>
+      </div>
+
+      <div class="finding high">
+        <span class="label high">High</span>
+        <h3>Reliability and link integrity need immediate fixes</h3>
+        <p>The audit found browser console errors, a missing CSS asset, a broken Terms & Conditions route, and inconsistent server behavior during checks. The public site also exposes default WordPress sitemap entries, including user and builder-template sitemap indexes that are not ideal for a polished production ecommerce site.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Site-Wide Evidence Captured</h2>
+      <table>
+        <thead>
+          <tr><th>Check</th><th>Result</th><th>Implication</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Main public pages checked</td><td>Home, About, Shop, Contact, Cart, My Downloads, Privacy Policy, Terms route, sitemap, robots.txt, and one product detail page.</td><td>The audit covers the core public journey from discovery to shop/download entry points.</td></tr>
+          <tr><td>Server/platform</td><td><code>Apache</code>, <code>PHP/8.3.31</code>, WordPress, WooCommerce, Elementor</td><td>Dynamic PHP/WordPress hosting is currently required.</td></tr>
+          <tr><td>Generators exposed</td><td>WordPress 7.0, WooCommerce 10.8.1, Redux 4.5.11, Elementor 4.1.3</td><td>Technology versions are publicly disclosed; this increases fingerprinting exposure.</td></tr>
+          <tr><td>Missing SEO metadata</td><td>No meta description detected on Home, About, Shop, Contact, Privacy, or the sampled product page.</td><td>Search snippets and social previews are weaker than they should be.</td></tr>
+          <tr><td>Heading structure</td><td>No detected <code>h1</code> on Home, Contact, Privacy, or sampled product page. About and Shop had one detected <code>h1</code>.</td><td>Accessibility and SEO hierarchy should be made consistent across all templates.</td></tr>
+          <tr><td>Console errors</td><td>Missing <code>/wp-content/themes/edumoon/css/custom-style.css</code>; <code>ReferenceError: gutenova is not defined</code></td><td>The browser is loading broken or misordered assets.</td></tr>
+          <tr><td>Initial HTML size</td><td>Home: 222 KB; About: 180 KB; Shop: 256 KB; Cart: 194 KB; Downloads: 147 KB; Privacy: 361 KB; sampled product: 193 KB.</td><td>The site ships heavy markup for content-led and commerce pages.</td></tr>
+          <tr><td>Footer Terms link</td><td><code>https://designingminds.co.za/terms-conditions</code> returned 404</td><td>Legal/commercial trust issue and poor crawler signal.</td></tr>
+          <tr><td>Sitemap</td><td><code>/sitemap.xml</code> redirects to <code>/wp-sitemap.xml</code> and includes posts, pages, testimonials, Elementor/ElementsKit content, products, templates, taxonomies, and users.</td><td>The sitemap should be curated for customer-facing SEO and should not emphasize builder internals or user archives.</td></tr>
+          <tr><td>Robots.txt</td><td>Disallows WooCommerce logs/uploads, add-to-cart query URLs, and wp-admin; points to WordPress sitemap.</td><td>Basic robots setup exists, but migration should generate a clean static sitemap and robots file.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Audited URL Inventory</h2>
+      <table>
+        <thead>
+          <tr><th>URL / Page</th><th>Status</th><th>Payload / Runtime Signals</th><th>Primary Findings</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Home <code>/</code></td><td>200</td><td>~222 KB HTML, 93 stylesheets, 105 scripts, 11 images, 0 detected <code>h1</code>.</td><td>Strong offer is present: printable CAPS-aligned resources for Grades 3 to 7. Needs proper <code>h1</code>, metadata, lighter assets, and clearer static content structure.</td></tr>
+          <tr><td>About <code>/about-3/</code></td><td>200</td><td>~180 KB HTML, 91 stylesheets, 105 scripts, 4 images, 1 detected <code>h1</code>.</td><td>Good founder/story content. URL should become <code>/about/</code> with redirect from old route.</td></tr>
+          <tr><td>Shop <code>/shop/</code></td><td>200</td><td>~256 KB HTML, 89 stylesheets, 103 scripts, 19 images, 108 inputs.</td><td>Core business page. Product/filter markup is heavy. Needs stronger product data model, metadata, filters, and checkout/download architecture.</td></tr>
+          <tr><td>Contact <code>/contact/</code></td><td>200</td><td>Returned between ~77 KB and ~171 KB across fetches; rendered form/FAQ found in browser snapshot.</td><td>Useful contact details and FAQ. Needs metadata, <code>h1</code>, accessible labels, form validation, response expectations, and lighter implementation.</td></tr>
+          <tr><td>Product sample <code>/product/grade-7-full-year-test-bundle-2026/</code></td><td>200</td><td>~193 KB HTML, 86 stylesheets, 103 scripts, 109 inputs, 0 detected <code>h1</code>.</td><td>Product pages need SEO product metadata, structured data, clear pricing/download details, and simpler frontend code.</td></tr>
+          <tr><td>Cart <code>/cart-2/</code></td><td>200</td><td>~194 KB HTML.</td><td>Odd URL shape. Should become <code>/cart/</code> or be replaced by hosted checkout flow.</td></tr>
+          <tr><td>Downloads <code>/my-account/downloads/</code></td><td>200</td><td>~147 KB HTML.</td><td>Important post-purchase workflow. Needs deliberate auth/magic-link/download strategy in the migration.</td></tr>
+          <tr><td>Privacy Policy <code>/privacy-policy/</code></td><td>200</td><td>~361 KB HTML, 86 stylesheets, 115 scripts, 0 detected <code>h1</code>.</td><td>Very heavy for a legal text page. Also appears to contain generic WordPress privacy copy that should be reviewed for the actual business model.</td></tr>
+          <tr><td>Terms <code>/terms-conditions</code></td><td>404</td><td>Returned a large 404 payload.</td><td>Must be fixed before any commercial relaunch.</td></tr>
+          <tr><td>Sitemap / Robots</td><td>200</td><td>Default WordPress sitemap index and basic robots rules.</td><td>Replace with curated static sitemap, product/category URLs, and clean robots file after migration.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Current Site Inventory</h2>
+      <div class="grid">
+        <div class="span-6">
+          <h3>Visible customer-facing content</h3>
+          <ul>
+            <li>Navigation: Home, About, Shop Tests, Contact.</li>
+            <li>Home offer: printable CAPS-aligned resources for Grades 3 to 7.</li>
+            <li>Product model: grade/term/year test bundles and individual subject tests.</li>
+            <li>Shop taxonomy: test bundles, Grades 3 to 7, terms, product tags including 2026.</li>
+            <li>Utility links: cart amount, My Downloads.</li>
+            <li>Contact details: phone <code>+27 84 605 5217</code>, email <code>designingminds123@gmail.com</code>, address <code>Port Elizabeth</code>.</li>
+            <li>Contact form fields: Name, Email, Message, Send.</li>
+            <li>FAQ section for grades, CAPS alignment, delivery, accounts, subscription options, child usage, printing, and subjects.</li>
+            <li>Footer: short value proposition, Facebook, Instagram, newsletter field, account/legal/company/contact links.</li>
+          </ul>
+        </div>
+        <div class="span-6">
+          <h3>Detected WordPress/plugin stack</h3>
+          <ul>
+            <li>Theme: <code>edumoon</code>.</li>
+            <li>Page builder: Elementor and Royal Elementor Addons.</li>
+            <li>Commerce: WooCommerce, ShopEngine, ShopEngine Pro, WooCommerce Product Filter.</li>
+            <li>Forms and messaging: Contact Form 7, click-to-chat WhatsApp plugin.</li>
+            <li>Extra block/widget systems: Blocks for ShopEngine, ElementsKit Lite.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Findings Breakdown</h2>
+
+      <div class="finding critical">
+        <span class="label critical">Critical</span>
+        <h3>Performance: the whole site is carrying unnecessary page-builder and plugin overhead</h3>
+        <p>Home, About, Shop, Privacy, and product pages all load broad WordPress, Elementor, WooCommerce, ShopEngine, product-filter, animation, carousel, lightbox, and icon-library assets. The privacy page alone is about 361 KB of HTML before assets, which is disproportionate for legal copy.</p>
+        <p><strong>Recommendation:</strong> rebuild public pages as static routes, use route-level code splitting, generate CSS through Tailwind, and keep payment/cart/download scripts only on routes that need them.</p>
+      </div>
+
+      <div class="finding high">
+        <span class="label high">High</span>
+        <h3>SEO: core metadata is missing</h3>
+        <p>The audited pages did not include meta descriptions, and there was no useful social/structured metadata detected in the fetched HTML. Titles exist, but product/category pages need richer search snippets and share previews.</p>
+        <p><strong>Recommendation:</strong> define per-route metadata in a content config. Add Organization, WebSite, FAQPage, Product or Course-style structured data where appropriate. Use consistent canonical URLs.</p>
+      </div>
+
+      <div class="finding high">
+        <span class="label high">High</span>
+        <h3>Accessibility: heading hierarchy and icons need cleanup</h3>
+        <p>Home, Contact, Privacy, and the sampled product page had no detected <code>h1</code>. Several logo/image links appear without accessible names in the browser snapshot, and some icon text renders as private-use glyphs. FAQ buttons are semantically buttons, which is good, but templates need consistent hierarchy and labels.</p>
+        <p><strong>Recommendation:</strong> add one descriptive <code>h1</code> per page, ensure logo links have <code>aria-label</code>, use SVG/icon components with accessible names hidden where decorative, and test keyboard focus states.</p>
+      </div>
+
+      <div class="finding high">
+        <span class="label high">High</span>
+        <h3>Commerce and downloads: the migration must preserve fulfillment</h3>
+        <p>The business depends on selling digital printable tests and giving customers access to downloads. The current WordPress/WooCommerce setup handles cart, account, and downloads, but it does so with heavy public-page overhead.</p>
+        <p><strong>Recommendation:</strong> before rebuilding checkout, document product SKUs, pricing, bundle rules, payment provider, fulfillment emails, refund policy, account requirements, and how downloadable files are protected.</p>
+      </div>
+
+      <div class="finding high">
+        <span class="label high">High</span>
+        <h3>Trust and conversion: contact and purchase flows need tightening</h3>
+        <p>The contact details are visible and useful, but the form does not clearly explain expected response time, privacy handling, or submission success/error states in the static HTML. The newsletter field uses placeholder-style email text and no visible consent context. The broken Terms link harms trust.</p>
+        <p><strong>Recommendation:</strong> add concise form helper text, validation, success/error states, privacy link, expected response time, and fix legal links before launch.</p>
+      </div>
+
+      <div class="finding medium">
+        <span class="label medium">Medium</span>
+        <h3>Sitemap quality: WordPress internals are being surfaced</h3>
+        <p>The sitemap index includes user archives and builder/template content types such as Elementor/ElementsKit content, WPR templates, and ShopEngine templates. These are not usually pages customers should discover from search.</p>
+        <p><strong>Recommendation:</strong> in the migration, generate a curated sitemap containing only real customer-facing routes, product routes, category routes, and policy pages.</p>
+      </div>
+
+      <div class="finding medium">
+        <span class="label medium">Medium</span>
+        <h3>Security and privacy headers are thin</h3>
+        <p>The observed headers did not show modern hardening headers such as Content Security Policy, Strict-Transport-Security, X-Content-Type-Options, Referrer-Policy, or Permissions-Policy.</p>
+        <p><strong>Recommendation:</strong> configure security headers in <code>vercel.json</code>. Start with a conservative CSP after confirming required third-party domains for analytics, payments, email, and social links.</p>
+      </div>
+
+      <div class="finding medium">
+        <span class="label medium">Medium</span>
+        <h3>Content: the value proposition is present but not sharpened</h3>
+        <p>The footer states that the business supports home learning with high-quality CAPS-aligned practice materials. The FAQ makes the offer clearer than the page hero does. The contact page should reinforce who the site is for: South African parents, guardians, and learners needing printable CAPS-aligned Grade 3 to 7 tests.</p>
+        <p><strong>Recommendation:</strong> add short, specific copy near the contact form: “Questions about printable CAPS-aligned tests for Grades 3 to 7? Send us a message.”</p>
+      </div>
+
+      <div class="finding good">
+        <span class="label good">Working Well</span>
+        <h3>Clear contact routes and useful FAQ topics</h3>
+        <p>The phone, email, location, FAQ topics, My Downloads link, and Shop Tests navigation align with the business model. These should be preserved in the migration.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Migration Recommendation</h2>
+      <p>The target architecture should be a static-first Vite React app with Tailwind CSS, generated to static files and deployed on Vercel. Keep public pages fast and simple; integrate payments, file delivery, and account/download workflows intentionally rather than reproducing WordPress plugin behavior by default.</p>
+
+      <table>
+        <thead>
+          <tr><th>Concern</th><th>Recommended Approach</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Routing</td><td>Vite + React Router or TanStack Router with static route generation</td><td>Routes likely include Home, About, Shop Tests, Product, Grade/Term categories, Contact, Privacy, Terms, Cart, Account/Downloads or external account flow.</td></tr>
+          <tr><td>Styling</td><td>Tailwind with a small design-token layer</td><td>Carry forward the brand pink, navy text, clean education-focused UI, but remove builder CSS.</td></tr>
+          <tr><td>Static generation</td><td>Use <code>vite-plugin-ssr</code>, <code>vite-plugin-pages-sitemap</code>, or a simple prerender script depending on route complexity</td><td>If SEO is important, prerender every marketing/content route to HTML.</td></tr>
+          <tr><td>Forms</td><td>Vercel Functions, Resend, Formspree, Basin, or a small serverless endpoint</td><td>Add spam protection such as Turnstile or honeypot fields.</td></tr>
+          <tr><td>Payments</td><td>Choose Paystack, Yoco, Peach Payments, Stripe where available, or another South African-friendly provider</td><td>Do not assume WooCommerce is needed if products are digital and fixed.</td></tr>
+          <tr><td>Digital downloads</td><td>Use authenticated signed links, customer portal, or payment-provider fulfillment emails</td><td>This is the main workflow to design carefully before cutting over.</td></tr>
+          <tr><td>Content</td><td>Local MD/MDX/JSON content files at first</td><td>A CMS can be added later only if non-technical editing is required.</td></tr>
+          <tr><td>Deployment</td><td>Vercel static output with preview deployments</td><td>Use branch previews for stakeholder review before DNS cutover.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Key decision before implementation:</strong> decide whether the new site must include ecommerce/account/download functionality on day one, or whether the first migration can cover marketing pages plus contact while retaining the existing shop temporarily.
+      </div>
+    </section>
+
+    <section>
+      <h2>Suggested React Site Map</h2>
+      <div class="grid">
+        <div class="span-4">
+          <h3>Public pages</h3>
+          <ul>
+            <li><code>/</code> Home</li>
+            <li><code>/about/</code> About Designing Minds</li>
+        <li><code>/shop/</code> Shop Tests</li>
+        <li><code>/product/:slug/</code> Product detail</li>
+        <li><code>/grade/:grade/</code> Grade category</li>
+            <li><code>/contact/</code> Contact and FAQ</li>
+            <li><code>/privacy-policy/</code> Privacy Policy</li>
+            <li><code>/terms-conditions/</code> Terms & Conditions</li>
+          </ul>
+        </div>
+        <div class="span-4">
+          <h3>Commerce/download flows</h3>
+          <ul>
+            <li><code>/cart/</code> if using local cart state.</li>
+            <li><code>/checkout/</code> or hosted checkout handoff.</li>
+            <li><code>/downloads/</code> authenticated or magic-link access.</li>
+            <li><code>/account/</code> only if real account management is required.</li>
+          </ul>
+        </div>
+        <div class="span-4">
+          <h3>Reusable components</h3>
+          <ul>
+            <li><code>Header</code>, <code>Footer</code>, <code>MobileNav</code></li>
+            <li><code>ProductCard</code>, <code>GradeFilter</code>, <code>PricingOption</code></li>
+            <li><code>ContactForm</code>, <code>FaqAccordion</code>, <code>NewsletterForm</code></li>
+            <li><code>Seo</code>, <code>StructuredData</code>, <code>LegalPage</code></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Implementation Roadmap</h2>
+      <ol>
+        <li><strong>Discovery and content freeze:</strong> export page copy, FAQ answers, product list, pricing, test categories, images, policies, email templates, and download delivery rules from WordPress.</li>
+        <li><strong>Prototype static shell:</strong> create Vite, React, TypeScript, Tailwind, ESLint, and route structure. Build header/footer/contact page first because it is low-risk and representative.</li>
+        <li><strong>Design system pass:</strong> define typography, color tokens, spacing, buttons, form fields, cards, alerts, accordions, and focus states.</li>
+        <li><strong>SEO foundation:</strong> add route metadata, sitemap generation, robots.txt, canonical URLs, Open Graph images, FAQ structured data, and analytics.</li>
+        <li><strong>Commerce decision:</strong> either integrate a lightweight payment/download workflow or keep WooCommerce for shop/account temporarily behind subdomain or path separation.</li>
+        <li><strong>Vercel deployment:</strong> create preview deployments, add security headers, configure environment variables, connect domain, then run DNS cutover after verification.</li>
+        <li><strong>Post-launch checks:</strong> test forms, checkout, downloads, 404 page, legal pages, mobile nav, page speed, search indexing, and analytics events.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Priority Fix List</h2>
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Fix</th><th>Why It Matters</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Fix the Terms & Conditions URL and add a real 404 page.</td><td>Legal trust, SEO crawl quality, and user confidence.</td></tr>
+          <tr><td>2</td><td>Add one <code>h1</code>, meta description, canonical URL, Open Graph tags, and appropriate structured data to every page template.</td><td>Search visibility and accessible structure.</td></tr>
+          <tr><td>3</td><td>Remove broken CSS and fix the <code>gutenova</code> JavaScript error.</td><td>Reduces browser errors and improves frontend stability.</td></tr>
+          <tr><td>4</td><td>Reduce page dependencies by removing WooCommerce/product filter assets from non-shop pages.</td><td>Major performance improvement even before a full migration.</td></tr>
+          <tr><td>5</td><td>Design the new static architecture around products, payments, customer emails, protected files, and downloads.</td><td>The download/account flow is the most important backend decision in the migration.</td></tr>
+          <tr><td>6</td><td>Add Vercel security headers and form spam protection.</td><td>Raises baseline security for the new deployment.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Vercel Deployment Checklist</h2>
+      <ul>
+        <li>Use <code>npm create vite@latest designing-minds -- --template react-ts</code> or equivalent.</li>
+        <li>Add Tailwind and centralize brand tokens in <code>tailwind.config</code>.</li>
+        <li>Generate static HTML for all public routes before deployment.</li>
+        <li>Add <code>vercel.json</code> for redirects, clean URLs, and security headers.</li>
+        <li>Set environment variables for form email, payment provider keys, analytics, and download signing secret.</li>
+        <li>Add redirects from old WordPress URLs: <code>/about-3/</code> to <code>/about/</code>, <code>/cart-2/</code> to <code>/cart/</code>, and fixed legal routes.</li>
+        <li>Run Lighthouse/PageSpeed, keyboard navigation checks, form submission tests, and checkout/download tests before DNS cutover.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Audit Sources</h2>
+      <p class="sources">Primary source: live website <a href="https://designingminds.co.za/">https://designingminds.co.za/</a>. Supporting checks: rendered browser snapshot via Playwright CLI, raw HTML fetched from Home, About, Shop, Contact, Privacy Policy, and a representative product page; HTTP/status checks for Home, About, Shop, Contact, Cart, My Downloads, Privacy Policy, Terms & Conditions, sitemap, feed, and robots.txt on 19 June 2026.</p>
+    </section>
+  </main>
+</body>
+</html>
