@@ -1,7 +1,7 @@
 import type { CmsSnapshot } from '../types'
 
 export const seedSnapshot: CmsSnapshot = {
-  "generatedAt": "2026-06-20T10:07:53.249Z",
+  "generatedAt": "2026-06-20T12:32:54.605Z",
   "source": "https://designingminds.co.za",
   "navigation": [
     {

@@ -2,8 +2,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 const root = process.cwd()
-const pagesPath = path.join(root, 'extracted-content', 'data', 'pages.json')
-const productsPath = path.join(root, 'extracted-content', 'data', 'products.json')
+const pagesPath = path.join(root, 'research', 'extracted-content', 'data', 'pages.json')
+const productsPath = path.join(root, 'research', 'extracted-content', 'data', 'products.json')
 const outputPath = path.join(root, 'packages', 'cms', 'src', 'generated', 'seed.ts')
 
 const decodeText = (value = '') =>
