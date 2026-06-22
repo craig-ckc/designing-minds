@@ -1,13 +1,13 @@
 import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
-import { CONTACT } from '../../content/site'
+import { CONTACT, gradeToSlug } from '../../content/site'
 import { repository } from '../../repository'
 import { Container } from '../ui/Container'
 import { NewsletterForm } from '../NewsletterForm'
 
 export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
-  const grades = snapshot?.filters.grades ?? []
+  const grades = snapshot?.valueLists.grades ?? []
   return (
     <footer className="mt-auto border-t border-line bg-surface-alt">
       <Container className="grid grid-cols-1 gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:py-[72px]">
@@ -27,18 +27,22 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
         <FooterColumn title="Shop by grade">
           {grades.map((grade) => (
             <li key={grade}>
-              <Link className="text-[0.95rem] text-ink-soft hover:text-ink" to={`/shop?grade=${encodeURIComponent(grade)}`}>
+              <Link className="text-[0.95rem] text-ink-soft hover:text-ink" to={`/grades/${gradeToSlug(grade)}`}>
                 {grade}
               </Link>
             </li>
           ))}
+          <FooterLink to="/bundles">Bundles & plans</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Company">
           <FooterLink to="/about">About</FooterLink>
           <FooterLink to="/contact">Contact</FooterLink>
-          <FooterLink to="/shop">All tests</FooterLink>
+          <FooterLink to="/help">Help</FooterLink>
+          <FooterLink to="/shop">All resources</FooterLink>
           <FooterLink to="/privacy-policy">Privacy policy</FooterLink>
+          <FooterLink to="/terms">Terms</FooterLink>
+          <FooterLink to="/refund-policy">Refund policy</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Get in touch">

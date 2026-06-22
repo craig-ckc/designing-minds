@@ -1,15 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from './repository'
+import { AuthProvider } from './lib/auth'
+import { ScrollToTop } from './lib/ScrollToTop'
 import { Shell } from './components/layout/Shell'
 import { StatePanel } from './components/ui/StatePanel'
 import { HomePage } from './pages/HomePage'
 import { ShopPage } from './pages/ShopPage'
+import { GradesPage } from './pages/GradesPage'
+import { GradeDetailPage } from './pages/GradeDetailPage'
+import { BundlesPage } from './pages/BundlesPage'
 import { ProductPage } from './pages/ProductPage'
-import { AboutPage } from './pages/AboutPage'
+import { HelpPage } from './pages/HelpPage'
 import { ContactPage } from './pages/ContactPage'
-import { CmsPage } from './pages/CmsPage'
+import { AboutPage } from './pages/AboutPage'
+import { LegalPage } from './pages/LegalPage'
+import { SignUpPage } from './pages/auth/SignUpPage'
+import { LoginPage } from './pages/auth/LoginPage'
+import { AccountPage } from './pages/account/AccountPage'
+import { OrderHistoryPage } from './pages/account/OrderHistoryPage'
+import { OrderDetailPage } from './pages/account/OrderDetailPage'
+import { CartPage } from './pages/CartPage'
+import { CheckoutPage } from './pages/CheckoutPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 function App() {
@@ -20,15 +33,13 @@ function App() {
     let cancelled = false
     const load = async () => {
       try {
-        const nextSnapshot = await repository.getSnapshot()
+        const next = await repository.getSnapshot()
         if (!cancelled) {
-          setSnapshot(nextSnapshot)
+          setSnapshot(next)
           setError(null)
         }
       } catch (loadError) {
-        if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load content.')
-        }
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Unable to load content.')
       }
     }
     void load()
@@ -37,35 +48,60 @@ function App() {
     }
   }, [])
 
-  if (error) {
-    return (
-      <Shell snapshot={null}>
-        <StatePanel eyebrow="Something went wrong" title="Website unavailable" body={error} />
-      </Shell>
-    )
-  }
+  const demoCustomer = snapshot?.customers[0] ?? null
 
-  if (!snapshot) {
-    return (
-      <Shell snapshot={null}>
-        <StatePanel eyebrow="Loading" title="Preparing the catalogue…" />
-      </Shell>
+  let body: ReactNode
+  if (error) {
+    body = <StatePanel eyebrow="Something went wrong" title="Website unavailable" body={error} />
+  } else if (!snapshot) {
+    body = <StatePanel eyebrow="Loading" title="Preparing the catalogue…" />
+  } else {
+    body = (
+      <Routes>
+        <Route path="/" element={<HomePage snapshot={snapshot} />} />
+
+        {/* Browse */}
+        <Route path="/shop" element={<ShopPage snapshot={snapshot} />} />
+        <Route path="/grades" element={<GradesPage snapshot={snapshot} />} />
+        <Route path="/grades/:gradeSlug" element={<GradeDetailPage snapshot={snapshot} />} />
+        <Route path="/bundles" element={<BundlesPage snapshot={snapshot} />} />
+
+        {/* Product */}
+        <Route path="/product/:slug" element={<ProductPage snapshot={snapshot} />} />
+
+        {/* Support + company */}
+        <Route path="/help" element={<HelpPage snapshot={snapshot} />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/about" element={<AboutPage snapshot={snapshot} />} />
+
+        {/* Legal */}
+        <Route path="/privacy-policy" element={<LegalPage kind="privacy" />} />
+        <Route path="/terms" element={<LegalPage kind="terms" />} />
+        <Route path="/refund-policy" element={<LegalPage kind="refund" />} />
+
+        {/* Authentication */}
+        <Route path="/sign-up" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Customer Account */}
+        <Route path="/account" element={<AccountPage snapshot={snapshot} />} />
+        <Route path="/account/orders" element={<OrderHistoryPage snapshot={snapshot} />} />
+        <Route path="/account/orders/:orderId" element={<OrderDetailPage snapshot={snapshot} />} />
+
+        {/* Commerce flow */}
+        <Route path="/cart" element={<CartPage snapshot={snapshot} />} />
+        <Route path="/checkout" element={<CheckoutPage snapshot={snapshot} />} />
+
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     )
   }
 
   return (
-    <Shell snapshot={snapshot}>
-      <Routes>
-        <Route path="/" element={<HomePage snapshot={snapshot} />} />
-        <Route path="/shop" element={<ShopPage snapshot={snapshot} />} />
-        <Route path="/product/:slug" element={<ProductPage snapshot={snapshot} />} />
-        <Route path="/about" element={<AboutPage snapshot={snapshot} />} />
-        <Route path="/about-3" element={<AboutPage snapshot={snapshot} />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/:slug" element={<CmsPage snapshot={snapshot} />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Shell>
+    <AuthProvider demoCustomer={demoCustomer}>
+      <ScrollToTop />
+      <Shell snapshot={snapshot}>{body}</Shell>
+    </AuthProvider>
   )
 }
 

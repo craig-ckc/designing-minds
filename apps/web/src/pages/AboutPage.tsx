@@ -90,7 +90,7 @@ export function AboutPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </Container>
       </section>
 
-      <TestimonialsSection />
+      <TestimonialsSection testimonials={snapshot.testimonials.filter((t) => t.published)} />
 
       <section className="section">
         <Container>

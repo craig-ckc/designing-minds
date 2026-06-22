@@ -1,9 +1,10 @@
-import { TESTIMONIALS } from '../content/site'
+import { type Testimonial } from '@designing-minds/cms'
 import { Container } from '../components/ui/Container'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { Placeholder } from '../components/ui/Placeholder'
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
+  if (testimonials.length === 0) return null
   return (
     <section className="section bg-surface-alt">
       <Container>
@@ -12,8 +13,8 @@ export function TestimonialsSection() {
           <h2>Real stories from families across South Africa</h2>
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {TESTIMONIALS.map((item) => (
-            <figure key={item.name} className="card flex flex-col gap-5 p-[30px]">
+          {testimonials.map((item) => (
+            <figure key={item.id} className="card flex flex-col gap-5 p-[30px]">
               <div className="tracking-[3px] text-ink" aria-label="5 out of 5 stars">
                 ★★★★★
               </div>
@@ -21,8 +22,8 @@ export function TestimonialsSection() {
               <figcaption className="flex items-center gap-3">
                 <Placeholder circle className="h-11 w-11 flex-none" />
                 <span>
-                  <strong className="block text-[0.95rem] font-semibold">{item.name}</strong>
-                  <span className="text-[0.85rem] text-muted">{item.meta}</span>
+                  <strong className="block text-[0.95rem] font-semibold">{item.customerName}</strong>
+                  <span className="text-[0.85rem] text-muted">{item.context}</span>
                 </span>
               </figcaption>
             </figure>
