@@ -104,7 +104,7 @@ Filtering rules:
 
 ```text
 Shop -> all published Products
-Grades -> grade options from controlled field
+Grades -> grade options from the Grades value list
 Grade Detail -> Products filtered by Grade
 Bundles -> Products where Product Kind = Bundle or Access Plan, visually separated by offer type
 ```

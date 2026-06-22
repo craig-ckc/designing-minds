@@ -1,11 +1,12 @@
 # Designing Minds Content Map
 
-This document records the agreed content model for the launch site. It separates admin-manageable collections from controlled fields, operational records, and static pages.
+This document records the agreed content model for the launch site. It separates admin-manageable collections from value lists, operational records, and static pages.
 
 ## Content Model Principles
 
 - A collection is admin-manageable content that can be created, edited, or removed independently.
-- A controlled field is a constrained set of selectable values used on collection items.
+- A field is a defined attribute of a record (e.g. a Product's title, slug, grade, or term).
+- A value list is a database-sourced set of allowed values that certain fields draw from. Value lists are edited directly in the database, not through the admin app.
 - A reference field links one collection item to one or more items in another collection.
 - Operational records may live in the database, but they are not CMS collections.
 - Static pages are fixed routes owned by the website; they can display collection content without becoming collections.
@@ -23,7 +24,7 @@ Testimonials
 
 The primary catalogue collection. Products include every purchasable offer.
 
-Product kinds are represented through the Product Kind controlled field:
+Product kinds are represented through the Product Kind field, drawn from the Product Kinds value list:
 
 ```text
 Individual Resource
@@ -147,7 +148,9 @@ Testimonials are standalone reusable trust content.
 Static pages can query and display testimonials directly.
 ```
 
-## Controlled Fields
+## Value Lists
+
+Value lists are database-sourced sets of allowed values that fields draw from. They are stored in the database and changed there directly — there is no admin screen for managing them, and they are not collections.
 
 ```text
 Grades
@@ -159,7 +162,7 @@ Resource Formats
 
 ### Grades
 
-Controlled values:
+Allowed values:
 
 ```text
 Grade 3
@@ -169,11 +172,11 @@ Grade 6
 Grade 7
 ```
 
-Grades are stable launch values, not a collection.
+Grades are fixed for launch (the school system has these grades) and come from the database.
 
 ### Terms
 
-Controlled values:
+Allowed values:
 
 ```text
 Term 1
@@ -182,15 +185,15 @@ Term 3
 Term 4
 ```
 
+Terms are fixed for launch (the school year has four terms) and come from the database.
+
 ### Years
 
-Managed selectable values used to classify products by curriculum or release year.
+Curriculum or release years used to classify products. Years come from the database and can be extended over time (e.g. a new year input on a product).
 
 ### Product Kinds
 
-Controlled values for how a product is sold.
-
-Launch values:
+How a product is sold. Fixed launch values, sourced from the database (the product editor branches on these three values):
 
 ```text
 Individual Resource
@@ -200,7 +203,7 @@ Access Plan
 
 ### Resource Formats
 
-Controlled values for what kind of learning material a product contains.
+What kind of learning material a product contains. Sourced from the database so values can be changed there as the catalogue grows.
 
 Launch values:
 
@@ -209,7 +212,7 @@ Test / Assessment
 Summary
 ```
 
-Additional values can be added later if the catalogue expands to worksheets, memos, packs, or other resource formats.
+Additional values can be added later — in the database — if the catalogue expands to worksheets, memos, packs, or other resource formats.
 
 ## Operational Records
 
@@ -297,4 +300,5 @@ Orders
 ```
 
 Bundles and access plans are Products. Customers and orders are operational records.
+Grades, Terms, Years, Product Kinds, and Resource Formats are value lists (database-sourced allowed values), not collections — there is no admin screen for managing them.
 Files are stored on Products for launch rather than managed as a separate collection. Bundle and access plan products can reference included Products so file access can resolve from the included product records.
