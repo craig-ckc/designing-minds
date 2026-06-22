@@ -248,7 +248,7 @@ export function TableWrap({ children }: { children: ReactNode }) {
   )
 }
 
-export function Th({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function Th({ children, className = '' }: { children?: ReactNode; className?: string }) {
   return (
     <th
       className={`whitespace-nowrap px-4 py-3 text-left text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-muted ${className}`}
@@ -258,7 +258,7 @@ export function Th({ children, className = '' }: { children: ReactNode; classNam
   )
 }
 
-export function Td({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function Td({ children, className = '' }: { children?: ReactNode; className?: string }) {
   return <td className={`whitespace-nowrap px-4 py-3.5 align-middle text-[0.92rem] ${className}`}>{children}</td>
 }
 

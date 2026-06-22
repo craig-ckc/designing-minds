@@ -1,145 +1,98 @@
-import { useDeferredValue, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  defaultProductFilters,
-  filterProducts,
-  formatCurrency,
-  type CmsSnapshot,
-  type ProductFilterState,
-} from '@designing-minds/cms'
-import { Chip, Icon, PageHeader, SelectField, Td, TableWrap, Th } from '../components/ui'
-import { FIELD } from '../components/tokens'
-
-/* Monochrome product-status pill — varies by fill / outline, never colour. */
-function ProductStatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    featured: 'border-ink bg-ink text-white',
-    fresh: 'border-line-strong bg-surface text-ink',
-    evergreen: 'border-line bg-surface-alt text-muted',
-  }
-  return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.72rem] font-medium uppercase tracking-[0.06em] ${
-        styles[status] ?? styles.fresh
-      }`}
-    >
-      {status}
-    </span>
-  )
-}
+import { useDeferredValue, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { formatCurrency, type CmsSnapshot } from '@designing-minds/cms'
+import { Field, PageHeader, SelectField, Td, TableWrap, Th } from '../components/ui'
+import { KindPill, Pill } from '../components/Badge'
+import { FIELD, SOLID_BTN } from '../components/tokens'
 
 export function ProductsPage({ snapshot }: { snapshot: CmsSnapshot }) {
-  const navigate = useNavigate()
-  const [filters, setFilters] = useState<ProductFilterState>(defaultProductFilters)
-  const deferredQuery = useDeferredValue(filters.query)
-  const visible = filterProducts(snapshot.products, { ...filters, query: deferredQuery })
+  const [query, setQuery] = useState('')
+  const [kind, setKind] = useState('All kinds')
+  const deferred = useDeferredValue(query)
 
-  const update = (patch: Partial<ProductFilterState>) => setFilters((current) => ({ ...current, ...patch }))
+  const visible = useMemo(() => {
+    const q = deferred.trim().toLowerCase()
+    return snapshot.products.filter((p) => {
+      if (kind !== 'All kinds' && p.productKind !== kind) return false
+      if (!q) return true
+      return `${p.title} ${p.grade} ${p.term}`.toLowerCase().includes(q)
+    })
+  }, [snapshot.products, deferred, kind])
 
   return (
     <>
       <PageHeader
-        eyebrow="Catalogue"
+        eyebrow="Collection"
         title="Products"
-        description={`${snapshot.stats.productCount} CAPS-aligned resources. Click a row to edit.`}
+        description="The catalogue: individual resources, bundles, and access plans."
+        actions={
+          <Link to="/products/new" className={SOLID_BTN}>
+            New product
+          </Link>
+        }
       />
 
       <div className="mb-5 flex flex-wrap items-end gap-3">
-        <div className="min-w-[200px] flex-1">
-          <label className="grid gap-2 text-[0.92rem] font-medium">
-            Search
-            <span className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted">
-                <Icon name="search" />
-              </span>
-              <input
-                className={`${FIELD} pl-9`}
-                value={filters.query}
-                onChange={(event) => update({ query: event.target.value })}
-                placeholder="Title, subject…"
-              />
-            </span>
-          </label>
+        <div className="min-w-[220px] flex-1">
+          <Field label="Search">
+            <input className={FIELD} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products" />
+          </Field>
         </div>
-        <div className="min-w-[140px]">
+        <div className="min-w-[180px]">
           <SelectField
-            label="Grade"
-            value={filters.grade}
-            options={['All grades', ...snapshot.filters.grades]}
-            onChange={(value) => update({ grade: value })}
+            label="Kind"
+            value={kind}
+            options={['All kinds', ...snapshot.valueLists.productKinds]}
+            onChange={setKind}
           />
         </div>
-        <div className="min-w-[130px]">
-          <SelectField
-            label="Term"
-            value={filters.term}
-            options={['All terms', ...snapshot.filters.terms]}
-            onChange={(value) => update({ term: value })}
-          />
-        </div>
-        <div className="min-w-[160px]">
-          <SelectField
-            label="Subject"
-            value={filters.subject}
-            options={['All subjects', ...snapshot.filters.subjects]}
-            onChange={(value) => update({ subject: value })}
-          />
-        </div>
-        <div className="min-w-[140px]">
-          <SelectField
-            label="Type"
-            value={filters.type}
-            options={['All formats', ...snapshot.filters.productTypes]}
-            onChange={(value) => update({ type: value })}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => setFilters(defaultProductFilters)}
-          className="ml-auto min-h-[46px] text-[0.9rem] font-medium text-ink underline underline-offset-4 hover:opacity-70"
-        >
-          Reset filters
-        </button>
       </div>
-
-      <p className="mb-3 text-[0.9rem] text-muted">{visible.length} results</p>
 
       <TableWrap>
         <table className="w-full border-collapse">
           <thead className="border-b border-line bg-surface-alt">
             <tr>
               <Th>Title</Th>
+              <Th>Kind</Th>
               <Th>Grade</Th>
               <Th>Term</Th>
-              <Th>Subject</Th>
-              <Th>Type</Th>
+              <Th>Format</Th>
               <Th className="text-right">Price</Th>
               <Th>Status</Th>
+              <Th />
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-line">
             {visible.map((product) => (
-              <tr
-                key={product.id}
-                onClick={() => navigate(`/products/${product.id}`)}
-                className="cursor-pointer border-b border-line last:border-0 hover:bg-surface-alt"
-              >
-                <Td className="max-w-[320px] whitespace-normal font-medium">{product.title}</Td>
-                <Td>
-                  <Chip>{product.grade}</Chip>
+              <tr key={product.id} className="hover:bg-surface-alt">
+                <Td className="whitespace-normal">
+                  <Link to={`/products/${product.id}`} className="font-medium underline underline-offset-4">
+                    {product.title}
+                  </Link>
                 </Td>
-                <Td className="text-muted">{product.term}</Td>
-                <Td className="text-muted">{product.primarySubject}</Td>
-                <Td className="text-muted">{product.type}</Td>
-                <Td className="text-right font-medium tabular-nums">{formatCurrency(product.priceZar)}</Td>
                 <Td>
-                  <ProductStatusBadge status={product.status} />
+                  <KindPill kind={product.productKind} />
+                </Td>
+                <Td>{product.grade}</Td>
+                <Td>{product.term}</Td>
+                <Td>{product.resourceFormat}</Td>
+                <Td className="text-right">{formatCurrency(product.priceZar)}</Td>
+                <Td>
+                  <span className="flex gap-1.5">
+                    <Pill tone={product.published ? 'solid' : 'muted'}>{product.published ? 'Published' : 'Draft'}</Pill>
+                    {product.featured ? <Pill tone="outline">Featured</Pill> : null}
+                  </span>
+                </Td>
+                <Td>
+                  <Link to={`/products/${product.id}`} className="text-[0.88rem] underline underline-offset-4">
+                    Edit
+                  </Link>
                 </Td>
               </tr>
             ))}
             {visible.length === 0 ? (
               <tr>
-                <Td className="text-muted">No products match your filters.</Td>
+                <Td className="text-muted">No products match.</Td>
               </tr>
             ) : null}
           </tbody>

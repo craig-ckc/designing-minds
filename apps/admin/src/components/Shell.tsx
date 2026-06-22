@@ -4,12 +4,26 @@ import { repository } from '../repository'
 import { Icon, type IconName } from './ui'
 import { btn } from './tokens'
 
-const NAV: { to: string; label: string; icon: IconName }[] = [
-  { to: '/', label: 'Dashboard', icon: 'grid' },
-  { to: '/products', label: 'Products', icon: 'box' },
-  { to: '/orders', label: 'Orders', icon: 'receipt' },
-  { to: '/customers', label: 'Customers', icon: 'users' },
-  { to: '/content', label: 'Content', icon: 'doc' },
+type NavItem = { to: string; label: string; icon: IconName }
+const NAV_GROUPS: { heading?: string; items: NavItem[] }[] = [
+  { items: [{ to: '/', label: 'Dashboard', icon: 'grid' }] },
+  {
+    heading: 'Catalogue',
+    items: [
+      { to: '/products', label: 'Products', icon: 'box' },
+      { to: '/subjects', label: 'Subjects', icon: 'spark' },
+      { to: '/faqs', label: 'FAQs', icon: 'doc' },
+      { to: '/testimonials', label: 'Testimonials', icon: 'star' },
+    ],
+  },
+  {
+    heading: 'Operations',
+    items: [
+      { to: '/orders', label: 'Orders', icon: 'receipt' },
+      { to: '/customers', label: 'Customers', icon: 'users' },
+      { to: '/payments', label: 'Payments', icon: 'rand' },
+    ],
+  },
 ]
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
@@ -20,13 +34,24 @@ const navLinkCls = ({ isActive }: { isActive: boolean }) =>
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
-      {NAV.map((item) => (
-        <NavLink key={item.to} to={item.to} end={item.to === '/'} className={navLinkCls} onClick={onNavigate}>
-          <span className="h-[18px] w-[18px] flex-none">
-            <Icon name={item.icon} />
-          </span>
-          {item.label}
-        </NavLink>
+      {NAV_GROUPS.map((group, index) => (
+        <div key={group.heading ?? `group-${index}`} className="contents">
+          {/* Divider between groups (Webflow-style: Catalogue | Operations) */}
+          {index > 0 ? <div className="my-3 hidden h-px bg-line lg:block" /> : null}
+          {group.heading ? (
+            <p className="hidden px-3 pb-1 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-muted lg:block">
+              {group.heading}
+            </p>
+          ) : null}
+          {group.items.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.to === '/'} className={navLinkCls} onClick={onNavigate}>
+              <span className="h-[18px] w-[18px] flex-none">
+                <Icon name={item.icon} />
+              </span>
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
       ))}
     </>
   )
