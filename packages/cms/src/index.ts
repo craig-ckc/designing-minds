@@ -4,7 +4,7 @@ import { createSupabaseRepository } from './providers/supabase'
 
 export * from './types'
 export * from './lib/formatters'
-export { seedSnapshot } from './generated/seed'
+export { fixtureSnapshot } from './fixtures'
 
 interface RepositoryOptions {
   provider?: string
