@@ -1,5 +1,6 @@
 .DS_Store
 .playwright-cli/
+.playwright-mcp
 output/
 node_modules/
 dist/
