@@ -56,8 +56,18 @@ function Editor({
   saving: boolean
 }) {
   const [draft, setDraft] = useState<Testimonial>(initial)
+  const [error, setError] = useState<string | null>(null)
   const patch = (next: Partial<Testimonial>) => setDraft((current) => ({ ...current, ...next }))
   const save = async () => {
+    if (!draft.customerName.trim()) {
+      setError('Customer display name is required.')
+      return
+    }
+    if (!draft.quote.trim()) {
+      setError('Quote is required.')
+      return
+    }
+    setError(null)
     const saved = await onSave(draft)
     if (saved) setDraft(saved)
   }
@@ -69,9 +79,12 @@ function Editor({
           <Eyebrow>Testimonial editor</Eyebrow>
           <h2>{draft.customerName}</h2>
         </div>
-        <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
-          {saving ? 'Saving…' : 'Save testimonial'}
-        </button>
+        <div className="flex items-center gap-3">
+          {error ? <span className="text-[0.85rem] text-red-600">{error}</span> : null}
+          <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
+            {saving ? 'Saving…' : 'Save testimonial'}
+          </button>
+        </div>
       </div>
 
       <section className={`grid max-w-[760px] gap-4 p-6 ${CARD}`}>

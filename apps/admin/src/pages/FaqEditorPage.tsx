@@ -41,8 +41,18 @@ export function FaqEditorPage({
 
 function Editor({ initial, onSave, saving }: { initial: Faq; onSave: (faq: Faq) => Promise<Faq | null>; saving: boolean }) {
   const [draft, setDraft] = useState<Faq>(initial)
+  const [error, setError] = useState<string | null>(null)
   const patch = (next: Partial<Faq>) => setDraft((current) => ({ ...current, ...next }))
   const save = async () => {
+    if (!draft.question.trim()) {
+      setError('Question is required.')
+      return
+    }
+    if (!draft.answer.trim()) {
+      setError('Answer is required.')
+      return
+    }
+    setError(null)
     const saved = await onSave(draft)
     if (saved) setDraft(saved)
   }
@@ -54,9 +64,12 @@ function Editor({ initial, onSave, saving }: { initial: Faq; onSave: (faq: Faq) 
           <Eyebrow>FAQ editor</Eyebrow>
           <h2 className="max-w-[640px]">{draft.question}</h2>
         </div>
-        <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
-          {saving ? 'Saving…' : 'Save FAQ'}
-        </button>
+        <div className="flex items-center gap-3">
+          {error ? <span className="text-[0.85rem] text-red-600">{error}</span> : null}
+          <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
+            {saving ? 'Saving…' : 'Save FAQ'}
+          </button>
+        </div>
       </div>
 
       <section className={`grid gap-4 p-6 ${CARD}`}>

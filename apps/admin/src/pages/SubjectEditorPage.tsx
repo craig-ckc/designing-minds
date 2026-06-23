@@ -53,6 +53,7 @@ function Editor({
   saving: boolean
 }) {
   const [draft, setDraft] = useState<Subject>(initial)
+  const [error, setError] = useState<string | null>(null)
   const patch = (next: Partial<Subject>) => setDraft((current) => ({ ...current, ...next }))
   const toggleFaq = (faqId: string) =>
     setDraft((current) => ({
@@ -60,8 +61,21 @@ function Editor({
       faqs: current.faqs.includes(faqId) ? current.faqs.filter((f) => f !== faqId) : [...current.faqs, faqId],
     }))
 
+  const validate = (): string | null => {
+    if (!draft.name.trim()) return 'Name is required.'
+    if (!draft.slug.trim()) return 'Slug is required.'
+    if (snapshot.subjects.some((s) => s.id !== draft.id && s.slug === draft.slug.trim())) return 'Another subject already uses this slug.'
+    return null
+  }
+
   const save = async () => {
-    const saved = await onSave(draft)
+    const problem = validate()
+    if (problem) {
+      setError(problem)
+      return
+    }
+    setError(null)
+    const saved = await onSave({ ...draft, slug: draft.slug.trim() })
     if (saved) setDraft(saved)
   }
 
@@ -72,9 +86,12 @@ function Editor({
           <Eyebrow>Subject editor</Eyebrow>
           <h2>{draft.name}</h2>
         </div>
-        <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
-          {saving ? 'Saving…' : 'Save subject'}
-        </button>
+        <div className="flex items-center gap-3">
+          {error ? <span className="text-[0.85rem] text-red-600">{error}</span> : null}
+          <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
+            {saving ? 'Saving…' : 'Save subject'}
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-6">
