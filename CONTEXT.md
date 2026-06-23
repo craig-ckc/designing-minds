@@ -89,8 +89,12 @@ A group of routes that share the same structural purpose and content rules.
 _Avoid_: One-off page specification
 
 **Customer**:
-A person who owns their own account information and places orders.
+A person who owns their own account information and places orders. A Customer is exactly one authenticated account; there is no login-less, shared, or admin-created Customer.
 _Avoid_: Admin-managed customer
+
+**Administrator**:
+A person with privileged access to manage catalogue Collections and to view all operational data (Customers, Orders, Payments). An Administrator authenticates like a Customer but is distinguished by an administrator role, and is not itself a Customer.
+_Avoid_: Super user, staff account, the generic "user"
 
 **Order**:
 A system-generated purchase record connected to a Customer Account.
@@ -120,6 +124,8 @@ _Avoid_: Marketing page
 - An **Order Detail** is the only place where a customer downloads purchased files.
 - **Digital Fulfillment** is the launch fulfillment model.
 - A **Cart** can contain one or more selected resources.
+- A **Cart** holds each resource at most once; there are no quantities, because each resource is purchased once and then downloaded.
+- A resource a **Customer** already owns (in a paid **Order**) cannot be added to the **Cart** or purchased again.
 - A **Cart** leads to **Checkout**.
 - **Checkout** requires a **Customer Account** before payment is completed.
 - An **Authentication Page** can be reached directly or from **Checkout**.
@@ -141,6 +147,8 @@ _Avoid_: Marketing page
 - **Static Pages** remain fixed website routes; they may display content from **Collections** without becoming collections themselves.
 - **Static Pages** can be documented by **Page Family** when several routes share the same structure.
 - **Customers** and **Orders** may be stored in the database, but they are not **Collections**.
+- An **Administrator** manages catalogue **Collections** and can view all **Customers**, **Orders**, and **Payments**; an Administrator is not a **Customer** and does not place **Orders**.
+- Every **Customer** and every **Administrator** is exactly one authenticated account.
 - **Value Lists** supply the allowed values for fields like Grade, Term, Product Kind, Resource Format, and Year; **Reference Fields** are for relationships between **Collections**.
 - **Value Lists** are stored in the database and changed there directly; they are not managed through an admin screen, and Grades, Terms, and Product Kinds are effectively fixed for launch.
 - Products reference one or more items from the **Subject Collection** through a required multi-select relationship.
@@ -157,4 +165,5 @@ _Avoid_: Marketing page
 - Customers can browse and add resources to the cart without a **Customer Account**, but they cannot complete **Checkout** without one.
 - A top-level route can be a **Functional Page** without being an **Indexable Page**.
 - Physical delivery and cash-on-delivery are possible future concepts, but they are out of scope for launch.
+- **Digital Fulfillment** is automatic and immediate once a payment is confirmed; there is no separate manual fulfillment step at launch. A distinct "fulfilled" state is reserved for possible future non-instant (e.g. physical) fulfillment, but at launch a confirmed payment is what unlocks downloads.
 - "Essential" and "Premium" are marketed as term and yearly **Access Plans**, but they are one-time purchases for that period, not recurring subscriptions. Automatic renewal and automatic charging are possible future concepts, out of scope for launch.
