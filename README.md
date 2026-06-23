@@ -12,7 +12,7 @@ This repository turns the extracted Designing Minds content into a Vite monorepo
 1. Run `npm install`.
 2. Create a Supabase project.
 3. Run `supabase/schema.sql`, then `supabase/seed.sql`.
-4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_API_BASE_URL` for the web and admin apps.
+4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `VITE_API_BASE_URL` for the web and admin apps.
 5. Run `npm run dev`.
 
 The apps read catalogue and operational data from Supabase. There is no localStorage or bundled seed fallback.

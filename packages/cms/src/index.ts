@@ -5,19 +5,19 @@ export * from './lib/formatters'
 
 interface RepositoryOptions {
   supabaseUrl?: string
-  supabaseAnonKey?: string
+  supabasePublishableKey?: string
 }
 
 export const createCmsRepository = ({
   supabaseUrl,
-  supabaseAnonKey,
+  supabasePublishableKey,
 }: RepositoryOptions = {}) => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required.')
+  if (!supabaseUrl || !supabasePublishableKey) {
+    throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are required.')
   }
 
   return createSupabaseRepository({
     url: supabaseUrl,
-    anonKey: supabaseAnonKey,
+    publishableKey: supabasePublishableKey,
   })
 }

@@ -14,7 +14,7 @@ import type {
 
 interface SupabaseRepositoryOptions {
   url: string
-  anonKey: string
+  publishableKey: string
 }
 
 const TABLES = {
@@ -70,12 +70,12 @@ const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] 
 
 /**
  * Shared-content provider. Reads the documented collections + operational
- * records from Supabase tables. Browser clients use the anon key plus the
+ * records from Supabase tables. Browser clients use the publishable key plus the
  * stored Supabase session, so RLS determines whether operational rows and
  * catalogue writes are available.
  */
-export const createSupabaseRepository = ({ url, anonKey }: SupabaseRepositoryOptions): CmsRepository => {
-  const client = createClient(url, anonKey)
+export const createSupabaseRepository = ({ url, publishableKey }: SupabaseRepositoryOptions): CmsRepository => {
+  const client = createClient(url, publishableKey)
 
   return {
     mode: 'supabase',

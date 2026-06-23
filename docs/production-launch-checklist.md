@@ -44,13 +44,13 @@ Use this as the final go-live checklist for Designing Minds. Tick each item only
 - [ ] Production Vercel environment variables are set for the admin app.
 - [ ] Production Vercel environment variables are set for functions.
 - [ ] `VITE_SUPABASE_URL` is set for web and admin.
-- [ ] `VITE_SUPABASE_ANON_KEY` is set for web and admin.
+- [ ] `VITE_SUPABASE_PUBLISHABLE_KEY` is set for web and admin.
 - [ ] `VITE_API_BASE_URL` is set for web and admin if the API app is on a different origin.
 - [ ] `ALLOWED_ORIGINS` on the functions app is set and includes the public web and admin origins.
 - [ ] Preview environment variables point to sandbox services only.
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` is configured only for serverless functions.
+- [ ] `SUPABASE_SECRET_KEY` is configured only for serverless functions.
 - [ ] `PAYFAST_PASSPHRASE` is configured only for serverless functions.
-- [ ] No service-role key or PayFast passphrase appears in any `VITE_` variable.
+- [ ] No Supabase secret key or PayFast passphrase appears in any `VITE_` variable.
 
 ## Admin Isolation
 

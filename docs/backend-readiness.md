@@ -32,7 +32,7 @@ The **front-end and domain model are solid**; nearly every **backend integration
 | --- | --- | --- |
 | 1 | **Customer = Supabase Auth user, 1:1.** `customers.id` = auth uid, provisioned by a signup trigger. No login-less customer. | ADR 0003, CONTEXT.md |
 | 2 | **Two roles (`customer`/`admin`) in a DB-managed `user_roles` table**, RLS-enforced. Signup auto-assigns `customer`; promotion is a direct DB edit (mirrors ADR 0002). | ADR 0003 |
-| 3 | **Hybrid write model.** Catalogue: direct client writes gated by `is_admin()`. Operational records: customer reads own / admin reads all; **all writes server-side via service role**. | ADR 0003 |
+| 3 | **Hybrid write model.** Catalogue: direct client writes gated by `is_admin()`. Operational records: customer reads own / admin reads all; **all writes server-side via Supabase secret key**. | ADR 0003 |
 | 4 | **Server handlers run as Vercel Node serverless functions**, not Supabase Edge Functions. | this doc |
 | 5 | **`paid` is the canonical "downloads unlocked" state**; `fulfilled` reserved/unused at launch. | CONTEXT.md |
 | 6 | **Money stored as `numeric(10,2)`** (rands.cents). In-memory arithmetic in integer cents; PayFast amount via `.toFixed(2)`; amount match within ±0.01. | this doc |
@@ -65,13 +65,13 @@ The **front-end and domain model are solid**; nearly every **backend integration
 - **Checkout** (`/checkout`): re-resolve every line's price + `published` from the DB (never trust the client), compute the authoritative total, create the `order` (`pending`) + one `payment` (`pending`), then build the **signed PayFast redirect** form/URL. `m_payment_id` = `payments.id`.
 - **Signature**: generate server-side, **documentation field order** (not alphabetical — that's the API format), `urlencode` (`+` for spaces, uppercase hex), passphrase appended. Passphrase **never** reaches the browser.
 - **ITN webhook** (`/payment-webhook`): return 200 first; then (1) verify signature, (2) source IP in PayFast ranges, (3) `amount_gross` matches the order total (±0.01), (4) POST back to `/eng/query/validate` and require `VALID`; fulfill only on `payment_status === 'COMPLETE'`. Map PayFast `COMPLETE` → internal `succeeded`; set order → `paid`. **Idempotent**: dedupe on `pf_payment_id`, no-op duplicates, always 200.
-- **Refunds**: admin-triggered server action (service role) — out of launch scope but reserved.
+- **Refunds**: admin-triggered server action using the Supabase secret key — out of launch scope but reserved.
 - **Stale pending orders**: a sweep job (PayFast doesn't reliably send FAILED/PENDING for once-off). Deferrable.
 
 ### 3.4 Storage & downloads — ABSENT
 - Create one **private bucket**; implement the **Supabase `StorageProvider`** (`getSignedUploadUrl`, `getSignedDownloadUrl`, `deleteObject`).
 - `ProductFile` gains **`storageKey`** (bare, provider-neutral, e.g. `products/{productId}/{fileId}-{filename}`). Remove `previewFiles` from the type, schema, admin editor, and web product page.
-- **`issue-download`**: identify caller via **verified JWT**; load order (service role); assert owned + `paid`; resolve `fileId` → `storageKey` → short-lived signed URL. Wire the Order Detail download button to call it (currently no handler).
+- **`issue-download`**: identify caller via **verified JWT**; load order with the Supabase secret key; assert owned + `paid`; resolve `fileId` → `storageKey` → short-lived signed URL. Wire the Order Detail download button to call it (currently no handler).
 - **Admin upload**: `/admin/upload-url` returns a presigned PUT for a server-chosen key (is_admin only); client uploads, then saves `storageKey`.
 
 ### 3.5 Checkout / cart flow — WALL
@@ -98,9 +98,9 @@ The **front-end and domain model are solid**; nearly every **backend integration
 ## 5. Required environment variables
 | Var | Where | Secret |
 | --- | --- | --- |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | web + admin (client) | no |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | web + admin (client) | no |
 | `VITE_API_BASE_URL` | web + admin (client) | no |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | functions (server) | **yes** (service role) |
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | functions (server) | **yes** (secret key) |
 | `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY` | functions (server) | merchant_key sensitive |
 | `PAYFAST_PASSPHRASE` | functions (server) | **yes** — never client-side |
 | `PAYFAST_MODE` (`sandbox`/`live`) | functions | no |
@@ -171,10 +171,10 @@ Each risk in §8 has a decided mitigation. These are specs, not yet implemented.
 - `customers.orderIds` dropped; order lists derive from `orders`.
 - Residual `orders.paymentId` is set in the same server transaction that creates the payment (or treated as derivable via `payments.orderId`). No hand-maintained arrays remain.
 
-### M7 — Service-role key hygiene
-- `SUPABASE_SERVICE_ROLE_KEY` and `PAYFAST_PASSPHRASE` live ONLY in the serverless functions' server env — **never** in a `VITE_`-prefixed var or any client bundle.
-- Client apps use only the **anon key** + the user's session JWT.
-- Add a CI guard that fails the build if a service-role key or passphrase string appears in client env/bundle output.
+### M7 — Supabase secret key hygiene
+- `SUPABASE_SECRET_KEY` and `PAYFAST_PASSPHRASE` live ONLY in the serverless functions' server env — **never** in a `VITE_`-prefixed var or any client bundle.
+- Client apps use only the **publishable key** + the user's session JWT.
+- Add a CI guard that fails the build if a Supabase secret key or passphrase string appears in client env/bundle output.
 
 ### M8 — Email deliverability (Resend)
 - Wire **Resend** as Supabase Auth's custom SMTP; verify a dedicated **sending domain** (SPF / DKIM / DMARC) — not the shared onboarding domain.

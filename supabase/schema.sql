@@ -1,8 +1,8 @@
 -- Designing Minds — Supabase schema.
 --
 -- Supabase owns Auth, Postgres, and launch storage. Vercel serverless
--- functions perform trusted operational writes with the service-role key.
--- Browser clients use the anon key plus a user session JWT and are constrained
+-- functions perform trusted operational writes with the secret key.
+-- Browser clients use the publishable key plus a user session JWT and are constrained
 -- by RLS.
 
 create extension if not exists pgcrypto;

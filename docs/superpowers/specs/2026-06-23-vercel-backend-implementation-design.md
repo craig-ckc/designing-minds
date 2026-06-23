@@ -16,11 +16,11 @@ Implement the locked backend architecture for Designing Minds on Vercel:
 
 Vercel is the deployment platform for the public web app, admin app, and serverless functions. Business logic stays in `apps/functions/src/handlers` using the existing framework-agnostic `HandlerRequest` and `HandlerResponse` interfaces. `apps/functions` is the API app; its `api/` files are thin Vercel adapters that parse requests, call the shared handlers, and write JSON responses.
 
-Supabase remains the source of truth for Auth, Postgres, and launch storage. Browser apps use only the anon key plus user sessions. Trusted writes for orders, payments, downloads, and upload URL issuance happen in Vercel functions with the service-role key.
+Supabase remains the source of truth for Auth, Postgres, and launch storage. Browser apps use only the publishable key plus user sessions. Trusted writes for orders, payments, downloads, and upload URL issuance happen in Vercel functions with the secret key.
 
 Web and admin call the API app via same-origin `/api/*` rewrites or `VITE_API_BASE_URL` when the API app is on another origin.
 
-The apps do not fall back to localStorage or bundled seed content for catalogue data. `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are required, and all catalogue reads/writes go through Supabase.
+The apps do not fall back to localStorage or bundled seed content for catalogue data. `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are required, and all catalogue reads/writes go through Supabase.
 
 ## Phase Order
 
@@ -46,6 +46,6 @@ The apps do not fall back to localStorage or bundled seed content for catalogue 
 
 ## Testing And Verification
 
-Each phase should be verified with TypeScript checks and targeted runtime smoke tests. Database verification is done by applying `supabase/schema.sql` to a Supabase project, creating test Auth users, checking role-trigger behavior, and exercising RLS with anon/authenticated/service-role clients.
+Each phase should be verified with TypeScript checks and targeted runtime smoke tests. Database verification is done by applying `supabase/schema.sql` to a Supabase project, creating test Auth users, checking role-trigger behavior, and exercising RLS with publishable-key unauthenticated/authenticated clients plus a secret-key server client.
 
 PayFast verification uses sandbox credentials and a tunnel or deployed Vercel preview URL for ITN delivery. Storage verification uses a private bucket and confirms that files are inaccessible without a signed URL issued after Postgres entitlement checks.

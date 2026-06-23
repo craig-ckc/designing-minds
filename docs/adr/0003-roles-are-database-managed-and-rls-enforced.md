@@ -9,7 +9,7 @@ We chose this because a single visible source-of-truth table is simpler to reaso
 Writes follow a **hybrid model**:
 
 - **Catalogue collections** (products, subjects, faqs, testimonials) — direct client writes from the admin app, gated by `is_admin()` in RLS.
-- **Operational records** (customers, orders, payments) — a Customer reads only their own rows; an Administrator reads all; and **every write happens server-side with the service-role key** (checkout creates orders, the payment webhook updates them, refunds/overrides are admin-triggered server actions). No client ever writes operational rows directly.
+- **Operational records** (customers, orders, payments) — a Customer reads only their own rows; an Administrator reads all; and **every write happens server-side with the Supabase secret key** (checkout creates orders, the payment webhook updates them, refunds/overrides are admin-triggered server actions). No client ever writes operational rows directly.
 
 ## Considered Options
 
@@ -23,6 +23,6 @@ Writes follow a **hybrid model**:
 - Promoting an Administrator is a manual database operation; bootstrapping the first admin is a manual insert. Document the runbook.
 - `is_admin()` / `has_role()` must be `SECURITY DEFINER` and stable, consulting `user_roles`.
 - The admin app must sign in via Supabase Auth and gate its routes on the role for UX; RLS remains the real enforcement (defense in depth). The current anon-key-with-no-session admin access is replaced.
-- Operational mutations require the service-role key in a trusted server context (the functions layer) — never shipped to the browser.
+- Operational mutations require the Supabase secret key in a trusted server context (the functions layer) — never shipped to the browser.
 - The catalogue write policies change from `to authenticated using (true)` to `is_admin()`.
 - The admin app is **login-only** — no self-serve sign-up or password reset. Admin accounts are developer-provisioned, and a forgotten admin password is reset by the developer directly in Supabase (consistent with role membership being a manual DB operation). It is served on a separate, non-indexable subdomain using an authenticated Supabase session — never the anon key.

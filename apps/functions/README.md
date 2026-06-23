@@ -20,7 +20,7 @@ npm run dev --workspace @designing-minds/functions
 ```
 
 Set the server environment variables from `docs/production-launch-checklist.md`.
-The service-role key is server-only — never ship it to the browser.
+The Supabase secret key is server-only — never ship it to the browser.
 
 ## Deploy
 
