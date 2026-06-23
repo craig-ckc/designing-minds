@@ -46,28 +46,33 @@ function CheckGroup({
 function FileList({
   title,
   files,
-  onAdd,
   onUpload,
   onRemove,
+  uploading,
+  error,
 }: {
   title: string
   files: ProductFile[]
-  onAdd: () => void
   onUpload: (file: File) => void
   onRemove: (id: string) => void
+  uploading?: boolean
+  error?: string | null
 }) {
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between">
         <span className="text-[0.92rem] font-medium">{title}</span>
-        <button type="button" onClick={onAdd} className="text-[0.85rem] underline underline-offset-4">
-          Add file
-        </button>
         <label className="cursor-pointer text-[0.85rem] underline underline-offset-4">
-          Upload
-          <input className="sr-only" type="file" onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0])} />
+          {uploading ? 'Uploading…' : 'Upload'}
+          <input
+            className="sr-only"
+            type="file"
+            disabled={uploading}
+            onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0])}
+          />
         </label>
       </div>
+      {error ? <p className="text-[0.82rem] text-red-600">{error}</p> : null}
       {files.length === 0 ? (
         <p className="text-[0.85rem] text-muted">No files attached.</p>
       ) : (
@@ -165,6 +170,9 @@ function Editor({
 }) {
   const cf = snapshot.valueLists
   const [draft, setDraft] = useState<Product>(initial)
+  const [error, setError] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const patch = (next: Partial<Product>) => setDraft((current) => ({ ...current, ...next }))
   const toggleIn = (key: 'subjects' | 'faqs' | 'includedProductSlugs' | 'includedSubjects' | 'includedTerms' | 'includedGrades', value: string) =>
     setDraft((current) => {
@@ -182,48 +190,57 @@ function Editor({
   const isBundle = draft.productKind === 'Bundle'
   const isPlan = draft.productKind === 'Access Plan'
 
-  const addFile = () =>
-    setDraft((current) => ({
-      ...current,
-      purchasedFiles: [
-        ...current.purchasedFiles,
-        {
-          id: `f-${Date.now()}`,
-          label: 'New file',
-          filename: 'file.pdf',
-          storageKey: `products/${current.id}/f-${Date.now()}-file.pdf`,
-        },
-      ],
-    }))
   const removeFile = (fileId: string) =>
     setDraft((current) => ({ ...current, purchasedFiles: current.purchasedFiles.filter((f) => f.id !== fileId) }))
 
   const uploadFile = async (file: File) => {
-    const fileId = `f-${Date.now()}`
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token
-    if (!token) throw new Error('Admin session required.')
-    const response = await fetch(apiUrl('/api/admin/upload-url'), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ productId: draft.id, fileId, filename: file.name }),
-    })
-    const body = (await response.json()) as { uploadUrl?: string; storageKey?: string; error?: string }
-    if (!response.ok || !body.uploadUrl || !body.storageKey) throw new Error(body.error ?? 'Unable to create upload URL.')
-    const storageKey = body.storageKey
-    const upload = await fetch(body.uploadUrl, { method: 'PUT', body: file })
-    if (!upload.ok) throw new Error('Unable to upload file.')
-    setDraft((current) => ({
-      ...current,
-      purchasedFiles: [...current.purchasedFiles, { id: fileId, label: file.name, filename: file.name, storageKey }],
-    }))
+    setUploadError(null)
+    setUploading(true)
+    try {
+      const fileId = `f-${Date.now()}`
+      const { data } = await supabase.auth.getSession()
+      const token = data.session?.access_token
+      if (!token) throw new Error('Admin session required.')
+      const response = await fetch(apiUrl('/api/admin/upload-url'), {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: draft.id, fileId, filename: file.name }),
+      })
+      const body = (await response.json()) as { uploadUrl?: string; storageKey?: string; error?: string }
+      if (!response.ok || !body.uploadUrl || !body.storageKey) throw new Error(body.error ?? 'Unable to create upload URL.')
+      const storageKey = body.storageKey
+      const upload = await fetch(body.uploadUrl, { method: 'PUT', body: file })
+      if (!upload.ok) throw new Error('Unable to upload file.')
+      setDraft((current) => ({
+        ...current,
+        purchasedFiles: [...current.purchasedFiles, { id: fileId, label: file.name, filename: file.name, storageKey }],
+      }))
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Unable to upload file.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const validate = (): string | null => {
+    if (!draft.title.trim()) return 'Name is required.'
+    if (!draft.slug.trim()) return 'Slug is required.'
+    if (snapshot.products.some((p) => p.id !== draft.id && p.slug === draft.slug.trim())) return 'Another product already uses this slug.'
+    if (draft.subjects.length === 0) return 'Select at least one subject.'
+    return null
   }
 
   const save = async () => {
-    const saved = await onSave(draft)
+    const problem = validate()
+    if (problem) {
+      setError(problem)
+      return
+    }
+    setError(null)
+    const saved = await onSave({ ...draft, slug: draft.slug.trim() })
     if (saved) setDraft(saved)
   }
 
@@ -241,6 +258,7 @@ function Editor({
           <KindPill kind={draft.productKind} />
         </div>
         <div className="ml-auto flex items-center gap-3">
+          {error ? <span className="text-[0.85rem] text-red-600">{error}</span> : null}
           <Pill tone={draft.published ? 'solid' : 'muted'}>{draft.published ? 'Published' : 'Draft'}</Pill>
           <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
             {saving ? 'Saving…' : 'Save'}
@@ -339,7 +357,7 @@ function Editor({
 
         {!isBundle && !isPlan ? (
           <Section title="Files" divided>
-            <FileList title="Purchased files" files={draft.purchasedFiles} onAdd={addFile} onUpload={(file) => void uploadFile(file)} onRemove={removeFile} />
+            <FileList title="Purchased files" files={draft.purchasedFiles} onUpload={(file) => void uploadFile(file)} onRemove={removeFile} uploading={uploading} error={uploadError} />
           </Section>
         ) : null}
 
