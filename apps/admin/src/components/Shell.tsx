@@ -48,7 +48,7 @@ function TopBar() {
           {repository.canWrite ? 'Write access' : 'Read only'}
         </span>
         <a
-          href="http://localhost:5173"
+          href={import.meta.env.VITE_WEB_URL ?? 'http://localhost:5173'}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-1.5 rounded-md border border-line-strong px-2.5 py-1 hover:border-ink"

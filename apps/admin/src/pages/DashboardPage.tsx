@@ -52,7 +52,7 @@ function Breakdown({ title, rows, total }: { title: string; rows: [string, numbe
 
 export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const revenue = snapshot.orders.reduce((sum, order) => sum + order.totalZar, 0)
-  const recent = [...snapshot.orders].slice(0, 5)
+  const recent = [...snapshot.orders].sort((a, b) => b.placedAt.localeCompare(a.placedAt)).slice(0, 5)
 
   return (
     <div className="px-6 py-5">
