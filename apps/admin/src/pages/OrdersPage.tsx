@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { formatCurrency, type CmsSnapshot } from '@designing-minds/cms'
+import { formatCurrency, type CmsSnapshot, type OrderStatus } from '@designing-minds/cms'
 import { Td, Th } from '../components/ui'
 import { CollectionListLayout } from '../components/CollectionListLayout'
 import { OrderStatusPill } from '../components/Badge'
@@ -8,10 +8,12 @@ import { OrderStatusPill } from '../components/Badge'
 const FILTER_SELECT =
   'min-h-[42px] rounded-md border border-line-strong bg-surface px-3 text-[0.92rem] focus:outline focus:outline-2 focus:outline-ink focus:-outline-offset-1'
 
+const ORDER_STATUSES: OrderStatus[] = ['pending', 'paid', 'fulfilled', 'refunded', 'failed']
+
 export function OrdersPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('All statuses')
-  const statuses = ['All statuses', 'pending', 'paid', 'fulfilled', 'failed', 'refunded']
+  const statuses = ['All statuses', ...ORDER_STATUSES]
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -28,7 +30,7 @@ export function OrdersPage({ snapshot }: { snapshot: CmsSnapshot }) {
       query={query}
       onQueryChange={setQuery}
       filters={
-        <select className={FILTER_SELECT} value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select className={FILTER_SELECT} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by order status">
           {statuses.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -65,6 +67,13 @@ export function OrdersPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <Td className="text-right">{formatCurrency(order.totalZar)}</Td>
             </tr>
           ))}
+          {visible.length === 0 ? (
+            <tr>
+              <Td className="text-muted" colSpan={6}>
+                No orders match.
+              </Td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
     </CollectionListLayout>

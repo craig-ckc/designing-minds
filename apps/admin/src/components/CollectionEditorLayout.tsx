@@ -38,7 +38,7 @@ export function CollectionEditorLayout({
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <span className="text-[0.88rem] font-medium">{title}</span>
           {newLabel ? (
-            <Link to={`${basePath}/new`} className="grid h-6 w-6 place-items-center rounded text-[1rem] text-ink-soft hover:bg-surface-alt" title={newLabel}>
+            <Link to={`${basePath}/new`} className="grid h-6 w-6 place-items-center rounded text-[1rem] text-ink-soft hover:bg-surface-alt" title={newLabel} aria-label={newLabel}>
               <span className="h-4 w-4">
                 <Icon name="plus" />
               </span>

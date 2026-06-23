@@ -55,6 +55,7 @@ export function CollectionListLayout({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder={`Search ${title.toLowerCase()}…`}
+            aria-label={`Search ${title.toLowerCase()}`}
             className="h-[34px] w-[200px] rounded-md border border-line-strong bg-surface pl-8 pr-3 text-[0.85rem] focus:outline focus:outline-2 focus:outline-ink focus:-outline-offset-1"
           />
         </div>

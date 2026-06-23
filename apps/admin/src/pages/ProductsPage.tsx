@@ -31,7 +31,7 @@ export function ProductsPage({ snapshot }: { snapshot: CmsSnapshot }) {
       newLabel="New product"
       newTo="/products/new"
       filters={
-        <select className={FILTER_SELECT} value={kind} onChange={(e) => setKind(e.target.value)}>
+        <select className={FILTER_SELECT} value={kind} onChange={(e) => setKind(e.target.value)} aria-label="Filter by product kind">
           {['All kinds', ...snapshot.valueLists.productKinds].map((option) => (
             <option key={option} value={option}>
               {option}
@@ -77,7 +77,9 @@ export function ProductsPage({ snapshot }: { snapshot: CmsSnapshot }) {
           ))}
           {visible.length === 0 ? (
             <tr>
-              <Td className="text-muted">No products match.</Td>
+              <Td className="text-muted" colSpan={7}>
+                No products match.
+              </Td>
             </tr>
           ) : null}
         </tbody>

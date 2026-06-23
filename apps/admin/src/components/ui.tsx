@@ -267,8 +267,12 @@ export function Th({ children, className = '' }: { children?: ReactNode; classNa
   )
 }
 
-export function Td({ children, className = '' }: { children?: ReactNode; className?: string }) {
-  return <td className={`whitespace-nowrap px-3 py-3 align-middle text-[0.92rem] ${className}`}>{children}</td>
+export function Td({ children, className = '', colSpan }: { children?: ReactNode; className?: string; colSpan?: number }) {
+  return (
+    <td colSpan={colSpan} className={`whitespace-nowrap px-3 py-3 align-middle text-[0.92rem] ${className}`}>
+      {children}
+    </td>
+  )
 }
 
 export function StatePanel({
