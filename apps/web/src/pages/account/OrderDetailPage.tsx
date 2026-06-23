@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { StatePanel } from '../../components/ui/StatePanel'
 import { useAuth } from '../../lib/auth'
 import { apiUrl } from '../../lib/api'
+import { supabase } from '../../lib/supabase'
 import { AccountShell, SignedOut } from './AccountShell'
 import { OrderStatusBadge } from './OrderStatusBadge'
 
@@ -33,17 +34,29 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const { orderId } = useParams()
   const order = orderId ? getOrderById(snapshot, orderId) : undefined
+  const isDownloadable = order?.status === 'paid' || order?.status === 'fulfilled'
 
+  // While an order is still pending, poll only its status (cheap) rather than
+  // refetching the whole catalogue snapshot; refresh the snapshot once it flips
+  // to a downloadable state so the files appear, then stop.
   useEffect(() => {
-    if (!customer || !orderId || order?.status === 'paid') return
+    if (!customer || !orderId || isDownloadable) return
     let attempts = 0
     const interval = window.setInterval(() => {
       attempts += 1
-      void onRefresh()
+      void (async () => {
+        if (supabase) {
+          const { data } = await supabase.from('orders').select('status').eq('id', orderId).maybeSingle()
+          const status = (data as { status?: string } | null)?.status
+          if (status === 'paid' || status === 'fulfilled') await onRefresh()
+        } else {
+          await onRefresh()
+        }
+      })()
       if (attempts >= 20) window.clearInterval(interval)
     }, 3000)
     return () => window.clearInterval(interval)
-  }, [customer, onRefresh, order?.status, orderId])
+  }, [customer, onRefresh, isDownloadable, orderId])
 
   if (!customer) {
     return <SignedOut />
