@@ -93,28 +93,17 @@ export const checkout: Handler = async (req) => {
     const reference = orderReference()
     const totalZar = formatPayfastAmount(totalCents)
 
-    const { error: orderError } = await supabase.from('orders').insert({
-      id: orderId,
-      reference,
-      customerId: customer.id,
-      customerName: customer.name,
-      customerEmail: customer.email,
-      status: 'pending',
-      items,
-      totalZar,
-      paymentId,
+    const { error: orderCreateError } = await supabase.rpc('create_pending_order', {
+      p_order_id: orderId,
+      p_payment_id: paymentId,
+      p_reference: reference,
+      p_customer_id: customer.id,
+      p_customer_name: customer.name,
+      p_customer_email: customer.email,
+      p_items: items,
+      p_total_zar: totalZar,
     })
-    if (orderError) throw new Error(orderError.message)
-
-    const { error: paymentError } = await supabase.from('payments').insert({
-      id: paymentId,
-      orderId,
-      status: 'pending',
-      provider: 'PayFast',
-      reference,
-      amountZar: totalZar,
-    })
-    if (paymentError) throw new Error(paymentError.message)
+    if (orderCreateError) throw new Error(orderCreateError.message)
 
     const baseUrl = siteUrl()
     if (!process.env.PAYFAST_MERCHANT_ID || !process.env.PAYFAST_MERCHANT_KEY) {
