@@ -33,7 +33,7 @@ The **front-end and domain model are solid**; nearly every **backend integration
 | 1 | **Customer = Supabase Auth user, 1:1.** `customers.id` = auth uid, provisioned by a signup trigger. No login-less customer. | ADR 0003, CONTEXT.md |
 | 2 | **Two roles (`customer`/`admin`) in a DB-managed `user_roles` table**, RLS-enforced. Signup auto-assigns `customer`; promotion is a direct DB edit (mirrors ADR 0002). | ADR 0003 |
 | 3 | **Hybrid write model.** Catalogue: direct client writes gated by `is_admin()`. Operational records: customer reads own / admin reads all; **all writes server-side via service role**. | ADR 0003 |
-| 4 | **Server handlers run as Node serverless** (Vercel/Netlify/Fly-style), not Supabase Edge Functions. Specific platform deferred. | this doc |
+| 4 | **Server handlers run as Vercel Node serverless functions**, not Supabase Edge Functions. | this doc |
 | 5 | **`paid` is the canonical "downloads unlocked" state**; `fulfilled` reserved/unused at launch. | CONTEXT.md |
 | 6 | **Money stored as `numeric(10,2)`** (rands.cents). In-memory arithmetic in integer cents; PayFast amount via `.toFixed(2)`; amount match within ±0.01. | this doc |
 | 7 | **Full PayFast ITN validation chain** (signature, source IP, amount, server post-back) + gate on `COMPLETE` + idempotent dedupe on `pf_payment_id`. | this doc |
@@ -81,7 +81,7 @@ The **front-end and domain model are solid**; nearly every **backend integration
 ### 3.6 Data-model gaps
 - **`customers.orderIds` dropped** — order lists derive from `orders where customerId = …` (the source of truth; already indexed + RLS'd). `orders.paymentId` remains a 1:1 convenience pointer (also derivable via `payments.orderId`).
 - **Value Lists**: ADR 0002 says DB-sourced, but the Supabase provider reads them from fixtures "until a value-list table exists." Need a `value_lists` table (or seed) for `supabase` mode.
-- **Catalogue ingestion**: `scripts/sync-content.mjs` generates `seed.ts` that is **unused** (apps use hand-authored fixtures). Real launch needs a path to load actual products into Supabase.
+- **Catalogue ingestion**: `supabase/seed.sql` seeds the catalogue from `research/extracted-content/data/products.json`; production edits then happen in Supabase through the admin app.
 - Add `payments.pf_payment_id` (unique) + `payments.processedAt` for ITN idempotency.
 
 ---
@@ -90,7 +90,7 @@ The **front-end and domain model are solid**; nearly every **backend integration
 - **Supabase** — Auth, Postgres, Storage (already the chosen backend).
 - **PayFast** merchant account (+ sandbox account) — merchant id/key/passphrase.
 - **Production SMTP — Resend** wired into Supabase Auth as custom SMTP (verified sending domain). Verification gates checkout, so this is purchase-critical; the built-in sender is not for production.
-- **Node serverless host** for the handlers (public HTTPS for the ITN; ports 80/8080/8081/443).
+- **Vercel** for the web app, admin app, and Node serverless handlers (public HTTPS for the ITN; ports 80/8080/8081/443).
 - **Dev tunnel** (ngrok/Expose) so PayFast can reach `notify_url` from `localhost`.
 - **CORS** config between the web app origin and the serverless functions.
 - (Future) **Cloudflare R2** as the egress-saving storage swap target.
@@ -99,6 +99,7 @@ The **front-end and domain model are solid**; nearly every **backend integration
 | Var | Where | Secret |
 | --- | --- | --- |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | web + admin (client) | no |
+| `VITE_API_BASE_URL` | web + admin (client) | no |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | functions (server) | **yes** (service role) |
 | `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY` | functions (server) | merchant_key sensitive |
 | `PAYFAST_PASSPHRASE` | functions (server) | **yes** — never client-side |
@@ -117,8 +118,6 @@ The **front-end and domain model are solid**; nearly every **backend integration
 ---
 
 ## 7. Open decisions still to make
-- **Specific Node serverless platform** (Vercel / Netlify / Fly / …) — co-locate with the web host?
-- **Value Lists in Supabase**: dedicated `value_lists` table vs seeded constants for `supabase` mode.
 - **Refund mechanism** detail (PayFast refund API vs dashboard) when it comes into scope.
 
 _Resolved: email verification **hard-gates checkout** (account hygiene over funnel friction)._

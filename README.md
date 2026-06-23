@@ -4,20 +4,23 @@ This repository turns the extracted Designing Minds content into a Vite monorepo
 
 - `apps/web`: the public website for browsing pages and products.
 - `apps/admin`: a lightweight admin app for editing CMS-style content.
-- `packages/cms`: the shared content schema, seed generator, and storage adapters.
+- `apps/functions`: the Vercel API app for checkout, PayFast ITN, downloads, and admin uploads.
+- `packages/cms`: the shared content schema and Supabase repository.
 
 ## Getting Started
 
 1. Run `npm install`.
-2. Run `npm run sync-content`.
-3. Run `npm run dev`.
+2. Create a Supabase project.
+3. Run `supabase/schema.sql`, then `supabase/seed.sql`.
+4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_API_BASE_URL` for the web and admin apps.
+5. Run `npm run dev`.
 
-The website defaults to seed content. The admin app defaults to browser local storage so the client can test edits immediately.
+The apps read catalogue and operational data from Supabase. There is no localStorage or bundled seed fallback.
 
-## Persistence Modes
+`VITE_API_BASE_URL` should be the deployed `apps/functions` origin, for example `https://designing-minds-functions.vercel.app`. Leave it blank only when the current app origin rewrites `/api/*` to the functions app.
 
-- `seed`: read-only content generated from `extracted-content/data`.
-- `local`: editable content stored in the browser with `localStorage`.
-- `supabase`: shared content stored in Supabase tables and storage-ready infrastructure.
+## Supabase SQL
 
-Use `supabase/schema.sql` to create the starter database tables if you want both apps to share a live content source.
+- `supabase/schema.sql`: full current schema for a fresh project.
+- `supabase/seed.sql`: full current catalogue seed generated from extracted website products.
+- `supabase/patch/`: versioned SQL patches for existing projects; accepted patches should be folded back into schema or seed.
