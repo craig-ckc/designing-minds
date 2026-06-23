@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { cloneSnapshot } from '../lib/formatters'
-import { fixtureSnapshot } from '../fixtures'
 import type {
   CmsRepository,
   CmsSnapshot,
@@ -11,6 +9,7 @@ import type {
   Product,
   Subject,
   Testimonial,
+  ValueLists,
 } from '../types'
 
 interface SupabaseRepositoryOptions {
@@ -26,7 +25,38 @@ const TABLES = {
   customers: 'customers',
   orders: 'orders',
   payments: 'payments',
+  valueLists: 'value_lists',
 } as const
+
+const DEFAULT_VALUE_LISTS: ValueLists = {
+  grades: [],
+  terms: [],
+  years: [],
+  productKinds: [],
+  resourceFormats: [],
+}
+
+interface ValueListRow {
+  key: keyof ValueLists
+  values: string[]
+}
+
+const rowsToValueLists = (rows: ValueListRow[] | null): ValueLists =>
+  (rows ?? []).reduce<ValueLists>(
+    (lists, row) => ({
+      ...lists,
+      [row.key]: row.values,
+    }),
+    DEFAULT_VALUE_LISTS,
+  ) as ValueLists
+
+const numberizeProduct = (product: Product): Product => ({ ...product, priceZar: Number(product.priceZar) })
+const numberizeOrder = (order: Order): Order => ({
+  ...order,
+  totalZar: Number(order.totalZar),
+  items: order.items.map((item) => ({ ...item, priceZar: Number(item.priceZar) })),
+})
+const numberizePayment = (payment: Payment): Payment => ({ ...payment, amountZar: Number(payment.amountZar) })
 
 const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] => ({
   productCount: snapshot.products.length,
@@ -40,9 +70,9 @@ const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] 
 
 /**
  * Shared-content provider. Reads the documented collections + operational
- * records from Supabase tables; value lists come from the wireframe fixtures
- * until a value-list table exists. Not exercised by the wireframe (web
- * defaults to seed, admin to local), but kept type-correct.
+ * records from Supabase tables. Browser clients use the anon key plus the
+ * stored Supabase session, so RLS determines whether operational rows and
+ * catalogue writes are available.
  */
 export const createSupabaseRepository = ({ url, anonKey }: SupabaseRepositoryOptions): CmsRepository => {
   const client = createClient(url, anonKey)
@@ -51,7 +81,7 @@ export const createSupabaseRepository = ({ url, anonKey }: SupabaseRepositoryOpt
     mode: 'supabase',
     canWrite: true,
     async getSnapshot() {
-      const [products, subjects, faqs, testimonials, customers, orders, payments] = await Promise.all([
+      const [products, subjects, faqs, testimonials, customers, orders, payments, valueLists] = await Promise.all([
         client.from(TABLES.products).select('*'),
         client.from(TABLES.subjects).select('*'),
         client.from(TABLES.faqs).select('*'),
@@ -59,9 +89,10 @@ export const createSupabaseRepository = ({ url, anonKey }: SupabaseRepositoryOpt
         client.from(TABLES.customers).select('*'),
         client.from(TABLES.orders).select('*'),
         client.from(TABLES.payments).select('*'),
+        client.from(TABLES.valueLists).select('*'),
       ])
 
-      const firstError = [products, subjects, faqs, testimonials, customers, orders, payments].find((r) => r.error)
+      const firstError = [products, subjects, faqs, testimonials, customers, orders, payments, valueLists].find((r) => r.error)
       if (firstError?.error) {
         throw new Error(firstError.error.message)
       }
@@ -69,14 +100,14 @@ export const createSupabaseRepository = ({ url, anonKey }: SupabaseRepositoryOpt
       const base = {
         generatedAt: new Date().toISOString(),
         source: 'supabase',
-        valueLists: fixtureSnapshot.valueLists,
-        products: (products.data as Product[] | null) ?? [],
+        valueLists: rowsToValueLists(valueLists.data as ValueListRow[] | null),
+        products: ((products.data as Product[] | null) ?? []).map(numberizeProduct),
         subjects: (subjects.data as Subject[] | null) ?? [],
         faqs: (faqs.data as Faq[] | null) ?? [],
         testimonials: (testimonials.data as Testimonial[] | null) ?? [],
         customers: (customers.data as Customer[] | null) ?? [],
-        orders: (orders.data as Order[] | null) ?? [],
-        payments: (payments.data as Payment[] | null) ?? [],
+        orders: ((orders.data as Order[] | null) ?? []).map(numberizeOrder),
+        payments: ((payments.data as Payment[] | null) ?? []).map(numberizePayment),
       }
       return { ...base, stats: buildStats(base) }
     },
@@ -99,17 +130,6 @@ export const createSupabaseRepository = ({ url, anonKey }: SupabaseRepositoryOpt
       const res = await client.from(TABLES.testimonials).upsert(testimonial).select().single()
       if (res.error) throw new Error(res.error.message)
       return res.data as Testimonial
-    },
-    async reset() {
-      const seed = cloneSnapshot(fixtureSnapshot)
-      const results = await Promise.all([
-        client.from(TABLES.products).upsert(seed.products),
-        client.from(TABLES.subjects).upsert(seed.subjects),
-        client.from(TABLES.faqs).upsert(seed.faqs),
-        client.from(TABLES.testimonials).upsert(seed.testimonials),
-      ])
-      const failed = results.find((r) => r.error)
-      if (failed?.error) throw new Error(failed.error.message)
     },
   }
 }

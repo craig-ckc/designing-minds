@@ -1,38 +1,23 @@
-import { createSeedRepository } from './providers/seed'
-import { createLocalRepository } from './providers/local'
 import { createSupabaseRepository } from './providers/supabase'
 
 export * from './types'
 export * from './lib/formatters'
-export { fixtureSnapshot } from './fixtures'
 
 interface RepositoryOptions {
-  provider?: string
-  app?: 'web' | 'admin'
   supabaseUrl?: string
   supabaseAnonKey?: string
 }
 
 export const createCmsRepository = ({
-  provider,
-  app = 'web',
   supabaseUrl,
   supabaseAnonKey,
 }: RepositoryOptions = {}) => {
-  if (provider === 'supabase' && supabaseUrl && supabaseAnonKey) {
-    return createSupabaseRepository({
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    })
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required.')
   }
 
-  if (provider === 'local') {
-    return createLocalRepository()
-  }
-
-  if (app === 'admin') {
-    return createLocalRepository()
-  }
-
-  return createSeedRepository()
+  return createSupabaseRepository({
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  })
 }

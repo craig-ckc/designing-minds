@@ -44,6 +44,8 @@ export interface ProductFile {
   id: string
   label: string
   filename: string
+  /** Provider-neutral private storage key, never a public URL. */
+  storageKey: string
 }
 
 /* ------------------------------- Collections --------------------------- */
@@ -66,7 +68,6 @@ export interface Product {
   /** Subject slugs. Required multi-select: at least one. */
   subjects: string[]
   marks: number | null
-  previewFiles: ProductFile[]
   purchasedFiles: ProductFile[]
   featured: boolean
   published: boolean
@@ -135,7 +136,6 @@ export interface Customer {
   name: string
   email: string
   createdAt: string
-  orderIds: string[]
 }
 
 export interface OrderItem {
@@ -152,8 +152,10 @@ export interface Payment {
   status: PaymentStatus
   provider: string
   reference: string
+  pfPaymentId?: string | null
   amountZar: number
   createdAt: string
+  processedAt?: string | null
 }
 
 export interface Order {
@@ -205,5 +207,4 @@ export interface CmsRepository {
   saveSubject: (subject: Subject) => Promise<Subject>
   saveFaq: (faq: Faq) => Promise<Faq>
   saveTestimonial: (testimonial: Testimonial) => Promise<Testimonial>
-  reset?: () => Promise<void>
 }
