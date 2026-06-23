@@ -10,8 +10,9 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
   if (!customer) {
     return <SignedOut />
   }
-  const orders = ordersForCustomer(snapshot, customer.id)
+  const orders = [...ordersForCustomer(snapshot, customer.id)].sort((a, b) => b.placedAt.localeCompare(a.placedAt))
   const recent = orders.slice(0, 3)
+  const downloadable = orders.filter((o) => o.status === 'paid' || o.status === 'fulfilled').length
 
   return (
     <AccountShell title={`Welcome back, ${customer.name.split(' ')[0]}`} intro="Your orders and account details in one place.">
@@ -19,7 +20,7 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-line bg-line sm:grid-cols-3">
           {[
             { value: String(orders.length), label: 'Total orders' },
-            { value: String(orders.filter((o) => o.status === 'fulfilled').length), label: 'Ready to download' },
+            { value: String(downloadable), label: 'Ready to download' },
             { value: priceLabel(orders.reduce((sum, o) => sum + o.totalZar, 0)), label: 'Lifetime spend' },
           ].map((stat) => (
             <div key={stat.label} className="bg-surface px-5 py-5">
