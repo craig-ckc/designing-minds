@@ -1,3 +1,5 @@
+import { type FormEvent, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { CONTACT } from '../content/site'
 import { Container } from '../components/ui/Container'
 import { Eyebrow } from '../components/ui/Eyebrow'
@@ -6,6 +8,19 @@ import { Field } from '../components/ui/Field'
 import { Button } from '../components/ui/Button'
 
 export function ContactPage() {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [message, setMessage] = useState('')
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const body = `From: ${name} <${email}>\n\n${message}`
+    const mailto = `mailto:${CONTACT.email}?subject=${encodeURIComponent(`Website enquiry from ${name || 'a customer'}`)}&body=${encodeURIComponent(body)}`
+    window.location.href = mailto
+    setSent(true)
+  }
+
   return (
     <>
       <section className="section">
@@ -23,28 +38,44 @@ export function ContactPage() {
               </div>
               <p className="mt-6 text-[0.92rem] text-muted">
                 Looking for download or printing help? Visit the{' '}
-                <a href="/help" className="text-ink underline underline-offset-4">
+                <Link to="/help" className="text-ink underline underline-offset-4">
                   Help centre
-                </a>
+                </Link>
                 .
               </p>
             </div>
 
-            <form className="card grid gap-[18px] p-7" onSubmit={(event) => event.preventDefault()}>
+            <form className="card grid gap-[18px] p-7" onSubmit={handleSubmit}>
               <h3>Send us a message</h3>
               <Field label="Name">
-                <input className="field" placeholder="Your name" />
+                <input className="field" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
               </Field>
               <Field label="Email">
-                <input className="field" type="email" placeholder="you@example.com" />
+                <input className="field" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </Field>
               <Field label="Message">
-                <textarea className="field min-h-[130px] resize-y" placeholder="How can we help?" />
+                <textarea
+                  className="field min-h-[130px] resize-y"
+                  placeholder="How can we help?"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
+                />
               </Field>
               <Button type="submit" variant="solid">
                 Send message
               </Button>
-              <p className="text-[0.82rem] text-muted">We usually reply within one business day.</p>
+              {sent ? (
+                <p className="text-[0.82rem] text-ink-soft">
+                  Your email app should have opened. If not, email us directly at{' '}
+                  <a href={`mailto:${CONTACT.email}`} className="underline underline-offset-4">
+                    {CONTACT.email}
+                  </a>
+                  .
+                </p>
+              ) : (
+                <p className="text-[0.82rem] text-muted">We usually reply within one business day.</p>
+              )}
             </form>
           </div>
         </Container>
