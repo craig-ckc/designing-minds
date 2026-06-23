@@ -6,6 +6,12 @@ import { PageHeader } from '../components/ui/Headings'
 import { FaqAccordion } from '../components/ui/FaqAccordion'
 import { Button } from '../components/ui/Button'
 
+const categorySlug = (category: string) =>
+  category
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
 export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const byCategory = useMemo(() => {
     const groups = new Map<string, Faq[]>()
@@ -36,7 +42,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <ul className="grid gap-2 text-ink-soft">
               {byCategory.map(([category]) => (
                 <li key={category}>
-                  <a href={`#${category.replace(/\s+/g, '-').toLowerCase()}`} className="hover:text-ink">
+                  <a href={`#${categorySlug(category)}`} className="hover:text-ink">
                     {category}
                   </a>
                 </li>
@@ -53,7 +59,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
           <div className="grid gap-10">
             {byCategory.map(([category, faqs]) => (
-              <div key={category} id={category.replace(/\s+/g, '-').toLowerCase()}>
+              <div key={category} id={categorySlug(category)}>
                 <h3 className="mb-3">{category}</h3>
                 <FaqAccordion faqs={faqs} />
               </div>

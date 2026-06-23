@@ -39,8 +39,13 @@ export function AccountShell({
   useNoindex()
   const { logout } = useAuth()
   const navigate = useNavigate()
-  const signOut = () => {
-    logout().finally(() => navigate('/'))
+  const signOut = async () => {
+    try {
+      await logout()
+      navigate('/')
+    } catch {
+      // Logout failed — keep the user here; the session is still active.
+    }
   }
 
   return (
