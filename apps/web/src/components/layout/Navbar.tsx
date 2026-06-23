@@ -5,7 +5,7 @@ import { accessPlanProducts, priceLabel, type CmsSnapshot, type Product } from '
 import { Container } from '../ui/Container'
 import { Icon } from '../ui/Icon'
 import { initials, useAuth } from '../../lib/auth'
-import { CART_CHANGED_EVENT, getCartSlugs } from '../../lib/cart'
+import { useCartSlugs } from '../../lib/useCart'
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-2 text-[0.95rem] hover:bg-surface-alt hover:text-ink ${
@@ -30,17 +30,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
 
 function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
   const { customer } = useAuth()
-  const [cartCount, setCartCount] = useState(() => getCartSlugs().length)
-
-  useEffect(() => {
-    const update = () => setCartCount(getCartSlugs().length)
-    window.addEventListener(CART_CHANGED_EVENT, update)
-    window.addEventListener('storage', update)
-    return () => {
-      window.removeEventListener(CART_CHANGED_EVENT, update)
-      window.removeEventListener('storage', update)
-    }
-  }, [])
+  const cartCount = useCartSlugs().length
 
   return (
     <>
@@ -167,6 +157,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const location = useLocation()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  const cartCount = useCartSlugs().length
   const plans = snapshot ? accessPlanProducts(snapshot) : []
   const closeMega = () => setMegaOpen(false)
   const closeMobile = () => setMobileOpen(false)
@@ -292,7 +283,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
                 <div className="my-4 h-px bg-line" />
                 <Link to="/cart" onClick={closeMobile} className="py-2 text-[1.05rem]">
-                  Cart (0)
+                  Cart ({cartCount})
                 </Link>
                 <MobileAccountLink onNavigate={closeMobile} />
               </Dialog.Popup>

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
 import { Container } from '../components/ui/Container'
@@ -7,20 +6,19 @@ import { Placeholder } from '../components/ui/Placeholder'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { useNoindex } from '../lib/useNoindex'
-import { getCartSlugs, removeCartSlug } from '../lib/cart'
+import { removeCartSlug } from '../lib/cart'
+import { useCartSlugs } from '../lib/useCart'
 
 export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
   useNoindex()
-  const [slugs, setSlugs] = useState<string[]>(() => getCartSlugs())
+  const slugs = useCartSlugs()
+  const published = publishedProducts(snapshot)
 
   const items = slugs
-    .map((slug) => publishedProducts(snapshot).find((p) => p.slug === slug))
+    .map((slug) => published.find((p) => p.slug === slug))
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
   const subtotal = items.reduce((sum, item) => sum + item.priceZar, 0)
-  const remove = (slug: string) => {
-    removeCartSlug(slug)
-    setSlugs(getCartSlugs())
-  }
+  const remove = (slug: string) => removeCartSlug(slug)
 
   return (
     <section className="section">

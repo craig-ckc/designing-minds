@@ -4,6 +4,8 @@ import { Placeholder } from './ui/Placeholder'
 import { Chip } from './ui/Chip'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
+import { addCartSlug } from '../lib/cart'
+import { useCartSlugs } from '../lib/useCart'
 
 const KIND_TONE = {
   Bundle: 'solid',
@@ -12,6 +14,7 @@ const KIND_TONE = {
 } as const
 
 export function ProductCard({ product }: { product: Product }) {
+  const inCart = useCartSlugs().includes(product.slug)
   return (
     <article className="flex flex-col overflow-hidden border border-line bg-surface transition hover:border-ink">
       <Link to={`/product/${product.slug}`} className="block">
@@ -33,9 +36,15 @@ export function ProductCard({ product }: { product: Product }) {
             <Button to={`/product/${product.slug}`} variant="text" size="sm">
               View
             </Button>
-            <Button type="button" variant="text" size="sm">
-              Add to cart
-            </Button>
+            {inCart ? (
+              <Button to="/cart" variant="text" size="sm">
+                In cart
+              </Button>
+            ) : (
+              <Button type="button" variant="text" size="sm" onClick={() => addCartSlug(product.slug)}>
+                Add to cart
+              </Button>
+            )}
           </div>
         </div>
       </div>
