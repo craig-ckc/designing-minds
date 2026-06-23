@@ -13,6 +13,7 @@
     "@base-ui/react": "^1.6.0",
     "@designing-minds/cms": "file:../../packages/cms",
     "@designing-minds/utils": "file:../../packages/utils",
+    "@supabase/supabase-js": "^2.57.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.9.6"
