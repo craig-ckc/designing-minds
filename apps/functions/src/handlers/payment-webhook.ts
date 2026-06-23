@@ -1,40 +1,89 @@
-import type { OrderStatus, PaymentStatus } from '@designing-minds/cms/types'
-import { badRequest, ok, type Handler } from '../lib/http.ts'
-// import { createServiceClient } from '../lib/supabase.ts'
+import { ok, type Handler, type HandlerResponse } from '../lib/http.ts'
+import { amountMatches } from '../lib/money.ts'
+import { verifyPayfastSignature, validatePayfastData, verifyPayfastSourceIp, type PayfastFields } from '../lib/payfast.ts'
+import { createServiceClient } from '../lib/supabase.ts'
 
-interface WebhookInput {
-  reference: string
-  status: PaymentStatus
+const asFields = (value: unknown): PayfastFields => (typeof value === 'object' && value !== null ? (value as PayfastFields) : {})
+
+class PermanentItnRejection extends Error {}
+
+const retryLater = (message: string): HandlerResponse => ({ status: 503, body: { received: false, error: message } })
+
+interface PaymentRow {
+  id: string
+  orderId: string
+  amountZar: number | string
+  status: string
+  processedAt: string | null
 }
 
-function isWebhookInput(value: unknown): value is WebhookInput {
-  return typeof value === 'object' && value !== null && typeof (value as WebhookInput).reference === 'string'
+const markPaymentFailed = async (payment: PaymentRow) => {
+  if (payment.processedAt || payment.status !== 'pending') return
+
+  const supabase = createServiceClient()
+  const { data: updatedPayment, error: updatePaymentError } = await supabase
+    .from('payments')
+    .update({ status: 'failed' })
+    .eq('id', payment.id)
+    .eq('status', 'pending')
+    .is('processedAt', null)
+    .select('id')
+    .maybeSingle()
+  if (updatePaymentError) throw new Error(updatePaymentError.message)
+  if (!updatedPayment) return
+
+  const { error: updateOrderError } = await supabase.from('orders').update({ status: 'failed' }).eq('id', payment.orderId).eq('status', 'pending')
+  if (updateOrderError) throw new Error(updateOrderError.message)
 }
 
-/** A successful payment unlocks downloads on the Order Detail; a failed one does not. */
-const orderStatusForPayment = (status: PaymentStatus): OrderStatus => {
-  if (status === 'succeeded') return 'fulfilled'
-  if (status === 'refunded') return 'refunded'
-  if (status === 'failed') return 'failed'
-  return 'pending'
-}
-
-/**
- * Provider → server webhook. Verifies the event, updates the Payment, and
- * derives the Order status (digital fulfillment, no shipping).
- *
- * WALL VERSION: outlines the mapping. Real signature verification and
- * persistence come later.
- */
 export const paymentWebhook: Handler = async (req) => {
-  if (req.method !== 'POST') return badRequest('Use POST.')
-  if (!isWebhookInput(req.body)) return badRequest('Expected { reference, status }.')
+  if (req.method !== 'POST') return ok({ received: true })
 
-  // TODO: verify the provider signature from req.headers before trusting this.
-  const { reference, status } = req.body
-  const nextOrderStatus = orderStatusForPayment(status)
+  const fields = asFields(req.body)
+  try {
+    if (!verifyPayfastSignature(fields)) throw new PermanentItnRejection('Invalid PayFast signature.')
+    if (!verifyPayfastSourceIp(req.headers)) throw new PermanentItnRejection('Invalid PayFast source IP.')
 
-  // const supabase = createServiceClient()
-  // TODO: find payment by reference, update its status, then set the order status.
-  return ok({ reference, paymentStatus: status, orderStatus: nextOrderStatus })
+    const paymentId = String(fields.m_payment_id ?? '')
+    const pfPaymentId = String(fields.pf_payment_id ?? '')
+    const amountGross = String(fields.amount_gross ?? '')
+    if (!paymentId || !pfPaymentId || !amountGross) throw new Error('Missing PayFast ITN fields.')
+
+    const supabase = createServiceClient()
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .select('id,orderId,amountZar,status,processedAt')
+      .eq('id', paymentId)
+      .single<PaymentRow>()
+    if (paymentError) throw new Error(paymentError.message)
+    if (payment?.processedAt) return ok({ received: true, duplicate: true })
+    if (!amountMatches(amountGross, payment.amountZar)) throw new PermanentItnRejection('PayFast amount mismatch.')
+    if (!(await validatePayfastData(fields))) throw new PermanentItnRejection('PayFast validate endpoint rejected the ITN.')
+
+    const paymentStatus = String(fields.payment_status ?? '')
+    if (paymentStatus !== 'COMPLETE') {
+      if (['FAILED', 'CANCELLED'].includes(paymentStatus)) await markPaymentFailed(payment)
+      throw new PermanentItnRejection(`PayFast payment is ${paymentStatus || 'not complete'}.`)
+    }
+
+    const { data: existing } = await supabase.from('payments').select('id,processedAt').eq('pfPaymentId', pfPaymentId).maybeSingle()
+    if (existing?.processedAt) return ok({ received: true, duplicate: true })
+
+    const processedAt = new Date().toISOString()
+    const { error: updatePaymentError } = await supabase
+      .from('payments')
+      .update({ status: 'succeeded', pfPaymentId, processedAt })
+      .eq('id', paymentId)
+      .is('processedAt', null)
+    if (updatePaymentError) throw new Error(updatePaymentError.message)
+
+    const { error: updateOrderError } = await supabase.from('orders').update({ status: 'paid' }).eq('id', payment.orderId)
+    if (updateOrderError) throw new Error(updateOrderError.message)
+
+    return ok({ received: true, processed: true })
+  } catch (error) {
+    console.error('PayFast ITN ignored:', error instanceof Error ? error.message : error)
+    if (error instanceof PermanentItnRejection) return ok({ received: true, processed: false })
+    return retryLater(error instanceof Error ? error.message : 'Temporary PayFast ITN processing error.')
+  }
 }
