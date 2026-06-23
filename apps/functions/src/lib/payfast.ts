@@ -100,7 +100,7 @@ export const validatePayfastData = async (fields: PayfastFields): Promise<boolea
 const ipFromHeaders = (headers: Record<string, string | undefined>) =>
   headers['x-real-ip'] ||
   headers['X-Real-IP'] ||
-  (headers['x-forwarded-for'] ?? headers['X-Forwarded-For'] ?? '').split(',').at(-1)?.trim() ||
+  (headers['x-forwarded-for'] ?? headers['X-Forwarded-For'] ?? '').split(',').at(0)?.trim() ||
   ''
 
 export const verifyPayfastSourceIp = (headers: Record<string, string | undefined>): boolean => {

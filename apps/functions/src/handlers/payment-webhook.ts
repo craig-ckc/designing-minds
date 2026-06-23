@@ -70,14 +70,18 @@ export const paymentWebhook: Handler = async (req) => {
     if (existing?.processedAt) return ok({ received: true, duplicate: true })
 
     const processedAt = new Date().toISOString()
-    const { error: updatePaymentError } = await supabase
+    const { data: updatedPayment, error: updatePaymentError } = await supabase
       .from('payments')
       .update({ status: 'succeeded', pfPaymentId, processedAt })
       .eq('id', paymentId)
+      .eq('status', 'pending')
       .is('processedAt', null)
+      .select('id')
+      .maybeSingle()
     if (updatePaymentError) throw new Error(updatePaymentError.message)
+    if (!updatedPayment) return ok({ received: true, duplicate: true })
 
-    const { error: updateOrderError } = await supabase.from('orders').update({ status: 'paid' }).eq('id', payment.orderId)
+    const { error: updateOrderError } = await supabase.from('orders').update({ status: 'paid' }).eq('id', payment.orderId).eq('status', 'pending')
     if (updateOrderError) throw new Error(updateOrderError.message)
 
     return ok({ received: true, processed: true })
