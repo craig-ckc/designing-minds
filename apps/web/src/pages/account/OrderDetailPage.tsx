@@ -9,6 +9,25 @@ import { apiUrl } from '../../lib/api'
 import { AccountShell, SignedOut } from './AccountShell'
 import { OrderStatusBadge } from './OrderStatusBadge'
 
+const includesByRules = (
+  product: NonNullable<ReturnType<typeof getProductBySlug>>,
+  candidate: NonNullable<ReturnType<typeof getProductBySlug>>,
+) => {
+  if (candidate.productKind !== 'Individual Resource') return false
+  if (product.includedProductSlugs?.includes(candidate.slug)) return true
+  if (product.includedGrades?.length && !product.includedGrades.includes(candidate.grade)) return false
+  if (product.includedTerms?.length && !product.includedTerms.includes(candidate.term)) return false
+  if (product.includedSubjects?.length && !candidate.subjects.some((subject) => product.includedSubjects?.includes(subject))) return false
+  return Boolean(product.includedGrades?.length || product.includedTerms?.length || product.includedSubjects?.length)
+}
+
+const downloadProductsForItem = (snapshot: CmsSnapshot, productSlug: string) => {
+  const product = getProductBySlug(snapshot, productSlug)
+  if (!product) return []
+  if (product.productKind === 'Individual Resource') return [product]
+  return snapshot.products.filter((candidate) => includesByRules(product, candidate))
+}
+
 export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot; onRefresh: () => Promise<void> }) {
   const { customer, getAccessToken } = useAuth()
   const [downloadError, setDownloadError] = useState<string | null>(null)
@@ -105,8 +124,8 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
           ) : null}
           <ul className="grid gap-4">
             {order.items.map((item) => {
-              const product = getProductBySlug(snapshot, item.productSlug)
-              const files = product?.purchasedFiles ?? []
+              const products = downloadProductsForItem(snapshot, item.productSlug)
+              const files = products.flatMap((product) => product.purchasedFiles.map((file) => ({ ...file, productTitle: product.title })))
               return (
                 <li key={item.id} className="border border-line bg-surface p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -127,7 +146,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                             <span className="h-4 w-4 text-muted">
                               <Icon name="doc" />
                             </span>
-                            {file.label}
+                            {file.productTitle === item.title ? file.label : `${file.productTitle} · ${file.label}`}
                           </span>
                           <Button type="button" variant={downloadable ? 'outline' : 'text'} size="sm" disabled={!downloadable} onClick={() => void download(file.id)}>
                             <span className="h-4 w-4">

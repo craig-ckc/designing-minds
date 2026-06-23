@@ -29,6 +29,37 @@ const findFile = (products: Product[], fileId: string): ProductFile | null => {
   return null
 }
 
+const includesByRules = (plan: Product, candidate: Product): boolean => {
+  if (candidate.productKind !== 'Individual Resource') return false
+  if (plan.includedProductSlugs?.includes(candidate.slug)) return true
+  if (plan.includedGrades?.length && !plan.includedGrades.includes(candidate.grade)) return false
+  if (plan.includedTerms?.length && !plan.includedTerms.includes(candidate.term)) return false
+  if (plan.includedSubjects?.length && !candidate.subjects.some((subject) => plan.includedSubjects?.includes(subject))) return false
+  return Boolean(plan.includedGrades?.length || plan.includedTerms?.length || plan.includedSubjects?.length)
+}
+
+const entitledProducts = (purchasedProducts: Product[], catalogue: Product[]): Product[] => {
+  const bySlug = new Map(catalogue.map((product) => [product.slug, product]))
+  const entitled = new Map<string, Product>()
+
+  for (const product of purchasedProducts) {
+    if (product.productKind === 'Individual Resource') entitled.set(product.slug, product)
+
+    for (const slug of product.includedProductSlugs ?? []) {
+      const included = bySlug.get(slug)
+      if (included) entitled.set(included.slug, included)
+    }
+
+    if (product.productKind === 'Bundle' || product.productKind === 'Access Plan') {
+      for (const candidate of catalogue) {
+        if (includesByRules(product, candidate)) entitled.set(candidate.slug, candidate)
+      }
+    }
+  }
+
+  return [...entitled.values()]
+}
+
 export const issueDownload: Handler = async (req) => {
   if (req.method !== 'POST') return badRequest('Use POST.')
   if (!isDownloadInput(req.body)) return badRequest('Expected { orderId, fileId }.')
@@ -52,10 +83,19 @@ export const issueDownload: Handler = async (req) => {
     if (!['paid', 'fulfilled'].includes(order.status)) return unauthorized('Downloads unlock once payment succeeds.')
 
     const productSlugs = [...new Set(order.items.map((item) => item.productSlug))]
-    const { data: products, error: productsError } = await supabase.from('products').select('*').in('slug', productSlugs)
+    const { data: purchasedProducts, error: productsError } = await supabase.from('products').select('*').in('slug', productSlugs)
     if (productsError) throw new Error(productsError.message)
 
-    const file = findFile((products ?? []) as Product[], req.body.fileId)
+    const purchased = (purchasedProducts ?? []) as Product[]
+    const hasComposite = purchased.some((product) => product.productKind === 'Bundle' || product.productKind === 'Access Plan')
+    let catalogue = purchased
+    if (hasComposite) {
+      const { data: catalogueProducts, error: catalogueError } = await supabase.from('products').select('*')
+      if (catalogueError) throw new Error(catalogueError.message)
+      catalogue = (catalogueProducts ?? []) as Product[]
+    }
+
+    const file = findFile(entitledProducts(purchased, catalogue), req.body.fileId)
     if (!file) return unauthorized('This file is not available on your order.')
     if (!file.storageKey) throw new Error('Product file is missing a storage key.')
 
