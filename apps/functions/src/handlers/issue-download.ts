@@ -77,9 +77,10 @@ export const issueDownload: Handler = async (req) => {
       .from('orders')
       .select('id,customerId,status,items')
       .eq('id', req.body.orderId)
-      .single<OrderRow>()
+      .maybeSingle<OrderRow>()
     if (orderError) throw new Error(orderError.message)
-    if (order.customerId !== user.id) return unauthorized('This order is not available on your account.')
+    // Treat "not found" and "not yours" identically so order ids can't be enumerated.
+    if (!order || order.customerId !== user.id) return unauthorized('This order is not available on your account.')
     if (!['paid', 'fulfilled'].includes(order.status)) return unauthorized('Downloads unlock once payment succeeds.')
 
     const productSlugs = [...new Set(order.items.map((item) => item.productSlug))]
@@ -104,6 +105,7 @@ export const issueDownload: Handler = async (req) => {
     const url = await storage.getSignedDownloadUrl(file.storageKey, expiresInSeconds, file.filename)
     return ok({ url, expiresInSeconds, filename: file.filename })
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : 'Unable to issue download.')
+    console.error('issue-download failed:', error instanceof Error ? error.message : error)
+    return serverError('Unable to issue download.')
   }
 }

@@ -41,6 +41,7 @@ export const adminUploadUrl: Handler = async (req) => {
     const uploadUrl = await storage.getSignedUploadUrl(key)
     return ok({ uploadUrl, storageKey: key })
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : 'Unable to create upload URL.')
+    console.error('admin-upload-url failed:', error instanceof Error ? error.message : error)
+    return serverError('Unable to create upload URL.')
   }
 }

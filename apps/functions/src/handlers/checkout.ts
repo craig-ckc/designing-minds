@@ -125,6 +125,7 @@ export const checkout: Handler = async (req) => {
 
     return created({ orderId, paymentId, reference, payfast })
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : 'Unable to start checkout.')
+    console.error('checkout failed:', error instanceof Error ? error.message : error)
+    return serverError('Unable to start checkout.')
   }
 }
