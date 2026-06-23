@@ -15,7 +15,7 @@ This repository turns the extracted Designing Minds content into a Vite monorepo
 4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `VITE_API_BASE_URL` for the web and admin apps.
 5. Run `npm run dev`.
 
-The apps read catalogue and operational data from Supabase. There is no localStorage or bundled seed fallback.
+The apps read catalogue and operational data from Supabase. Anonymous carts use localStorage until sign-in, then merge into the Supabase cart tables; catalogue data has no localStorage or bundled seed fallback.
 
 `VITE_API_BASE_URL` should be the deployed `apps/functions` origin, for example `https://designing-minds-functions.vercel.app`. Leave it blank only when the current app origin rewrites `/api/*` to the functions app.
 

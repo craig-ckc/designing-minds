@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Customer } from '@designing-minds/cms'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
+import { mergeSignedInCart } from './cart'
 
 interface AuthValue {
   customer: Customer | null
@@ -36,15 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return
 
     let cancelled = false
+    const applySession = (nextSession: Session | null) => {
+      if (nextSession?.user.id) void mergeSignedInCart(nextSession.user.id)
+      setSession(nextSession)
+      setLoading(false)
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!cancelled) {
-        setSession(data.session)
-        setLoading(false)
+        applySession(data.session)
       }
     })
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-      setLoading(false)
+      applySession(nextSession)
     })
     return () => {
       cancelled = true

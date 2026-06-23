@@ -100,7 +100,8 @@ Use this as the final go-live checklist for Designing Minds. Tick each item only
 - [ ] Unpublished products cannot be checked out.
 - [ ] Product files have labels, filenames, and `storageKey` values.
 - [ ] Value Lists match the launch catalogue needs.
-- [ ] No app is running against localStorage or bundled seed catalogue content.
+- [ ] No app is running against localStorage or bundled seed catalogue content for catalogue data.
+- [ ] Signed-in cart add/remove/clear actions persist to Supabase.
 - [ ] Any database change after launch has a versioned file in `supabase/patch/`.
 - [ ] Any accepted patch has been folded back into `supabase/schema.sql` or `supabase/seed.sql`.
 
