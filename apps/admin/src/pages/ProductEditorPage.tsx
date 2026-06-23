@@ -1,7 +1,6 @@
 import { type ReactNode, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import {
-  formatCurrency,
   type CmsSnapshot,
   type Grade,
   type Product,
@@ -10,10 +9,10 @@ import {
   type ResourceFormat,
   type Term,
 } from '@designing-minds/cms'
-import { Eyebrow, Field, Icon, Placeholder, SelectField, StatePanel } from '../components/ui'
-import { KindPill } from '../components/Badge'
+import { Field, Icon, SelectField, StatePanel } from '../components/ui'
+import { KindPill, Pill } from '../components/Badge'
 import { CollectionEditorLayout } from '../components/CollectionEditorLayout'
-import { CARD, FIELD, SOLID_BTN } from '../components/tokens'
+import { FIELD, SOLID_BTN } from '../components/tokens'
 
 function CheckGroup({
   label,
@@ -74,10 +73,10 @@ function FileList({ title, files, onAdd, onRemove }: { title: string; files: Pro
   )
 }
 
-function Card({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, children, divided }: { title: string; children: ReactNode; divided?: boolean }) {
   return (
-    <section className={`grid gap-4 p-6 ${CARD}`}>
-      <h3 className="text-[1.2rem]">{title}</h3>
+    <section className={`grid gap-4 ${divided ? 'border-t border-line pt-6' : ''}`}>
+      <h3 className="text-[1.05rem]">{title}</h3>
       {children}
     </section>
   )
@@ -178,101 +177,59 @@ function Editor({
 
   return (
     <>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Eyebrow>Product editor</Eyebrow>
-          <div className="flex items-center gap-3">
-            <h2>{draft.title}</h2>
-            <KindPill kind={draft.productKind} />
-          </div>
+      {/* Publish bar */}
+      <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-line pb-5">
+        <Link to="/products" className="grid h-8 w-8 flex-none place-items-center rounded-md text-ink-soft hover:bg-surface-alt">
+          <span className="h-4 w-4">
+            <Icon name="back" />
+          </span>
+        </Link>
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-[1.4rem]">{draft.title}</h2>
+          <KindPill kind={draft.productKind} />
         </div>
-        <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
-          {saving ? 'Saving…' : 'Save product'}
-        </button>
+        <div className="ml-auto flex items-center gap-3">
+          <Pill tone={draft.published ? 'solid' : 'muted'}>{draft.published ? 'Published' : 'Draft'}</Pill>
+          <button type="button" onClick={() => void save()} disabled={saving} className={SOLID_BTN}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_1fr]">
-        <div className="grid gap-8">
-          <Card title="Basics">
-            <Field label="Title">
-              <input className={FIELD} value={draft.title} onChange={(e) => patch({ title: e.target.value })} />
-            </Field>
-            <Field label="Slug">
-              <input className={FIELD} value={draft.slug} onChange={(e) => patch({ slug: e.target.value })} />
-            </Field>
-            <Field label="Short description">
-              <textarea className={`${FIELD} min-h-[70px] resize-y`} value={draft.shortDescription} onChange={(e) => patch({ shortDescription: e.target.value })} />
-            </Field>
-            <Field label="Full description">
-              <textarea className={`${FIELD} min-h-[160px] resize-y`} value={draft.fullDescription} onChange={(e) => patch({ fullDescription: e.target.value })} />
-            </Field>
-          </Card>
+      <div className="grid max-w-[760px] gap-8">
+        {/* Basic info */}
+        <Section title="Basic info">
+          <Field label="Name">
+            <input className={FIELD} value={draft.title} onChange={(e) => patch({ title: e.target.value })} />
+          </Field>
+          <Field label="Slug">
+            <input className={FIELD} value={draft.slug} onChange={(e) => patch({ slug: e.target.value })} />
+          </Field>
+          <div className="flex items-center gap-2 rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.82rem] text-muted">
+            <span className="h-3.5 w-3.5 flex-none">
+              <Icon name="external" />
+            </span>
+            www.designingminds.co.za/product/{draft.slug || 'your-slug'}
+          </div>
+          <Field label="Short description">
+            <textarea className={`${FIELD} min-h-[70px] resize-y`} value={draft.shortDescription} onChange={(e) => patch({ shortDescription: e.target.value })} />
+          </Field>
+          <Field label="Full description">
+            <textarea className={`${FIELD} min-h-[160px] resize-y`} value={draft.fullDescription} onChange={(e) => patch({ fullDescription: e.target.value })} />
+          </Field>
+        </Section>
 
-          <Card title="Classification">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField label="Product kind" value={draft.productKind} options={cf.productKinds} onChange={(v) => patch({ productKind: v as ProductKind })} />
-              <SelectField label="Resource format" value={draft.resourceFormat} options={cf.resourceFormats} onChange={(v) => patch({ resourceFormat: v as ResourceFormat })} />
-              <SelectField label="Grade" value={draft.grade} options={cf.grades} onChange={(v) => patch({ grade: v as Grade })} />
-              <SelectField label="Term" value={draft.term} options={cf.terms} onChange={(v) => patch({ term: v as Term })} />
-              <SelectField label="Year" value={draft.year} options={cf.years} onChange={(v) => patch({ year: v })} />
-              <Field label="Marks">
-                <input
-                  className={FIELD}
-                  type="number"
-                  value={draft.marks ?? ''}
-                  onChange={(e) => patch({ marks: e.target.value ? Number(e.target.value) : null })}
-                />
-              </Field>
-            </div>
-            <CheckGroup label="Subjects (at least one)" options={subjectOptions} selected={draft.subjects} onToggle={(v) => toggleIn('subjects', v)} />
-          </Card>
-
-          {isBundle ? (
-            <Card title="Bundle details">
-              <SelectField label="Bundle scope" value={draft.bundleScope ?? 'Term'} options={['Term', 'Full Year']} onChange={(v) => patch({ bundleScope: v as 'Term' | 'Full Year' })} />
-              <CheckGroup label="Included products (Individual Resources)" options={resourceOptions} selected={draft.includedProductSlugs ?? []} onToggle={(v) => toggleIn('includedProductSlugs', v)} />
-              <CheckGroup label="Included subjects" options={subjectOptions} selected={draft.includedSubjects ?? []} onToggle={(v) => toggleIn('includedSubjects', v)} />
-              <CheckGroup label="Included terms" options={cf.terms.map((t) => ({ value: t, label: t }))} selected={draft.includedTerms ?? []} onToggle={(v) => toggleIn('includedTerms', v)} />
-            </Card>
-          ) : null}
-
-          {isPlan ? (
-            <Card title="Access plan details">
-              <SelectField label="Access period" value={draft.accessPeriod ?? 'Term'} options={['Term', 'Year']} onChange={(v) => patch({ accessPeriod: v as 'Term' | 'Year' })} />
-              <CheckGroup label="Included grades" options={cf.grades.map((g) => ({ value: g, label: g }))} selected={draft.includedGrades ?? []} onToggle={(v) => toggleIn('includedGrades', v)} />
-              <CheckGroup label="Included subjects" options={subjectOptions} selected={draft.includedSubjects ?? []} onToggle={(v) => toggleIn('includedSubjects', v)} />
-              <CheckGroup label="Included terms" options={cf.terms.map((t) => ({ value: t, label: t }))} selected={draft.includedTerms ?? []} onToggle={(v) => toggleIn('includedTerms', v)} />
-              <CheckGroup label="Included products" options={resourceOptions} selected={draft.includedProductSlugs ?? []} onToggle={(v) => toggleIn('includedProductSlugs', v)} />
-              <Field label="Delivery rules">
-                <textarea className={`${FIELD} min-h-[70px] resize-y`} value={draft.deliveryRules ?? ''} onChange={(e) => patch({ deliveryRules: e.target.value })} />
-              </Field>
-              <Field label="Renewal / expiry notes">
-                <textarea className={`${FIELD} min-h-[70px] resize-y`} value={draft.renewalNotes ?? ''} onChange={(e) => patch({ renewalNotes: e.target.value })} />
-              </Field>
-            </Card>
-          ) : null}
-
-          {!isBundle && !isPlan ? (
-            <Card title="Files">
-              <FileList title="Preview files" files={draft.previewFiles} onAdd={() => addFile('previewFiles')} onRemove={(fid) => removeFile('previewFiles', fid)} />
-              <FileList title="Purchased files" files={draft.purchasedFiles} onAdd={() => addFile('purchasedFiles')} onRemove={(fid) => removeFile('purchasedFiles', fid)} />
-            </Card>
-          ) : null}
-
-          <Card title="Related FAQs">
-            <CheckGroup label="FAQs referenced by this product" options={faqOptions} selected={draft.faqs} onToggle={(v) => toggleIn('faqs', v)} />
-          </Card>
-        </div>
-
-        <aside className="grid content-start gap-4">
-          <div className={`grid gap-4 p-6 ${CARD}`}>
-            <h3 className="text-[1.2rem]">Pricing &amp; visibility</h3>
+        {/* Custom fields */}
+        <Section title="Pricing &amp; visibility" divided>
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Price (ZAR)">
               <input className={FIELD} type="number" value={draft.priceZar} onChange={(e) => patch({ priceZar: Number(e.target.value || 0) })} />
             </Field>
             <Field label="Sort order">
               <input className={FIELD} type="number" value={draft.sortOrder} onChange={(e) => patch({ sortOrder: Number(e.target.value || 0) })} />
             </Field>
+          </div>
+          <div className="flex flex-wrap gap-5">
             <label className="flex items-center gap-2 text-[0.92rem]">
               <input type="checkbox" checked={draft.published} onChange={(e) => patch({ published: e.target.checked })} />
               Published
@@ -282,27 +239,71 @@ function Editor({
               Featured
             </label>
           </div>
+        </Section>
 
-          <Placeholder label="Card preview" ratio="4 / 3" />
-          <div className={`grid gap-2 p-6 ${CARD}`}>
-            <Eyebrow className="mb-0">Preview</Eyebrow>
-            <h3 className="text-[1.2rem]">{draft.title}</h3>
-            <p className="text-[0.9rem] text-muted">
-              {draft.grade} · {draft.term} · {draft.resourceFormat} · {formatCurrency(draft.priceZar)}
-            </p>
-            <p className="border-t border-line pt-3 text-[0.92rem] text-ink-soft">{draft.shortDescription}</p>
-          </div>
-
-          <div className={`grid gap-4 p-6 ${CARD}`}>
-            <h3 className="text-[1.2rem]">SEO</h3>
-            <Field label="Meta title">
-              <input className={FIELD} value={draft.seo.title} onChange={(e) => patch({ seo: { ...draft.seo, title: e.target.value } })} />
-            </Field>
-            <Field label="Meta description">
-              <textarea className={`${FIELD} min-h-[80px] resize-y`} value={draft.seo.description} onChange={(e) => patch({ seo: { ...draft.seo, description: e.target.value } })} />
+        <Section title="Classification" divided>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField label="Product kind" value={draft.productKind} options={cf.productKinds} onChange={(v) => patch({ productKind: v as ProductKind })} />
+            <SelectField label="Resource format" value={draft.resourceFormat} options={cf.resourceFormats} onChange={(v) => patch({ resourceFormat: v as ResourceFormat })} />
+            <SelectField label="Grade" value={draft.grade} options={cf.grades} onChange={(v) => patch({ grade: v as Grade })} />
+            <SelectField label="Term" value={draft.term} options={cf.terms} onChange={(v) => patch({ term: v as Term })} />
+            <SelectField label="Year" value={draft.year} options={cf.years} onChange={(v) => patch({ year: v })} />
+            <Field label="Marks">
+              <input
+                className={FIELD}
+                type="number"
+                value={draft.marks ?? ''}
+                onChange={(e) => patch({ marks: e.target.value ? Number(e.target.value) : null })}
+              />
             </Field>
           </div>
-        </aside>
+          <CheckGroup label="Subjects (at least one)" options={subjectOptions} selected={draft.subjects} onToggle={(v) => toggleIn('subjects', v)} />
+        </Section>
+
+        {isBundle ? (
+          <Section title="Bundle details" divided>
+            <SelectField label="Bundle scope" value={draft.bundleScope ?? 'Term'} options={['Term', 'Full Year']} onChange={(v) => patch({ bundleScope: v as 'Term' | 'Full Year' })} />
+            <CheckGroup label="Included products (Individual Resources)" options={resourceOptions} selected={draft.includedProductSlugs ?? []} onToggle={(v) => toggleIn('includedProductSlugs', v)} />
+            <CheckGroup label="Included subjects" options={subjectOptions} selected={draft.includedSubjects ?? []} onToggle={(v) => toggleIn('includedSubjects', v)} />
+            <CheckGroup label="Included terms" options={cf.terms.map((t) => ({ value: t, label: t }))} selected={draft.includedTerms ?? []} onToggle={(v) => toggleIn('includedTerms', v)} />
+          </Section>
+        ) : null}
+
+        {isPlan ? (
+          <Section title="Access plan details" divided>
+            <SelectField label="Access period" value={draft.accessPeriod ?? 'Term'} options={['Term', 'Year']} onChange={(v) => patch({ accessPeriod: v as 'Term' | 'Year' })} />
+            <CheckGroup label="Included grades" options={cf.grades.map((g) => ({ value: g, label: g }))} selected={draft.includedGrades ?? []} onToggle={(v) => toggleIn('includedGrades', v)} />
+            <CheckGroup label="Included subjects" options={subjectOptions} selected={draft.includedSubjects ?? []} onToggle={(v) => toggleIn('includedSubjects', v)} />
+            <CheckGroup label="Included terms" options={cf.terms.map((t) => ({ value: t, label: t }))} selected={draft.includedTerms ?? []} onToggle={(v) => toggleIn('includedTerms', v)} />
+            <CheckGroup label="Included products" options={resourceOptions} selected={draft.includedProductSlugs ?? []} onToggle={(v) => toggleIn('includedProductSlugs', v)} />
+            <Field label="Delivery rules">
+              <textarea className={`${FIELD} min-h-[70px] resize-y`} value={draft.deliveryRules ?? ''} onChange={(e) => patch({ deliveryRules: e.target.value })} />
+            </Field>
+            <Field label="Renewal / expiry notes">
+              <textarea className={`${FIELD} min-h-[70px] resize-y`} value={draft.renewalNotes ?? ''} onChange={(e) => patch({ renewalNotes: e.target.value })} />
+            </Field>
+          </Section>
+        ) : null}
+
+        {!isBundle && !isPlan ? (
+          <Section title="Files" divided>
+            <FileList title="Preview files" files={draft.previewFiles} onAdd={() => addFile('previewFiles')} onRemove={(fid) => removeFile('previewFiles', fid)} />
+            <FileList title="Purchased files" files={draft.purchasedFiles} onAdd={() => addFile('purchasedFiles')} onRemove={(fid) => removeFile('purchasedFiles', fid)} />
+          </Section>
+        ) : null}
+
+        <Section title="Related FAQs" divided>
+          <CheckGroup label="FAQs referenced by this product" options={faqOptions} selected={draft.faqs} onToggle={(v) => toggleIn('faqs', v)} />
+        </Section>
+
+        <Section title="SEO" divided>
+          <Field label="Meta title">
+            <input className={FIELD} value={draft.seo.title} onChange={(e) => patch({ seo: { ...draft.seo, title: e.target.value } })} />
+          </Field>
+          <Field label="Meta description">
+            <textarea className={`${FIELD} min-h-[80px] resize-y`} value={draft.seo.description} onChange={(e) => patch({ seo: { ...draft.seo, description: e.target.value } })} />
+          </Field>
+        </Section>
       </div>
     </>
   )

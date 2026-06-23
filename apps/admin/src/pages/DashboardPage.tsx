@@ -55,7 +55,7 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const recent = [...snapshot.orders].slice(0, 5)
 
   return (
-    <>
+    <div className="px-6 py-5">
       <PageHeader eyebrow="Overview" title="Dashboard" description="Catalogue, collections, and operational records at a glance." />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -114,6 +114,6 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
           </table>
         </TableWrap>
       </div>
-    </>
+    </div>
   )
 }

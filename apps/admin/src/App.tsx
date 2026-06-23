@@ -142,7 +142,7 @@ function App() {
 
   if (!snapshot) {
     return (
-      <Shell {...shellProps}>
+      <Shell {...shellProps} snapshot={null}>
         {error ? (
           <StatePanel eyebrow="Something went wrong" title="Content unavailable" body={error} />
         ) : (
@@ -153,7 +153,7 @@ function App() {
   }
 
   return (
-    <Shell {...shellProps}>
+    <Shell {...shellProps} snapshot={snapshot}>
       <Routes>
         <Route path="/" element={<DashboardPage snapshot={snapshot} />} />
 

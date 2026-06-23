@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Icon } from './ui'
-import { SOLID_BTN } from './tokens'
 
 export interface EditorItem {
   id: string
@@ -9,10 +8,15 @@ export interface EditorItem {
   sublabel?: string
 }
 
+const itemCls = ({ isActive }: { isActive: boolean }) =>
+  `group flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[0.88rem] transition ${
+    isActive ? 'bg-surface-alt font-medium text-ink' : 'text-ink-soft hover:bg-surface-alt hover:text-ink'
+  }`
+
 /**
- * Webflow-style edit mode: a narrow item column (this collection's records)
- * beside the editor, so you can hop between items without leaving the editor.
- * The persistent nav rail lives in <Shell>, giving the full 3-pane layout.
+ * Webflow-style edit mode: a flush item column (this collection's records, with
+ * thumbnails) sits against the collections panel, with the detail editor to its
+ * right — the full three-column layout.
  */
 export function CollectionEditorLayout({
   title,
@@ -24,38 +28,42 @@ export function CollectionEditorLayout({
   title: string
   basePath: string
   items: EditorItem[]
-  /** When provided, shows a "+ New" action (catalogue collections). Omit for read-mostly operations. */
+  /** When provided, shows a "+" add action (catalogue collections). Omit for read-mostly operations. */
   newLabel?: string
   children: ReactNode
 }) {
-  const itemCls = ({ isActive }: { isActive: boolean }) =>
-    `block rounded-md px-3 py-2 ${isActive ? 'bg-surface-alt font-medium text-ink' : 'text-ink-soft hover:bg-surface-alt'}`
-
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        <Link to={basePath} className="mb-3 inline-flex items-center gap-1.5 text-[0.88rem] text-ink-soft hover:text-ink">
-          <span className="h-4 w-4">
-            <Icon name="back" />
-          </span>
-          All {title.toLowerCase()}
-        </Link>
-        {newLabel ? (
-          <Link to={`${basePath}/new`} className={`${SOLID_BTN} mb-3 w-full`}>
-            {newLabel}
-          </Link>
-        ) : null}
-        <nav className="grid max-h-[70vh] gap-0.5 overflow-y-auto rounded-[10px] border border-line bg-surface p-1.5 text-[0.9rem]">
+    <div className="flex min-h-full">
+      <aside className="hidden w-[260px] flex-none flex-col border-r border-line bg-surface md:flex">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <span className="text-[0.88rem] font-medium">{title}</span>
+          {newLabel ? (
+            <Link to={`${basePath}/new`} className="grid h-6 w-6 place-items-center rounded text-[1rem] text-ink-soft hover:bg-surface-alt" title={newLabel}>
+              <span className="h-4 w-4">
+                <Icon name="plus" />
+              </span>
+            </Link>
+          ) : null}
+        </div>
+        <nav className="flex-1 overflow-y-auto p-2">
           {items.map((item) => (
             <NavLink key={item.id} to={`${basePath}/${item.id}`} end className={itemCls}>
-              <span className="block truncate">{item.label}</span>
-              {item.sublabel ? <span className="block truncate text-[0.76rem] text-muted">{item.sublabel}</span> : null}
+              <span className="grid h-7 w-7 flex-none place-items-center rounded bg-ph text-ph-glyph">
+                <span className="h-3.5 w-3.5">
+                  <Icon name="doc" />
+                </span>
+              </span>
+              <span className="truncate">{item.label}</span>
+              <span className="ml-auto h-3.5 w-3.5 flex-none text-muted opacity-0 group-[.active]:opacity-100">
+                <Icon name="arrow" />
+              </span>
             </NavLink>
           ))}
-          {items.length === 0 ? <span className="px-3 py-2 text-[0.85rem] text-muted">No items.</span> : null}
+          {items.length === 0 ? <span className="px-2 py-1.5 text-[0.85rem] text-muted">No items.</span> : null}
         </nav>
       </aside>
-      <div className="min-w-0">{children}</div>
+
+      <div className="min-w-0 flex-1 px-6 py-5">{children}</div>
     </div>
   )
 }
