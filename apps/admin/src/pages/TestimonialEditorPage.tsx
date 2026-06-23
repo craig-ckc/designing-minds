@@ -22,7 +22,7 @@ export function TestimonialEditorPage({
   const items = snapshot.testimonials.map((t) => ({ id: t.id, label: t.customerName, sublabel: t.context }))
 
   const blank: Testimonial = {
-    id: `t-${Date.now()}`,
+    id: crypto.randomUUID(),
     customerName: 'New testimonial',
     quote: '',
     context: '',

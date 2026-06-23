@@ -20,7 +20,7 @@ export function SubjectEditorPage({
   const items = snapshot.subjects.map((s) => ({ id: s.id, label: s.name, sublabel: s.slug }))
 
   const blank: Subject = {
-    id: `sub-${Date.now()}`,
+    id: crypto.randomUUID(),
     slug: '',
     name: 'New subject',
     shortLabel: '',

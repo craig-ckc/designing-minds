@@ -28,14 +28,18 @@ import { OrderDetailPage } from './pages/OrderDetailPage'
 import { CustomersPage } from './pages/CustomersPage'
 import { CustomerDetailPage } from './pages/CustomerDetailPage'
 import { PaymentsPage } from './pages/PaymentsPage'
+import { LoginPage } from './pages/LoginPage'
+import { useAdminAuth } from './lib/auth'
 
 function App() {
+  const { session, loading: authLoading, isAdmin } = useAdminAuth()
   const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    if (!session || !isAdmin) return
     let cancelled = false
     const load = async () => {
       try {
@@ -52,7 +56,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isAdmin, session])
 
   const saveProduct = useCallback(async (draft: Product): Promise<Product | null> => {
     if (!repository.canWrite) return null
@@ -122,23 +126,19 @@ function App() {
     }
   }, [])
 
-  const resetContent = useCallback(async () => {
-    if (!repository.reset) return
-    setSaving(true)
-    try {
-      await repository.reset()
-      const next = await repository.getSnapshot()
-      setSnapshot(next)
-      setMessage('Content reset to the seed snapshot.')
-      setError(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to reset content.')
-    } finally {
-      setSaving(false)
-    }
-  }, [])
+  const shellProps = { message, error }
 
-  const shellProps = { onReset: () => void resetContent(), saving, message, error }
+  if (authLoading) {
+    return <StatePanel eyebrow="Admin" title="Checking access…" />
+  }
+
+  if (!session) {
+    return <LoginPage />
+  }
+
+  if (!isAdmin) {
+    return <StatePanel eyebrow="Admin" title="Not authorized" body="This account does not have administrator access." />
+  }
 
   if (!snapshot) {
     return (

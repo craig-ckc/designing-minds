@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from '../repository'
+import { useAdminAuth } from '../lib/auth'
 import { Icon } from './ui'
 
 type CollectionKey = 'products' | 'subjects' | 'faqs' | 'testimonials' | 'orders' | 'customers' | 'payments'
@@ -29,7 +30,8 @@ const GROUPS: { heading: string; items: CollectionLink[] }[] = [
 
 /* ----------------------------- Top app bar ----------------------------- */
 
-function TopBar({ onReset, saving }: { onReset: () => void; saving: boolean }) {
+function TopBar() {
+  const { logout } = useAdminAuth()
   return (
     <header className="sticky top-0 z-30 flex h-12 flex-none items-center gap-4 border-b border-line bg-surface px-3">
       {/* Left: brand mark + tabs */}
@@ -45,14 +47,6 @@ function TopBar({ onReset, saving }: { onReset: () => void; saving: boolean }) {
           <span className={`h-1.5 w-1.5 rounded-full ${repository.canWrite ? 'bg-ink' : 'bg-line-strong'}`} />
           {repository.canWrite ? 'Write access' : 'Read only'}
         </span>
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={saving}
-          className="rounded-md px-2.5 py-1 text-ink-soft hover:bg-surface-alt disabled:opacity-50"
-        >
-          Reset
-        </button>
         <a
           href="http://localhost:5173"
           target="_blank"
@@ -67,6 +61,9 @@ function TopBar({ onReset, saving }: { onReset: () => void; saving: boolean }) {
         <span className="grid h-7 w-7 place-items-center rounded-full bg-surface-sunk text-[0.7rem] font-semibold text-ink-soft">
           DM
         </span>
+        <button type="button" onClick={() => void logout()} className="rounded-md px-2.5 py-1 text-ink-soft hover:bg-surface-alt">
+          Log out
+        </button>
       </div>
     </header>
   )
@@ -124,7 +121,7 @@ function CollectionsPanel({ snapshot }: { snapshot: CmsSnapshot }) {
         ))}
       </div>
 
-      <div className="border-t border-line px-4 py-2.5 text-[0.74rem] text-muted">Wireframe preview · {repository.mode}</div>
+      <div className="border-t border-line px-4 py-2.5 text-[0.74rem] text-muted">Supabase · {repository.mode}</div>
     </div>
   )
 }
@@ -134,21 +131,17 @@ function CollectionsPanel({ snapshot }: { snapshot: CmsSnapshot }) {
 export function Shell({
   children,
   snapshot,
-  onReset,
-  saving,
   message,
   error,
 }: {
   children: ReactNode
   snapshot: CmsSnapshot | null
-  onReset: () => void
-  saving: boolean
   message: string | null
   error: string | null
 }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <TopBar onReset={onReset} saving={saving} />
+      <TopBar />
       <div className="flex min-h-0 flex-1">
         {/* Collections panel */}
         <aside className="hidden w-[256px] flex-none border-r border-line bg-surface lg:block">

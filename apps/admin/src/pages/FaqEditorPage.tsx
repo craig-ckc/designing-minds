@@ -20,7 +20,7 @@ export function FaqEditorPage({
   const items = snapshot.faqs.map((f) => ({ id: f.id, label: f.question, sublabel: f.category }))
 
   const blank: Faq = {
-    id: `faq-${Date.now()}`,
+    id: crypto.randomUUID(),
     question: 'New question',
     answer: '',
     category: 'General',

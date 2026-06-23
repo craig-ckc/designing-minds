@@ -13,6 +13,8 @@ import { Field, Icon, SelectField, StatePanel } from '../components/ui'
 import { KindPill, Pill } from '../components/Badge'
 import { CollectionEditorLayout } from '../components/CollectionEditorLayout'
 import { FIELD, SOLID_BTN } from '../components/tokens'
+import { supabase } from '../lib/supabase'
+import { apiUrl } from '../lib/api'
 
 function CheckGroup({
   label,
@@ -41,7 +43,19 @@ function CheckGroup({
   )
 }
 
-function FileList({ title, files, onAdd, onRemove }: { title: string; files: ProductFile[]; onAdd: () => void; onRemove: (id: string) => void }) {
+function FileList({
+  title,
+  files,
+  onAdd,
+  onUpload,
+  onRemove,
+}: {
+  title: string
+  files: ProductFile[]
+  onAdd: () => void
+  onUpload: (file: File) => void
+  onRemove: (id: string) => void
+}) {
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between">
@@ -49,6 +63,10 @@ function FileList({ title, files, onAdd, onRemove }: { title: string; files: Pro
         <button type="button" onClick={onAdd} className="text-[0.85rem] underline underline-offset-4">
           Add file
         </button>
+        <label className="cursor-pointer text-[0.85rem] underline underline-offset-4">
+          Upload
+          <input className="sr-only" type="file" onChange={(event) => event.target.files?.[0] && onUpload(event.target.files[0])} />
+        </label>
       </div>
       {files.length === 0 ? (
         <p className="text-[0.85rem] text-muted">No files attached.</p>
@@ -56,11 +74,14 @@ function FileList({ title, files, onAdd, onRemove }: { title: string; files: Pro
         <ul className="grid gap-1.5">
           {files.map((file) => (
             <li key={file.id} className="flex items-center justify-between gap-3 border border-line px-3 py-2 text-[0.9rem]">
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 text-muted">
-                  <Icon name="doc" />
+              <span className="grid min-w-0 gap-0.5">
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 text-muted">
+                    <Icon name="doc" />
+                  </span>
+                  {file.label} · {file.filename}
                 </span>
-                {file.label} · {file.filename}
+                <span className="truncate pl-6 text-[0.78rem] text-muted">{file.storageKey}</span>
               </span>
               <button type="button" onClick={() => onRemove(file.id)} className="text-[0.82rem] text-muted underline underline-offset-4 hover:text-ink">
                 Remove
@@ -98,7 +119,7 @@ export function ProductEditorPage({
   const items = snapshot.products.map((p) => ({ id: p.id, label: p.title, sublabel: `${p.grade} · ${p.productKind}` }))
 
   const blank: Product = {
-    id: `p-${Date.now()}`,
+    id: crypto.randomUUID(),
     slug: '',
     title: 'New product',
     shortDescription: '',
@@ -111,7 +132,6 @@ export function ProductEditorPage({
     resourceFormat: cf.resourceFormats[0],
     subjects: [],
     marks: null,
-    previewFiles: [],
     purchasedFiles: [],
     featured: false,
     published: false,
@@ -162,13 +182,45 @@ function Editor({
   const isBundle = draft.productKind === 'Bundle'
   const isPlan = draft.productKind === 'Access Plan'
 
-  const addFile = (key: 'previewFiles' | 'purchasedFiles') =>
+  const addFile = () =>
     setDraft((current) => ({
       ...current,
-      [key]: [...current[key], { id: `f-${Date.now()}`, label: 'New file', filename: 'file.pdf' }],
+      purchasedFiles: [
+        ...current.purchasedFiles,
+        {
+          id: `f-${Date.now()}`,
+          label: 'New file',
+          filename: 'file.pdf',
+          storageKey: `products/${current.id}/f-${Date.now()}-file.pdf`,
+        },
+      ],
     }))
-  const removeFile = (key: 'previewFiles' | 'purchasedFiles', fileId: string) =>
-    setDraft((current) => ({ ...current, [key]: current[key].filter((f) => f.id !== fileId) }))
+  const removeFile = (fileId: string) =>
+    setDraft((current) => ({ ...current, purchasedFiles: current.purchasedFiles.filter((f) => f.id !== fileId) }))
+
+  const uploadFile = async (file: File) => {
+    const fileId = `f-${Date.now()}`
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    if (!token) throw new Error('Admin session required.')
+    const response = await fetch(apiUrl('/api/admin/upload-url'), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ productId: draft.id, fileId, filename: file.name }),
+    })
+    const body = (await response.json()) as { uploadUrl?: string; storageKey?: string; error?: string }
+    if (!response.ok || !body.uploadUrl || !body.storageKey) throw new Error(body.error ?? 'Unable to create upload URL.')
+    const storageKey = body.storageKey
+    const upload = await fetch(body.uploadUrl, { method: 'PUT', body: file })
+    if (!upload.ok) throw new Error('Unable to upload file.')
+    setDraft((current) => ({
+      ...current,
+      purchasedFiles: [...current.purchasedFiles, { id: fileId, label: file.name, filename: file.name, storageKey }],
+    }))
+  }
 
   const save = async () => {
     const saved = await onSave(draft)
@@ -287,8 +339,7 @@ function Editor({
 
         {!isBundle && !isPlan ? (
           <Section title="Files" divided>
-            <FileList title="Preview files" files={draft.previewFiles} onAdd={() => addFile('previewFiles')} onRemove={(fid) => removeFile('previewFiles', fid)} />
-            <FileList title="Purchased files" files={draft.purchasedFiles} onAdd={() => addFile('purchasedFiles')} onRemove={(fid) => removeFile('purchasedFiles', fid)} />
+            <FileList title="Purchased files" files={draft.purchasedFiles} onAdd={addFile} onUpload={(file) => void uploadFile(file)} onRemove={removeFile} />
           </Section>
         ) : null}
 
