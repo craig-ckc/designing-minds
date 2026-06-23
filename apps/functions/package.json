@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch --experimental-strip-types src/server.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@designing-minds/cms": "file:../../packages/cms",
@@ -14,6 +15,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.3",
-    "typescript": "~6.0.2"
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.9"
   }
 }

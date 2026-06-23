@@ -12,7 +12,8 @@
     "dev:web": "npm run dev --workspace @designing-minds/web",
     "dev:admin": "npm run dev --workspace @designing-minds/admin",
     "build": "npm run build --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
