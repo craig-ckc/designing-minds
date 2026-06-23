@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { type CmsSnapshot, priceLabel } from '@designing-minds/cms'
+import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
 import { Container } from '../components/ui/Container'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { Button } from '../components/ui/Button'
@@ -39,7 +39,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const [submitting, setSubmitting] = useState(false)
   const slugs = useMemo(() => getCartSlugs(), [])
   const items = slugs
-    .map((slug) => snapshot.products.find((p) => p.slug === slug))
+    .map((slug) => publishedProducts(snapshot).find((p) => p.slug === slug))
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
   const total = items.reduce((sum, item) => sum + item.priceZar, 0)
 

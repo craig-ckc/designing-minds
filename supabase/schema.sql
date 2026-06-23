@@ -81,6 +81,52 @@ create table if not exists public.products (
   "includedTerms" text[]
 );
 
+create or replace view public.catalog_products as
+select
+  p.id,
+  p.slug,
+  p.title,
+  p."shortDescription",
+  p."fullDescription",
+  p."priceZar",
+  p.grade,
+  p.term,
+  p.year,
+  p."productKind",
+  p."resourceFormat",
+  p.subjects,
+  p.marks,
+  coalesce(
+    (
+      select jsonb_agg(
+        jsonb_build_object(
+          'id', file ->> 'id',
+          'label', file ->> 'label',
+          'filename', file ->> 'filename'
+        )
+        order by file ->> 'id'
+      )
+      from jsonb_array_elements(p."purchasedFiles") as file
+    ),
+    '[]'::jsonb
+  ) as "purchasedFiles",
+  p.featured,
+  p.published,
+  p."sortOrder",
+  p.seo,
+  p.faqs,
+  p."updatedAt",
+  p."bundleScope",
+  p."accessPeriod",
+  p."includedGrades",
+  p."deliveryRules",
+  p."renewalNotes",
+  p."includedProductSlugs",
+  p."includedSubjects",
+  p."includedTerms"
+from public.products p
+where p.published = true;
+
 create table if not exists public.subjects (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -285,12 +331,13 @@ drop policy if exists "User reads own role" on public.user_roles;
 create policy "User reads own role" on public.user_roles
   for select to authenticated using ("userId" = auth.uid());
 
--- Catalogue collections and value lists: public reads, admin-only writes.
-create policy "Public read products" on public.products for select to anon, authenticated using (true);
+-- Catalogue collections and value lists: public reads go through sanitized views; admin-only writes.
 create policy "Public read subjects" on public.subjects for select to anon, authenticated using (true);
 create policy "Public read faqs" on public.faqs for select to anon, authenticated using (true);
 create policy "Public read testimonials" on public.testimonials for select to anon, authenticated using (true);
 create policy "Public read value lists" on public.value_lists for select to anon, authenticated using (true);
+
+grant select on public.catalog_products to anon, authenticated;
 
 create policy "Admin write products" on public.products for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "Admin write subjects" on public.subjects for all to authenticated using (public.is_admin()) with check (public.is_admin());

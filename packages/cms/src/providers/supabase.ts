@@ -15,10 +15,12 @@ import type {
 interface SupabaseRepositoryOptions {
   url: string
   publishableKey: string
+  audience: 'public' | 'admin'
 }
 
 const TABLES = {
   products: 'products',
+  catalogProducts: 'catalog_products',
   subjects: 'subjects',
   faqs: 'faqs',
   testimonials: 'testimonials',
@@ -74,15 +76,16 @@ const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] 
  * stored Supabase session, so RLS determines whether operational rows and
  * catalogue writes are available.
  */
-export const createSupabaseRepository = ({ url, publishableKey }: SupabaseRepositoryOptions): CmsRepository => {
+export const createSupabaseRepository = ({ url, publishableKey, audience }: SupabaseRepositoryOptions): CmsRepository => {
   const client = createClient(url, publishableKey)
+  const productReadTable = audience === 'public' ? TABLES.catalogProducts : TABLES.products
 
   return {
     mode: 'supabase',
-    canWrite: true,
+    canWrite: audience === 'admin',
     async getSnapshot() {
       const [products, subjects, faqs, testimonials, customers, orders, payments, valueLists] = await Promise.all([
-        client.from(TABLES.products).select('*'),
+        client.from(productReadTable).select('*'),
         client.from(TABLES.subjects).select('*'),
         client.from(TABLES.faqs).select('*'),
         client.from(TABLES.testimonials).select('*'),

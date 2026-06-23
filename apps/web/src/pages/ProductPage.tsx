@@ -24,7 +24,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const { slug } = useParams()
   const product = slug ? getProductBySlug(snapshot, slug) : undefined
 
-  if (!product) {
+  if (!product?.published) {
     return <NotFoundPage />
   }
 

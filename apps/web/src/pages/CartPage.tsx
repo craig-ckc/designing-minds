@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { type CmsSnapshot, priceLabel } from '@designing-minds/cms'
+import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
 import { Container } from '../components/ui/Container'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { Placeholder } from '../components/ui/Placeholder'
@@ -14,7 +14,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const [slugs, setSlugs] = useState<string[]>(() => getCartSlugs())
 
   const items = slugs
-    .map((slug) => snapshot.products.find((p) => p.slug === slug))
+    .map((slug) => publishedProducts(snapshot).find((p) => p.slug === slug))
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
   const subtotal = items.reduce((sum, item) => sum + item.priceZar, 0)
   const remove = (slug: string) => {

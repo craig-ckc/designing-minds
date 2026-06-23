@@ -81,7 +81,7 @@ function FileList({
                   </span>
                   {file.label} · {file.filename}
                 </span>
-                <span className="truncate pl-6 text-[0.78rem] text-muted">{file.storageKey}</span>
+                <span className="truncate pl-6 text-[0.78rem] text-muted">{file.storageKey ?? 'No storage key yet'}</span>
               </span>
               <button type="button" onClick={() => onRemove(file.id)} className="text-[0.82rem] text-muted underline underline-offset-4 hover:text-ink">
                 Remove

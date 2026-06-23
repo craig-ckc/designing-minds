@@ -45,7 +45,7 @@ export interface ProductFile {
   label: string
   filename: string
   /** Provider-neutral private storage key, never a public URL. */
-  storageKey: string
+  storageKey?: string
 }
 
 /* ------------------------------- Collections --------------------------- */
