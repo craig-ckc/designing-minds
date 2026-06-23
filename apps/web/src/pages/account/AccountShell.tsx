@@ -40,8 +40,7 @@ export function AccountShell({
   const { logout } = useAuth()
   const navigate = useNavigate()
   const signOut = () => {
-    logout()
-    navigate('/')
+    logout().finally(() => navigate('/'))
   }
 
   return (

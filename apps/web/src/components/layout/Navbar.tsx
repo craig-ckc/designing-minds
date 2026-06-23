@@ -5,6 +5,7 @@ import { accessPlanProducts, priceLabel, type CmsSnapshot, type Product } from '
 import { Container } from '../ui/Container'
 import { Icon } from '../ui/Icon'
 import { initials, useAuth } from '../../lib/auth'
+import { CART_CHANGED_EVENT, getCartSlugs } from '../../lib/cart'
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-2 text-[0.95rem] hover:bg-surface-alt hover:text-ink ${
@@ -29,6 +30,18 @@ function Logo({ onClick }: { onClick?: () => void }) {
 
 function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
   const { customer } = useAuth()
+  const [cartCount, setCartCount] = useState(() => getCartSlugs().length)
+
+  useEffect(() => {
+    const update = () => setCartCount(getCartSlugs().length)
+    window.addEventListener(CART_CHANGED_EVENT, update)
+    window.addEventListener('storage', update)
+    return () => {
+      window.removeEventListener(CART_CHANGED_EVENT, update)
+      window.removeEventListener('storage', update)
+    }
+  }, [])
+
   return (
     <>
       <Link
@@ -39,7 +52,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <span className="h-4 w-4">
           <Icon name="cart" />
         </span>
-        <span className="hidden sm:inline">Cart (0)</span>
+        <span className="hidden sm:inline">Cart ({cartCount})</span>
       </Link>
 
       {customer ? (
@@ -161,8 +174,10 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   // Close both menus whenever the route changes, so navigating to any link —
   // including ones outside the mega menu — dismisses the open panel.
   useEffect(() => {
-    setMegaOpen(false)
-    setMobileOpen(false)
+    queueMicrotask(() => {
+      setMegaOpen(false)
+      setMobileOpen(false)
+    })
   }, [location.pathname])
 
   // Close the mega menu on any click outside the panel/trigger, or on Escape.

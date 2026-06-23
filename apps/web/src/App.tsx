@@ -1,8 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from './repository'
-import { AuthProvider } from './lib/auth'
+import { useAuth } from './lib/auth'
 import { ScrollToTop } from './lib/ScrollToTop'
 import { Shell } from './components/layout/Shell'
 import { StatePanel } from './components/ui/StatePanel'
@@ -23,37 +23,41 @@ import { OrderHistoryPage } from './pages/account/OrderHistoryPage'
 import { OrderDetailPage } from './pages/account/OrderDetailPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
+import { CheckoutReturnPage } from './pages/CheckoutReturnPage'
+import { CheckoutCancelPage } from './pages/CheckoutCancelPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 function App() {
+  const { loading: authLoading, session } = useAuth()
   const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const refreshSnapshot = useCallback(async () => {
+    try {
+      const next = await repository.getSnapshot()
+      setSnapshot(next)
+      setError(null)
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load content.')
+    }
+  }, [])
+
   useEffect(() => {
+    if (authLoading) return
     let cancelled = false
     const load = async () => {
-      try {
-        const next = await repository.getSnapshot()
-        if (!cancelled) {
-          setSnapshot(next)
-          setError(null)
-        }
-      } catch (loadError) {
-        if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Unable to load content.')
-      }
+      if (!cancelled) await refreshSnapshot()
     }
     void load()
     return () => {
       cancelled = true
     }
-  }, [])
-
-  const demoCustomer = snapshot?.customers[0] ?? null
+  }, [authLoading, refreshSnapshot, session?.access_token])
 
   let body: ReactNode
   if (error) {
     body = <StatePanel eyebrow="Something went wrong" title="Website unavailable" body={error} />
-  } else if (!snapshot) {
+  } else if (authLoading || !snapshot) {
     body = <StatePanel eyebrow="Loading" title="Preparing the catalogue…" />
   } else {
     body = (
@@ -86,11 +90,13 @@ function App() {
         {/* Customer Account */}
         <Route path="/account" element={<AccountPage snapshot={snapshot} />} />
         <Route path="/account/orders" element={<OrderHistoryPage snapshot={snapshot} />} />
-        <Route path="/account/orders/:orderId" element={<OrderDetailPage snapshot={snapshot} />} />
+        <Route path="/account/orders/:orderId" element={<OrderDetailPage snapshot={snapshot} onRefresh={refreshSnapshot} />} />
 
         {/* Commerce flow */}
         <Route path="/cart" element={<CartPage snapshot={snapshot} />} />
         <Route path="/checkout" element={<CheckoutPage snapshot={snapshot} />} />
+        <Route path="/checkout/return" element={<CheckoutReturnPage />} />
+        <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
@@ -98,10 +104,10 @@ function App() {
   }
 
   return (
-    <AuthProvider demoCustomer={demoCustomer}>
+    <>
       <ScrollToTop />
       <Shell snapshot={snapshot}>{body}</Shell>
-    </AuthProvider>
+    </>
   )
 }
 

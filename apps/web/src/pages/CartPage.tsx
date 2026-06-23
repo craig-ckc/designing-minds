@@ -1,23 +1,26 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { type CmsSnapshot, individualResources, priceLabel } from '@designing-minds/cms'
+import { type CmsSnapshot, priceLabel } from '@designing-minds/cms'
 import { Container } from '../components/ui/Container'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { Placeholder } from '../components/ui/Placeholder'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { useNoindex } from '../lib/useNoindex'
+import { getCartSlugs, removeCartSlug } from '../lib/cart'
 
 export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
   useNoindex()
-  const seed = useMemo(() => individualResources(snapshot).slice(0, 2).map((p) => p.slug), [snapshot])
-  const [slugs, setSlugs] = useState<string[]>(seed)
+  const [slugs, setSlugs] = useState<string[]>(() => getCartSlugs())
 
   const items = slugs
     .map((slug) => snapshot.products.find((p) => p.slug === slug))
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
   const subtotal = items.reduce((sum, item) => sum + item.priceZar, 0)
-  const remove = (slug: string) => setSlugs((current) => current.filter((s) => s !== slug))
+  const remove = (slug: string) => {
+    removeCartSlug(slug)
+    setSlugs(getCartSlugs())
+  }
 
   return (
     <section className="section">

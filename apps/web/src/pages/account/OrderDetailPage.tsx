@@ -1,16 +1,30 @@
 import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { type CmsSnapshot, getOrderById, getProductBySlug, paymentForOrder, priceLabel } from '@designing-minds/cms'
 import { Icon } from '../../components/ui/Icon'
 import { Button } from '../../components/ui/Button'
 import { StatePanel } from '../../components/ui/StatePanel'
 import { useAuth } from '../../lib/auth'
+import { apiUrl } from '../../lib/api'
 import { AccountShell, SignedOut } from './AccountShell'
 import { OrderStatusBadge } from './OrderStatusBadge'
 
-export function OrderDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
-  const { customer } = useAuth()
+export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot; onRefresh: () => Promise<void> }) {
+  const { customer, getAccessToken } = useAuth()
+  const [downloadError, setDownloadError] = useState<string | null>(null)
   const { orderId } = useParams()
   const order = orderId ? getOrderById(snapshot, orderId) : undefined
+
+  useEffect(() => {
+    if (!customer || !orderId || order?.status === 'paid') return
+    let attempts = 0
+    const interval = window.setInterval(() => {
+      attempts += 1
+      void onRefresh()
+      if (attempts >= 20) window.clearInterval(interval)
+    }, 3000)
+    return () => window.clearInterval(interval)
+  }, [customer, onRefresh, order?.status, orderId])
 
   if (!customer) {
     return <SignedOut />
@@ -18,7 +32,7 @@ export function OrderDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
   if (!order) {
     return (
-      <StatePanel eyebrow="Customer Account" title="Order not found" body="We couldn’t find that order on your account.">
+      <StatePanel eyebrow="Customer Account" title="Finalizing order" body="We’re checking for this order. If payment has just completed, it can take a moment to appear.">
         <div className="mt-2 flex justify-center">
           <Button to="/account/orders" variant="text">
             Back to order history
@@ -29,7 +43,34 @@ export function OrderDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
   }
 
   const payment = paymentForOrder(snapshot, order)
-  const downloadable = order.status === 'fulfilled' || order.status === 'paid'
+  const downloadable = order.status === 'paid' || order.status === 'fulfilled'
+
+  const download = async (fileId: string) => {
+    setDownloadError(null)
+    try {
+      const token = await getAccessToken()
+      if (!token) throw new Error('Authentication required.')
+      const response = await fetch(apiUrl('/api/issue-download'), {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId: order.id, fileId }),
+      })
+      const body = (await response.json()) as { url?: string; filename?: string; error?: string }
+      if (!response.ok || !body.url) throw new Error(body.error ?? 'Unable to prepare download.')
+      const link = document.createElement('a')
+      link.href = body.url
+      link.download = body.filename ?? ''
+      link.rel = 'noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch (e) {
+      setDownloadError(e instanceof Error ? e.message : 'Unable to prepare download.')
+    }
+  }
 
   return (
     <AccountShell title={`Order ${order.reference}`}>
@@ -59,6 +100,9 @@ export function OrderDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
               Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.
             </p>
           ) : null}
+          {downloadError ? (
+            <p className="mb-4 rounded-md border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">{downloadError}</p>
+          ) : null}
           <ul className="grid gap-4">
             {order.items.map((item) => {
               const product = getProductBySlug(snapshot, item.productSlug)
@@ -85,7 +129,7 @@ export function OrderDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
                             </span>
                             {file.label}
                           </span>
-                          <Button type="button" variant={downloadable ? 'outline' : 'text'} size="sm" disabled={!downloadable}>
+                          <Button type="button" variant={downloadable ? 'outline' : 'text'} size="sm" disabled={!downloadable} onClick={() => void download(file.id)}>
                             <span className="h-4 w-4">
                               <Icon name="download" />
                             </span>

@@ -17,6 +17,7 @@ import { Button } from '../components/ui/Button'
 import { FaqAccordion } from '../components/ui/FaqAccordion'
 import { ProductCard } from '../components/ProductCard'
 import { SpecRow } from '../components/SpecRow'
+import { addCartSlug } from '../lib/cart'
 import { NotFoundPage } from './NotFoundPage'
 
 export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
@@ -48,26 +49,6 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
             <div>
               <Placeholder label={`${product.resourceFormat} preview`} ratio="4 / 3.2" />
-
-              {/* Preview files */}
-              {product.previewFiles.length > 0 ? (
-                <div className="mt-6">
-                  <h4 className="mb-3">Preview files</h4>
-                  <ul className="grid gap-2">
-                    {product.previewFiles.map((file) => (
-                      <li key={file.id}>
-                        <button type="button" className="flex w-full items-center gap-3 border border-line px-4 py-3 text-left hover:border-ink">
-                          <span className="h-4 w-4 text-muted">
-                            <Icon name="doc" />
-                          </span>
-                          <span className="flex-1">{file.label}</span>
-                          <span className="text-[0.82rem] text-muted">Preview</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
 
               {/* Description */}
               <div className="mt-8 text-ink-soft">
@@ -131,7 +112,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <SpecRow label="Marks" value={product.marks ? `${product.marks} marks` : 'Not applicable'} />
                 <SpecRow label="Delivery" value="Instant download on Order Detail" last />
               </ul>
-              <Button type="button" variant="solid" className="w-full">
+              <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(product.slug)}>
                 <span className="h-4 w-4">
                   <Icon name="cart" />
                 </span>
