@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Customer } from '@designing-minds/cms'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { mergeSignedInCart } from './cart'
+import { clearLocalCart, mergeSignedInCart } from './cart'
 
 interface AuthValue {
   customer: Customer | null
@@ -47,7 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         applySession(data.session)
       }
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // Drop the previous user's cart on sign-out so a different account signing
+      // in next on this browser doesn't inherit it. Guard on the explicit event:
+      // a null session on initial load is a guest, whose cart we must preserve.
+      if (event === 'SIGNED_OUT') clearLocalCart()
       applySession(nextSession)
     })
     return () => {

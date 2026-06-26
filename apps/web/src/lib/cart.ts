@@ -1,6 +1,9 @@
 import { supabase } from './supabase'
 
 const CART_KEY = 'designing-minds.cart.v1'
+// Tracks which signed-in user the local cart currently belongs to (absent = guest).
+// Lets us avoid folding one account's leftover cart into another on a shared browser.
+const CART_OWNER_KEY = 'designing-minds.cart.owner.v1'
 const CART_EVENT = 'designing-minds:cart'
 
 const read = (): string[] => {
@@ -16,6 +19,26 @@ const read = (): string[] => {
 const writeLocal = (slugs: string[]) => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(CART_KEY, JSON.stringify([...new Set(slugs)]))
+  window.dispatchEvent(new Event(CART_EVENT))
+}
+
+const readOwner = (): string | null => {
+  if (typeof window === 'undefined') return null
+  return window.localStorage.getItem(CART_OWNER_KEY)
+}
+
+const writeOwner = (owner: string | null) => {
+  if (typeof window === 'undefined') return
+  if (owner) window.localStorage.setItem(CART_OWNER_KEY, owner)
+  else window.localStorage.removeItem(CART_OWNER_KEY)
+}
+
+// Wipe the local cart without touching the server. Used on sign-out so the next
+// guest/account on this browser starts clean instead of inheriting these items.
+const clearLocal = () => {
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(CART_KEY)
+  writeOwner(null)
   window.dispatchEvent(new Event(CART_EVENT))
 }
 
@@ -77,11 +100,20 @@ export const setCartSlugs = write
 export const addCartSlug = (slug: string) => write([...read(), slug])
 export const removeCartSlug = (slug: string) => write(read().filter((entry) => entry !== slug))
 export const clearCart = () => write([])
+export const clearLocalCart = clearLocal
 export const CART_CHANGED_EVENT = CART_EVENT
 
 export const mergeSignedInCart = async (customerId: string) => {
-  const merged = [...new Set([...(await readSignedInCart(customerId)), ...read()])]
+  // Only fold the local cart into this account if it belongs to a guest (no
+  // owner) or to this same user. A cart left behind by a *different* signed-in
+  // user — e.g. switching accounts on a shared browser — must not leak across
+  // accounts, even if sign-out failed to clear it.
+  const owner = readOwner()
+  const localSlugs = owner && owner !== customerId ? [] : read()
+
+  const merged = [...new Set([...(await readSignedInCart(customerId)), ...localSlugs])]
   writeLocal(merged)
+  writeOwner(customerId)
   await persistSignedInCart(merged)
   return merged
 }
