@@ -23,6 +23,31 @@ values
   ('0b274d83-dc6b-5eb5-89bb-9f360af6d3bd', 'social-sciences', 'Social Sciences', 'Social Sciences', 'Social Sciences resources.', 9, true, array[]::text[], null, null)
 on conflict (id) do update set slug = excluded.slug, name = excluded.name, "shortLabel" = excluded."shortLabel", description = excluded.description, "sortOrder" = excluded."sortOrder", visible = excluded.visible, faqs = excluded.faqs, accent = excluded.accent, seo = excluded.seo;
 
+insert into public.faqs (id, question, answer, category, "sortOrder", published)
+values
+  ('d5b08af6-a33b-4fa0-bee9-9185edddac2a', 'What grades are your tests available for?', 'Designing Minds currently offers printable CAPS-aligned tests and learning resources for Grades 3 to 7, with new material released during the year.', 'Products', 10, true),
+  ('80a8abba-0054-475b-8b47-545b168df214', 'Are your tests aligned with the South African CAPS curriculum?', 'Yes. The resources are created for the South African CAPS curriculum and follow the grade, term, subject, and assessment expectations shown on each product page.', 'Curriculum', 20, true),
+  ('8a2f18eb-2ece-4e24-bbe5-4609f8a6e2b0', 'How do I receive the tests after purchase?', 'After payment, your purchased PDF resources are made available for download. You should also receive a confirmation email with access details.', 'Orders & Downloads', 30, true),
+  ('cf408f21-e669-44a0-955e-9de65d522730', 'Do I need an account to buy tests?', 'You can complete checkout as a guest where available, but creating an account makes it easier to find orders and re-download purchased resources later.', 'Account', 40, true),
+  ('ffb31110-40af-4b76-84a0-7bf8441abbf7', 'What is the difference between Essential Access and Premium Access?', 'Essential Access gives you one term of resources for a selected grade. Premium Access gives full-year access across all subjects and terms, with term updates delivered during the year.', 'Access Plans', 50, true),
+  ('9235f4d3-da3b-409f-895a-1a948c6e9b78', 'Can I use the same tests for more than one child?', 'Purchased resources may be printed and reused within your household. Teachers, tutors, or schools should contact Designing Minds for classroom or multi-user licensing.', 'Licensing', 60, true),
+  ('b519bbfe-6894-4e21-a3ad-8a3f57eed514', 'Can I print the tests from my phone or tablet?', 'Yes. The resources are supplied as PDF files, so you can download and print them from a phone, tablet, or computer connected to a printer.', 'Printing', 70, true),
+  ('d1407685-b090-431f-8269-c4f9f492d77a', 'What subjects are included in each grade?', 'Core subjects commonly include Mathematics, English Home Language, English First Additional Language, Afrikaans First Additional Language, Life Skills, Natural Sciences, Geography, and History. Availability may vary by grade and term.', 'Products', 80, true),
+  ('067c3736-3505-4357-9b4e-73712f26c4f0', 'Do the tests include memorandums?', 'Most test and assessment products include a memorandum. Check the product description before purchase for the exact files and content included.', 'Products', 90, true),
+  ('710871b9-d19b-4eff-be7c-f9082725d6cf', 'Are the resources editable?', 'Resources are supplied as printable PDFs and are generally not editable. They are designed for download, printing, revision, and assessment practice.', 'Products', 100, true),
+  ('c166a04e-f0a2-4977-9531-bd55ac176178', 'Can I preview a resource before buying?', 'Where a sample or preview is available, it will be shown on the product page so you can review the layout, question style, and memorandum format before purchasing.', 'Products', 110, true),
+  ('454f6474-8c44-4746-9a46-975ddd8a2799', 'How often are new tests added?', 'New tests and assessments are added throughout the year, especially around term assessments and exam preparation periods.', 'Products', 120, true),
+  ('bea2bad6-d0a0-4e7f-b390-b95a3a94c85f', 'What should I do if my download link does not work?', 'Contact Designing Minds with your order details and the email address used at checkout so the team can help restore access or resend the download information.', 'Orders & Downloads', 130, true),
+  ('5fd009b8-9d59-4f58-ac6b-3cde99372027', 'Can I get a refund after downloading a PDF?', 'Because digital resources can be accessed immediately, refunds may be limited once a file has been downloaded. If there is a duplicate purchase or a problem with the file, contact support with your order details.', 'Orders & Downloads', 140, true),
+  ('79c73cb6-3503-454c-96ad-70863bcc579b', 'Are the resources suitable for homeschool use?', 'Yes. Parents and homeschool families can use the printable tests, summaries, and memorandums for revision, practice, and informal assessment at home.', 'Curriculum', 150, true),
+  ('8da9efbd-0c34-4ae7-8e4a-436482827958', 'How can I contact Designing Minds for help?', 'Use the contact page or email designingminds123@gmail.com with your question, order number if relevant, and the email address used during checkout.', 'Support', 160, true)
+on conflict (id) do update set
+  question = excluded.question,
+  answer = excluded.answer,
+  category = excluded.category,
+  "sortOrder" = excluded."sortOrder",
+  published = excluded.published;
+
 insert into public.products (
   id, slug, title, "shortDescription", "fullDescription", "priceZar", grade, term, year,
   "productKind", "resourceFormat", subjects, marks, "purchasedFiles", featured, published,
@@ -8629,5 +8654,25 @@ File Type: PDF Delivery: Instant email download after checkout Copyright: © Des
 
 Test covers: • Describing & ordering fractions • Calculations with fractions • Solving fractions • Equivalent fractions
 
-Format: PDF, 10 pages. Note: This test is also included in the Grade 5 2025 Term 3 Test Bundle.', 350.00, 'Grade 5', 'Term 3', '2025', 'Bundle', 'Test / Assessment', array['mathematics'], 50, '[]'::jsonb, false, true, 2346, '{"title":"Grade 5 Mathematics Term 3 Fractions Test (2025)","description":"Grade 5 Mathematics Fractions Test (Term 3, 2025). Worth 50 marks. Includes memorandum. PDF format, 10 pages."}'::jsonb, array[]::text[], 'Term', null, null, null, null, null, array['mathematics'], array['Term 3'])
+Format: PDF, 10 pages. Note: This test is also included in the Grade 5 2025 Term 3 Test Bundle.', 350.00, 'Grade 5', 'Term 3', '2025', 'Bundle', 'Test / Assessment', array['mathematics'], 50, '[]'::jsonb, false, true, 2346, '{"title":"Grade 5 Mathematics Term 3 Fractions Test (2025)","description":"Grade 5 Mathematics Fractions Test (Term 3, 2025). Worth 50 marks. Includes memorandum. PDF format, 10 pages."}'::jsonb, array[]::text[], 'Term', null, null, null, null, null, array['mathematics'], array['Term 3']),
+  ('4198c63e-4202-4362-8c12-7c4eda4e6413', 'essential-access', 'Essential Access', 'One term of CAPS-aligned access for a selected grade. Includes 2 tests per subject, all core subjects, and memorandums.', 'Essential Access
+
+R350 per term.
+
+Includes:
+
+- 2 CAPS-aligned tests per subject
+- All core subjects for your selected grade
+- A memorandum with every test
+- Ideal for short-term use or new learners', 350.00, 'Grade 3', 'Any Term', '2026', 'Access Plan', 'Test / Assessment', array['mathematics','english-home-language','english-first-additional-language','afrikaans-first-additional-language','life-skills','natural-science-and-technology','history','geography'], null, '[]'::jsonb, false, true, 10000, '{"title":"Essential Access","description":"One term of CAPS-aligned access for a selected grade. Includes 2 tests per subject, all core subjects, and memorandums."}'::jsonb, array[]::text[], null, 'Term', array['Grade 3','Grade 4','Grade 5','Grade 6','Grade 7'], 'Term access covers all core subjects for the selected grade and term. Includes 2 CAPS-aligned tests per subject with memorandums.', 'One-time term access. Buy again when you are ready for another term.', null, array['mathematics','english-home-language','english-first-additional-language','afrikaans-first-additional-language','life-skills','natural-science-and-technology','history','geography'], null),
+  ('468fabcc-3f11-4840-ac6f-4a22646964b8', 'premium-access', 'Premium Access', 'Full-year CAPS-aligned access across every subject and every term, with automatic term delivery and priority updates.', 'Premium Access
+
+R1,200 per year.
+
+Includes:
+
+- Access to every subject and every term
+- Automatic delivery each term via email
+- Priority updates and new test releases
+- One simple subscription, no reordering needed', 1200.00, 'Grade 3', 'Any Term', '2026', 'Access Plan', 'Test / Assessment', array['mathematics','english-home-language','english-first-additional-language','afrikaans-first-additional-language','life-skills','natural-science-and-technology','history','geography'], null, '[]'::jsonb, true, true, 10001, '{"title":"Premium Access","description":"Full-year CAPS-aligned access across every subject and every term, with automatic term delivery and priority updates."}'::jsonb, array[]::text[], null, 'Year', array['Grade 3','Grade 4','Grade 5','Grade 6','Grade 7'], 'Full-year access covers every subject and every term, with automatic delivery each term via email.', 'One-time annual access. No automatic renewal.', null, array['mathematics','english-home-language','english-first-additional-language','afrikaans-first-additional-language','life-skills','natural-science-and-technology','history','geography'], array['Term 1','Term 2','Term 3','Term 4'])
 on conflict (id) do update set slug = excluded.slug, title = excluded.title, "shortDescription" = excluded."shortDescription", "fullDescription" = excluded."fullDescription", "priceZar" = excluded."priceZar", grade = excluded.grade, term = excluded.term, year = excluded.year, "productKind" = excluded."productKind", "resourceFormat" = excluded."resourceFormat", subjects = excluded.subjects, marks = excluded.marks, "purchasedFiles" = excluded."purchasedFiles", featured = excluded.featured, published = excluded.published, "sortOrder" = excluded."sortOrder", seo = excluded.seo, faqs = excluded.faqs, "bundleScope" = excluded."bundleScope", "accessPeriod" = excluded."accessPeriod", "includedGrades" = excluded."includedGrades", "deliveryRules" = excluded."deliveryRules", "renewalNotes" = excluded."renewalNotes", "includedProductSlugs" = excluded."includedProductSlugs", "includedSubjects" = excluded."includedSubjects", "includedTerms" = excluded."includedTerms";
