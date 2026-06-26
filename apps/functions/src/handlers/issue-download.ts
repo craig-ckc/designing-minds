@@ -1,6 +1,6 @@
 import type { Product, ProductFile } from '@designing-minds/cms/types'
 import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
-import { requireVerifiedUser } from '../lib/auth.ts'
+import { requireUser } from '../lib/auth.ts'
 import { createServiceClient } from '../lib/supabase.ts'
 import { createSupabaseStorageProvider } from '../lib/storage.ts'
 
@@ -66,7 +66,7 @@ export const issueDownload: Handler = async (req) => {
 
   let user
   try {
-    user = await requireVerifiedUser(req.headers)
+    user = await requireUser(req.headers)
   } catch (error) {
     return unauthorized(error instanceof Error ? error.message : 'Authentication required.')
   }

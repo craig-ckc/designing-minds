@@ -1,28 +1,36 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Field } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../lib/auth'
 import { AuthLayout } from './AuthLayout'
 
+const signupErrorMessage = (error: unknown) => {
+  const message = error instanceof Error ? error.message : ''
+  if (message.toLowerCase().includes('rate limit')) {
+    return 'Too many signup attempts have been made. Wait a while before trying again, or log in if this account was already created.'
+  }
+  return message || 'Unable to create account.'
+}
+
 export function SignUpPage() {
   const { signUp } = useAuth()
+  const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const submit = async () => {
     setSubmitting(true)
     setError(null)
-    setMessage(null)
     try {
       await signUp(name, email, password)
-      setMessage('Check your email to verify your account before checkout.')
+      navigate(params.get('redirect') ?? '/account')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to create account.')
+      setError(signupErrorMessage(e))
     } finally {
       setSubmitting(false)
     }
@@ -43,7 +51,6 @@ export function SignUpPage() {
         </>
       }
     >
-      {message ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{message}</p> : null}
       {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
       <Field label="Full name">
         <input className="field" placeholder="Your name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required />

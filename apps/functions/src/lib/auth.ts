@@ -18,12 +18,6 @@ export const requireUser = async (headers: Record<string, string | undefined>): 
   return data.user
 }
 
-export const requireVerifiedUser = async (headers: Record<string, string | undefined>): Promise<User> => {
-  const user = await requireUser(headers)
-  if (!user.email_confirmed_at) throw new Error('Email verification is required.')
-  return user
-}
-
 export const requireAdmin = async (headers: Record<string, string | undefined>): Promise<User> => {
   const user = await requireUser(headers)
   const supabase = createServiceClient()
@@ -32,4 +26,3 @@ export const requireAdmin = async (headers: Record<string, string | undefined>):
   if (data?.role !== 'admin') throw new Error('Administrator access is required.')
   return user
 }
-

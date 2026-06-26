@@ -15,7 +15,7 @@ launch scope).
 | Supabase schema | READY | `supabase/schema.sql` defines Auth-linked customers, roles, catalogue tables, orders, payments, carts, and RLS. Existing projects should apply `supabase/patch/2026-06-23-secure-catalog-and-checkout.sql`. |
 | Public catalogue reads | READY | The storefront reads `catalog_products`, a sanitized published-only view that omits private storage keys. Raw `products` rows are admin-only. |
 | Admin CMS | READY | Admin uses Supabase Auth, checks `user_roles`, and writes catalogue rows through admin-only RLS policies. |
-| Customer auth | READY | Web uses Supabase email/password auth and gates checkout on verified email. |
+| Customer auth | READY | Web uses Supabase email/password auth with confirm-email disabled for customer signup. |
 | Cart | READY | Anonymous cart state is local-only until login; signed-in sessions merge into Supabase `carts`/`cart_items` and persist add/remove/clear changes. |
 | Checkout | READY | `/checkout` verifies the JWT, re-resolves published products and prices server-side, blocks repurchases, and creates the order + payment atomically via `create_pending_order`. |
 | PayFast ITN | READY | `/payment-webhook` verifies signature, source IP, amount, PayFast validation response, and only transitions pending/unprocessed payments. |

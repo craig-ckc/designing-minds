@@ -23,16 +23,14 @@ Use this as the final go-live checklist for Designing Minds. Tick each item only
 ## Supabase Auth And Email
 
 - [ ] Email/password Auth is enabled.
-- [ ] Confirm-email is enabled.
-- [ ] Resend custom SMTP is configured in Supabase Auth.
-- [ ] Sending domain has verified SPF.
-- [ ] Sending domain has verified DKIM.
-- [ ] Sending domain has a DMARC policy.
-- [ ] Verification email template has production branding and correct redirect URL.
+- [ ] Confirm-email is disabled for customer signup.
+- [ ] Password reset email sending is configured in Supabase Auth.
+- [ ] If using custom SMTP, sending domain has verified SPF.
+- [ ] If using custom SMTP, sending domain has verified DKIM.
+- [ ] If using custom SMTP, sending domain has a DMARC policy.
 - [ ] Password reset template has production branding and correct redirect URL.
-- [ ] Test customer receives verification email in an inbox.
-- [ ] Unverified customer cannot complete checkout.
-- [ ] Verified customer can complete checkout.
+- [ ] New customer can sign up and continue without email verification.
+- [ ] Signed-in customer can complete checkout.
 
 ## Vercel Projects
 

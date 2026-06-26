@@ -9,7 +9,6 @@ interface AuthValue {
   customer: Customer | null
   session: Session | null
   loading: boolean
-  isVerified: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (name: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
@@ -70,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { name },
-        emailRedirectTo: `${window.location.origin}/account`,
       },
     })
     if (error) throw new Error(error.message)
@@ -94,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       customer: customerFromSession(session),
       session,
       loading,
-      isVerified: Boolean(session?.user.email_confirmed_at),
       signIn,
       signUp,
       logout,

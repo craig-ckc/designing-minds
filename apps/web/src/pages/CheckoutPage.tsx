@@ -9,14 +9,26 @@ import { apiUrl } from '../lib/api'
 import { getCartSlugs } from '../lib/cart'
 import { useNoindex } from '../lib/useNoindex'
 
-interface CheckoutResponse {
+interface CheckoutBaseResponse {
+  orderId: string
+}
+
+interface PayfastCheckoutResponse extends CheckoutBaseResponse {
   payfast: {
     url: string
     fields: Record<string, string | number | boolean>
   }
 }
 
-const postToPayfast = ({ url, fields }: CheckoutResponse['payfast']) => {
+interface FakePayfastCheckoutResponse extends CheckoutBaseResponse {
+  fakePayfast: {
+    path: string
+  }
+}
+
+type CheckoutResponse = PayfastCheckoutResponse | FakePayfastCheckoutResponse
+
+const postToPayfast = ({ url, fields }: PayfastCheckoutResponse['payfast']) => {
   const form = document.createElement('form')
   form.method = 'POST'
   form.action = url
@@ -34,7 +46,7 @@ const postToPayfast = ({ url, fields }: CheckoutResponse['payfast']) => {
 export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   useNoindex()
   const navigate = useNavigate()
-  const { customer, isVerified, getAccessToken } = useAuth()
+  const { customer, getAccessToken } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const slugs = useMemo(() => getCartSlugs(), [])
@@ -46,10 +58,6 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const pay = async () => {
     if (!customer) {
       navigate('/login?redirect=/checkout')
-      return
-    }
-    if (!isVerified) {
-      setError('Verify your email address before checkout.')
       return
     }
     if (items.length === 0) {
@@ -72,7 +80,16 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
       })
       const body = (await response.json()) as CheckoutResponse | { error?: string }
       if (!response.ok) throw new Error('error' in body && body.error ? body.error : 'Unable to start checkout.')
-      postToPayfast((body as CheckoutResponse).payfast)
+      const checkout = body as CheckoutResponse
+      if ('fakePayfast' in checkout && checkout.fakePayfast) {
+        navigate(checkout.fakePayfast.path)
+        return
+      }
+      if ('payfast' in checkout) {
+        postToPayfast(checkout.payfast)
+        return
+      }
+      throw new Error('Checkout response did not include a payment handoff.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to start checkout.')
       setSubmitting(false)
@@ -90,7 +107,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <h3>Your account</h3>
             {customer ? (
               <p className="text-[0.92rem] text-muted">
-                Signed in as <strong>{customer.email}</strong>. {isVerified ? 'Your email is verified.' : 'Verify your email before payment.'}
+                Signed in as <strong>{customer.email}</strong>.
               </p>
             ) : (
               <p className="text-[0.92rem] text-muted">

@@ -1,7 +1,7 @@
 import type { Product } from '@designing-minds/cms/types'
 import { badRequest, created, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { createServiceClient } from '../lib/supabase.ts'
-import { requireVerifiedUser } from '../lib/auth.ts'
+import { requireUser } from '../lib/auth.ts'
 import { formatPayfastAmount, toCents } from '../lib/money.ts'
 import { buildPayfastProcess } from '../lib/payfast.ts'
 
@@ -39,7 +39,7 @@ export const checkout: Handler = async (req) => {
 
   let user
   try {
-    user = await requireVerifiedUser(req.headers)
+    user = await requireUser(req.headers)
   } catch (error) {
     return unauthorized(error instanceof Error ? error.message : 'Authentication required.')
   }
@@ -104,6 +104,17 @@ export const checkout: Handler = async (req) => {
       p_total_zar: totalZar,
     })
     if (orderCreateError) throw new Error(orderCreateError.message)
+
+    if (process.env.FAKE_PAYFAST_ENABLED === 'true') {
+      return created({
+        orderId,
+        paymentId,
+        reference,
+        fakePayfast: {
+          path: `/checkout/fake-payfast?order=${orderId}`,
+        },
+      })
+    }
 
     const baseUrl = siteUrl()
     if (!process.env.PAYFAST_MERCHANT_ID || !process.env.PAYFAST_MERCHANT_KEY) {
