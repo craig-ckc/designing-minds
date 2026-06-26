@@ -7,6 +7,9 @@
 
 create extension if not exists pgcrypto;
 
+-- Private schema for helpers that must never be reachable through the REST API.
+create schema if not exists private;
+
 -- =========================================================================
 -- Role helpers
 -- =========================================================================
@@ -18,11 +21,15 @@ create table if not exists public.user_roles (
   "updatedAt" timestamptz not null default now()
 );
 
+-- has_role/is_admin only ever read the caller's OWN role, which the
+-- "User reads own role" RLS policy already permits, so they run as the caller
+-- (security invoker) rather than as a definer. EXECUTE is restricted to
+-- signed-in users so they are not reachable by the anon role over REST.
 create or replace function public.has_role(expected_role text)
 returns boolean
 language sql
 stable
-security definer
+security invoker
 set search_path = public
 as $$
   select exists (
@@ -37,11 +44,16 @@ create or replace function public.is_admin()
 returns boolean
 language sql
 stable
-security definer
+security invoker
 set search_path = public
 as $$
   select public.has_role('admin');
 $$;
+
+revoke execute on function public.has_role(text) from public;
+revoke execute on function public.is_admin() from public;
+grant execute on function public.has_role(text) to authenticated;
+grant execute on function public.is_admin() to authenticated;
 
 -- =========================================================================
 -- Collections
@@ -81,51 +93,71 @@ create table if not exists public.products (
   "includedTerms" text[]
 );
 
-create or replace view public.catalog_products as
-select
-  p.id,
-  p.slug,
-  p.title,
-  p."shortDescription",
-  p."fullDescription",
-  p."priceZar",
-  p.grade,
-  p.term,
-  p.year,
-  p."productKind",
-  p."resourceFormat",
-  p.subjects,
-  p.marks,
-  coalesce(
-    (
-      select jsonb_agg(
-        jsonb_build_object(
-          'id', file ->> 'id',
-          'label', file ->> 'label',
-          'filename', file ->> 'filename'
+-- Public catalogue. The view is security_invoker, so the row filtering and
+-- storage-key stripping live in this SECURITY DEFINER function. It sits in the
+-- private schema (not exposed over REST), which lets anon/authenticated read
+-- the sanitized, published catalogue without granting them any access to the
+-- products table itself.
+create or replace function private.published_products()
+returns setof public.products
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    p.id,
+    p.slug,
+    p.title,
+    p."shortDescription",
+    p."fullDescription",
+    p."priceZar",
+    p.grade,
+    p.term,
+    p.year,
+    p."productKind",
+    p."resourceFormat",
+    p.subjects,
+    p.marks,
+    coalesce(
+      (
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', file ->> 'id',
+            'label', file ->> 'label',
+            'filename', file ->> 'filename'
+          )
+          order by file ->> 'id'
         )
-        order by file ->> 'id'
-      )
-      from jsonb_array_elements(p."purchasedFiles") as file
+        from jsonb_array_elements(p."purchasedFiles") as file
+      ),
+      '[]'::jsonb
     ),
-    '[]'::jsonb
-  ) as "purchasedFiles",
-  p.featured,
-  p.published,
-  p."sortOrder",
-  p.seo,
-  p.faqs,
-  p."updatedAt",
-  p."bundleScope",
-  p."accessPeriod",
-  p."includedGrades",
-  p."deliveryRules",
-  p."renewalNotes",
-  p."includedProductSlugs",
-  p."includedSubjects",
-  p."includedTerms"
-from public.products p
-where p.published = true;
+    p.featured,
+    p.published,
+    p."sortOrder",
+    p.seo,
+    p.faqs,
+    p."updatedAt",
+    p."bundleScope",
+    p."accessPeriod",
+    p."includedGrades",
+    p."deliveryRules",
+    p."renewalNotes",
+    p."includedProductSlugs",
+    p."includedSubjects",
+    p."includedTerms"
+  from public.products p
+  where p.published = true;
+$$;
+
+revoke execute on function private.published_products() from public;
+grant usage on schema private to anon, authenticated;
+grant execute on function private.published_products() to anon, authenticated;
+
+create or replace view public.catalog_products
+with (security_invoker = on) as
+  select * from private.published_products();
 
 create table if not exists public.subjects (
   id uuid primary key default gen_random_uuid(),
@@ -238,6 +270,7 @@ create index if not exists cart_items_cart_id_idx on public.cart_items ("cartId"
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new."updatedAt" = now();
@@ -296,6 +329,11 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute procedure public.handle_new_user();
+
+-- handle_new_user must stay SECURITY DEFINER for the trigger to seed locked
+-- tables, but it should never be callable through /rest/v1/rpc. The trigger
+-- still fires regardless of these EXECUTE grants.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
 
 create or replace function public.create_pending_order(
   p_order_id uuid,
