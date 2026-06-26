@@ -1,8 +1,8 @@
 import { type Product, priceLabel } from '@designing-minds/cms'
-import { Container } from '../components/ui/Container'
-import { Eyebrow } from '../components/ui/Eyebrow'
-import { Icon } from '../components/ui/Icon'
-import { Button } from '../components/ui/Button'
+import { Container } from '../ui/Container'
+import { Eyebrow } from '../ui/Eyebrow'
+import { Icon } from '../ui/Icon'
+import { Button } from '../ui/Button'
 
 const planFeatures = (plan: Product): string[] => {
   const terms = plan.accessPeriod === 'Year' ? 'All four terms' : 'One term of resources'

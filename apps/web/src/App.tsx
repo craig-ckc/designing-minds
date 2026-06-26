@@ -25,7 +25,22 @@ import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { CheckoutReturnPage } from './pages/CheckoutReturnPage'
 import { CheckoutCancelPage } from './pages/CheckoutCancelPage'
+import { FakePayfastPage } from './pages/FakePayfastPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+
+function SnapshotGate({
+  snapshot,
+  error,
+  children,
+}: {
+  snapshot: CmsSnapshot | null
+  error: string | null
+  children: (snapshot: CmsSnapshot) => ReactNode
+}) {
+  if (snapshot) return <>{children(snapshot)}</>
+  if (error) return <StatePanel eyebrow="Something went wrong" title="Website unavailable" body={error} />
+  return <StatePanel eyebrow="Loading" title="Preparing the catalogue…" />
+}
 
 function App() {
   const { loading: authLoading, session } = useAuth()
@@ -54,54 +69,57 @@ function App() {
     }
   }, [authLoading, refreshSnapshot, session?.access_token])
 
-  let body: ReactNode
-  if (error) {
-    body = <StatePanel eyebrow="Something went wrong" title="Website unavailable" body={error} />
-  } else if (authLoading || !snapshot) {
-    body = <StatePanel eyebrow="Loading" title="Preparing the catalogue…" />
-  } else {
-    body = (
-      <Routes>
-        <Route path="/" element={<HomePage snapshot={snapshot} />} />
+  const body: ReactNode = (
+    <Routes>
+      <Route path="/" element={<HomePage snapshot={snapshot} loadError={error} />} />
 
-        {/* Browse */}
-        <Route path="/shop" element={<ShopPage snapshot={snapshot} />} />
-        <Route path="/grades" element={<GradesPage snapshot={snapshot} />} />
-        <Route path="/grades/:gradeSlug" element={<GradeDetailPage snapshot={snapshot} />} />
-        <Route path="/bundles" element={<BundlesPage snapshot={snapshot} />} />
+      {/* Browse */}
+      <Route path="/shop" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <ShopPage snapshot={ready} />}</SnapshotGate>} />
+      <Route path="/grades" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <GradesPage snapshot={ready} />}</SnapshotGate>} />
+      <Route
+        path="/grades/:gradeSlug"
+        element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <GradeDetailPage snapshot={ready} />}</SnapshotGate>}
+      />
+      <Route path="/bundles" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <BundlesPage snapshot={ready} />}</SnapshotGate>} />
 
-        {/* Product */}
-        <Route path="/product/:slug" element={<ProductPage snapshot={snapshot} />} />
+      {/* Product */}
+      <Route path="/product/:slug" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <ProductPage snapshot={ready} />}</SnapshotGate>} />
 
-        {/* Support + company */}
-        <Route path="/help" element={<HelpPage snapshot={snapshot} />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/about" element={<AboutPage snapshot={snapshot} />} />
+      {/* Support + company */}
+      <Route path="/help" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <HelpPage snapshot={ready} />}</SnapshotGate>} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/about" element={<AboutPage snapshot={snapshot} loadError={error} />} />
 
-        {/* Legal */}
-        <Route path="/privacy-policy" element={<LegalPage kind="privacy" />} />
-        <Route path="/terms" element={<LegalPage kind="terms" />} />
-        <Route path="/refund-policy" element={<LegalPage kind="refund" />} />
+      {/* Legal */}
+      <Route path="/privacy-policy" element={<LegalPage kind="privacy" />} />
+      <Route path="/terms" element={<LegalPage kind="terms" />} />
+      <Route path="/refund-policy" element={<LegalPage kind="refund" />} />
 
-        {/* Authentication */}
-        <Route path="/sign-up" element={<SignUpPage />} />
-        <Route path="/login" element={<LoginPage />} />
+      {/* Authentication */}
+      <Route path="/sign-up" element={<SignUpPage />} />
+      <Route path="/login" element={<LoginPage />} />
 
-        {/* Customer Account */}
-        <Route path="/account" element={<AccountPage snapshot={snapshot} />} />
-        <Route path="/account/orders" element={<OrderHistoryPage snapshot={snapshot} />} />
-        <Route path="/account/orders/:orderId" element={<OrderDetailPage snapshot={snapshot} onRefresh={refreshSnapshot} />} />
+      {/* Customer Account */}
+      <Route path="/account" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <AccountPage snapshot={ready} />}</SnapshotGate>} />
+      <Route
+        path="/account/orders"
+        element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <OrderHistoryPage snapshot={ready} />}</SnapshotGate>}
+      />
+      <Route
+        path="/account/orders/:orderId"
+        element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <OrderDetailPage snapshot={ready} onRefresh={refreshSnapshot} />}</SnapshotGate>}
+      />
 
-        {/* Commerce flow */}
-        <Route path="/cart" element={<CartPage snapshot={snapshot} />} />
-        <Route path="/checkout" element={<CheckoutPage snapshot={snapshot} />} />
-        <Route path="/checkout/return" element={<CheckoutReturnPage />} />
-        <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
+      {/* Commerce flow */}
+      <Route path="/cart" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <CartPage snapshot={ready} />}</SnapshotGate>} />
+      <Route path="/checkout" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <CheckoutPage snapshot={ready} />}</SnapshotGate>} />
+      <Route path="/checkout/fake-payfast" element={<FakePayfastPage />} />
+      <Route path="/checkout/return" element={<CheckoutReturnPage />} />
+      <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    )
-  }
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  )
 
   return (
     <>

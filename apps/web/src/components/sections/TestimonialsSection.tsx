@@ -1,7 +1,7 @@
 import { type Testimonial } from '@designing-minds/cms'
-import { Container } from '../components/ui/Container'
-import { Eyebrow } from '../components/ui/Eyebrow'
-import { Placeholder } from '../components/ui/Placeholder'
+import { Container } from '../ui/Container'
+import { Eyebrow } from '../ui/Eyebrow'
+import { Placeholder } from '../ui/Placeholder'
 
 export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
   if (testimonials.length === 0) return null
