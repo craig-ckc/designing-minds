@@ -71,6 +71,21 @@ const server = createServer(async (req, res) => {
   res.end(JSON.stringify(response.body))
 })
 
+server.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use — another functions server is probably running.`)
+    console.error(`Stop it with: lsof -ti tcp:${PORT} | xargs kill   (or set PORT to a free port)`)
+    process.exit(1)
+  }
+  throw error
+})
+
+// Close the listener on exit so `node --watch` restarts (and Ctrl-C) release the
+// port before the next process binds it, instead of racing into EADDRINUSE.
+for (const signal of ['SIGTERM', 'SIGINT'] as NodeJS.Signals[]) {
+  process.on(signal, () => server.close(() => process.exit(0)))
+}
+
 server.listen(PORT, () => {
   console.log(`Functions dev server on http://localhost:${PORT}`)
   console.log('Routes:', Object.keys(handlers).join(', '))
