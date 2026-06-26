@@ -20,7 +20,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
       <span className="grid h-[38px] w-[38px] place-items-center rounded-lg bg-ink text-[0.95rem] tracking-[-0.04em] text-white">
         DM
       </span>
-      <span className="leading-tight">
+      <span className="leading-tight hidden sm:block">
         <span className="block text-[1.05rem] tracking-[-0.02em]">Designing Minds</span>
         <span className="block text-[0.68rem] font-normal tracking-[0.04em] text-muted">CAPS-aligned resources</span>
       </span>

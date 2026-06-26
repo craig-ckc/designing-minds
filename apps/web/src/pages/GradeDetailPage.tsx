@@ -42,7 +42,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <div className="min-w-[160px]">
             <Select label="Term" value={term} options={[ALL, ...snapshot.valueLists.terms]} onChange={setTerm} />
           </div>
-          <Button to="/shop" variant="text" className="ml-auto">
+          <Button to="/shop" variant="soft" className="ml-auto">
             Advanced filters in Shop
           </Button>
         </Container>

@@ -90,7 +90,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <div className="min-w-[160px]">
             <Select label="Type" value={filters.kind} options={[ALL, ...snapshot.valueLists.productKinds]} onChange={(v) => update({ kind: v })} />
           </div>
-          <Button type="button" variant="text" onClick={reset} className="ml-auto">
+          <Button type="button" variant="soft" onClick={reset} className="ml-auto">
             Reset filters
           </Button>
         </Container>

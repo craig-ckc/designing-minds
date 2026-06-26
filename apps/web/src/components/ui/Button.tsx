@@ -2,7 +2,14 @@ import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn, cv } from '@designing-minds/utils'
 
-export type ButtonVariant = 'solid' | 'outline' | 'text' | 'text-light'
+export type ButtonVariant =
+  | 'solid'
+  | 'solid-light'
+  | 'soft'
+  | 'outline'
+  | 'outline-light'
+  | 'text'
+  | 'text-light'
 export type ButtonSize = 'md' | 'sm'
 
 /** Button styling via the team `cv` variant builder. */
@@ -11,7 +18,10 @@ const button = cv({
   variants: {
     variant: {
       solid: ['rounded-md border-[1.5px] border-ink bg-ink text-white hover:opacity-85'],
+      'solid-light': ['rounded-md border-[1.5px] border-white bg-white text-ink hover:opacity-85'],
+      soft: ['rounded-md border-[1.5px] border-surface-alt bg-surface-alt text-ink hover:bg-surface-sunk'],
       outline: ['rounded-md border-[1.5px] border-ink text-ink hover:bg-surface-alt'],
+      'outline-light': ['rounded-md border-[1.5px] border-white text-white hover:bg-white/10'],
       text: ['text-ink underline underline-offset-4 hover:opacity-70'],
       'text-light': ['text-white underline underline-offset-4 hover:opacity-70'],
     },

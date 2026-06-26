@@ -37,7 +37,7 @@ export function NewsletterForm({ compact }: { compact?: boolean }) {
         onChange={(e) => setEmail(e.target.value)}
         required
       />
-      <Button type="submit" variant="text">
+      <Button type="submit" variant="solid">
         {compact ? 'Subscribe' : 'Get my free test'}
       </Button>
     </form>
