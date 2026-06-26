@@ -33,6 +33,14 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const included = getProductsBySlugs(snapshot, product.includedProductSlugs ?? [])
   const related = relatedProducts(snapshot, product, 3)
   const isComposite = product.productKind === 'Bundle' || product.productKind === 'Access Plan'
+  // An Access Plan is bought "for a selected grade" chosen at checkout, so show
+  // the eligible grade range rather than its placeholder grade.
+  const eligibleGrades = product.includedGrades ?? []
+  const isAccessPlan = product.productKind === 'Access Plan'
+  const gradeDisplay =
+    isAccessPlan && eligibleGrades.length > 0
+      ? `${eligibleGrades[0]}–${eligibleGrades[eligibleGrades.length - 1].replace('Grade ', '')}`
+      : product.grade
 
   return (
     <>
@@ -97,13 +105,13 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   {product.productKind}
                 </Badge>
                 <span className="text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-muted">
-                  {product.grade} · {product.term}
+                  {gradeDisplay} · {product.term}
                 </span>
               </div>
               <h1 className="text-[1.7rem]">{product.title}</h1>
               <div className="text-[2.4rem] font-semibold tracking-[-0.03em]">{priceLabel(product.priceZar)}</div>
               <ul className="grid gap-3">
-                <SpecRow label="Grade" value={product.grade} />
+                <SpecRow label="Grade" value={isAccessPlan ? `${gradeDisplay} · choose at checkout` : product.grade} />
                 <SpecRow label="Term" value={product.term} />
                 <SpecRow label="Year" value={product.year} />
                 <SpecRow label="Subjects" value={subjects.map((s) => s.shortLabel).join(', ') || '—'} />

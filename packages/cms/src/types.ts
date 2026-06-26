@@ -144,6 +144,12 @@ export interface OrderItem {
   title: string
   productKind: ProductKind
   priceZar: number
+  /**
+   * The grade this line item grants. For an Access Plan it is the grade chosen
+   * at checkout; for other products it is the product's own grade. Optional for
+   * orders placed before grade capture existed.
+   */
+  grade?: Grade
 }
 
 export interface Payment {

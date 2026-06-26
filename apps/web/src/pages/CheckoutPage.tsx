@@ -4,6 +4,7 @@ import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-mind
 import { Container } from '../components/ui/Container'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { Button } from '../components/ui/Button'
+import { Select } from '../components/ui/Select'
 import { useAuth } from '../lib/auth'
 import { apiUrl } from '../lib/api'
 import { getCartSlugs } from '../lib/cart'
@@ -55,6 +56,11 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
   const total = items.reduce((sum, item) => sum + item.priceZar, 0)
 
+  // Access Plans are sold "for a selected grade"; the buyer picks one here.
+  const planItems = items.filter((item) => item.productKind === 'Access Plan')
+  const [grades, setGrades] = useState<Record<string, string>>({})
+  const missingGrade = planItems.some((item) => !grades[item.slug])
+
   const pay = async () => {
     if (!customer) {
       navigate('/login?redirect=/checkout')
@@ -62,6 +68,10 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
     }
     if (items.length === 0) {
       setError('Your cart is empty.')
+      return
+    }
+    if (missingGrade) {
+      setError('Choose a grade for each access plan.')
       return
     }
 
@@ -76,7 +86,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
           'content-type': 'application/json',
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ items: items.map((item) => ({ productSlug: item.slug })) }),
+        body: JSON.stringify({ items: items.map((item) => ({ productSlug: item.slug, grade: grades[item.slug] })) }),
       })
       const body = (await response.json()) as CheckoutResponse | { error?: string }
       if (!response.ok) throw new Error('error' in body && body.error ? body.error : 'Unable to start checkout.')
@@ -103,26 +113,46 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <h1 className="mb-8 text-[2rem]">Checkout</h1>
 
         <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
-          <div className="grid gap-6 rounded-[10px] border border-line p-6">
-            <h3>Your account</h3>
-            {customer ? (
-              <p className="text-[0.92rem] text-muted">
-                Signed in as <strong>{customer.email}</strong>.
-              </p>
-            ) : (
-              <p className="text-[0.92rem] text-muted">
-                Checkout requires a Customer Account.{' '}
-                <Link to="/login?redirect=/checkout" className="text-ink underline underline-offset-4">
-                  Log in
-                </Link>{' '}
-                or{' '}
-                <Link to="/sign-up?redirect=/checkout" className="text-ink underline underline-offset-4">
-                  create one
-                </Link>
-                .
-              </p>
-            )}
-            {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+          <div className="grid gap-6">
+            <div className="grid gap-6 rounded-[10px] border border-line p-6">
+              <h3>Your account</h3>
+              {customer ? (
+                <p className="text-[0.92rem] text-muted">
+                  Signed in as <strong>{customer.email}</strong>.
+                </p>
+              ) : (
+                <p className="text-[0.92rem] text-muted">
+                  Checkout requires a Customer Account.{' '}
+                  <Link to="/login?redirect=/checkout" className="text-ink underline underline-offset-4">
+                    Log in
+                  </Link>{' '}
+                  or{' '}
+                  <Link to="/sign-up?redirect=/checkout" className="text-ink underline underline-offset-4">
+                    create one
+                  </Link>
+                  .
+                </p>
+              )}
+              {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+            </div>
+
+            {planItems.length > 0 ? (
+              <div className="grid gap-4 rounded-[10px] border border-line p-6">
+                <div>
+                  <h3>Choose your grade</h3>
+                  <p className="text-[0.88rem] text-muted">Each access plan unlocks one grade. Pick the grade for each plan before paying.</p>
+                </div>
+                {planItems.map((item) => (
+                  <Select
+                    key={item.slug}
+                    label={item.title}
+                    value={grades[item.slug] ?? ''}
+                    options={item.includedGrades ?? []}
+                    onChange={(grade) => setGrades((prev) => ({ ...prev, [item.slug]: grade }))}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <aside className="grid gap-4 rounded-[10px] border border-line p-6 lg:sticky lg:top-24">
@@ -143,7 +173,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <span>Total</span>
               <span>{priceLabel(total)}</span>
             </div>
-            <Button type="button" variant="solid" className="w-full" onClick={() => void pay()} disabled={submitting || items.length === 0}>
+            <Button type="button" variant="solid" className="w-full" onClick={() => void pay()} disabled={submitting || items.length === 0 || missingGrade}>
               {submitting ? 'Redirecting…' : 'Pay with PayFast'}
             </Button>
             <p className="text-[0.82rem] text-muted">Single payment. Downloads unlock only after PayFast confirms payment.</p>

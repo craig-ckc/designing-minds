@@ -2,6 +2,7 @@ import { createSupabaseRepository } from './providers/supabase'
 
 export * from './types'
 export * from './lib/formatters'
+export * from './lib/entitlements'
 
 interface RepositoryOptions {
   supabaseUrl?: string

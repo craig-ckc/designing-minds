@@ -1,4 +1,5 @@
-import type { Product, ProductFile } from '@designing-minds/cms/types'
+import type { Grade, Product, ProductFile } from '@designing-minds/cms/types'
+import { resourceUnlockedByPlan } from '@designing-minds/cms/entitlements'
 import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { requireUser } from '../lib/auth.ts'
 import { createServiceClient } from '../lib/supabase.ts'
@@ -13,7 +14,7 @@ interface OrderRow {
   id: string
   customerId: string
   status: string
-  items: { productSlug: string }[]
+  items: { productSlug: string; grade?: Grade }[]
 }
 
 function isDownloadInput(value: unknown): value is DownloadInput {
@@ -29,16 +30,7 @@ const findFile = (products: Product[], fileId: string): ProductFile | null => {
   return null
 }
 
-const includesByRules = (plan: Product, candidate: Product): boolean => {
-  if (candidate.productKind !== 'Individual Resource') return false
-  if (plan.includedProductSlugs?.includes(candidate.slug)) return true
-  if (plan.includedGrades?.length && !plan.includedGrades.includes(candidate.grade)) return false
-  if (plan.includedTerms?.length && !plan.includedTerms.includes(candidate.term)) return false
-  if (plan.includedSubjects?.length && !candidate.subjects.some((subject) => plan.includedSubjects?.includes(subject))) return false
-  return Boolean(plan.includedGrades?.length || plan.includedTerms?.length || plan.includedSubjects?.length)
-}
-
-const entitledProducts = (purchasedProducts: Product[], catalogue: Product[]): Product[] => {
+const entitledProducts = (purchasedProducts: Product[], catalogue: Product[], gradeBySlug: Map<string, Grade | undefined>): Product[] => {
   const bySlug = new Map(catalogue.map((product) => [product.slug, product]))
   const entitled = new Map<string, Product>()
 
@@ -51,8 +43,9 @@ const entitledProducts = (purchasedProducts: Product[], catalogue: Product[]): P
     }
 
     if (product.productKind === 'Bundle' || product.productKind === 'Access Plan') {
+      const grade = gradeBySlug.get(product.slug)
       for (const candidate of catalogue) {
-        if (includesByRules(product, candidate)) entitled.set(candidate.slug, candidate)
+        if (resourceUnlockedByPlan(product, candidate, grade)) entitled.set(candidate.slug, candidate)
       }
     }
   }
@@ -96,7 +89,8 @@ export const issueDownload: Handler = async (req) => {
       catalogue = (catalogueProducts ?? []) as Product[]
     }
 
-    const file = findFile(entitledProducts(purchased, catalogue), req.body.fileId)
+    const gradeBySlug = new Map(order.items.map((item) => [item.productSlug, item.grade]))
+    const file = findFile(entitledProducts(purchased, catalogue, gradeBySlug), req.body.fileId)
     if (!file) return unauthorized('This file is not available on your order.')
     if (!file.storageKey) throw new Error('Product file is missing a storage key.')
 

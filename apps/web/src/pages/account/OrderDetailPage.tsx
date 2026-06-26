@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { type CmsSnapshot, getOrderById, getProductBySlug, paymentForOrder, priceLabel } from '@designing-minds/cms'
+import { type CmsSnapshot, type OrderItem, getOrderById, getProductBySlug, paymentForOrder, priceLabel, resourceUnlockedByPlan } from '@designing-minds/cms'
 import { Icon } from '../../components/ui/Icon'
 import { Button } from '../../components/ui/Button'
 import { StatePanel } from '../../components/ui/StatePanel'
@@ -10,23 +10,11 @@ import { supabase } from '../../lib/supabase'
 import { AccountShell, SignedOut } from './AccountShell'
 import { OrderStatusBadge } from './OrderStatusBadge'
 
-const includesByRules = (
-  product: NonNullable<ReturnType<typeof getProductBySlug>>,
-  candidate: NonNullable<ReturnType<typeof getProductBySlug>>,
-) => {
-  if (candidate.productKind !== 'Individual Resource') return false
-  if (product.includedProductSlugs?.includes(candidate.slug)) return true
-  if (product.includedGrades?.length && !product.includedGrades.includes(candidate.grade)) return false
-  if (product.includedTerms?.length && !product.includedTerms.includes(candidate.term)) return false
-  if (product.includedSubjects?.length && !candidate.subjects.some((subject) => product.includedSubjects?.includes(subject))) return false
-  return Boolean(product.includedGrades?.length || product.includedTerms?.length || product.includedSubjects?.length)
-}
-
-const downloadProductsForItem = (snapshot: CmsSnapshot, productSlug: string) => {
-  const product = getProductBySlug(snapshot, productSlug)
+const downloadProductsForItem = (snapshot: CmsSnapshot, item: OrderItem) => {
+  const product = getProductBySlug(snapshot, item.productSlug)
   if (!product) return []
   if (product.productKind === 'Individual Resource') return [product]
-  return snapshot.products.filter((candidate) => includesByRules(product, candidate))
+  return snapshot.products.filter((candidate) => resourceUnlockedByPlan(product, candidate, item.grade))
 }
 
 export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot; onRefresh: () => Promise<void> }) {
@@ -137,7 +125,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
           ) : null}
           <ul className="grid gap-4">
             {order.items.map((item) => {
-              const products = downloadProductsForItem(snapshot, item.productSlug)
+              const products = downloadProductsForItem(snapshot, item)
               const files = products.flatMap((product) => product.purchasedFiles.map((file) => ({ ...file, productTitle: product.title })))
               return (
                 <li key={item.id} className="border border-line bg-surface p-5">
