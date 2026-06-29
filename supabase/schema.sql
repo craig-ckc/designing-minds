@@ -212,7 +212,11 @@ on conflict (key) do nothing;
 -- Operational records
 -- =========================================================================
 
-create table if not exists public.customers (
+-- Account profile for every authenticated person, Customer or Administrator,
+-- keyed by auth.users.id. The role lives in user_roles, not here; this table is
+-- named for the account, not the Customer role (ADR 0006). Order/cart ownership
+-- columns stay "customerId" because only the Customer role owns those rows.
+create table if not exists public.users (
   id uuid primary key references auth.users (id) on delete cascade,
   name text not null,
   email text not null unique,
@@ -222,7 +226,7 @@ create table if not exists public.customers (
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   reference text not null unique,
-  "customerId" uuid not null references public.customers (id) on delete cascade,
+  "customerId" uuid not null references public.users (id) on delete cascade,
   "customerName" text not null,
   "customerEmail" text not null,
   status text not null check (status in ('pending', 'paid', 'fulfilled', 'refunded', 'failed')),
@@ -246,7 +250,7 @@ create table if not exists public.payments (
 
 create table if not exists public.carts (
   id uuid primary key default gen_random_uuid(),
-  "customerId" uuid not null unique references public.customers (id) on delete cascade,
+  "customerId" uuid not null unique references public.users (id) on delete cascade,
   "createdAt" timestamptz not null default now(),
   "updatedAt" timestamptz not null default now()
 );
@@ -309,7 +313,7 @@ begin
     ''
   );
 
-  insert into public.customers (id, name, email)
+  insert into public.users (id, name, email)
   values (new.id, display_name, new.email)
   on conflict (id) do nothing;
 
@@ -406,7 +410,7 @@ alter table public.subjects enable row level security;
 alter table public.faqs enable row level security;
 alter table public.testimonials enable row level security;
 alter table public.value_lists enable row level security;
-alter table public.customers enable row level security;
+alter table public.users enable row level security;
 alter table public.orders enable row level security;
 alter table public.payments enable row level security;
 alter table public.carts enable row level security;
@@ -421,7 +425,7 @@ drop policy if exists "Public read products" on public.products;
 drop policy if exists "Public read subjects" on public.subjects;
 drop policy if exists "Public read faqs" on public.faqs;
 drop policy if exists "Public read testimonials" on public.testimonials;
-drop policy if exists "Customer reads self" on public.customers;
+drop policy if exists "Customer reads self" on public.users;
 drop policy if exists "Customer reads own orders" on public.orders;
 drop policy if exists "Customer reads own payments" on public.payments;
 
@@ -444,7 +448,7 @@ create policy "Admin write faqs" on public.faqs for all to authenticated using (
 create policy "Admin write testimonials" on public.testimonials for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- Operational records: customers read own; admins read all; writes are server-only.
-create policy "Customer reads self" on public.customers
+create policy "Customer reads self" on public.users
   for select to authenticated using (id = auth.uid() or public.is_admin());
 
 create policy "Customer reads own orders" on public.orders
