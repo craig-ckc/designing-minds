@@ -24,7 +24,9 @@ const TABLES = {
   subjects: 'subjects',
   faqs: 'faqs',
   testimonials: 'testimonials',
-  customers: 'customers',
+  // Account profiles live in the `users` table (renamed from `customers`, ADR 0006).
+  // The snapshot still exposes them under `customers` as the operational Customer list.
+  customers: 'users',
   orders: 'orders',
   payments: 'payments',
   valueLists: 'value_lists',

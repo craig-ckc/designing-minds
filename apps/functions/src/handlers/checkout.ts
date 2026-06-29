@@ -1,4 +1,4 @@
-import type { Grade, Product } from '@designing-minds/cms/types'
+import type { Product } from '@designing-minds/cms/types'
 import { badRequest, created, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { createServiceClient } from '../lib/supabase.ts'
 import { requireUser } from '../lib/auth.ts'
@@ -6,7 +6,7 @@ import { formatPayfastAmount, toCents } from '../lib/money.ts'
 import { buildPayfastProcess } from '../lib/payfast.ts'
 
 interface CheckoutInput {
-  items: { productSlug: string; grade?: string }[]
+  items: { productSlug: string }[]
 }
 
 interface CustomerRow {
@@ -20,9 +20,7 @@ function isCheckoutInput(value: unknown): value is CheckoutInput {
     typeof value === 'object' &&
     value !== null &&
     Array.isArray((value as CheckoutInput).items) &&
-    (value as CheckoutInput).items.every(
-      (item) => typeof item?.productSlug === 'string' && (item.grade === undefined || typeof item.grade === 'string'),
-    )
+    (value as CheckoutInput).items.every((item) => typeof item?.productSlug === 'string')
   )
 }
 
@@ -50,7 +48,7 @@ export const checkout: Handler = async (req) => {
     const supabase = createServiceClient()
     const slugs = [...new Set(req.body.items.map((item) => item.productSlug))]
     const { data: customer, error: customerError } = await supabase
-      .from('customers')
+      .from('users')
       .select('id,name,email')
       .eq('id', user.id)
       .single<CustomerRow>()
@@ -80,34 +78,16 @@ export const checkout: Handler = async (req) => {
     if (repurchased) return badRequest('Your account already owns one or more cart items.')
 
     const resolvedProducts = products as Product[]
-    // An Access Plan is sold "for a selected grade", so the buyer must choose a
-    // grade the plan is offered for. Other products grant their own fixed grade.
-    const gradeBySlug = new Map(req.body.items.map((item) => [item.productSlug, item.grade]))
-    const items: {
-      id: string
-      productSlug: string
-      title: string
-      productKind: Product['productKind']
-      priceZar: number
-      grade: Grade
-    }[] = []
-    for (const product of resolvedProducts) {
-      let grade = product.grade
-      if (product.productKind === 'Access Plan') {
-        const chosen = gradeBySlug.get(product.slug)
-        const eligible = (product.includedGrades ?? []) as string[]
-        if (!chosen || !eligible.includes(chosen)) return badRequest(`Choose a grade for ${product.title}.`)
-        grade = chosen as Grade
-      }
-      items.push({
-        id: crypto.randomUUID(),
-        productSlug: product.slug,
-        title: product.title,
-        productKind: product.productKind,
-        priceZar: Number(product.priceZar),
-        grade,
-      })
-    }
+    // Every product — including Access Plans — carries its own fixed grade now,
+    // so the order line records product.grade directly (see ADR 0005).
+    const items = resolvedProducts.map((product) => ({
+      id: crypto.randomUUID(),
+      productSlug: product.slug,
+      title: product.title,
+      productKind: product.productKind,
+      priceZar: Number(product.priceZar),
+      grade: product.grade,
+    }))
     const totalCents = items.reduce((sum, item) => sum + toCents(item.priceZar), 0)
     if (totalCents <= 0) return badRequest('Order total must be greater than zero.')
 

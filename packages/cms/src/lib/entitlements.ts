@@ -1,41 +1,34 @@
-import type { Grade, Product } from '../types'
+import type { Product } from '../types'
 
 /**
  * Whether the Individual Resource `candidate` is unlocked by owning the
- * Bundle / Access Plan `plan`, scoped to a single `grade`.
+ * Bundle / Access Plan `plan`.
  *
- * `grade` is the grade the purchase is for — the grade chosen at checkout for an
- * Access Plan, or a Bundle's own grade. Scoping by it stops a grant from
- * spilling across every grade in the catalogue (the reason order downloads were
- * surfacing unrelated resources). When absent — legacy orders placed before the
- * grade was captured — it falls back to the plan's eligible `includedGrades`,
- * and finally to the plan's own grade.
+ * Grade and term are fixed Fields on the plan itself: each Access Plan is one
+ * grade — Essential covers one term, Premium covers all terms — and a Bundle is
+ * one grade. So the grant is scoped by `plan.grade` (and, for Essential,
+ * `plan.includedTerms`). Grade is never chosen at checkout (see ADR 0005), so
+ * this function takes no grade argument.
  *
  * This is the single source of truth for download entitlements: the account UI
  * (which files to show) and the issue-download function (which files to
  * authorise) both call it, so they can never disagree. Keep it pure — no I/O.
  */
-export const resourceUnlockedByPlan = (plan: Product, candidate: Product, grade?: Grade | null): boolean => {
+export const resourceUnlockedByPlan = (plan: Product, candidate: Product): boolean => {
   if (candidate.productKind !== 'Individual Resource') return false
 
-  // Explicitly listed resources are always granted, regardless of grade.
+  // Explicitly listed resources are always granted, regardless of grade/term.
   if (plan.includedProductSlugs?.includes(candidate.slug)) return true
 
   // Rule-based grant. A plan that only carries an explicit list (no
-  // subject/term/grade rules) grants nothing further here.
-  const hasRules = Boolean(plan.includedSubjects?.length || plan.includedTerms?.length || plan.includedGrades?.length)
+  // subject/term rules) grants nothing further here.
+  const hasRules = Boolean(plan.includedSubjects?.length || plan.includedTerms?.length)
   if (!hasRules) return false
 
-  // Pin the grant to one grade. Prefer the purchase's grade; else the plan's
-  // eligible grades; else the plan's own grade (Bundles are single-grade and
-  // typically omit includedGrades).
-  const scopeGrade = grade ?? (plan.includedGrades?.length ? null : plan.grade)
-  if (scopeGrade) {
-    if (candidate.grade !== scopeGrade) return false
-  } else if (plan.includedGrades?.length && !plan.includedGrades.includes(candidate.grade)) {
-    return false
-  }
+  // Plans and Bundles are single-grade; scope the grant to the plan's own grade.
+  if (candidate.grade !== plan.grade) return false
 
+  // Essential carries one term; Premium leaves includedTerms empty to grant every term.
   if (plan.includedTerms?.length && !plan.includedTerms.includes(candidate.term)) return false
   if (plan.includedSubjects?.length && !candidate.subjects.some((subject) => plan.includedSubjects?.includes(subject))) return false
 

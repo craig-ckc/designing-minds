@@ -30,7 +30,7 @@ const findFile = (products: Product[], fileId: string): ProductFile | null => {
   return null
 }
 
-const entitledProducts = (purchasedProducts: Product[], catalogue: Product[], gradeBySlug: Map<string, Grade | undefined>): Product[] => {
+const entitledProducts = (purchasedProducts: Product[], catalogue: Product[]): Product[] => {
   const bySlug = new Map(catalogue.map((product) => [product.slug, product]))
   const entitled = new Map<string, Product>()
 
@@ -43,9 +43,8 @@ const entitledProducts = (purchasedProducts: Product[], catalogue: Product[], gr
     }
 
     if (product.productKind === 'Bundle' || product.productKind === 'Access Plan') {
-      const grade = gradeBySlug.get(product.slug)
       for (const candidate of catalogue) {
-        if (resourceUnlockedByPlan(product, candidate, grade)) entitled.set(candidate.slug, candidate)
+        if (resourceUnlockedByPlan(product, candidate)) entitled.set(candidate.slug, candidate)
       }
     }
   }
@@ -89,8 +88,7 @@ export const issueDownload: Handler = async (req) => {
       catalogue = (catalogueProducts ?? []) as Product[]
     }
 
-    const gradeBySlug = new Map(order.items.map((item) => [item.productSlug, item.grade]))
-    const file = findFile(entitledProducts(purchased, catalogue, gradeBySlug), req.body.fileId)
+    const file = findFile(entitledProducts(purchased, catalogue), req.body.fileId)
     if (!file) return unauthorized('This file is not available on your order.')
     if (!file.storageKey) throw new Error('Product file is missing a storage key.')
 

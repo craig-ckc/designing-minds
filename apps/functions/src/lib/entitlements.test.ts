@@ -28,21 +28,40 @@ const resource = (slug: string, grade: Grade, term: Term, subjects: string[] = [
   product({ slug, productKind: 'Individual Resource' as ProductKind, grade, term, subjects })
 
 describe('resourceUnlockedByPlan', () => {
-  it('scopes an Access Plan to the grade chosen at checkout', () => {
+  it('scopes an Essential Access plan to its own grade and term', () => {
     const plan = product({
-      slug: 'essential-access',
+      slug: 'essential-access-grade-5-term-1',
       productKind: 'Access Plan',
-      includedGrades: ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'],
+      grade: 'Grade 5',
+      accessPeriod: 'Term',
       includedSubjects: ['mathematics'],
+      includedTerms: ['Term 1'],
     })
-    expect(resourceUnlockedByPlan(plan, resource('g5-math', 'Grade 5', 'Term 1'), 'Grade 5')).toBe(true)
-    // A different grade in the plan's eligibility must NOT leak in once a grade is chosen.
-    expect(resourceUnlockedByPlan(plan, resource('g7-math', 'Grade 7', 'Term 1'), 'Grade 5')).toBe(false)
-    // A subject outside the plan is excluded even at the right grade.
-    expect(resourceUnlockedByPlan(plan, resource('g5-art', 'Grade 5', 'Term 1', ['art']), 'Grade 5')).toBe(false)
+    expect(resourceUnlockedByPlan(plan, resource('g5-math-t1', 'Grade 5', 'Term 1'))).toBe(true)
+    // A different grade must NOT leak in.
+    expect(resourceUnlockedByPlan(plan, resource('g7-math-t1', 'Grade 7', 'Term 1'))).toBe(false)
+    // A different term must NOT leak in — Essential covers one term.
+    expect(resourceUnlockedByPlan(plan, resource('g5-math-t2', 'Grade 5', 'Term 2'))).toBe(false)
+    // A subject outside the plan is excluded even at the right grade and term.
+    expect(resourceUnlockedByPlan(plan, resource('g5-art-t1', 'Grade 5', 'Term 1', ['art']))).toBe(false)
   })
 
-  it('falls back to a Bundle’s own grade when no grade is captured', () => {
+  it('grants every term for a Premium Access plan (no term filter)', () => {
+    const plan = product({
+      slug: 'premium-access-grade-4',
+      productKind: 'Access Plan',
+      grade: 'Grade 4',
+      accessPeriod: 'Year',
+      includedSubjects: ['mathematics'],
+      // includedTerms omitted → all terms for the grade
+    })
+    expect(resourceUnlockedByPlan(plan, resource('g4-t1', 'Grade 4', 'Term 1'))).toBe(true)
+    expect(resourceUnlockedByPlan(plan, resource('g4-t4', 'Grade 4', 'Term 4'))).toBe(true)
+    expect(resourceUnlockedByPlan(plan, resource('g4-any', 'Grade 4', 'Any Term' as Term))).toBe(true)
+    expect(resourceUnlockedByPlan(plan, resource('g7-t1', 'Grade 7', 'Term 1'))).toBe(false)
+  })
+
+  it('scopes a Bundle to its own grade and term', () => {
     const bundle = product({
       slug: 'g7-term1-bundle',
       productKind: 'Bundle',
@@ -55,17 +74,6 @@ describe('resourceUnlockedByPlan', () => {
     expect(resourceUnlockedByPlan(bundle, resource('g7-math-t2', 'Grade 7', 'Term 2'))).toBe(false)
   })
 
-  it('falls back to eligible grades for a legacy Access Plan order with no grade', () => {
-    const plan = product({
-      slug: 'essential-access',
-      productKind: 'Access Plan',
-      includedGrades: ['Grade 3', 'Grade 4'],
-      includedSubjects: ['mathematics'],
-    })
-    expect(resourceUnlockedByPlan(plan, resource('g4', 'Grade 4', 'Term 1'))).toBe(true)
-    expect(resourceUnlockedByPlan(plan, resource('g7', 'Grade 7', 'Term 1'))).toBe(false)
-  })
-
   it('always grants explicitly listed resources and nothing else for a list-only plan', () => {
     const plan = product({
       slug: 'curated-bundle',
@@ -73,14 +81,14 @@ describe('resourceUnlockedByPlan', () => {
       grade: 'Grade 4',
       includedProductSlugs: ['picked'],
     })
-    expect(resourceUnlockedByPlan(plan, resource('picked', 'Grade 7', 'Term 3'), 'Grade 4')).toBe(true)
+    expect(resourceUnlockedByPlan(plan, resource('picked', 'Grade 7', 'Term 3'))).toBe(true)
     // Same grade, but not on the list and the plan defines no rules → not granted.
-    expect(resourceUnlockedByPlan(plan, resource('other', 'Grade 4', 'Term 1'), 'Grade 4')).toBe(false)
+    expect(resourceUnlockedByPlan(plan, resource('other', 'Grade 4', 'Term 1'))).toBe(false)
   })
 
   it('never unlocks non-resources or composites', () => {
-    const plan = product({ slug: 'plan', productKind: 'Access Plan', includedSubjects: ['mathematics'] })
+    const plan = product({ slug: 'plan', productKind: 'Access Plan', grade: 'Grade 4', includedSubjects: ['mathematics'] })
     const otherBundle = product({ slug: 'b', productKind: 'Bundle', grade: 'Grade 4' })
-    expect(resourceUnlockedByPlan(plan, otherBundle, 'Grade 4')).toBe(false)
+    expect(resourceUnlockedByPlan(plan, otherBundle)).toBe(false)
   })
 })
