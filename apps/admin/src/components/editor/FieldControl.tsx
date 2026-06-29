@@ -1,0 +1,229 @@
+import { type ReactNode } from 'react'
+import { cn } from '@designing-minds/utils'
+import type { ProductFile } from '@designing-minds/cms'
+import type { AdminField, AdminRecord, FieldContext, ReferenceField, SelectField } from '../../cms/types'
+import { getPath } from '../../cms/record'
+import { FIELD } from '../tokens'
+import { Icon } from '../ui'
+import { Button, Checkbox, Input, Select, Textarea, type SelectOption } from '../primitives'
+
+type Props = {
+  field: AdminField
+  record: AdminRecord
+  ctx: FieldContext
+  onUpdate: (key: string, value: unknown) => void
+  onUpload?: (file: File) => void
+  uploading?: boolean
+  uploadError?: string | null
+  disabled?: boolean
+}
+
+export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading, uploadError, disabled }: Props) {
+  const value = getPath(record, field.key)
+  const inputId = `${record.id}:${field.key}`
+
+  /* Boolean renders as an inline checkbox row (its own label). */
+  if (field.type === 'boolean') {
+    const checked = Boolean(value)
+    return (
+      <div className="flex items-center gap-2 text-[0.92rem]">
+        <Checkbox id={inputId} checked={checked} onCheckedChange={(next) => onUpdate(field.key, next)} disabled={disabled} />
+        <span
+          onClick={() => !disabled && onUpdate(field.key, !checked)}
+          className={cn('select-none', !disabled && 'cursor-pointer')}
+        >
+          {field.label}
+        </span>
+      </div>
+    )
+  }
+
+  return <FieldShell field={field} inputId={inputId}>{renderControl()}</FieldShell>
+
+  function renderControl(): ReactNode {
+    switch (field.type) {
+      case 'readonly': {
+        const text = value == null || value === '' ? '—' : String(value)
+        return <div className={cn(FIELD, 'min-h-[42px] whitespace-pre-line text-ink-soft')}>{text}</div>
+      }
+
+      case 'textarea':
+        return (
+          <Textarea id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
+        )
+
+      case 'number':
+        return (
+          <Input
+            id={inputId}
+            type="number"
+            value={value === null || value === undefined || value === '' ? '' : Number(value)}
+            disabled={disabled}
+            onChange={(e) => {
+              if (e.target.value === '') return onUpdate(field.key, field.nullable ? null : 0)
+              onUpdate(field.key, Number(e.target.value))
+            }}
+          />
+        )
+
+      case 'date':
+      case 'datetime':
+        return (
+          <Input
+            id={inputId}
+            type={field.type === 'date' ? 'date' : 'datetime-local'}
+            value={String(value ?? '')}
+            disabled={disabled}
+            onChange={(e) => onUpdate(field.key, e.target.value)}
+          />
+        )
+
+      case 'slug':
+        return (
+          <>
+            <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
+            {field.urlPrefix ? (
+              <div className="mt-2 flex items-center gap-2 rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.82rem] text-muted">
+                <span className="h-3.5 w-3.5 flex-none">
+                  <Icon name="external" />
+                </span>
+                {field.urlPrefix}
+                <strong className="font-medium text-ink">{String(value || 'your-slug')}</strong>
+              </div>
+            ) : null}
+          </>
+        )
+
+      case 'select':
+        return renderSelect(field)
+
+      case 'reference':
+        return renderReferenceSingle(field)
+
+      case 'multiReference':
+        return renderMultiReference(field)
+
+      case 'fileList':
+        return renderFileList()
+
+      default:
+        return <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
+    }
+  }
+
+  function renderSelect(select: SelectField): ReactNode {
+    const current = value == null ? '' : String(value)
+    const options: SelectOption[] = []
+    if (select.allowEmpty) {
+      options.push({ label: select.emptyLabel ?? 'Not specified', value: '' })
+    } else if (current === '') {
+      options.push({ label: 'Select…', value: '' })
+    }
+    options.push(...ctx.optionsForSelect(select))
+
+    return (
+      <Select
+        id={inputId}
+        value={current}
+        disabled={disabled}
+        options={options}
+        onValueChange={(next) => {
+          if (select.allowEmpty && next === '') return onUpdate(field.key, select.emptyValue ?? null)
+          onUpdate(field.key, next)
+        }}
+      />
+    )
+  }
+
+  function renderReferenceSingle(reference: ReferenceField): ReactNode {
+    const current = value == null ? '' : String(value)
+    const options: SelectOption[] = current === '' ? [{ label: 'Select…', value: '' }] : []
+    options.push(...ctx.optionsForReference(reference))
+    return <Select id={inputId} value={current} disabled={disabled} options={options} onValueChange={(next) => onUpdate(field.key, next)} />
+  }
+
+  function renderMultiReference(reference: ReferenceField): ReactNode {
+    const options = ctx.optionsForReference(reference)
+    const selected = Array.isArray(value) ? (value as string[]) : []
+    return (
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        {options.map((option) => {
+          const isOn = selected.includes(option.value)
+          const toggle = () =>
+            onUpdate(field.key, isOn ? selected.filter((v) => v !== option.value) : [...selected, option.value])
+          return (
+            <div key={option.value} className="flex items-center gap-2 text-[0.9rem] text-ink-soft">
+              <Checkbox checked={isOn} onCheckedChange={toggle} disabled={disabled} />
+              <span onClick={() => !disabled && toggle()} className={cn('select-none', !disabled && 'cursor-pointer')}>
+                {option.label}
+              </span>
+            </div>
+          )
+        })}
+        {options.length === 0 ? <span className="text-[0.85rem] text-muted">No options yet.</span> : null}
+      </div>
+    )
+  }
+
+  function renderFileList(): ReactNode {
+    const files = Array.isArray(value) ? (value as ProductFile[]) : []
+    return (
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[0.82rem] text-muted">
+            {files.length} file{files.length === 1 ? '' : 's'}
+          </span>
+          {!disabled ? (
+            <label className="cursor-pointer text-[0.85rem] underline underline-offset-4">
+              {uploading ? 'Uploading…' : 'Upload'}
+              <input
+                className="sr-only"
+                type="file"
+                disabled={uploading}
+                onChange={(e) => e.target.files?.[0] && onUpload?.(e.target.files[0])}
+              />
+            </label>
+          ) : null}
+        </div>
+        {uploadError ? <p className="text-[0.82rem] text-red-600">{uploadError}</p> : null}
+        {files.length === 0 ? (
+          <p className="text-[0.85rem] text-muted">No files attached.</p>
+        ) : (
+          <ul className="grid gap-1.5">
+            {files.map((file) => (
+              <li key={file.id} className="flex items-center justify-between gap-3 rounded-md border border-line px-3 py-2 text-[0.9rem]">
+                <span className="grid min-w-0 gap-0.5">
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 text-muted">
+                      <Icon name="doc" />
+                    </span>
+                    {file.label} · {file.filename}
+                  </span>
+                  <span className="truncate pl-6 text-[0.78rem] text-muted">{file.storageKey ?? 'No storage key yet'}</span>
+                </span>
+                {!disabled ? (
+                  <Button variant="text" onClick={() => onUpdate(field.key, files.filter((f) => f.id !== file.id))}>
+                    Remove
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    )
+  }
+}
+
+function FieldShell({ field, inputId, children }: { field: AdminField; inputId: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-2">
+      <label htmlFor={inputId} className="text-[0.92rem] font-medium">
+        {field.label}
+        {field.required ? <span className="text-muted"> *</span> : null}
+      </label>
+      {children}
+      {field.helpText ? <p className="text-[0.82rem] text-muted">{field.helpText}</p> : null}
+    </div>
+  )
+}

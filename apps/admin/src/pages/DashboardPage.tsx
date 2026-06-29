@@ -20,36 +20,6 @@ function StatCard({ icon, value, label, to }: { icon: IconName; value: string; l
   )
 }
 
-function countBy(snapshot: CmsSnapshot, key: 'grade' | 'productKind') {
-  const counts = new Map<string, number>()
-  for (const product of snapshot.products) {
-    const value = product[key]
-    counts.set(value, (counts.get(value) ?? 0) + 1)
-  }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])
-}
-
-function Breakdown({ title, rows, total }: { title: string; rows: [string, number][]; total: number }) {
-  return (
-    <div className={`p-5 ${CARD}`}>
-      <h4 className="mb-4">{title}</h4>
-      <ul className="grid gap-3">
-        {rows.map(([label, count]) => (
-          <li key={label} className="grid gap-1.5">
-            <div className="flex items-center justify-between text-[0.9rem]">
-              <span className="text-ink-soft">{label}</span>
-              <span className="text-muted">{count}</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-surface-sunk">
-              <span className="block h-full bg-ink" style={{ width: `${total ? (count / total) * 100 : 0}%` }} />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
 export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const revenue = snapshot.orders.reduce((sum, order) => sum + order.totalZar, 0)
   const recent = [...snapshot.orders].sort((a, b) => b.placedAt.localeCompare(a.placedAt)).slice(0, 5)
@@ -63,17 +33,6 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <StatCard icon="receipt" value={String(snapshot.stats.orderCount)} label="Orders" to="/orders" />
         <StatCard icon="users" value={String(snapshot.stats.customerCount)} label="Customers" to="/customers" />
         <StatCard icon="rand" value={formatCurrency(revenue)} label="Order value" to="/payments" />
-      </div>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <StatCard icon="spark" value={String(snapshot.stats.subjectCount)} label="Subjects" to="/subjects" />
-        <StatCard icon="box" value={String(snapshot.stats.bundleCount)} label="Bundles" to="/products" />
-        <StatCard icon="box" value={String(snapshot.stats.accessPlanCount)} label="Access plans" to="/products" />
-      </div>
-
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <Breakdown title="Products by grade" rows={countBy(snapshot, 'grade')} total={snapshot.products.length} />
-        <Breakdown title="Products by kind" rows={countBy(snapshot, 'productKind')} total={snapshot.products.length} />
       </div>
 
       <div className="mt-8">

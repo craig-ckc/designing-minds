@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useAdminAuth } from '../lib/auth'
-import { FIELD, SOLID_BTN } from '../components/tokens'
+import { Button, Input } from '../components/primitives'
 
 export function LoginPage() {
   const { signIn } = useAdminAuth()
@@ -32,15 +32,15 @@ export function LoginPage() {
         {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
         <label className="grid gap-1.5 text-[0.9rem]">
           Email
-          <input className={FIELD} type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required />
+          <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required />
         </label>
         <label className="grid gap-1.5 text-[0.9rem]">
           Password
-          <input className={FIELD} type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
+          <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
         </label>
-        <button type="submit" className={SOLID_BTN} disabled={submitting}>
+        <Button type="submit" variant="solid" size="md" disabled={submitting} className="h-[46px] w-full">
           {submitting ? 'Logging in…' : 'Log in'}
-        </button>
+        </Button>
       </form>
     </main>
   )
