@@ -76,7 +76,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
 function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClose: () => void; compact?: boolean }) {
   return (
     <Link
-      to={`/packages?tab=plans&plan=${tier.tier}`}
+      to={`/packages?plan=${tier.tier}`}
       onClick={onClose}
       className={`group flex flex-col gap-2 rounded-[10px] border p-5 transition hover:border-ink ${
         tier.featured ? 'border-ink' : 'border-line'

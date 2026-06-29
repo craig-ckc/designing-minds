@@ -1,61 +1,75 @@
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Tabs } from '@base-ui/react/tabs'
-import { ALL, type CmsSnapshot, type Product, accessPlanProducts, bundleProducts } from '@designing-minds/cms'
+import { ALL, type CmsSnapshot, type Product, publishedProducts } from '@designing-minds/cms'
 import { Container } from '../components/ui/Container'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
-import { PageHeader } from '../components/ui/Headings'
+import { Field } from '../components/ui/Field'
 import { Select } from '../components/ui/Select'
+import { Button } from '../components/ui/Button'
 import { ProductCard } from '../components/ProductCard'
+import { PageHeader } from '../components/ui/Headings'
 
-function Grid({ products, empty }: { products: Product[]; empty: string }) {
-  if (products.length === 0) {
-    return (
-      <div className="card p-7 text-center">
-        <p className="text-muted">{empty}</p>
-      </div>
-    )
+// The single "Offer" dimension that replaces the old tabs/segmented toggle, so
+// Packages filters read the same way as the Shop's "Type" select.
+const OFFERS = ['Term bundles', 'Full-year bundles', 'Essential access', 'Premium access'] as const
+
+const matchesOffer = (product: Product, offer: string) => {
+  switch (offer) {
+    case 'Term bundles':
+      return product.productKind === 'Bundle' && product.bundleScope === 'Term'
+    case 'Full-year bundles':
+      return product.productKind === 'Bundle' && product.bundleScope === 'Full Year'
+    case 'Essential access':
+      return product.productKind === 'Access Plan' && product.accessPeriod === 'Term'
+    case 'Premium access':
+      return product.productKind === 'Access Plan' && product.accessPeriod === 'Year'
+    default:
+      return true
   }
-  return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
-  )
 }
 
-const tabCls = 'relative z-10 px-4 py-2.5 text-[0.95rem] font-medium text-muted data-[selected]:text-ink'
-
-type Tier = 'essential' | 'premium'
-
 export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
-  const [searchParams] = useSearchParams()
-  const bundles = useMemo(() => bundleProducts(snapshot), [snapshot])
-  const termBundles = bundles.filter((b) => b.bundleScope === 'Term')
-  const yearBundles = bundles.filter((b) => b.bundleScope === 'Full Year')
-  const plans = useMemo(() => accessPlanProducts(snapshot), [snapshot])
-
-  // Arrive pre-filtered when a homepage/nav tier link sets the query params.
-  const planParam = searchParams.get('plan')
-  const defaultTab = searchParams.get('tab') === 'plans' || planParam ? 'plans' : 'term'
-  const [tier, setTier] = useState<Tier>(planParam === 'premium' ? 'premium' : 'essential')
-  const [grade, setGrade] = useState<string>(searchParams.get('grade') ?? ALL)
-  const [term, setTerm] = useState<string>(searchParams.get('term') ?? ALL)
-
-  // Essential is one grade + one term; Premium is one grade across all terms.
-  const period = tier === 'premium' ? 'Year' : 'Term'
-  const filteredPlans = plans.filter(
-    (p) =>
-      p.accessPeriod === period &&
-      (grade === ALL || p.grade === grade) &&
-      (tier === 'premium' || term === ALL || p.term === term),
+  const [searchParams, setSearchParams] = useSearchParams()
+  const packages = useMemo(
+    () => publishedProducts(snapshot).filter((p) => p.productKind === 'Bundle' || p.productKind === 'Access Plan'),
+    [snapshot],
   )
 
-  const gradeOptions = [ALL, ...snapshot.valueLists.grades]
-  // The runtime terms value list can include 'Any Term' (used by Premium and some
-  // resources); Essential filters to concrete terms only.
-  const termOptions = [ALL, ...snapshot.valueLists.terms.filter((t) => (t as string) !== 'Any Term')]
+  // Deep-links from the homepage/nav tiers (?plan=essential|premium) pre-select the Offer.
+  const planParam = searchParams.get('plan')
+  const initialOffer = planParam === 'premium' ? 'Premium access' : planParam === 'essential' ? 'Essential access' : ALL
+
+  const [offer, setOffer] = useState<string>(initialOffer)
+  const [grade, setGrade] = useState<string>(searchParams.get('grade') ?? ALL)
+  const [term, setTerm] = useState<string>(ALL)
+  const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
+
+  const visible = packages.filter((product) => {
+    if (!matchesOffer(product, offer)) return false
+    if (grade !== ALL && product.grade !== grade) return false
+    if (term !== ALL && product.term !== term) return false
+    const q = deferredQuery.trim().toLowerCase()
+    if (q && !`${product.title} ${product.shortDescription}`.toLowerCase().includes(q)) return false
+    return true
+  })
+
+  // Mirror the Shop: persist only the entry-relevant params (grade + plan tier).
+  const sync = (nextOffer: string, nextGrade: string) => {
+    const params = new URLSearchParams()
+    if (nextGrade !== ALL) params.set('grade', nextGrade)
+    if (nextOffer === 'Essential access') params.set('plan', 'essential')
+    else if (nextOffer === 'Premium access') params.set('plan', 'premium')
+    setSearchParams(params, { replace: true })
+  }
+
+  const reset = () => {
+    setOffer(ALL)
+    setGrade(ALL)
+    setTerm(ALL)
+    setQuery('')
+    setSearchParams(new URLSearchParams(), { replace: true })
+  }
 
   return (
     <>
@@ -69,54 +83,67 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
       </PageHeader>
 
+      <div className="sticky top-[72px] z-20 border-b border-line bg-white/95 backdrop-blur">
+        <Container className="flex flex-wrap items-end gap-3 py-4">
+          <div className="min-w-[200px] flex-1">
+            <Field label="Search">
+              <input
+                className="field"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="e.g. Grade 5 premium"
+              />
+            </Field>
+          </div>
+          <div className="min-w-[180px]">
+            <Select
+              label="Offer"
+              value={offer}
+              options={[ALL, ...OFFERS]}
+              onChange={(v) => {
+                setOffer(v)
+                sync(v, grade)
+              }}
+            />
+          </div>
+          <div className="min-w-[150px]">
+            <Select
+              label="Grade"
+              value={grade}
+              options={[ALL, ...snapshot.valueLists.grades]}
+              onChange={(v) => {
+                setGrade(v)
+                sync(offer, v)
+              }}
+            />
+          </div>
+          <div className="min-w-[140px]">
+            <Select label="Term" value={term} options={[ALL, ...snapshot.valueLists.terms]} onChange={setTerm} />
+          </div>
+          <Button type="button" variant="soft" onClick={reset} className="ml-auto">
+            Reset filters
+          </Button>
+        </Container>
+      </div>
+
       <section className="section">
         <Container>
-          <Tabs.Root defaultValue={defaultTab}>
-            <Tabs.List className="relative mb-9 inline-flex gap-1 rounded-md border border-line bg-surface-alt p-1">
-              <Tabs.Tab value="term" className={tabCls}>
-                Term bundles
-              </Tabs.Tab>
-              <Tabs.Tab value="year" className={tabCls}>
-                Full-year bundles
-              </Tabs.Tab>
-              <Tabs.Tab value="plans" className={tabCls}>
-                Access plans
-              </Tabs.Tab>
-              <Tabs.Indicator className="absolute left-0 top-1 z-0 h-[calc(100%-0.5rem)] w-[var(--active-tab-width)] translate-x-[var(--active-tab-left)] rounded bg-surface shadow-sm transition-all" />
-            </Tabs.List>
-
-            <Tabs.Panel value="term">
-              <Grid products={termBundles} empty="No term bundles are published yet." />
-            </Tabs.Panel>
-            <Tabs.Panel value="year">
-              <Grid products={yearBundles} empty="No full-year bundles are published yet." />
-            </Tabs.Panel>
-            <Tabs.Panel value="plans">
-              <div className="mb-7 grid gap-4">
-                <div className="inline-flex w-fit gap-1 rounded-md border border-line bg-surface-alt p-1">
-                  {(['essential', 'premium'] as Tier[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setTier(t)}
-                      className={`rounded px-4 py-2 text-[0.92rem] font-medium capitalize transition ${
-                        tier === t ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-ink'
-                      }`}
-                    >
-                      {t} access
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Select label="Grade" value={grade} options={gradeOptions} onChange={setGrade} />
-                  {tier === 'essential' ? (
-                    <Select label="Term" value={term} options={termOptions} onChange={setTerm} />
-                  ) : null}
-                </div>
-              </div>
-              <Grid products={filteredPlans} empty="No access plans match these filters yet." />
-            </Tabs.Panel>
-          </Tabs.Root>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <h4>{visible.length} results</h4>
+            <span className="text-muted">Sorted by catalogue order</span>
+          </div>
+          {visible.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {visible.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="card p-7 text-center">
+              <h4>No matching packages</h4>
+              <p className="mt-2 text-muted">Try clearing a filter or choosing a different grade.</p>
+            </div>
+          )}
         </Container>
       </section>
     </>

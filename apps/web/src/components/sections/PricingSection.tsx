@@ -89,7 +89,7 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
                     </li>
                   ))}
                 </ul>
-                <Button to={`/packages?tab=plans&plan=${tier.tier}`} variant={tier.featured ? 'solid' : 'outline'} className="w-full">
+                <Button to={`/packages?plan=${tier.tier}`} variant={tier.featured ? 'solid' : 'outline'} className="w-full">
                   {content.cta}
                 </Button>
               </article>
