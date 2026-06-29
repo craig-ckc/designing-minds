@@ -1,14 +1,55 @@
-import { StatePanel } from '../components/ui/StatePanel'
+import { Link } from 'react-router-dom'
+import { Container } from '../components/ui/Container'
+import { Eyebrow } from '../components/ui/Eyebrow'
+import { Icon } from '../components/ui/Icon'
 import { Button } from '../components/ui/Button'
+
+// Shown for any route React Router can't match. On Vercel this only renders
+// once the SPA fallback rewrite serves index.html for the deep link (see
+// apps/web/vercel.json); without that rewrite the CDN 404s before React loads.
+const SUGGESTIONS = [
+  { to: '/shop', label: 'All resources', sub: 'Browse the full CAPS-aligned catalogue' },
+  { to: '/packages', label: 'Bundles & access plans', sub: 'Save with a term or full-year plan' },
+  { to: '/grades', label: 'Browse by grade', sub: 'Grades 3 to 7' },
+  { to: '/help', label: 'Help & FAQs', sub: 'Answers to common questions' },
+]
 
 export function NotFoundPage() {
   return (
-    <StatePanel eyebrow="404" title="Page not found" body="This route doesn’t match anything in the catalogue.">
-      <div className="mt-2 flex justify-center">
-        <Button to="/" variant="text">
-          Back to home
-        </Button>
-      </div>
-    </StatePanel>
+    <section className="section">
+      <Container>
+        <div className="mx-auto max-w-[640px] text-center">
+          <Eyebrow>404</Eyebrow>
+          <h1 className="mt-3">Page not found</h1>
+          <p className="mt-4 lead">
+            The page you’re looking for doesn’t exist or may have moved. Check the address, or pick up from one of these
+            instead.
+          </p>
+          <div className="mt-7 flex justify-center">
+            <Button to="/" variant="solid">
+              Back to home
+            </Button>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-12 grid max-w-[760px] grid-cols-1 gap-4 sm:grid-cols-2">
+          {SUGGESTIONS.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="group flex items-center justify-between gap-3 rounded-[10px] border border-line p-5 transition hover:border-ink"
+            >
+              <span>
+                <span className="block font-medium text-ink">{item.label}</span>
+                <span className="block text-[0.88rem] text-muted">{item.sub}</span>
+              </span>
+              <span className="h-4 w-4 flex-none text-muted transition group-hover:text-ink">
+                <Icon name="arrow" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </Container>
+    </section>
   )
 }
