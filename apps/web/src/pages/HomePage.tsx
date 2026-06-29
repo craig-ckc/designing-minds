@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { type CmsSnapshot, accessPlanProducts } from '@designing-minds/cms'
+import { type CmsSnapshot, accessPlanTiers } from '@designing-minds/cms'
 import { GRADE_BLURB, PROOF_POINTS, WHY_FEATURES, gradeToSlug } from '../content/site'
 import { getFeatured } from '../lib/products'
 import { Container } from '../components/ui/Container'
@@ -46,7 +46,7 @@ function HomeHero() {
                 <Icon name="arrow" />
               </span>
             </Button>
-            <Button to="/bundles" variant="outline">
+            <Button to="/packages" variant="outline">
               See bundles &amp; plans
             </Button>
           </div>
@@ -124,7 +124,7 @@ function GradeFinderSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
 }
 
 function AccessPlansSection({ snapshot, loadError }: { snapshot: CmsSnapshot | null; loadError?: string | null }) {
-  if (snapshot) return <PricingSection plans={accessPlanProducts(snapshot)} />
+  if (snapshot) return <PricingSection tiers={accessPlanTiers(snapshot)} />
 
   return (
     <section className="section">
@@ -255,7 +255,7 @@ function BundleCtaSection() {
           title="Cover a whole term or the full year in one purchase"
           body="Bundles group a grade’s resources into one discounted, once-off purchase. Access plans unlock a term or year — no auto-renewal."
         >
-          <Button to="/bundles" variant="solid-light">
+          <Button to="/packages" variant="solid-light">
             Browse bundles &amp; plans
           </Button>
           <Button to="/about" variant="outline-light">

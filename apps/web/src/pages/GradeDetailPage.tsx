@@ -74,7 +74,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <h3>Cover {grade} in one purchase</h3>
             <p className="mt-1.5 text-muted">See term bundles, full-year bundles, and access plans.</p>
           </div>
-          <Link to="/bundles" className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4">
+          <Link to="/packages" className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4">
             Browse bundles &amp; plans
           </Link>
         </Container>

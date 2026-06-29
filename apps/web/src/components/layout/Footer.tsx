@@ -32,7 +32,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
               </Link>
             </li>
           ))}
-          <FooterLink to="/bundles">Bundles & plans</FooterLink>
+          <FooterLink to="/packages">Bundles & plans</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Company">

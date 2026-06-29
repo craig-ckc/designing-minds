@@ -65,6 +65,43 @@ export const bundleProducts = (snapshot: CmsSnapshot) =>
 export const accessPlanProducts = (snapshot: CmsSnapshot) =>
   publishedProducts(snapshot).filter((p) => p.productKind === 'Access Plan')
 
+export type AccessPlanTierKey = 'essential' | 'premium'
+
+export interface AccessPlanTier {
+  tier: AccessPlanTierKey
+  title: string
+  period: 'Term' | 'Year'
+  fromPriceZar: number
+  gradeCount: number
+  featured: boolean
+}
+
+/**
+ * Collapse the per-grade (and per-term) Access Plan products into the two
+ * marketed tiers for homepage/nav entry points. Each Access Plan is one grade
+ * now (ADR 0005), so a single "Essential" or "Premium" card can't be one
+ * product — it summarises its tier and deep-links to /packages filtered by it.
+ */
+export const accessPlanTiers = (snapshot: CmsSnapshot): AccessPlanTier[] => {
+  const plans = accessPlanProducts(snapshot)
+  const tiers: AccessPlanTier[] = []
+  const add = (tier: AccessPlanTierKey, period: 'Term' | 'Year', title: string) => {
+    const subset = plans.filter((p) => p.accessPeriod === period)
+    if (subset.length === 0) return
+    tiers.push({
+      tier,
+      title,
+      period,
+      fromPriceZar: Math.min(...subset.map((p) => p.priceZar)),
+      gradeCount: new Set(subset.map((p) => p.grade)).size,
+      featured: tier === 'premium',
+    })
+  }
+  add('essential', 'Term', 'Essential Access')
+  add('premium', 'Year', 'Premium Access')
+  return tiers
+}
+
 export const productsForGrade = (snapshot: CmsSnapshot, grade: string) =>
   publishedProducts(snapshot).filter((p) => p.grade === grade)
 

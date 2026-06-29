@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from './repository'
 import { useAuth } from './lib/auth'
@@ -10,7 +10,7 @@ import { HomePage } from './pages/HomePage'
 import { ShopPage } from './pages/ShopPage'
 import { GradesPage } from './pages/GradesPage'
 import { GradeDetailPage } from './pages/GradeDetailPage'
-import { BundlesPage } from './pages/BundlesPage'
+import { PackagesPage } from './pages/PackagesPage'
 import { ProductPage } from './pages/ProductPage'
 import { HelpPage } from './pages/HelpPage'
 import { ContactPage } from './pages/ContactPage'
@@ -80,7 +80,9 @@ function App() {
         path="/grades/:gradeSlug"
         element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <GradeDetailPage snapshot={ready} />}</SnapshotGate>}
       />
-      <Route path="/bundles" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <BundlesPage snapshot={ready} />}</SnapshotGate>} />
+      <Route path="/packages" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <PackagesPage snapshot={ready} />}</SnapshotGate>} />
+      {/* /bundles renamed to /packages (covers Bundles + Access Plans). Keep a redirect for any stray links. */}
+      <Route path="/bundles" element={<Navigate to="/packages" replace />} />
 
       {/* Product */}
       <Route path="/product/:slug" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <ProductPage snapshot={ready} />}</SnapshotGate>} />

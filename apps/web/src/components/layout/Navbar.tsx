@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Dialog } from '@base-ui/react/dialog'
-import { accessPlanProducts, priceLabel, type CmsSnapshot, type Product } from '@designing-minds/cms'
+import { accessPlanTiers, priceLabel, type AccessPlanTier, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../ui/Container'
 import { Icon } from '../ui/Icon'
 import { initials, useAuth } from '../../lib/auth'
@@ -11,8 +11,6 @@ const navLinkCls = ({ isActive }: { isActive: boolean }) =>
   `rounded-md px-3 py-2 text-[0.95rem] hover:bg-surface-alt hover:text-ink ${
     isActive ? 'font-medium text-ink' : 'text-ink-soft'
   }`
-
-const periodLabel = (plan: Product) => (plan.accessPeriod === 'Year' ? 'Full year' : 'One term')
 
 function Logo({ onClick }: { onClick?: () => void }) {
   return (
@@ -73,29 +71,36 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-/** Access-plan card used in the mega menu (and reused in the mobile sheet). */
-function PlanCard({ plan, onClose, compact }: { plan: Product; onClose: () => void; compact?: boolean }) {
+/** Access-plan tier card used in the mega menu (and reused in the mobile sheet).
+ *  Each tier deep-links into /packages, where the buyer picks a grade (ADR 0005). */
+function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClose: () => void; compact?: boolean }) {
   return (
     <Link
-      to={`/product/${plan.slug}`}
+      to={`/packages?tab=plans&plan=${tier.tier}`}
       onClick={onClose}
       className={`group flex flex-col gap-2 rounded-[10px] border p-5 transition hover:border-ink ${
-        plan.featured ? 'border-ink' : 'border-line'
+        tier.featured ? 'border-ink' : 'border-line'
       } ${compact ? '' : 'h-full'}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-muted">{periodLabel(plan)}</span>
-        {plan.featured ? (
+        <span className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-muted">
+          {tier.period === 'Year' ? 'Full year' : 'One term'}
+        </span>
+        {tier.featured ? (
           <span className="rounded-full bg-ink px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.08em] text-white">
             Best value
           </span>
         ) : null}
       </div>
-      <span className="font-semibold text-ink">{plan.title}</span>
-      <span className="text-[1.3rem] font-semibold tracking-[-0.02em]">{priceLabel(plan.priceZar)}</span>
-      {compact ? null : <span className="text-[0.88rem] text-muted">{plan.shortDescription}</span>}
+      <span className="font-semibold text-ink">{tier.title}</span>
+      <span className="text-[1.3rem] font-semibold tracking-[-0.02em]">{priceLabel(tier.fromPriceZar)}</span>
+      {compact ? null : (
+        <span className="text-[0.88rem] text-muted">
+          Choose from {tier.gradeCount} grades{tier.period === 'Term' ? ', any term' : ''}.
+        </span>
+      )}
       <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-[0.88rem] font-medium underline underline-offset-4">
-        View {plan.accessPeriod === 'Year' ? 'yearly' : 'term'} access
+        Choose a grade
         <span className="h-3.5 w-3.5">
           <Icon name="arrow" />
         </span>
@@ -104,7 +109,7 @@ function PlanCard({ plan, onClose, compact }: { plan: Product; onClose: () => vo
   )
 }
 
-function ShopMega({ plans, onClose, panelRef }: { plans: Product[]; onClose: () => void; panelRef: RefObject<HTMLDivElement | null> }) {
+function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClose: () => void; panelRef: RefObject<HTMLDivElement | null> }) {
   return (
     <>
       {/* Visual dim only — outside clicks are handled by a document listener. */}
@@ -117,17 +122,17 @@ function ShopMega({ plans, onClose, panelRef }: { plans: Product[]; onClose: () 
             <ul className="grid gap-2.5">
               <MegaLink to="/shop" onClose={onClose} label="All resources" sub="The full catalogue" />
               <MegaLink to="/grades" onClose={onClose} label="Grades" sub="Browse Grades 3–7" />
-              <MegaLink to="/bundles" onClose={onClose} label="Bundles & access plans" sub="Save with bundles" />
+              <MegaLink to="/packages" onClose={onClose} label="Bundles & access plans" sub="Save with bundles" />
             </ul>
           </div>
 
-          {/* Access plan cards */}
+          {/* Access plan tiers */}
           <div>
             <h5 className="mb-4 text-[0.82rem] font-semibold uppercase tracking-[0.1em] text-muted">Access plans</h5>
-            {plans.length > 0 ? (
+            {tiers.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                {plans.map((plan) => (
-                  <PlanCard key={plan.id} plan={plan} onClose={onClose} />
+                {tiers.map((tier) => (
+                  <PlanTierCard key={tier.tier} tier={tier} onClose={onClose} />
                 ))}
               </div>
             ) : (
@@ -158,7 +163,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const cartCount = useCartSlugs().length
-  const plans = snapshot ? accessPlanProducts(snapshot) : []
+  const tiers = snapshot ? accessPlanTiers(snapshot) : []
   const closeMega = () => setMegaOpen(false)
   const closeMobile = () => setMobileOpen(false)
 
@@ -255,16 +260,16 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
                 <Link to="/grades" onClick={closeMobile} className="py-1.5 text-ink-soft">
                   Grades
                 </Link>
-                <Link to="/bundles" onClick={closeMobile} className="py-1.5 text-ink-soft">
+                <Link to="/packages" onClick={closeMobile} className="py-1.5 text-ink-soft">
                   Bundles &amp; access plans
                 </Link>
 
-                {plans.length > 0 ? (
+                {tiers.length > 0 ? (
                   <>
                     <p className="mt-3 text-[0.82rem] font-semibold uppercase tracking-[0.1em] text-muted">Access plans</p>
                     <div className="grid gap-3">
-                      {plans.map((plan) => (
-                        <PlanCard key={plan.id} plan={plan} onClose={closeMobile} compact />
+                      {tiers.map((tier) => (
+                        <PlanTierCard key={tier.tier} tier={tier} onClose={closeMobile} compact />
                       ))}
                     </div>
                   </>
@@ -292,7 +297,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
         </div>
       </Container>
 
-      {megaOpen ? <ShopMega plans={plans} onClose={closeMega} panelRef={panelRef} /> : null}
+      {megaOpen ? <ShopMega tiers={tiers} onClose={closeMega} panelRef={panelRef} /> : null}
     </header>
   )
 }

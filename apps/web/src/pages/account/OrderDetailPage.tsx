@@ -14,7 +14,7 @@ const downloadProductsForItem = (snapshot: CmsSnapshot, item: OrderItem) => {
   const product = getProductBySlug(snapshot, item.productSlug)
   if (!product) return []
   if (product.productKind === 'Individual Resource') return [product]
-  return snapshot.products.filter((candidate) => resourceUnlockedByPlan(product, candidate, item.grade))
+  return snapshot.products.filter((candidate) => resourceUnlockedByPlan(product, candidate))
 }
 
 export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot; onRefresh: () => Promise<void> }) {
