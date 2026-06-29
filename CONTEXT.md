@@ -40,13 +40,17 @@ _Avoid_: Database table, static page, system record
 The main catalogue collection containing downloadable resources and bundles.
 _Avoid_: Catalogue item collection
 
+**Package**:
+An umbrella term for any Product that grants more than one resource — a Bundle or an Access Plan — as opposed to a single Individual Resource. The Packages Browse Page (route `/packages`) presents both Bundles and Access Plans.
+_Avoid_: using "Package" to mean only a Bundle
+
 **Bundle**:
 A purchasable product that groups multiple resources into one offer.
-_Avoid_: Bundle collection
+_Avoid_: Bundle collection, Package (a Bundle is one kind of Package, not the only kind)
 
 **Access Plan**:
-A purchasable product that grants access to a defined set of resources over a term or year. Purchased once per term or year; it does not auto-renew or auto-charge at launch.
-_Avoid_: Plan collection, Subscription
+A purchasable product that grants access to a defined set of resources for one fixed grade over a fixed period. An **Essential Access** plan covers one grade for one term; a **Premium Access** plan covers one grade for the full year (all terms). The grade and term are fixed properties of the plan itself — the customer chooses them by choosing which plan to buy, not as a checkout option. Purchased once for its period; it does not auto-renew or auto-charge at launch.
+_Avoid_: Plan collection, Subscription, "choose grade at checkout"
 
 **Product Kind**:
 A Product field that describes how a product is sold; its value is drawn from the Product Kinds Value List.
@@ -131,7 +135,9 @@ _Avoid_: Marketing page
 - An **Authentication Page** can be reached directly or from **Checkout**.
 - **Authentication Pages**, **Cart**, **Checkout**, **Customer Account**, **Order History**, and **Order Details** are **Functional Pages**.
 - A **Product Detail** is a top-level route because products can be reached from Shop, Grades, and Bundles.
-- **Shop**, **Grades**, and **Bundles** are **Browse Pages**.
+- **Shop**, **Grades**, and **Packages** are **Browse Pages**.
+- A **Bundle** and an **Access Plan** are both **Packages**; an **Individual Resource** is not.
+- The **Packages** Browse Page (route `/packages`) lists **Bundles** and **Access Plans**; tier/grade/term filters narrow the Access Plans, pre-filled from query parameters when the customer arrives from a homepage or nav plan entry.
 - A **Browse Page** can link to many **Product Details**, but it does not own their routes.
 - The **Product Collection** is the primary catalogue **Collection**.
 - A **Bundle** is an item in the **Product Collection**.
@@ -167,3 +173,4 @@ _Avoid_: Marketing page
 - Physical delivery and cash-on-delivery are possible future concepts, but they are out of scope for launch.
 - **Digital Fulfillment** is automatic and immediate once a payment is confirmed; there is no separate manual fulfillment step at launch. A distinct "fulfilled" state is reserved for possible future non-instant (e.g. physical) fulfillment, but at launch a confirmed payment is what unlocks downloads.
 - "Essential" and "Premium" are marketed as term and yearly **Access Plans**, but they are one-time purchases for that period, not recurring subscriptions. Automatic renewal and automatic charging are possible future concepts, out of scope for launch.
+- Each **Access Plan** is a distinct product per grade. Essential is further split per term (one product per grade-and-term); Premium is one product per grade covering all terms. There is no single "Essential" or "Premium" product that spans grades, and grade is never selected during **Checkout**.
