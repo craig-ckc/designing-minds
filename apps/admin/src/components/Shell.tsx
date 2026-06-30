@@ -5,6 +5,7 @@ import { useAdminAuth } from '../lib/auth'
 import { CollectionSidebar } from './workspace/CollectionSidebar'
 import { Icon } from './ui'
 import { Button } from './primitives'
+import { PublishButton } from './PublishButton'
 
 /* ----------------------------- Top app bar ----------------------------- */
 
@@ -23,6 +24,7 @@ function TopBar() {
           <span className={`h-1.5 w-1.5 rounded-full ${repository.canWrite ? 'bg-ink' : 'bg-line-strong'}`} />
           {repository.canWrite ? 'Write access' : 'Read only'}
         </span>
+        {repository.canWrite ? <PublishButton /> : null}
         <Button
           variant="outline"
           size="sm"
