@@ -177,6 +177,24 @@ export interface Order {
   placedAt: string
 }
 
+/* ----------------------------- Slug redirects -------------------------- */
+
+/**
+ * A system-managed permanent redirect from a historical product URL to the
+ * current canonical URL. Created automatically when a product slug changes (see
+ * the products slug-change trigger). Never an admin-editable collection.
+ */
+export interface SlugRedirect {
+  id: string
+  entityType: 'product'
+  entityId: string | null
+  fromPath: string
+  toPath: string
+  statusCode: 301 | 308
+  createdAt: string
+  createdBy?: string | null
+}
+
 /* --------------------------------- Snapshot ---------------------------- */
 
 export interface CmsStats {
@@ -209,6 +227,8 @@ export interface CmsRepository {
   mode: CmsProviderMode
   canWrite: boolean
   getSnapshot: () => Promise<CmsSnapshot>
+  /** System-managed redirects whose target is a currently-published product. */
+  getSlugRedirects: () => Promise<SlugRedirect[]>
   saveProduct: (product: Product) => Promise<Product>
   saveSubject: (subject: Subject) => Promise<Subject>
   saveFaq: (faq: Faq) => Promise<Faq>

@@ -3,6 +3,7 @@ import { createSupabaseRepository } from './providers/supabase'
 export * from './types'
 export * from './lib/formatters'
 export * from './lib/entitlements'
+export * from './lib/public-snapshot'
 
 interface RepositoryOptions {
   supabaseUrl?: string

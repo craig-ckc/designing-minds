@@ -7,6 +7,7 @@ import type {
   Order,
   Payment,
   Product,
+  SlugRedirect,
   Subject,
   Testimonial,
   ValueLists,
@@ -30,6 +31,7 @@ const TABLES = {
   orders: 'orders',
   payments: 'payments',
   valueLists: 'value_lists',
+  slugRedirects: 'active_slug_redirects',
 } as const
 
 const DEFAULT_VALUE_LISTS: ValueLists = {
@@ -115,6 +117,23 @@ export const createSupabaseRepository = ({ url, publishableKey, audience }: Supa
         payments: ((payments.data as Payment[] | null) ?? []).map(numberizePayment),
       }
       return { ...base, stats: buildStats(base) }
+    },
+    async getSlugRedirects() {
+      const res = await client.from(TABLES.slugRedirects).select('*')
+      if (res.error) {
+        // Tolerate a not-yet-migrated project: if the redirects view is absent
+        // (PostgREST PGRST205 / Postgres 42P01), there are simply no redirects
+        // yet — don't fail the build. Any other error is real and rethrown.
+        if (res.error.code === 'PGRST205' || res.error.code === '42P01') {
+          console.warn(`[cms] ${TABLES.slugRedirects} not found — treating as no redirects. Apply the slug-redirects SQL patch.`)
+          return []
+        }
+        throw new Error(res.error.message)
+      }
+      return ((res.data as SlugRedirect[] | null) ?? []).map((row) => ({
+        ...row,
+        statusCode: Number(row.statusCode) as SlugRedirect['statusCode'],
+      }))
     },
     async saveProduct(product: Product) {
       const res = await client.from(TABLES.products).upsert({ ...product, updatedAt: new Date().toISOString() }).select().single()
