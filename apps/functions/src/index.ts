@@ -2,6 +2,7 @@ import { checkout } from './handlers/checkout.ts'
 import { paymentWebhook } from './handlers/payment-webhook.ts'
 import { issueDownload } from './handlers/issue-download.ts'
 import { adminUploadUrl } from './handlers/admin-upload-url.ts'
+import { adminRebuildWeb } from './handlers/admin-rebuild-web.ts'
 import { fakePayfastComplete } from './handlers/fake-payfast-complete.ts'
 import type { Handler } from './lib/http.ts'
 
@@ -16,7 +17,8 @@ export const handlers: Record<string, Handler> = {
   '/fake-payfast/complete': fakePayfastComplete,
   '/issue-download': issueDownload,
   '/admin/upload-url': adminUploadUrl,
+  '/admin/rebuild-web': adminRebuildWeb,
 }
 
-export { checkout, paymentWebhook, fakePayfastComplete, issueDownload, adminUploadUrl }
+export { checkout, paymentWebhook, fakePayfastComplete, issueDownload, adminUploadUrl, adminRebuildWeb }
 export type { Handler, HandlerRequest, HandlerResponse } from './lib/http.ts'
