@@ -42,9 +42,14 @@ function SnapshotGate({
   return <StatePanel eyebrow="Loading" title="Preparing the catalogue…" />
 }
 
-function App() {
+function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null }) {
   const { loading: authLoading, session } = useAuth()
-  const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(null)
+  // Seed from the build-time public snapshot (prerender/hydration) when present
+  // so public pages paint immediately instead of showing "Preparing the
+  // catalogue…". The effect below still refreshes — and for signed-in users it
+  // pulls in their operational data (orders/payments), which the public
+  // snapshot never carries.
+  const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(initialSnapshot)
   const [error, setError] = useState<string | null>(null)
 
   const refreshSnapshot = useCallback(async () => {
@@ -59,6 +64,11 @@ function App() {
 
   useEffect(() => {
     if (authLoading) return
+    // With a build-time snapshot and no signed-in session, trust it — the
+    // runtime fetch is only a fallback (and would swap sanitized content for an
+    // unsanitized read). Signed-in users still refresh to pull in their
+    // operational data (orders/payments), which the public snapshot omits.
+    if (initialSnapshot && !session?.access_token) return
     let cancelled = false
     const load = async () => {
       if (!cancelled) await refreshSnapshot()
@@ -67,7 +77,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [authLoading, refreshSnapshot, session?.access_token])
+  }, [authLoading, refreshSnapshot, session?.access_token, initialSnapshot])
 
   const body: ReactNode = (
     <Routes>

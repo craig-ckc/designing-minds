@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run build:ssr && npm run prerender",
+    "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist-server",
+    "prerender": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
