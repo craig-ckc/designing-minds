@@ -21,6 +21,7 @@ The web app must behave like a fast static commerce and marketing site for publi
 - Preserve React hydration so filters, add-to-cart buttons, and navigation remain interactive.
 - Generate SEO and AEO metadata from static page definitions and CMS data.
 - Keep cart, checkout, auth, and customer account routes functional and noindexed.
+- Preserve SEO value when a product slug changes by generating permanent redirects from old product URLs.
 - Allow admin users to trigger a web rebuild after CMS content changes.
 - Keep the Vercel Deploy Hook URL secret and server-side only.
 
@@ -31,6 +32,7 @@ The web app must behave like a fast static commerce and marketing site for publi
 - Do not make account, order, cart, checkout, or auth data static.
 - Do not expose Vercel API tokens or Deploy Hook URLs to the browser.
 - Do not add CMS-managed page-builder content. Static pages remain owned by the website code.
+- Do not expose redirects as a normal admin-editable CMS collection. Redirects are system-managed records created from slug changes.
 
 ## Recommended Architecture
 
@@ -43,8 +45,9 @@ Use a custom Vite SSG pipeline built on Vite's SSR build capability:
 5. Generate the list of public routes from static route definitions and CMS data.
 6. Render each public route to HTML with React `StaticRouter`.
 7. Inject page-specific head tags, JSON-LD, canonical URLs, and the sanitized snapshot bootstrap.
-8. Write each route as a static HTML file under `dist`.
-9. Keep dynamic routes served by the SPA fallback and marked `noindex`.
+8. Generate permanent redirect rules for historical product slugs.
+9. Write each route as a static HTML file under `dist`.
+10. Keep dynamic routes served by the SPA fallback and marked `noindex`.
 
 This is intentionally Vite-native and lower-churn than adopting a full framework now.
 
@@ -73,6 +76,16 @@ Dynamic static routes are generated from CMS data:
 - Product detail pages from published products
 
 If package detail pages are added later, they should be generated from published package/access-plan slugs using the same route manifest.
+
+### Static Redirect Routes
+
+Historical product URLs must redirect to the current canonical product URL:
+
+```text
+/product/:oldSlug -> /product/:currentSlug
+```
+
+These redirects should be emitted as HTTP `301` or `308` redirects at deployment level where possible, not as React client redirects. This preserves SEO value and avoids serving a not-found page after a slug change.
 
 ### Functional, Noindex Routes
 
@@ -116,6 +129,55 @@ Exclude:
 
 The browser should hydrate from the embedded or linked public snapshot first. Public pages should not show "Preparing the catalogue..." when a build-time snapshot is present. Runtime CMS fetches can remain as a fallback for development, preview debugging, or failed bootstrap data.
 
+## System-Managed Slug Redirects
+
+Product slug changes need a permanent redirect path because product detail pages are public, indexable, and may already be linked from search engines, emails, customer bookmarks, or social posts.
+
+Add a system-managed redirect table, not an admin-editable CMS collection:
+
+```text
+slug_redirects
+- id
+- entityType
+- entityId
+- fromPath
+- toPath
+- statusCode
+- createdAt
+- createdBy
+```
+
+Initial scope:
+
+- `entityType`: `product`
+- `fromPath`: `/product/<old-slug>`
+- `toPath`: `/product/<new-slug>`
+- `statusCode`: `301` or `308`, with `301` preferred unless there is a reason to preserve HTTP method semantics
+
+Admin behavior:
+
+- The redirect table is not shown in the admin sidebar.
+- Admin users do not manually create, edit, or delete redirect records.
+- When an admin saves a product and the slug changed, the system creates or updates the redirect record automatically.
+- The admin UI may show a passive confirmation such as "Old product URL will redirect after publishing", but it should not expose redirect management controls.
+
+Validation rules:
+
+- `fromPath` must be unique.
+- `fromPath` and `toPath` must not be equal.
+- Redirect loops must be collapsed. If `/product/a` redirects to `/product/b` and the product later changes to `/product/c`, both `/product/a` and `/product/b` should redirect directly to `/product/c`.
+- A redirect must not point to an unpublished product on the production site.
+- If a product is unpublished, redirects to that product should be omitted from production redirect output until the product is published again.
+
+Build behavior:
+
+- The web build fetches system-managed redirects with the public build snapshot.
+- Redirects are emitted into the web deployment as platform-level permanent redirects where Vercel supports them.
+- Redirect `fromPath` values are excluded from `sitemap.xml`.
+- Product pages always use the current slug as the canonical URL.
+
+This keeps redirects reliable for SEO while keeping the admin editing surface focused on actual catalogue content.
+
 ## App Structure Changes
 
 Introduce an application factory so browser and server entries share the same route tree:
@@ -125,6 +187,7 @@ Introduce an application factory so browser and server entries share the same ro
 - `src/entry-server.tsx` exports a render function that accepts `{ url, snapshot, siteUrl }`.
 - `src/static-routes.ts` owns route classification and public route generation.
 - `src/seo.ts` maps route matches plus CMS data to metadata and JSON-LD.
+- `src/redirects.ts` converts system-managed slug redirects into deployment redirect rules.
 - `scripts/prerender.mjs` or `src/prerender.ts` runs after `vite build` and writes route HTML.
 
 The current `main.tsx` can be replaced by `entry-client.tsx` or kept as a thin client entry if Vite config points at it.
@@ -163,6 +226,7 @@ Recommended Vercel behavior:
 
 - Keep `/api/:path*` rewriting to the functions deployment.
 - Let static files in `dist` win for generated routes.
+- Apply generated slug redirects before the SPA fallback.
 - Fallback remaining paths to `/index.html`.
 - Continue rendering the React `NotFoundPage` for unmatched client routes.
 
@@ -215,13 +279,14 @@ Normal code deployment:
 CMS publish deployment:
 
 1. Admin edits products, subjects, FAQs, or testimonials.
-2. Admin saves CMS records.
+2. Admin saves CMS records. If a product slug changed, the system records the old product URL as a redirect to the new canonical URL.
 3. Admin clicks "Publish website".
 4. Admin app calls `POST /api/admin/rebuild-web`.
 5. Functions app validates admin access.
 6. Functions app triggers the web Vercel Deploy Hook.
 7. Web project rebuilds from the current Git commit and latest CMS data.
-8. New static files go live when the deployment completes.
+8. Static HTML and permanent redirects are regenerated.
+9. New static files and redirects go live when the deployment completes.
 
 ## Error Handling
 
@@ -230,6 +295,7 @@ Web build:
 - If CMS snapshot fetching fails in production, fail the build rather than deploying stale or empty static pages silently.
 - In local development, allow a clear error message or optional fixture fallback.
 - If one route fails to render, fail the build with the route path in the error.
+- If redirect generation detects a loop or duplicate `fromPath`, fail the build with the conflicting paths.
 
 Runtime web:
 
@@ -254,6 +320,7 @@ Build checks:
 - Verify no private operational data appears in `dist`.
 - Verify `sitemap.xml` contains only indexable routes.
 - Verify `robots.txt` excludes functional routes.
+- Verify old product slugs are not in `sitemap.xml` and redirect to the current canonical product URL.
 
 Browser checks:
 
@@ -268,23 +335,26 @@ Admin/functions checks:
 - Admin can trigger `/api/admin/rebuild-web`.
 - The Deploy Hook URL is never sent to the browser.
 - Failed Vercel hook calls are reported clearly in admin UI.
+- Product slug changes create system-managed redirect records without exposing a redirects collection in admin.
 
 ## Rollout Plan
 
 1. Add public snapshot sanitization and route metadata helpers.
-2. Refactor web app entry points for server rendering and client hydration.
-3. Add the Vite prerender build step and generated static files.
-4. Add SEO, JSON-LD, sitemap, and robots generation.
-5. Update Vercel routing if needed.
-6. Add functions endpoint for admin-triggered web rebuilds.
-7. Add admin UI publish action.
-8. Verify static output, hydration, noindex behavior, and rebuild trigger.
+2. Add the system-managed product slug redirect table and slug-change detection.
+3. Refactor web app entry points for server rendering and client hydration.
+4. Add the Vite prerender build step and generated static files.
+5. Add SEO, JSON-LD, sitemap, robots, and redirect generation.
+6. Update Vercel routing if needed.
+7. Add functions endpoint for admin-triggered web rebuilds.
+8. Add admin UI publish action.
+9. Verify static output, hydration, noindex behavior, redirects, and rebuild trigger.
 
 ## Open Decisions
 
 - Whether the admin should show a manual "Publish website" button only, or also offer "Save and publish".
 - Whether rebuild request debouncing should be in-memory for the first version or persisted in Supabase.
 - Whether product pages should include only published products or also preview unpublished products on preview deployments. The production default is published products only.
+- Whether redirect records should be created in the browser-side admin save path or moved behind a functions endpoint together with product saving. The target behavior is system-managed either way, with no admin collection exposed.
 
 ## Research Notes
 
