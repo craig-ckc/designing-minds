@@ -41,7 +41,7 @@ The main catalogue collection containing downloadable resources and bundles.
 _Avoid_: Catalogue item collection
 
 **Package**:
-An umbrella term for any Product that grants more than one resource — a Bundle or an Access Plan — as opposed to a single Individual Resource. The Packages Browse Page (route `/packages`) presents both Bundles and Access Plans.
+An umbrella term for any Product that grants more than one resource — a Bundle or an Access Plan — as opposed to a **Single** product. The Packages Browse Page (route `/packages`) presents both Bundles and Access Plans.
 _Avoid_: using "Package" to mean only a Bundle
 
 **Bundle**:
@@ -136,7 +136,7 @@ _Avoid_: Marketing page
 - **Authentication Pages**, **Cart**, **Checkout**, **Customer Account**, **Order History**, and **Order Details** are **Functional Pages**.
 - A **Product Detail** is a top-level route because products can be reached from Shop, Grades, and Bundles.
 - **Shop**, **Grades**, and **Packages** are **Browse Pages**.
-- A **Bundle** and an **Access Plan** are both **Packages**; an **Individual Resource** is not.
+- A **Bundle** and an **Access Plan** are both **Packages**; a **Single** product is not.
 - The **Packages** Browse Page (route `/packages`) lists **Bundles** and **Access Plans**; tier/grade/term filters narrow the Access Plans, pre-filled from query parameters when the customer arrives from a homepage or nav plan entry.
 - A **Browse Page** can link to many **Product Details**, but it does not own their routes.
 - The **Product Collection** is the primary catalogue **Collection**.

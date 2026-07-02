@@ -57,7 +57,7 @@ export const getFeaturedProducts = (snapshot: CmsSnapshot, limit = 6) =>
     .slice(0, limit)
 
 export const individualResources = (snapshot: CmsSnapshot) =>
-  publishedProducts(snapshot).filter((p) => p.productKind === 'Individual Resource')
+  publishedProducts(snapshot).filter((p) => p.productKind === 'Single')
 
 export const bundleProducts = (snapshot: CmsSnapshot) =>
   publishedProducts(snapshot).filter((p) => p.productKind === 'Bundle')

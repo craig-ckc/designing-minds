@@ -130,7 +130,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         grade: vl.grades[0],
         term: vl.terms[0],
         year: vl.years[0] ?? '2026',
-        productKind: 'Individual Resource',
+        productKind: 'Single',
         resourceFormat: vl.resourceFormats[0],
         subjects: [],
         marks: null,

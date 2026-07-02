@@ -69,7 +69,7 @@ create table if not exists public.products (
   grade text not null,
   term text not null,
   year text not null,
-  "productKind" text not null check ("productKind" in ('Individual Resource', 'Bundle', 'Access Plan')),
+  "productKind" text not null check ("productKind" in ('Single', 'Bundle', 'Access Plan')),
   "resourceFormat" text not null,
   subjects text[] not null default '{}',
   marks integer,
@@ -204,7 +204,7 @@ values
   ('grades', array['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7']),
   ('terms', array['Term 1', 'Term 2', 'Term 3', 'Term 4']),
   ('years', array['2024', '2025', '2026']),
-  ('productKinds', array['Individual Resource', 'Bundle', 'Access Plan']),
+  ('productKinds', array['Single', 'Bundle', 'Access Plan']),
   ('resourceFormats', array['Test / Assessment', 'Summary'])
 on conflict (key) do nothing;
 

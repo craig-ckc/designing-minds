@@ -16,7 +16,7 @@ export type CmsProviderMode = 'seed' | 'local' | 'supabase'
 
 export type Grade = 'Grade 3' | 'Grade 4' | 'Grade 5' | 'Grade 6' | 'Grade 7'
 export type Term = 'Term 1' | 'Term 2' | 'Term 3' | 'Term 4'
-export type ProductKind = 'Individual Resource' | 'Bundle' | 'Access Plan'
+export type ProductKind = 'Single' | 'Bundle' | 'Access Plan'
 export type ResourceFormat = 'Test / Assessment' | 'Summary'
 
 /**
@@ -85,7 +85,7 @@ export interface Product {
   deliveryRules?: string
   renewalNotes?: string
 
-  /* Shared by Bundle and Access Plan. Included products are Individual Resources only. */
+  /* Shared by Bundle and Access Plan. Included products must have Product Kind `Single`. */
   includedProductSlugs?: string[]
   includedSubjects?: string[]
   includedTerms?: Term[]

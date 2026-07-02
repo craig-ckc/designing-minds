@@ -13,7 +13,7 @@ import { OrderStatusBadge } from './OrderStatusBadge'
 const downloadProductsForItem = (snapshot: CmsSnapshot, item: OrderItem) => {
   const product = getProductBySlug(snapshot, item.productSlug)
   if (!product) return []
-  if (product.productKind === 'Individual Resource') return [product]
+  if (product.productKind === 'Single') return [product]
   return snapshot.products.filter((candidate) => resourceUnlockedByPlan(product, candidate))
 }
 

@@ -25,7 +25,7 @@ const product = (overrides: Partial<Product> & Pick<Product, 'slug' | 'productKi
 })
 
 const resource = (slug: string, grade: Grade, term: Term, subjects: string[] = ['mathematics']): Product =>
-  product({ slug, productKind: 'Individual Resource' as ProductKind, grade, term, subjects })
+  product({ slug, productKind: 'Single' as ProductKind, grade, term, subjects })
 
 describe('resourceUnlockedByPlan', () => {
   it('scopes an Essential Access plan to its own grade and term', () => {

@@ -21,7 +21,7 @@ const literalOptions = (values: string[]): FieldOption[] => values.map((value) =
 
 const isKind = (kind: string) => (record: AdminRecord) => record.productKind === kind
 const isIndividualResource = (option: AdminRecord) =>
-  (option as { productKind?: string }).productKind === 'Individual Resource'
+  (option as { productKind?: string }).productKind === 'Single'
 
 /* --------------------------------- Products ---------------------------- */
 
@@ -83,7 +83,7 @@ const products: AdminCollection = {
 
     {
       key: 'includedProductSlugs',
-      label: 'Included products (Individual Resources)',
+      label: 'Included products (Single)',
       type: 'multiReference',
       collection: 'products',
       valueKey: 'slug',
@@ -117,7 +117,7 @@ const products: AdminCollection = {
     },
     {
       title: 'Files',
-      visibleWhen: isKind('Individual Resource'),
+      visibleWhen: isKind('Single'),
       hint: 'Files buyers receive after purchasing this resource.',
       fields: ['purchasedFiles'],
     },

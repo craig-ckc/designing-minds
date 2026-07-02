@@ -35,7 +35,7 @@ const entitledProducts = (purchasedProducts: Product[], catalogue: Product[]): P
   const entitled = new Map<string, Product>()
 
   for (const product of purchasedProducts) {
-    if (product.productKind === 'Individual Resource') entitled.set(product.slug, product)
+    if (product.productKind === 'Single') entitled.set(product.slug, product)
 
     for (const slug of product.includedProductSlugs ?? []) {
       const included = bySlug.get(slug)

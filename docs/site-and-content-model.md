@@ -64,7 +64,7 @@ Testimonials
 
 Products are every sellable offer:
 
-- `Individual Resource`: one downloadable resource.
+- `Single`: one downloadable resource.
 - `Bundle`: a fixed group of individual resources.
 - `Access Plan`: a fixed grade/term or grade/year offer that unlocks included resources.
 
@@ -76,7 +76,7 @@ productKind, resourceFormat, subjects, marks, purchasedFiles,
 featured, published, sort/order metadata, SEO metadata, faqs
 ```
 
-Bundle and Access Plan products can reference included Individual Resource products. Access Plans are normal products with fixed grade and term/year fields; checkout does not ask the customer to choose a grade.
+Bundle and Access Plan products can reference included products whose Product Kind is `Single`. Access Plans are normal products with fixed grade and term/year fields; checkout does not ask the customer to choose a grade.
 
 ### Subjects
 
@@ -108,7 +108,7 @@ Launch values:
 
 - Grades: Grade 3, Grade 4, Grade 5, Grade 6, Grade 7.
 - Terms: Term 1, Term 2, Term 3, Term 4.
-- Product Kinds: Individual Resource, Bundle, Access Plan.
+- Product Kinds: Single, Bundle, Access Plan.
 - Resource Formats: Test / Assessment, Summary.
 
 ## Operational Records

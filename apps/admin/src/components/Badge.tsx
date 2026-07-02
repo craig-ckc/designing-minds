@@ -37,7 +37,7 @@ const PAYMENT_TONE: Record<PaymentStatus, Tone> = {
 const KIND_TONE: Record<ProductKind, Tone> = {
   Bundle: 'solid',
   'Access Plan': 'outline',
-  'Individual Resource': 'muted',
+  'Single': 'muted',
 }
 
 export const OrderStatusPill = ({ status }: { status: OrderStatus }) => <Pill tone={ORDER_TONE[status]}>{status}</Pill>

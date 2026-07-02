@@ -1,7 +1,7 @@
 import type { Product } from '../types'
 
 /**
- * Whether the Individual Resource `candidate` is unlocked by owning the
+ * Whether the `Single` product `candidate` is unlocked by owning the
  * Bundle / Access Plan `plan`.
  *
  * Grade and term are fixed Fields on the plan itself: each Access Plan is one
@@ -15,7 +15,7 @@ import type { Product } from '../types'
  * authorise) both call it, so they can never disagree. Keep it pure — no I/O.
  */
 export const resourceUnlockedByPlan = (plan: Product, candidate: Product): boolean => {
-  if (candidate.productKind !== 'Individual Resource') return false
+  if (candidate.productKind !== 'Single') return false
 
   // Explicitly listed resources are always granted, regardless of grade/term.
   if (plan.includedProductSlugs?.includes(candidate.slug)) return true
