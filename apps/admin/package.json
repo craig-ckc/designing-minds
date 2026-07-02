@@ -14,6 +14,10 @@
     "@designing-minds/cms": "file:../../packages/cms",
     "@designing-minds/utils": "file:../../packages/utils",
     "@supabase/supabase-js": "^2.57.4",
+    "@tiptap/markdown": "^3.27.1",
+    "@tiptap/pm": "^3.27.1",
+    "@tiptap/react": "^3.27.1",
+    "@tiptap/starter-kit": "^3.27.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.9.6"

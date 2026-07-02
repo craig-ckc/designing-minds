@@ -40,6 +40,7 @@ export type IconName =
   | 'back'
   | 'filter'
   | 'settings'
+  | 'close'
 
 export function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -113,6 +114,7 @@ export function Icon({ name }: { name: IconName }) {
     ),
     rand: <path d="M7 4h6a4 4 0 0 1 0 8H7m0 0v8m0-8h4l5 8M7 4v8" />,
     back: <path d="M19 12H5M11 18l-6-6 6-6" />,
+    close: <path d="M18 6 6 18M6 6l12 12" />,
   }
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

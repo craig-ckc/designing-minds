@@ -1,11 +1,28 @@
 import { type ReactNode } from 'react'
+import { cn } from '@designing-minds/utils'
 
-/** A titled group of fields inside the Record Editor pane. */
-export function EditorSection({ title, children, divided }: { title: string; children: ReactNode; divided?: boolean }) {
+/**
+ * A titled group of fields inside the Record Editor pane. Fields stack in a
+ * single full-width column (Webflow-style item editor).
+ */
+export function EditorSection({
+  title,
+  hint,
+  children,
+  divided,
+}: {
+  title: string
+  hint?: string
+  children: ReactNode
+  divided?: boolean
+}) {
   return (
-    <section className={`grid gap-4 ${divided ? 'border-t border-line pt-7' : ''}`}>
-      <h3 className="text-[1.05rem]">{title}</h3>
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    <section className={cn('grid gap-5', divided && 'border-t border-line pt-7')}>
+      <header className="grid gap-1">
+        <h3 className="text-[1.05rem]">{title}</h3>
+        {hint ? <p className="text-[0.82rem] text-muted">{hint}</p> : null}
+      </header>
+      <div className="grid gap-5">{children}</div>
     </section>
   )
 }

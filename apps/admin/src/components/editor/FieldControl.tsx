@@ -5,7 +5,8 @@ import type { AdminField, AdminRecord, FieldContext, ReferenceField, SelectField
 import { getPath } from '../../cms/record'
 import { FIELD } from '../tokens'
 import { Icon } from '../ui'
-import { Button, Checkbox, Input, Select, Textarea, type SelectOption } from '../primitives'
+import { Button, Input, ReferencePicker, Select, Switch, Textarea, type SelectOption } from '../primitives'
+import { RichTextEditor } from './RichTextEditor'
 
 type Props = {
   field: AdminField
@@ -22,22 +23,6 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
   const value = getPath(record, field.key)
   const inputId = `${record.id}:${field.key}`
 
-  /* Boolean renders as an inline checkbox row (its own label). */
-  if (field.type === 'boolean') {
-    const checked = Boolean(value)
-    return (
-      <div className="flex items-center gap-2 text-[0.92rem]">
-        <Checkbox id={inputId} checked={checked} onCheckedChange={(next) => onUpdate(field.key, next)} disabled={disabled} />
-        <span
-          onClick={() => !disabled && onUpdate(field.key, !checked)}
-          className={cn('select-none', !disabled && 'cursor-pointer')}
-        >
-          {field.label}
-        </span>
-      </div>
-    )
-  }
-
   return <FieldShell field={field} inputId={inputId}>{renderControl()}</FieldShell>
 
   function renderControl(): ReactNode {
@@ -47,9 +32,30 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
         return <div className={cn(FIELD, 'min-h-[42px] whitespace-pre-line text-ink-soft')}>{text}</div>
       }
 
+      /* Webflow-style toggle: label above (from FieldShell), switch + On/Off below. */
+      case 'boolean': {
+        const checked = Boolean(value)
+        return (
+          <div className="flex items-center gap-2.5">
+            <Switch id={inputId} checked={checked} onCheckedChange={(next) => onUpdate(field.key, next)} disabled={disabled} />
+            <span className="text-[0.88rem] text-ink-soft">{checked ? 'On' : 'Off'}</span>
+          </div>
+        )
+      }
+
       case 'textarea':
         return (
           <Textarea id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
+        )
+
+      case 'richText':
+        return (
+          <RichTextEditor
+            id={inputId}
+            value={String(value ?? '')}
+            disabled={disabled}
+            onChange={(markdown) => onUpdate(field.key, markdown)}
+          />
         )
 
       case 'number':
@@ -87,8 +93,10 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
                 <span className="h-3.5 w-3.5 flex-none">
                   <Icon name="external" />
                 </span>
-                {field.urlPrefix}
-                <strong className="font-medium text-ink">{String(value || 'your-slug')}</strong>
+                <span className="min-w-0 break-all">
+                  {field.urlPrefix}
+                  <strong className="font-medium text-ink">{String(value || 'your-slug')}</strong>
+                </span>
               </div>
             ) : null}
           </>
@@ -142,26 +150,18 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
     return <Select id={inputId} value={current} disabled={disabled} options={options} onValueChange={(next) => onUpdate(field.key, next)} />
   }
 
+  /* Type-ahead picker: type to filter, click to add — scales to large collections. */
   function renderMultiReference(reference: ReferenceField): ReactNode {
     const options = ctx.optionsForReference(reference)
     const selected = Array.isArray(value) ? (value as string[]) : []
     return (
-      <div className="grid gap-1.5 sm:grid-cols-2">
-        {options.map((option) => {
-          const isOn = selected.includes(option.value)
-          const toggle = () =>
-            onUpdate(field.key, isOn ? selected.filter((v) => v !== option.value) : [...selected, option.value])
-          return (
-            <div key={option.value} className="flex items-center gap-2 text-[0.9rem] text-ink-soft">
-              <Checkbox checked={isOn} onCheckedChange={toggle} disabled={disabled} />
-              <span onClick={() => !disabled && toggle()} className={cn('select-none', !disabled && 'cursor-pointer')}>
-                {option.label}
-              </span>
-            </div>
-          )
-        })}
-        {options.length === 0 ? <span className="text-[0.85rem] text-muted">No options yet.</span> : null}
-      </div>
+      <ReferencePicker
+        id={inputId}
+        options={options}
+        selected={selected}
+        onChange={(next) => onUpdate(field.key, next)}
+        disabled={disabled}
+      />
     )
   }
 
