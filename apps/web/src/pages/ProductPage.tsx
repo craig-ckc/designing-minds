@@ -33,8 +33,8 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const included = getProductsBySlugs(snapshot, product.includedProductSlugs ?? [])
   const related = relatedProducts(snapshot, product, 3)
   const isComposite = product.productKind === 'Bundle' || product.productKind === 'Access Plan'
-  // Each Access Plan is one fixed grade (and, for Essential, one term) now — see
-  // ADR 0005. The grade is no longer chosen at checkout.
+  // Each Access Plan is one fixed grade, and Essential is also one fixed term.
+  // The grade is no longer chosen at checkout; see docs/decisions.md.
   const isAccessPlan = product.productKind === 'Access Plan'
 
   return (

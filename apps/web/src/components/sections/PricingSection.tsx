@@ -5,7 +5,7 @@ import { Icon } from '../ui/Icon'
 import { Button } from '../ui/Button'
 
 // Tier copy is derived from the structural difference (term vs year) plus the
-// shared inclusions. See ADR 0005 — plans are one-time purchases, no auto-renewal.
+// shared inclusions. See docs/decisions.md.
 const TIER_CONTENT: Record<AccessPlanTier['tier'], { includes: string[]; excludes: string[]; cta: string }> = {
   essential: {
     includes: [

@@ -1,10 +1,10 @@
 /* -------------------------------------------------------------------------
    Designing Minds content model.
 
-   Mirrors docs/content-map.md:
+   Mirrors docs/site-and-content-model.md:
    - Collections  : Products, Subjects, FAQs, Testimonials
    - Value lists  : Grades, Terms, Years, Product Kinds, Resource Formats
-   - Operational  : Customers, Orders, Order Items, Payments
+   - Operational  : Users, User Roles, Carts, Orders, Order Items, Payments
 
    Pages are intentionally NOT modelled here — static pages are owned by the
    website (see CONTEXT.md), not the CMS.
@@ -21,7 +21,7 @@ export type ResourceFormat = 'Test / Assessment' | 'Summary'
 
 /**
  * Database-sourced allowed-value lists that certain Product fields draw from.
- * Edited directly in the database (see ADR 0002) — the admin shows them as
+ * Edited directly in the database (see docs/decisions.md) — the admin shows them as
  * fixed select options and never writes to them.
  */
 export interface ValueLists {

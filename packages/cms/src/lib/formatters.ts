@@ -79,7 +79,7 @@ export interface AccessPlanTier {
 /**
  * Collapse the per-grade (and per-term) Access Plan products into the two
  * marketed tiers for homepage/nav entry points. Each Access Plan is one grade
- * now (ADR 0005), so a single "Essential" or "Premium" card can't be one
+ * now (see docs/decisions.md), so a single "Essential" or "Premium" card can't be one
  * product — it summarises its tier and deep-links to /packages filtered by it.
  */
 export const accessPlanTiers = (snapshot: CmsSnapshot): AccessPlanTier[] => {

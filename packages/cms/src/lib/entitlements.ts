@@ -7,7 +7,7 @@ import type { Product } from '../types'
  * Grade and term are fixed Fields on the plan itself: each Access Plan is one
  * grade — Essential covers one term, Premium covers all terms — and a Bundle is
  * one grade. So the grant is scoped by `plan.grade` (and, for Essential,
- * `plan.includedTerms`). Grade is never chosen at checkout (see ADR 0005), so
+ * `plan.includedTerms`). Grade is never chosen at checkout (see docs/decisions.md), so
  * this function takes no grade argument.
  *
  * This is the single source of truth for download entitlements: the account UI

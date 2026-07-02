@@ -3,11 +3,11 @@
 --
 -- Idempotent and transactional: safe to re-run. Paste into the Supabase SQL editor.
 -- Pre-launch migration — there are no production orders, so the two old plan rows
--- are simply removed. See docs/adr/0005 and docs/adr/0006.
+-- are simply removed. See docs/decisions.md.
 
 begin;
 
--- 1) Rename the account/profile table customers -> users (ADR 0006).
+-- 1) Rename the account/profile table customers -> users.
 --    FKs (orders.customerId, carts.customerId) and RLS policies travel with the
 --    table automatically; the column names stay customerId on purpose.
 do $$
@@ -55,7 +55,7 @@ $func$;
 
 revoke execute on function public.handle_new_user() from public, anon, authenticated;
 
--- 2) Replace the two old grade-spanning plans with 25 per-grade plans (ADR 0005):
+-- 2) Replace the two old grade-spanning plans with 25 per-grade plans:
 --    Premium = one per grade (all terms); Essential = one per grade-and-term.
 delete from public.products where slug in ('essential-access', 'premium-access');
 

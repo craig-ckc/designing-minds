@@ -214,8 +214,8 @@ on conflict (key) do nothing;
 
 -- Account profile for every authenticated person, Customer or Administrator,
 -- keyed by auth.users.id. The role lives in user_roles, not here; this table is
--- named for the account, not the Customer role (ADR 0006). Order/cart ownership
--- columns stay "customerId" because only the Customer role owns those rows.
+-- named for the account, not the Customer role (see docs/decisions.md).
+-- Order/cart ownership columns stay "customerId" because only Customers own them.
 create table if not exists public.users (
   id uuid primary key references auth.users (id) on delete cascade,
   name text not null,

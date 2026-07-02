@@ -78,8 +78,8 @@ export const checkout: Handler = async (req) => {
     if (repurchased) return badRequest('Your account already owns one or more cart items.')
 
     const resolvedProducts = products as Product[]
-    // Every product — including Access Plans — carries its own fixed grade now,
-    // so the order line records product.grade directly (see ADR 0005).
+    // Every product, including Access Plans, carries its own fixed grade now.
+    // The order line records product.grade directly; see docs/decisions.md.
     const items = resolvedProducts.map((product) => ({
       id: crypto.randomUUID(),
       productSlug: product.slug,

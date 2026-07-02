@@ -72,7 +72,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /** Access-plan tier card used in the mega menu (and reused in the mobile sheet).
- *  Each tier deep-links into /packages, where the buyer picks a grade (ADR 0005). */
+ *  Each tier deep-links into /packages, where the buyer picks a fixed-grade plan. */
 function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClose: () => void; compact?: boolean }) {
   return (
     <Link

@@ -7,6 +7,14 @@ This repository turns the extracted Designing Minds content into a Vite monorepo
 - `apps/functions`: the Vercel API app for checkout, PayFast ITN, downloads, and admin uploads.
 - `packages/cms`: the shared content schema and Supabase repository.
 
+## Documentation
+
+- [CONTEXT.md](./CONTEXT.md): domain language and business rules.
+- [docs/README.md](./docs/README.md): active docs index.
+- [docs/site-and-content-model.md](./docs/site-and-content-model.md): routes, CMS collections, value lists, and page data rules.
+- [docs/operations.md](./docs/operations.md): deployment, environment, publishing, and launch checks.
+- [docs/decisions.md](./docs/decisions.md): accepted architecture/product decisions.
+
 ## Getting Started
 
 1. Run `npm install`.
