@@ -1,33 +1,51 @@
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from '../repository'
 import { useAdminAuth } from '../lib/auth'
+import { useUnsavedChanges } from '../lib/unsaved'
 import { CollectionSidebar } from './workspace/CollectionSidebar'
 import { Icon } from './ui'
-import { Button } from './primitives'
+import { Button, ConfirmDialog, Menu, MenuItem, MenuLabel, MenuSeparator } from './primitives'
 import { PublishButton } from './PublishButton'
 
 /* ----------------------------- Top app bar ----------------------------- */
 
 function TopBar() {
-  const { logout } = useAdminAuth()
+  const { session, logout } = useAdminAuth()
+  const unsaved = useUnsavedChanges()
+  const [confirmLogout, setConfirmLogout] = useState(false)
+
+  const email = session?.user.email ?? 'Administrator'
+  const initial = email.slice(0, 1).toUpperCase()
+
+  const requestLogout = () => {
+    if (unsaved.isDirty()) setConfirmLogout(true)
+    else void logout()
+  }
+
   return (
-    <header className="sticky top-0 z-30 flex h-12 flex-none items-center gap-4 border-b border-line bg-surface px-3">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 flex h-12 flex-none items-center gap-3 border-b border-line bg-surface px-3">
+      <div className="flex min-w-0 items-center gap-2.5">
         <span className="grid h-7 w-7 flex-none place-items-center rounded-md bg-ink text-[0.72rem] font-semibold tracking-[-0.04em] text-white">
           DM
         </span>
+        <span className="hidden truncate text-[0.9rem] font-semibold tracking-[-0.01em] sm:block">Designing Minds</span>
+        <span className="hidden flex-none text-[0.72rem] font-medium uppercase tracking-[0.1em] text-muted md:block">
+          Admin
+        </span>
       </div>
 
-      <div className="ml-auto flex items-center gap-2.5 text-[0.85rem]">
-        <span className="hidden items-center gap-1.5 text-muted sm:inline-flex">
-          <span className={`h-1.5 w-1.5 rounded-full ${repository.canWrite ? 'bg-ink' : 'bg-line-strong'}`} />
-          {repository.canWrite ? 'Write access' : 'Read only'}
-        </span>
-        {repository.canWrite ? <PublishButton /> : null}
+      <div className="ml-auto flex flex-none items-center gap-2">
+        {!repository.canWrite ? (
+          <span className="hidden rounded-full border border-dashed border-line-strong px-2.5 py-0.5 text-[0.72rem] font-medium uppercase tracking-[0.06em] text-muted sm:inline-flex">
+            Read only
+          </span>
+        ) : null}
+
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
+          nativeButton={false}
           render={
             <a href={import.meta.env.VITE_WEB_URL ?? 'http://localhost:5173'} target="_blank" rel="noreferrer" />
           }
@@ -37,13 +55,45 @@ function TopBar() {
             <Icon name="external" />
           </span>
         </Button>
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-surface-sunk text-[0.7rem] font-semibold text-ink-soft">
-          DM
-        </span>
-        <Button variant="ghost" size="sm" onClick={() => void logout()}>
-          Log out
-        </Button>
+
+        {repository.canWrite ? <PublishButton /> : null}
+
+        <Menu
+          trigger={
+            <button
+              type="button"
+              aria-label="Account"
+              className="grid h-7 w-7 flex-none place-items-center rounded-full bg-surface-sunk text-[0.72rem] font-semibold text-ink-soft transition hover:bg-surface-alt focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-1"
+            >
+              {initial}
+            </button>
+          }
+        >
+          <MenuLabel>
+            <span className="block text-[0.72rem] uppercase tracking-[0.08em]">Signed in</span>
+            <span className="block truncate text-[0.85rem] text-ink">{email}</span>
+          </MenuLabel>
+          <MenuLabel className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-full ${repository.canWrite ? 'bg-ink' : 'bg-line-strong'}`} />
+            {repository.canWrite ? 'Write access' : 'Read only'}
+          </MenuLabel>
+          <MenuSeparator />
+          <MenuItem onClick={requestLogout}>Log out</MenuItem>
+        </Menu>
       </div>
+
+      <ConfirmDialog
+        open={confirmLogout}
+        title="Discard unsaved changes?"
+        description="You have unsaved changes that will be lost if you log out now."
+        confirmLabel="Log out"
+        cancelLabel="Keep editing"
+        onConfirm={() => {
+          setConfirmLogout(false)
+          void logout()
+        }}
+        onCancel={() => setConfirmLogout(false)}
+      />
     </header>
   )
 }

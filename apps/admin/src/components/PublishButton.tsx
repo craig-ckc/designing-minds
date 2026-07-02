@@ -41,7 +41,7 @@ export function PublishButton() {
         </span>
       ) : null}
       <Button variant="solid" size="sm" onClick={() => void publish()} disabled={state === 'publishing'}>
-        {state === 'publishing' ? 'Publishing…' : 'Publish website'}
+        {state === 'publishing' ? 'Publishing…' : 'Publish'}
       </Button>
     </span>
   )
