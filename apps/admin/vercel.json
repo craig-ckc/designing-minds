@@ -14,7 +14,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://REPLACE-ME-functions.vercel.app/api/:path*"
+      "destination": "https://designing-minds-api.vercel.app/api/:path*"
     },
     {
       "source": "/(.*)",

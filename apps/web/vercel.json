@@ -3,7 +3,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://REPLACE-ME-functions.vercel.app/api/$1"
+      "dest": "https://designing-minds-api.vercel.app/api/$1"
     },
     { "handle": "filesystem" },
     {
