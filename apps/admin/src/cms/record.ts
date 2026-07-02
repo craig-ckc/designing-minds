@@ -28,6 +28,16 @@ export function fieldIsVisible(field: AdminField, record: AdminRecord): boolean 
   return field.visibleWhen ? field.visibleWhen(record) : true
 }
 
+/**
+ * Facet filter matching: values within a facet are OR-ed, facets are AND-ed.
+ * Record values are compared as `String(value)` ('true'/'false' for booleans).
+ */
+export function matchesFilters(record: AdminRecord, filters: Record<string, string[]>): boolean {
+  return Object.entries(filters).every(
+    ([key, values]) => values.length === 0 || values.includes(String(getPath(record, key) ?? '')),
+  )
+}
+
 /** The record's primary label, from the collection's titleField. */
 export function getRecordTitle(collection: AdminCollection, record: AdminRecord): string {
   const value = getPath(record, collection.titleField)
@@ -45,4 +55,28 @@ export function getRecordSubtitle(collection: AdminCollection, record: AdminReco
 /** Find a field definition by key. */
 export function findField(collection: AdminCollection, key: string): AdminField | undefined {
   return collection.fields.find((field) => field.key === key)
+}
+
+/** Turn free text into a URL-safe slug: `Grade 5 Maths!` → `grade-5-maths`. */
+export function slugify(text: string): string {
+  return text
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '') // strip diacritics left by NFKD
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/** slugify + suffix (-2, -3, …) until the slug is unique among the other records. */
+export function uniqueSlug(text: string, slugKey: string, records: AdminRecord[], selfId: string): string {
+  const base = slugify(text)
+  if (!base) return ''
+  const taken = new Set(
+    records.filter((other) => other.id !== selfId).map((other) => String(getPath(other, slugKey) ?? '').trim()),
+  )
+  if (!taken.has(base)) return base
+  for (let n = 2; ; n += 1) {
+    const candidate = `${base}-${n}`
+    if (!taken.has(candidate)) return candidate
+  }
 }
