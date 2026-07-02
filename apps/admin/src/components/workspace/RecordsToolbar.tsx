@@ -1,37 +1,42 @@
-import { Icon, type IconName } from '../ui'
+import { cn } from '@designing-minds/utils'
+import { Icon } from '../ui'
 import { Button, Input } from '../primitives'
-
-/** Non-functional wireframe controls, mirroring the previous list toolbar. */
-function GhostButton({ icon, label }: { icon: IconName; label: string }) {
-  return (
-    <Button variant="outline" size="sm" title="Wireframe control">
-      <span className="h-3.5 w-3.5">
-        <Icon name={icon} />
-      </span>
-      {label}
-    </Button>
-  )
-}
+import { FilterPopover, type FilterState, type ResolvedFacet } from './FilterPopover'
 
 /**
- * Toolbar above the record table: title + search + New, with the same ghost
- * filter/export/import controls the old CollectionListLayout showed.
+ * Toolbar above the record table: title + search, filter popover, selection
+ * mode toggle, CSV export/import, and New. Import is only offered when the
+ * caller passes `onImport` (editable collections with write access).
  */
 export function RecordsToolbar({
   title,
   query,
   onQueryChange,
+  facets,
+  filters,
+  onFiltersChange,
+  selecting,
+  onToggleSelecting,
+  onExport,
+  onImport,
   onNew,
   newLabel,
 }: {
   title: string
   query: string
   onQueryChange: (value: string) => void
+  facets: ResolvedFacet[]
+  filters: FilterState
+  onFiltersChange: (next: FilterState) => void
+  selecting: boolean
+  onToggleSelecting: () => void
+  onExport: () => void
+  onImport?: () => void
   onNew?: () => void
   newLabel?: string
 }) {
   return (
-    <div className="flex flex-none flex-wrap items-center h-12 gap-2.5 border-b border-line px-6 py-1">
+    <div className="flex min-h-12 flex-none flex-wrap items-center gap-2.5 border-b border-line px-6 py-1.5">
       <h2 className="mr-auto text-base font-semibold">{title}</h2>
 
       <div className="relative">
@@ -47,10 +52,36 @@ export function RecordsToolbar({
         />
       </div>
 
-      <GhostButton icon="filter" label="Filter" />
-      <GhostButton icon="check" label="Select" />
-      <GhostButton icon="external" label="Export" />
-      <GhostButton icon="download" label="Import" />
+      {facets.length > 0 ? <FilterPopover facets={facets} filters={filters} onChange={onFiltersChange} /> : null}
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onToggleSelecting}
+        aria-pressed={selecting}
+        className={cn(selecting && 'border-ink bg-surface-alt text-ink')}
+      >
+        <span className="h-3.5 w-3.5">
+          <Icon name="check" />
+        </span>
+        Select
+      </Button>
+
+      <Button variant="outline" size="sm" onClick={onExport} aria-label={`Export ${title.toLowerCase()} as CSV`}>
+        <span className="h-3.5 w-3.5">
+          <Icon name="external" />
+        </span>
+        Export
+      </Button>
+
+      {onImport ? (
+        <Button variant="outline" size="sm" onClick={onImport} aria-label={`Import ${title.toLowerCase()} from CSV`}>
+          <span className="h-3.5 w-3.5">
+            <Icon name="download" />
+          </span>
+          Import
+        </Button>
+      ) : null}
 
       {onNew ? (
         <Button variant="solid" size="sm" onClick={onNew}>

@@ -28,7 +28,8 @@ import {
 } from '@designing-minds/cms'
 import { supabase } from '../lib/supabase'
 import { apiUrl } from '../lib/api'
-import type { AdminRecord, FieldContext, ReferenceField, SelectField } from './types'
+import type { AdminCollection, AdminRecord, FieldContext, FieldOption, ReferenceField, SelectField } from './types'
+import { getPath } from './record'
 
 /* -------------------------------- Reads -------------------------------- */
 
@@ -184,6 +185,36 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
     default:
       throw new Error(`Collection "${collectionId}" cannot create records.`)
   }
+}
+
+/* -------------------------------- Filters ------------------------------ */
+
+function deriveOptions(records: AdminRecord[], key: string): FieldOption[] {
+  const values = new Set<string>()
+  for (const record of records) {
+    const value = String(getPath(record, key) ?? '').trim()
+    if (value) values.add(value)
+  }
+  return Array.from(values)
+    .sort()
+    .map((value) => ({ label: value, value }))
+}
+
+/** Resolve a collection's filter facets: fixed options, a Value List, or distinct record values. */
+export function resolveFilterFacets(
+  collection: AdminCollection,
+  snapshot: CmsSnapshot,
+  records: AdminRecord[],
+): { key: string; label: string; options: FieldOption[] }[] {
+  return (collection.filters ?? []).map((filter) => ({
+    key: filter.key,
+    label: filter.label,
+    options:
+      filter.options ??
+      (filter.valueList
+        ? snapshot.valueLists[filter.valueList].map((value) => ({ label: value, value }))
+        : deriveOptions(records, filter.key)),
+  }))
 }
 
 /* ---------------------------- Field context ---------------------------- */

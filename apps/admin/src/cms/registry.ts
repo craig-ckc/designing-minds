@@ -8,10 +8,16 @@
    Reference Field, Value List.
    ------------------------------------------------------------------------- */
 
-import type { AdminCollection, AdminRecord } from './types'
+import type { AdminCollection, AdminRecord, FieldOption } from './types'
 
 const PUBLISH_LABELS = { on: 'Published', off: 'Draft', verbOn: 'Publish', verbOff: 'Unpublish' }
 const VISIBLE_LABELS = { on: 'Visible', off: 'Hidden', verbOn: 'Show', verbOff: 'Hide' }
+
+const boolOptions = (on: string, off: string): FieldOption[] => [
+  { label: on, value: 'true' },
+  { label: off, value: 'false' },
+]
+const literalOptions = (values: string[]): FieldOption[] => values.map((value) => ({ label: value, value }))
 
 const isKind = (kind: string) => (record: AdminRecord) => record.productKind === kind
 const isIndividualResource = (option: AdminRecord) =>
@@ -29,11 +35,18 @@ const products: AdminCollection = {
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
   searchFields: ['title', 'slug', 'grade', 'term', 'resourceFormat'],
+  filters: [
+    { key: 'productKind', label: 'Kind', valueList: 'productKinds' },
+    { key: 'grade', label: 'Grade', valueList: 'grades' },
+    { key: 'term', label: 'Term', valueList: 'terms' },
+    { key: 'resourceFormat', label: 'Format', valueList: 'resourceFormats' },
+    { key: 'published', label: 'Status', options: boolOptions('Published', 'Draft') },
+  ],
   fields: [
     { key: 'title', label: 'Name', type: 'text', required: true },
     { key: 'slug', label: 'Slug', type: 'slug', required: true, urlPrefix: 'www.designingminds.co.za/product/' },
     { key: 'shortDescription', label: 'Short description', type: 'textarea' },
-    { key: 'fullDescription', label: 'Full description', type: 'textarea' },
+    { key: 'fullDescription', label: 'Full description', type: 'richText', helpText: 'Rich text, stored as Markdown and rendered on the product page.' },
 
     { key: 'priceZar', label: 'Price (ZAR)', type: 'number' },
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
@@ -93,14 +106,21 @@ const products: AdminCollection = {
     {
       title: 'Bundle details',
       visibleWhen: isKind('Bundle'),
+      hint: 'Shown because the product kind is Bundle.',
       fields: ['bundleScope', 'includedProductSlugs', 'includedSubjects', 'includedTerms'],
     },
     {
       title: 'Access plan details',
       visibleWhen: isKind('Access Plan'),
+      hint: 'Shown because the product kind is Access Plan.',
       fields: ['accessPeriod', 'includedGrades', 'includedSubjects', 'includedTerms', 'includedProductSlugs', 'deliveryRules', 'renewalNotes'],
     },
-    { title: 'Files', visibleWhen: isKind('Individual Resource'), fields: ['purchasedFiles'] },
+    {
+      title: 'Files',
+      visibleWhen: isKind('Individual Resource'),
+      hint: 'Files buyers receive after purchasing this resource.',
+      fields: ['purchasedFiles'],
+    },
     { title: 'Related FAQs', fields: ['faqs'] },
     { title: 'SEO', fields: ['seo.title', 'seo.description'] },
   ],
@@ -127,6 +147,7 @@ const subjects: AdminCollection = {
   statusField: 'visible',
   statusLabels: VISIBLE_LABELS,
   searchFields: ['name', 'slug', 'shortLabel'],
+  filters: [{ key: 'visible', label: 'Visibility', options: boolOptions('Visible', 'Hidden') }],
   fields: [
     { key: 'name', label: 'Name', type: 'text', required: true },
     { key: 'shortLabel', label: 'Short label', type: 'text' },
@@ -161,6 +182,10 @@ const faqs: AdminCollection = {
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
   searchFields: ['question', 'category'],
+  filters: [
+    { key: 'category', label: 'Category' },
+    { key: 'published', label: 'Status', options: boolOptions('Published', 'Draft') },
+  ],
   fields: [
     { key: 'question', label: 'Question', type: 'text', required: true },
     { key: 'answer', label: 'Answer', type: 'textarea', required: true },
@@ -189,6 +214,11 @@ const testimonials: AdminCollection = {
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
   searchFields: ['customerName', 'quote', 'context'],
+  filters: [
+    { key: 'published', label: 'Status', options: boolOptions('Published', 'Draft') },
+    { key: 'featured', label: 'Featured', options: boolOptions('Featured', 'Not featured') },
+    { key: 'learnerGrade', label: 'Grade', valueList: 'grades' },
+  ],
   fields: [
     { key: 'customerName', label: 'Customer display name', type: 'text', required: true },
     { key: 'quote', label: 'Quote', type: 'textarea', required: true },
@@ -223,6 +253,7 @@ const orders: AdminCollection = {
   subtitleField: 'customerName',
   readOnly: true,
   searchFields: ['reference', 'customerName', 'customerEmail'],
+  filters: [{ key: 'status', label: 'Status', options: literalOptions(['pending', 'paid', 'fulfilled', 'refunded', 'failed']) }],
   fields: [
     { key: 'reference', label: 'Reference', type: 'readonly' },
     { key: 'status', label: 'Status', type: 'readonly' },
@@ -283,6 +314,10 @@ const payments: AdminCollection = {
   subtitleField: 'provider',
   readOnly: true,
   searchFields: ['reference', 'orderReference', 'provider'],
+  filters: [
+    { key: 'status', label: 'Status', options: literalOptions(['pending', 'succeeded', 'failed', 'refunded']) },
+    { key: 'provider', label: 'Provider' },
+  ],
   fields: [
     { key: 'reference', label: 'Reference', type: 'readonly' },
     { key: 'orderReference', label: 'Order', type: 'readonly' },

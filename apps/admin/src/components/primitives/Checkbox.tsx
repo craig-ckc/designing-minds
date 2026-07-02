@@ -9,12 +9,14 @@ export function Checkbox({
   disabled,
   id,
   className,
+  'aria-label': ariaLabel,
 }: {
   checked: boolean
   onCheckedChange: (checked: boolean) => void
   disabled?: boolean
   id?: string
   className?: string
+  'aria-label'?: string
 }) {
   return (
     <BaseCheckbox.Root
@@ -22,6 +24,7 @@ export function Checkbox({
       checked={checked}
       onCheckedChange={(next) => onCheckedChange(next)}
       disabled={disabled}
+      aria-label={ariaLabel}
       className={cn(
         'grid h-4 w-4 flex-none place-items-center rounded border border-line-strong bg-surface text-white transition',
         'data-[checked]:border-ink data-[checked]:bg-ink',

@@ -4,27 +4,47 @@ import { formatCurrency, type OrderStatus, type PaymentStatus, type ProductKind 
 import type { AdminCollection, AdminRecord, ListColumn } from '../../cms/types'
 import { getPath } from '../../cms/record'
 import { KindPill, OrderStatusPill, PaymentStatusPill, Pill } from '../Badge'
-import { ScrollArea } from '../primitives'
+import { Checkbox, ScrollArea } from '../primitives'
 
-/** Dense, full-width record table driven by collection.listColumns. */
+/**
+ * Dense, full-width record table driven by collection.listColumns. When
+ * `selection` is provided the table shows a checkbox column and row clicks
+ * toggle selection instead of opening the record.
+ */
 export function RecordTable({
   collection,
   records,
   selectedId,
   onSelect,
+  selection,
 }: {
   collection: AdminCollection
   records: AdminRecord[]
   selectedId?: string | null
   onSelect: (id: string) => void
+  selection?: {
+    selectedIds: ReadonlySet<string>
+    onToggle: (id: string) => void
+    onToggleAll: () => void
+  }
 }) {
   const columns = collection.listColumns
+  const allVisibleSelected = records.length > 0 && records.every((record) => selection?.selectedIds.has(record.id))
 
   return (
     <ScrollArea orientation="both" className="min-h-0 flex-1">
       <table className="w-full border-collapse text-[0.85rem]">
         <thead className="sticky top-0 z-10 bg-surface-alt">
           <tr className="border-b border-line">
+            {selection ? (
+              <th className="w-10 px-3 py-2">
+                <Checkbox
+                  checked={allVisibleSelected}
+                  onCheckedChange={selection.onToggleAll}
+                  aria-label="Select all visible records"
+                />
+              </th>
+            ) : null}
             {columns.map((column) => (
               <th
                 key={column.key}
@@ -43,12 +63,21 @@ export function RecordTable({
           {records.map((record) => (
             <tr
               key={record.id}
-              onClick={() => onSelect(record.id)}
+              onClick={() => (selection ? selection.onToggle(record.id) : onSelect(record.id))}
               className={cn(
                 'cursor-pointer border-b border-line hover:bg-surface-alt',
-                selectedId === record.id && 'bg-surface-alt',
+                (selectedId === record.id || selection?.selectedIds.has(record.id)) && 'bg-surface-alt',
               )}
             >
+              {selection ? (
+                <td className="w-10 px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selection.selectedIds.has(record.id)}
+                    onCheckedChange={() => selection.onToggle(record.id)}
+                    aria-label={`Select ${String(getPath(record, collection.titleField) ?? record.id)}`}
+                  />
+                </td>
+              ) : null}
               {columns.map((column) => (
                 <td
                   key={column.key}
@@ -66,7 +95,7 @@ export function RecordTable({
           ))}
           {records.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-8 text-center text-muted">
+              <td colSpan={columns.length + (selection ? 1 : 0)} className="px-3 py-8 text-center text-muted">
                 No records.
               </td>
             </tr>

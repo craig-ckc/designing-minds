@@ -24,6 +24,7 @@ export type CollectionGroupName = 'Catalogue' | 'Operations'
 export type FieldType =
   | 'text'
   | 'textarea'
+  | 'richText'
   | 'number'
   | 'boolean'
   | 'date'
@@ -59,7 +60,8 @@ type FieldBase = {
 }
 
 export type PrimitiveField = FieldBase & {
-  type: 'text' | 'textarea' | 'number' | 'boolean' | 'date' | 'datetime' | 'readonly'
+  /** richText edits as WYSIWYG but stores a Markdown string. */
+  type: 'text' | 'textarea' | 'richText' | 'number' | 'boolean' | 'date' | 'datetime' | 'readonly'
   /** number only: an empty input stores null instead of 0 (e.g. marks). */
   nullable?: boolean
 }
@@ -103,6 +105,24 @@ export type ListColumn = {
   valueType?: ListValueType
 }
 
+/* -------------------------------- Filters ------------------------------ */
+
+/**
+ * A facet in the list Filter popover. Values within a facet are OR-ed;
+ * facets are AND-ed. Record values are matched by `String(value)`, so boolean
+ * facets use 'true'/'false' option values.
+ */
+export type CollectionFilter = {
+  /** Record key the facet filters on (dotted keys supported). */
+  key: string
+  label: string
+  /** Fixed options (e.g. Published/Draft for booleans). */
+  options?: FieldOption[]
+  /** Options from a Value List. */
+  valueList?: keyof ValueLists
+  /* When neither is given, distinct values are derived from the records. */
+}
+
 /* ------------------------------ Collections ---------------------------- */
 
 export type EditorSection = {
@@ -110,6 +130,8 @@ export type EditorSection = {
   /** Field keys, in render order. */
   fields: string[]
   visibleWhen?: (record: AdminRecord) => boolean
+  /** Short explanation under the title (e.g. why a conditional section is showing). */
+  hint?: string
 }
 
 export type AdminCollection = {
@@ -130,6 +152,8 @@ export type AdminCollection = {
   readOnly?: boolean
   /** Field keys searched by the toolbar search box. */
   searchFields: string[]
+  /** Facets offered by the list Filter popover. */
+  filters?: CollectionFilter[]
   fields: AdminField[]
   sections: EditorSection[]
   listColumns: ListColumn[]
