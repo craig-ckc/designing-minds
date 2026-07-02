@@ -50,6 +50,15 @@ export const FUNCTIONAL_NOINDEX_PATHS = [
 ] as const
 
 /**
+ * Path prefixes for the client-rendered functional area (auth, cart, checkout,
+ * account). These pages are not prerendered — they load their own data and
+ * serve the noindex SPA shell. The deploy config matches these prefixes (and
+ * any sub-path, e.g. /account/orders/:id) to the shell with a 200, while every
+ * other unknown URL falls through to a genuine 404 instead of a soft 404.
+ */
+export const FUNCTIONAL_SPA_PREFIXES = ['/sign-up', '/login', '/cart', '/account', '/checkout'] as const
+
+/**
  * The full set of routes to prerender for a given snapshot: fixed static pages,
  * one grade detail page per grade value list entry, and one product detail page
  * per published product.
@@ -67,6 +76,36 @@ export function getPublicRoutes(snapshot: CmsSnapshot): PublicRoute[] {
   }
 
   return routes
+}
+
+/**
+ * Reverse of getPublicRoutes for a single URL: classify a live pathname into the
+ * PublicRoute it corresponds to, or null for functional/unknown paths. Used by
+ * the client head manager to resolve metadata on SPA navigation. Returns null
+ * (rather than a route) for a grade/product slug with no matching CMS entry, so
+ * callers never build metadata for a page that doesn't exist.
+ */
+export function matchPath(pathname: string, snapshot: CmsSnapshot): PublicRoute | null {
+  const path = pathname !== '/' && pathname.endsWith('/') ? pathname.replace(/\/+$/, '') : pathname
+
+  if ((STATIC_INDEXABLE_PATHS as readonly string[]).includes(path)) {
+    return { path, kind: 'static' }
+  }
+
+  const gradeMatch = path.match(/^\/grades\/([^/]+)$/)
+  if (gradeMatch) {
+    const grade = snapshot.valueLists.grades.find((value) => gradeToSlug(value) === gradeMatch[1])
+    return grade ? { path, kind: 'grade', grade } : null
+  }
+
+  const productMatch = path.match(/^\/product\/([^/]+)$/)
+  if (productMatch) {
+    const slug = productMatch[1]
+    const exists = snapshot.products.some((product) => product.slug === slug && product.published)
+    return exists ? { path, kind: 'product', productSlug: slug } : null
+  }
+
+  return null
 }
 
 export { gradeToSlug, slugToGrade }

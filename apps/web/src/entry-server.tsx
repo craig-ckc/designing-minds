@@ -30,6 +30,6 @@ export function render({ url, snapshot }: { url: string; snapshot: CmsSnapshot }
 }
 
 export { loadPublicBuildData } from './build/load-public-data.ts'
-export { getPublicRoutes, FUNCTIONAL_NOINDEX_PATHS } from './static-routes.ts'
-export { renderHead, sitemapXml, robotsTxt } from './seo.ts'
+export { getPublicRoutes, FUNCTIONAL_NOINDEX_PATHS, FUNCTIONAL_SPA_PREFIXES } from './static-routes.ts'
+export { renderHead, sitemapXml, robotsTxt, llmsTxt } from './seo.ts'
 export { redirectRoutes, validateRedirects } from './redirects.ts'

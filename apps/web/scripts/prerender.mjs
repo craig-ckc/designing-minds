@@ -116,9 +116,10 @@ for (const route of routes) {
 const shellHtml = template.replace('</head>', '    <meta name="robots" content="noindex" />\n  </head>')
 await writeFile(path.join(distDir, '_shell.html'), shellHtml, 'utf8')
 
-// sitemap.xml + robots.txt
-await writeFile(path.join(distDir, 'sitemap.xml'), server.sitemapXml(routes, siteUrl), 'utf8')
+// sitemap.xml + robots.txt + llms.txt
+await writeFile(path.join(distDir, 'sitemap.xml'), server.sitemapXml(routes, siteUrl, snapshot.generatedAt), 'utf8')
 await writeFile(path.join(distDir, 'robots.txt'), server.robotsTxt(server.FUNCTIONAL_NOINDEX_PATHS, siteUrl), 'utf8')
+await writeFile(path.join(distDir, 'llms.txt'), server.llmsTxt(routes, siteUrl), 'utf8')
 
 console.log(`[prerender] Rendered ${routes.length} routes, ${redirects.length} redirects → dist/`)
 
@@ -135,6 +136,10 @@ await rm(outputDir, { recursive: true, force: true })
 await mkdir(staticDir, { recursive: true })
 await cp(distDir, staticDir, { recursive: true })
 
+// Anchored regex matching the functional SPA prefixes and any sub-path, e.g.
+// /account/orders/:id or /checkout/return — but not lookalikes like /carts.
+const functionalSpaSrc = `^/(?:${server.FUNCTIONAL_SPA_PREFIXES.map((p) => p.slice(1)).join('|')})(?:/.*)?$`
+
 const config = {
   version: 3,
   routes: [
@@ -144,8 +149,13 @@ const config = {
     { src: '/api/(.*)', dest: `${apiOrigin}/api/$1` },
     // 3. Serve generated static files (route HTML, assets, sitemap, robots).
     { handle: 'filesystem' },
-    // 4. SPA fallback for functional + unknown client routes.
-    { src: '/.*', dest: '/_shell.html' },
+    // 4. Known functional client routes (auth, cart, checkout, account) →
+    //    noindex SPA shell with a 200. These aren't prerendered; they render
+    //    and load their own data in the browser.
+    { src: functionalSpaSrc, dest: '/_shell.html' },
+    // 5. Everything else is a genuinely unknown URL → serve the shell (so the
+    //    client shows the 404 page) but with a real 404 status, not a soft 404.
+    { src: '/.*', dest: '/_shell.html', status: 404 },
   ],
 }
 

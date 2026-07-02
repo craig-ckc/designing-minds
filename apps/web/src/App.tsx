@@ -4,6 +4,7 @@ import { type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from './repository'
 import { useAuth } from './lib/auth'
 import { ScrollToTop } from './lib/ScrollToTop'
+import { useRouteHead } from './lib/useRouteHead'
 import { Shell } from './components/layout/Shell'
 import { StatePanel } from './components/ui/StatePanel'
 import { HomePage } from './pages/HomePage'
@@ -51,6 +52,9 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
   // snapshot never carries.
   const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(initialSnapshot)
   const [error, setError] = useState<string | null>(null)
+
+  // Keep the tab title + share tags in sync as the user navigates the SPA.
+  useRouteHead(snapshot)
 
   const refreshSnapshot = useCallback(async () => {
     try {
