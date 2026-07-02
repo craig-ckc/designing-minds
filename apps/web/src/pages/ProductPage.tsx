@@ -18,6 +18,7 @@ import { FaqAccordion } from '../components/ui/FaqAccordion'
 import { ProductCard } from '../components/ProductCard'
 import { SpecRow } from '../components/SpecRow'
 import { addCartSlug } from '../lib/cart'
+import { Markdown } from '../lib/markdown'
 import { NotFoundPage } from './NotFoundPage'
 
 export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
@@ -53,10 +54,10 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <div>
               <Placeholder label={`${product.resourceFormat} preview`} ratio="4 / 3.2" />
 
-              {/* Description */}
+              {/* Description — CMS rich text stored as Markdown */}
               <div className="mt-8 text-ink-soft">
                 <h3 className="mb-4">About this {isComposite ? 'offer' : 'resource'}</h3>
-                <p className="text-[1.02rem]">{product.fullDescription}</p>
+                <Markdown source={product.fullDescription} className="text-[1.02rem]" />
               </div>
 
               {/* Included content for bundles / access plans */}
