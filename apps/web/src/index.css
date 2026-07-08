@@ -114,7 +114,7 @@
 
   /* Soft raised surface card. */
   .card {
-    @apply rounded-lg border border-line bg-surface shadow-soft;
+    @apply rounded-lg border border-line bg-surface;
   }
 
   /* Form control (input / select / textarea). */

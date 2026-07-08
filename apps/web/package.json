@@ -16,6 +16,7 @@
     "@base-ui/react": "^1.6.0",
     "@designing-minds/cms": "file:../../packages/cms",
     "@designing-minds/utils": "file:../../packages/utils",
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/supabase-js": "^2.57.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

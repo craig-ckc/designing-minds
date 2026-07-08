@@ -421,7 +421,7 @@ function BentoCard({
 }) {
   return (
     <article
-      className={`flex flex-col gap-6 rounded-lg border border-line bg-surface p-7 shadow-soft ${
+      className={`card flex flex-col gap-6 p-7 ${
         wide ? 'lg:col-span-2 lg:flex-row lg:items-center lg:gap-8' : ''
       }`}
     >

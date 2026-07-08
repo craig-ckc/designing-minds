@@ -28,7 +28,7 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
     <div className="px-6 py-5">
       <PageHeader eyebrow="Overview" title="Dashboard" description="Catalogue, collections, and operational records at a glance." />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard icon="box" value={String(snapshot.stats.productCount)} label="Products" to="/products" />
         <StatCard icon="receipt" value={String(snapshot.stats.orderCount)} label="Orders" to="/orders" />
         <StatCard icon="users" value={String(snapshot.stats.customerCount)} label="Customers" to="/customers" />
