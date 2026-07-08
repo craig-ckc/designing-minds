@@ -47,7 +47,6 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout
-      eyebrow="Customer Account"
       title="Choose a new password"
       intro="Enter a new password for your account."
       onSubmit={() => void submit()}

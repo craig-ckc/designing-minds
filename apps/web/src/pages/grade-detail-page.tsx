@@ -26,7 +26,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
   return (
     <>
-      <PageHeader eyebrow="Grade" title={grade} lead={GRADE_BLURB[grade] ?? 'CAPS-aligned tests and summaries for this grade.'}>
+      <PageHeader title={grade} lead={GRADE_BLURB[grade] ?? 'CAPS-aligned tests and summaries for this grade.'}>
         <div className="mt-6">
           <Breadcrumb
             trail={[

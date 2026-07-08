@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { Section } from '../components/ui/section'
-import { Eyebrow } from '../components/ui/eyebrow'
 import { Icon } from '../components/ui/icon'
 import { Button } from '../components/ui/button'
 import suggestions from '../content/navigation/not-found-suggestions.json'
@@ -14,7 +13,6 @@ export function NotFoundPage() {
   return (
     <Section>
         <div className="mx-auto max-w-prose text-center">
-          <Eyebrow>404</Eyebrow>
           <h1 className="mt-3">Page not found</h1>
           <p className="mt-4 lead">
             The page you’re looking for doesn’t exist or may have moved. Check the address, or pick up from one of these

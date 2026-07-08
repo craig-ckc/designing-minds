@@ -41,8 +41,8 @@ function SnapshotGate({
   children: (snapshot: CmsSnapshot) => ReactNode
 }) {
   if (snapshot) return <>{children(snapshot)}</>
-  if (error) return <StatePanel eyebrow="Something went wrong" title="Website unavailable" body={error} />
-  return <StatePanel eyebrow="Loading" title="Preparing the catalogue…" />
+  if (error) return <StatePanel title="Website unavailable" body={error} />
+  return <StatePanel title="Preparing the catalogue…" />
 }
 
 function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null }) {

@@ -39,7 +39,6 @@ export function SignUpPage() {
 
   return (
     <AuthLayout
-      eyebrow="Customer Account"
       title="Create your account"
       intro="Save your orders and download purchased files anytime from your account."
       onSubmit={() => void submit()}

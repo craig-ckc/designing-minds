@@ -50,7 +50,7 @@ export function FakePayfastPage() {
   }
 
   if (!orderId) {
-    return <StatePanel eyebrow="Fake PayFast" title="Missing order" body="Start checkout again to create a test payment." />
+    return <StatePanel title="Missing order" body="Start checkout again to create a test payment." />
   }
 
   return (

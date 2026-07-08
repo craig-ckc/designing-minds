@@ -1,6 +1,5 @@
 import { type AccessPlanTier, priceLabel } from '@designing-minds/cms'
 import { Section } from '../ui/section'
-import { Eyebrow } from '../ui/eyebrow'
 import { Icon } from '../ui/icon'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
@@ -19,7 +18,6 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
   return (
     <Section id="plans">
         <div className="mx-auto mb-9 max-w-prose text-center lg:mb-14">
-          <Eyebrow>Access plans</Eyebrow>
           <h2>Buy one term, or the whole year</h2>
           <p className="mt-4 lead">
             Each plan covers one grade and is a once-off purchase for the period it covers. Pick your grade on the next

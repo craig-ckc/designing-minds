@@ -6,13 +6,13 @@ import legalDocs from '../content/legal/legal-docs.json'
 
 type LegalKind = 'privacy' | 'terms' | 'refund'
 
-const CONTENT = legalDocs as Record<LegalKind, { title: string; eyebrow: string; sections: string[] }>
+const CONTENT = legalDocs as Record<LegalKind, { title: string; sections: string[] }>
 
 export function LegalPage({ kind }: { kind: LegalKind }) {
   const doc = CONTENT[kind]
   return (
     <>
-      <PageHeader eyebrow={doc.eyebrow} title={doc.title} lead="Effective date: 1 January 2026.">
+      <PageHeader title={doc.title} lead="Effective date: 1 January 2026.">
         <div className="mt-6">
           <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current={doc.title} />
         </div>

@@ -54,7 +54,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
 
   if (!order) {
     return (
-      <StatePanel eyebrow="Customer Account" title="Finalizing order" body="We’re checking for this order. If payment has just completed, it can take a moment to appear.">
+      <StatePanel title="Finalizing order" body="We’re checking for this order. If payment has just completed, it can take a moment to appear.">
         <div className="mt-2 flex justify-center">
           <Button to="/account/orders" variant="text">
             Back to order history

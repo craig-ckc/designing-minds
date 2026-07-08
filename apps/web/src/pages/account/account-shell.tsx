@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Section } from '../../components/ui/section'
-import { Eyebrow } from '../../components/ui/eyebrow'
 import { Button } from '../../components/ui/button'
 import { StatePanel } from '../../components/ui/state-panel'
 import { useAuth } from '../../lib/auth'
@@ -14,7 +13,7 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
 export function SignedOut() {
   useNoindex()
   return (
-    <StatePanel eyebrow="Customer Account" title="You’re not signed in" body="Log in to view your account, orders, and downloads.">
+    <StatePanel title="You’re not signed in" body="Log in to view your account, orders, and downloads.">
       <div className="mt-2 flex justify-center gap-4">
         <Button to="/login" variant="solid">
           Log in
@@ -52,7 +51,6 @@ export function AccountShell({
     <Section>
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <Eyebrow>Customer Account</Eyebrow>
             <h1 className="text-page-title">{title}</h1>
             {intro ? <p className="mt-2 text-muted">{intro}</p> : null}
           </div>

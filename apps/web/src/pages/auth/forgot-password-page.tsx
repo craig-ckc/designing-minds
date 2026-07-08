@@ -28,7 +28,6 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthLayout
-      eyebrow="Customer Account"
       title="Reset your password"
       intro="Enter your account email and we’ll send you a link to set a new password."
       onSubmit={() => void submit()}

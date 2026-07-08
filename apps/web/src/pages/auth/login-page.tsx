@@ -30,7 +30,6 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      eyebrow="Customer Account"
       title="Log in"
       intro="Access your orders and download your purchased resources."
       onSubmit={() => void submit()}
