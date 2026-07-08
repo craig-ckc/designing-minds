@@ -1,28 +1,22 @@
-import { Eyebrow } from '../ui/eyebrow'
 import { Section } from '../ui/section'
 
 export function OurStorySection() {
   return (
-    <Section containerClassName="grid justify-items-center">
-      <div className="mb-9 max-w-prose text-center lg:mb-14">
-        <Eyebrow>Our story</Eyebrow>
-        <h2>Where a passion for teaching meets a heart for learners</h2>
-      </div>
-      <div className="grid max-w-[70ch] gap-4 text-ink-soft">
-        <p className="text-body-lg">
-          Designing Minds was created from a simple idea: that every parent deserves easy access to quality learning
-          resources that help their children feel confident and prepared.
-        </p>
-        <p className="text-body-lg">
-          We design affordable, CAPS-aligned printable tests that make studying stress-free, structured, and engaging.
-          Our resources are crafted by teachers, tested by parents, and loved by learners across South Africa.
-        </p>
-        <p className="text-body-lg">
-          Each test is created to build confidence, reduce exam anxiety, and familiarise learners with real
-          classroom-style questions — so they walk into every test ready to succeed.
-        </p>
+    <Section containerClassName="text-center">
+      <div className="mx-auto max-w-prose">
+        <p className="mb-4 text-label font-bold uppercase tracking-[0.14em] text-primary">Why we exist</p>
+        <h2 className="mx-auto max-w-[20ch]">Where a passion for teaching meets a heart for learners</h2>
+        <div className="mx-auto mt-6 grid max-w-[58ch] gap-4 text-body-lg text-ink-soft">
+          <p>
+            Designing Minds began with a simple belief: every parent deserves easy access to quality learning resources
+            that help their children feel confident and prepared — without the stress, the guesswork, or the cost.
+          </p>
+          <p>
+            So we make affordable, CAPS-aligned printable tests and summaries that are crafted by teachers, tested by
+            parents, and loved by learners across South Africa — ready to print and practise, again and again.
+          </p>
+        </div>
       </div>
     </Section>
   )
 }
-

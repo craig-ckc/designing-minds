@@ -4,6 +4,7 @@ import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-mind
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
+import { Icon } from '../components/ui/icon'
 import { useAuth } from '../lib/auth'
 import { apiUrl } from '../lib/api'
 import { getCartSlugs } from '../lib/cart'
@@ -102,33 +103,37 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/cart', label: 'Cart' }]} current="Checkout" />
         <h1 className="mb-8 text-page-title">Checkout</h1>
 
-        <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
-          <div className="grid gap-6">
-            <div className="grid gap-6 rounded-card border border-line p-6">
-              <h3>Your account</h3>
-              {customer ? (
-                <p className="text-body-sm text-muted">
-                  Signed in as <strong>{customer.email}</strong>.
-                </p>
-              ) : (
-                <p className="text-body-sm text-muted">
-                  Checkout requires a Customer Account.{' '}
-                  <Link to="/login?redirect=/checkout" className="text-ink underline underline-offset-4">
-                    Log in
-                  </Link>{' '}
-                  or{' '}
-                  <Link to="/sign-up?redirect=/checkout" className="text-ink underline underline-offset-4">
-                    create one
-                  </Link>
-                  .
-                </p>
-              )}
-              {error ? <p className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p> : null}
+        <div className="mx-auto grid max-w-xl gap-5">
+          {/* Account status first — a slim confirmation, not a whole column. */}
+          {customer ? (
+            <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-4">
+              <span className="grid h-10 w-10 flex-none place-items-center rounded-pill bg-primary-tint text-primary">
+                <span className="h-5 w-5">
+                  <Icon name="user" />
+                </span>
+              </span>
+              <p className="text-body-sm text-ink-soft">
+                Signed in as <strong className="text-ink">{customer.email}</strong>
+              </p>
             </div>
+          ) : (
+            <div className="rounded-card border border-line bg-surface p-5">
+              <p className="text-body-sm text-muted">
+                Checkout requires a Customer Account.{' '}
+                <Link to="/login?redirect=/checkout" className="text-ink underline underline-offset-4">
+                  Log in
+                </Link>{' '}
+                or{' '}
+                <Link to="/sign-up?redirect=/checkout" className="text-ink underline underline-offset-4">
+                  create one
+                </Link>
+                .
+              </p>
+            </div>
+          )}
 
-          </div>
-
-          <aside className="grid gap-4 rounded-card border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
+          {/* Then the order details underneath. */}
+          <div className="grid gap-4 rounded-card border border-line bg-surface p-6">
             <h3>Order summary</h3>
             {items.length > 0 ? (
               <ul className="grid gap-2 text-body-sm">
@@ -146,11 +151,14 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <span>Total</span>
               <span>{priceLabel(total)}</span>
             </div>
+            {error ? (
+              <p className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p>
+            ) : null}
             <Button type="button" variant="solid" className="w-full" onClick={() => void pay()} disabled={submitting || items.length === 0}>
               {submitting ? 'Redirecting…' : 'Pay with PayFast'}
             </Button>
             <p className="text-label text-muted">Single payment. Downloads unlock only after PayFast confirms payment.</p>
-          </aside>
+          </div>
         </div>
       </Container>
     </section>

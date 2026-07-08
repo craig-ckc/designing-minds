@@ -3,6 +3,7 @@ import { AboutCtaSection } from '../components/sections/about-cta-section'
 import { AboutHeroSection } from '../components/sections/about-hero-section'
 import { AboutStatsSection } from '../components/sections/about-stats-section'
 import { AboutTestimonialsSection } from '../components/sections/about-testimonials-section'
+import { AboutValuesSection } from '../components/sections/about-values-section'
 import { FounderSection } from '../components/sections/founder-section'
 import { OurStorySection } from '../components/sections/our-story-section'
 
@@ -10,9 +11,10 @@ export function AboutPage({ snapshot, loadError }: { snapshot: CmsSnapshot | nul
   return (
     <>
       <AboutHeroSection />
-      <AboutStatsSection snapshot={snapshot} />
       <OurStorySection />
+      <AboutStatsSection snapshot={snapshot} />
       <FounderSection />
+      <AboutValuesSection />
       <AboutTestimonialsSection snapshot={snapshot} loadError={loadError} />
       <AboutCtaSection />
     </>

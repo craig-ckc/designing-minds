@@ -1,6 +1,5 @@
 import { type Testimonial } from '@designing-minds/cms'
 import { Section } from '../ui/section'
-import { Eyebrow } from '../ui/eyebrow'
 import { Placeholder } from '../ui/placeholder'
 import { Card } from '../ui/card'
 import { StarRating } from '../ui/star-rating'
@@ -8,9 +7,8 @@ import { StarRating } from '../ui/star-rating'
 export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
   if (testimonials.length === 0) return null
   return (
-    <Section className="bg-surface-alt">
+    <Section className="bg-cream">
         <div className="mx-auto mb-9 max-w-prose text-center lg:mb-14">
-          <Eyebrow>What parents are saying</Eyebrow>
           <h2>Real stories from families across South Africa</h2>
         </div>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { type CmsSnapshot, ordersForCustomer, priceLabel } from '@designing-minds/cms'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
+import { Icon } from '../../components/ui/icon'
 import { useAuth } from '../../lib/auth'
 import { AccountShell, SignedOut } from './account-shell'
 import { OrderStatusBadge } from './order-status-badge'
@@ -44,10 +45,10 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <li key={order.id}>
                   <Link
                     to={`/account/orders/${order.id}`}
-                    className="flex flex-wrap items-center justify-between gap-3 border border-line bg-surface px-5 py-4 hover:border-primary"
+                    className="group flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface px-5 py-4 transition-colors hover:border-primary"
                   >
                     <span>
-                      <strong className="block">{order.reference}</strong>
+                      <strong className="block transition-colors group-hover:text-primary">{order.reference}</strong>
                       <span className="text-label text-muted">
                         {order.items.length} item{order.items.length === 1 ? '' : 's'} · {order.placedAt.slice(0, 10)}
                       </span>
@@ -55,6 +56,9 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
                     <span className="flex items-center gap-4">
                       <OrderStatusBadge status={order.status} />
                       <strong>{priceLabel(order.totalZar)}</strong>
+                      <span className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary">
+                        <Icon name="arrow" />
+                      </span>
                     </span>
                   </Link>
                 </li>
