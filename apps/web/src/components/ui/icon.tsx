@@ -9,8 +9,12 @@ import { CalculatorIcon } from '@phosphor-icons/react/dist/ssr/Calculator'
 import { CaretDownIcon } from '@phosphor-icons/react/dist/ssr/CaretDown'
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check'
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr/DownloadSimple'
+import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr/EnvelopeSimple'
 import { FileTextIcon } from '@phosphor-icons/react/dist/ssr/FileText'
+import { MapPinIcon } from '@phosphor-icons/react/dist/ssr/MapPin'
+import { PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone'
 import { FlaskIcon } from '@phosphor-icons/react/dist/ssr/Flask'
+import { FunnelIcon } from '@phosphor-icons/react/dist/ssr/Funnel'
 import { GlobeIcon } from '@phosphor-icons/react/dist/ssr/Globe'
 import { ListIcon } from '@phosphor-icons/react/dist/ssr/List'
 import { PaletteIcon } from '@phosphor-icons/react/dist/ssr/Palette'
@@ -20,6 +24,7 @@ import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck'
 import { ShoppingCartIcon } from '@phosphor-icons/react/dist/ssr/ShoppingCart'
 import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle'
 import { StarIcon } from '@phosphor-icons/react/dist/ssr/Star'
+import { TrashIcon } from '@phosphor-icons/react/dist/ssr/Trash'
 import { UserIcon } from '@phosphor-icons/react/dist/ssr/User'
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X'
 
@@ -43,6 +48,11 @@ export type IconName =
   | 'flask'
   | 'palette'
   | 'pencil'
+  | 'trash'
+  | 'filter'
+  | 'phone'
+  | 'mail'
+  | 'pin'
 
 const icons: Record<IconName, ComponentType<IconProps>> = {
   check: CheckIcon,
@@ -64,17 +74,26 @@ const icons: Record<IconName, ComponentType<IconProps>> = {
   flask: FlaskIcon,
   palette: PaletteIcon,
   pencil: PencilSimpleIcon,
+  trash: TrashIcon,
+  filter: FunnelIcon,
+  phone: PhoneIcon,
+  mail: EnvelopeSimpleIcon,
+  pin: MapPinIcon,
 }
 
+// Functional UI glyphs read best as simple single-stroke lines; everything else
+// keeps Phosphor's richer duotone. An explicit `weight` prop overrides both.
+const LINE_ICONS = new Set<IconName>(['arrow', 'plus', 'check', 'chevron', 'close', 'menu', 'filter', 'download', 'trash'])
+
 /**
- * Themeable duotone Icon. Picks up `currentColor` from the surrounding text.
- * By default renders at `size="100%"` to fill a fixed-size wrapper; pass a
- * `size` (px number or CSS length) to size it directly and drop the wrapper
- * `<span>`. Pass `weight` to opt a glyph out of duotone.
+ * Themeable Icon. Picks up `currentColor` from the surrounding text. Defaults to
+ * duotone, except the functional glyphs above which default to a clean `regular`
+ * line. Renders at `size="100%"` to fill a fixed-size wrapper by default; pass a
+ * `size` (px number or CSS length) to size directly, or `weight` to force one.
  */
 export function Icon({
   name,
-  weight = 'duotone',
+  weight,
   size = '100%',
   className,
 }: {
@@ -84,5 +103,6 @@ export function Icon({
   className?: string
 }) {
   const Glyph = icons[name]
-  return <Glyph weight={weight} size={size} className={className} aria-hidden />
+  const resolved = weight ?? (LINE_ICONS.has(name) ? 'regular' : 'duotone')
+  return <Glyph weight={resolved} size={size} className={className} aria-hidden />
 }

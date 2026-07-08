@@ -14,9 +14,9 @@ const cardStyles = cv({
   variants: {
     variant: {
       surface: ['border border-line bg-surface'],
-      surfaceAlt: ['bg-surface-alt'],
+      surfaceAlt: ['border border-line bg-surface-alt'],
       featured: ['border-2 border-primary bg-primary-tint/40'],
-      interactive: ['border border-line bg-surface transition-shadow hover:shadow-card'],
+      interactive: ['border border-line bg-surface transition-colors hover:border-line-strong'],
       onPrimary: ['bg-primary text-on-primary'],
     },
     pad: {

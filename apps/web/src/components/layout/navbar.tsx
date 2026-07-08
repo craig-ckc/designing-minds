@@ -3,14 +3,14 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Dialog } from '@base-ui/react/dialog'
 import { accessPlanTiers, priceLabel, type AccessPlanTier, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../ui/container'
-import { Icon } from '../ui/icon'
+import { Icon, type IconName } from '../ui/icon'
 import { Wordmark } from '../ui/wordmark'
 import { initials, useAuth } from '../../lib/auth'
 import { useCartSlugs } from '../../lib/use-cart'
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
-  `rounded-pill px-3.5 py-2 text-body font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
-    isActive ? 'bg-surface-sunk text-ink' : 'text-ink-soft'
+  `px-3 py-2 text-body font-semibold transition-colors ${
+    isActive ? 'text-primary' : 'text-ink-soft hover:text-ink'
   }`
 
 /** Full-width promo bar above the nav; scrolls away as the sticky header pins. */
@@ -50,7 +50,6 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
           <span className="grid h-8 w-8 flex-none place-items-center rounded-pill bg-primary text-caption font-bold tracking-[0.02em] text-on-primary">
             {initials(customer.name)}
           </span>
-          <span className="hidden max-w-[9ch] truncate sm:inline">{customer.name.split(' ')[0]}</span>
         </Link>
       ) : (
         <Link
@@ -59,7 +58,6 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
           className="inline-flex items-center gap-2 rounded-pill px-3 py-2 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
         >
           <Icon name="user" size={16} />
-          <span className="hidden sm:inline">Account</span>
         </Link>
       )}
     </>
@@ -73,12 +71,12 @@ function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClos
     <Link
       to={`/packages?plan=${tier.tier}`}
       onClick={onClose}
-      className={`group flex flex-col gap-2 rounded-card border p-5 transition hover:border-primary hover:shadow-soft ${
-        tier.featured ? 'border-primary bg-primary-tint/40' : 'border-line'
+      className={`group flex flex-col gap-3 rounded-card border p-5 transition-colors hover:border-primary ${
+        tier.featured ? 'border-primary bg-primary-tint/40' : 'border-line bg-surface'
       } ${compact ? '' : 'h-full'}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-caption font-bold uppercase tracking-[0.1em] text-muted">
+        <span className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
           {tier.period === 'Year' ? 'Full year' : 'One term'}
         </span>
         {tier.featured ? (
@@ -87,17 +85,30 @@ function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClos
           </span>
         ) : null}
       </div>
-      <span className="font-bold text-ink">{tier.title}</span>
-      <span className="text-[1.4rem] font-extrabold tracking-[-0.02em] text-primary">{priceLabel(tier.fromPriceZar)}</span>
-      {compact ? null : (
-        <span className="text-label text-muted">
-          Choose from {tier.gradeCount} grades{tier.period === 'Term' ? ', any term' : ''}.
+
+      <div>
+        <span className="block font-bold text-ink">{tier.title}</span>
+        {compact ? null : (
+          <span className="mt-0.5 block text-label text-muted">
+            Choose from {tier.gradeCount} grades{tier.period === 'Term' ? ', any term' : ''}.
+          </span>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-end justify-between gap-2 pt-1">
+        <span className="flex items-baseline gap-1">
+          <span className="text-label font-semibold text-muted">from</span>
+          <span className="text-[1.5rem] font-extrabold leading-none tracking-[-0.02em] text-primary">
+            {priceLabel(tier.fromPriceZar)}
+          </span>
         </span>
-      )}
-      <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-label font-bold text-primary">
-        Choose a grade
-        <Icon name="arrow" size={14} />
-      </span>
+        <span className="inline-flex items-center gap-1 text-label font-bold text-primary">
+          Choose
+          <span className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5">
+            <Icon name="arrow" />
+          </span>
+        </span>
+      </div>
     </Link>
   )
 }
@@ -111,11 +122,11 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
         <Container className="grid gap-10 py-10 lg:grid-cols-[1fr_1.7fr]">
           {/* Links */}
           <div>
-            <h5 className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">Shop</h5>
-            <ul className="grid gap-2.5">
-              <MegaLink to="/shop" onClose={onClose} label="All resources" sub="The full catalogue" />
-              <MegaLink to="/grades" onClose={onClose} label="Grades" sub="Browse Grades 3–7" />
-              <MegaLink to="/packages" onClose={onClose} label="Bundles & access plans" sub="Save with bundles" />
+            <h5 className="mb-3 text-label font-semibold uppercase tracking-[0.1em] text-muted">Browse</h5>
+            <ul className="-mx-3 grid gap-1">
+              <MegaLink to="/shop" onClose={onClose} icon="doc" label="All resources" sub="The full catalogue" />
+              <MegaLink to="/grades" onClose={onClose} icon="book" label="Grades" sub="Browse Grades 3–7" />
+              <MegaLink to="/packages" onClose={onClose} icon="spark" label="Bundles & access plans" sub="Save with bundles" />
             </ul>
           </div>
 
@@ -138,12 +149,17 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
   )
 }
 
-function MegaLink({ to, label, sub, onClose }: { to: string; label: string; sub: string; onClose: () => void }) {
+function MegaLink({ to, label, sub, icon, onClose }: { to: string; label: string; sub: string; icon: IconName; onClose: () => void }) {
   return (
     <li>
-      <Link to={to} onClick={onClose} className="group block">
-        <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">{label}</span>
-        <span className="block text-label text-muted">{sub}</span>
+      <Link to={to} onClick={onClose} className="group flex items-start gap-3 rounded-control p-3 transition-colors hover:bg-surface-alt">
+        <span className="mt-0.5 h-5 w-5 flex-none text-primary">
+          <Icon name={icon} />
+        </span>
+        <span>
+          <span className="block font-semibold text-ink transition-colors group-hover:text-primary">{label}</span>
+          <span className="block text-label text-muted">{sub}</span>
+        </span>
       </Link>
     </li>
   )
@@ -204,8 +220,8 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
             type="button"
             onClick={() => setMegaOpen((open) => !open)}
             aria-expanded={megaOpen}
-            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-body font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
-              megaOpen ? 'bg-surface-sunk text-ink' : 'text-ink-soft'
+            className={`flex items-center gap-1.5 px-3 py-2 text-body font-semibold transition-colors ${
+              megaOpen ? 'text-primary' : 'text-ink-soft hover:text-ink'
             }`}
           >
             Shop

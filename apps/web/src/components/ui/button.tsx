@@ -21,8 +21,11 @@ const buttonStyles = cv({
   ],
   variants: {
     variant: {
-      solid: ['bg-primary text-on-primary shadow-soft hover:bg-primary-strong'],
-      'solid-light': ['bg-surface text-ink shadow-soft hover:bg-surface/90'],
+      solid: [
+        'border border-primary-edge text-on-primary [background-image:var(--gradient-primary)]',
+        'hover:[background-image:var(--gradient-primary-hover)]',
+      ],
+      'solid-light': ['border border-line bg-surface text-ink hover:bg-surface-sunk'],
       soft: ['bg-surface-sunk text-ink hover:bg-line-strong'],
       outline: ['border-[1.5px] border-line-strong text-ink hover:border-primary hover:bg-surface-alt'],
       'outline-light': ['border-[1.5px] border-on-primary/55 text-on-primary hover:bg-on-primary/10'],
