@@ -4,7 +4,7 @@ import { Button } from './button'
 import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
-import { addCartSlug } from '../../lib/cart'
+import { addCartSlug, removeCartSlug } from '../../lib/cart'
 import { useCartSlugs } from '../../lib/use-cart'
 
 export function ProductCard({ product }: { product: Product }) {
@@ -14,9 +14,9 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Card
       as="article"
-      variant="surfaceAlt"
+      variant="surface"
       pad="none"
-      className="group flex flex-col p-3 transition-shadow duration-200 hover:shadow-card"
+      className="group flex flex-col rounded-lg p-3 transition-colors duration-200 hover:border-primary/40"
     >
       <Link to={href} className="block">
         <ProductCover product={product} />
@@ -36,11 +36,11 @@ export function ProductCard({ product }: { product: Product }) {
               size="icon"
               shape="circle"
               variant="solid"
-              to="/cart"
-              aria-label="In cart — view cart"
+              onClick={() => removeCartSlug(product.slug)}
+              aria-label={`Remove ${product.title} from cart`}
               className="flex-none"
             >
-              <Icon name="check" size={16} />
+              <Icon name="trash" size={16} />
             </Button>
           ) : (
             <Button
@@ -51,7 +51,7 @@ export function ProductCard({ product }: { product: Product }) {
               aria-label={`Add ${product.title} to cart`}
               className="flex-none hover:bg-primary hover:text-on-primary"
             >
-              <Icon name="plus" size={16} />
+              <Icon name="cart" size={16} />
             </Button>
           )}
         </div>

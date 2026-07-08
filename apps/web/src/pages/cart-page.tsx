@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
-import { Placeholder } from '../components/ui/placeholder'
 import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
+import { Icon } from '../components/ui/icon'
 import { Card } from '../components/ui/card'
+import { ProductCover } from '../components/ui/product-cover'
 import { useNoindex } from '../lib/use-noindex'
 import { removeCartSlug } from '../lib/cart'
 import { useCartSlugs } from '../lib/use-cart'
@@ -41,27 +41,32 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             <ul className="grid gap-4">
               {items.map((item) => (
-                <li key={item.slug} className="flex gap-4 border border-line bg-surface p-4">
-                  <Placeholder label={item.resourceFormat} className="aspect-[4/3] w-28 flex-none rounded-none" />
-                  <div className="flex flex-1 flex-col gap-1.5">
-                    <div className="flex items-start justify-between gap-3">
-                      <Link to={`/product/${item.slug}`} className="font-medium hover:opacity-70">
-                        {item.title}
-                      </Link>
-                      <strong>{priceLabel(item.priceZar)}</strong>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge>{item.grade}</Badge>
-                      <Badge>{item.term}</Badge>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={() => remove(item.slug)}
-                      className="mt-auto self-start text-label text-muted underline underline-offset-4 hover:text-ink"
+                <li key={item.slug} className="flex items-center gap-5 rounded-card border border-line bg-surface p-4">
+                  <Link to={`/product/${item.slug}`} className="w-20 flex-none sm:w-[88px]">
+                    <ProductCover product={item} />
+                  </Link>
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Link
+                      to={`/product/${item.slug}`}
+                      className="font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 hover:text-primary"
                     >
-                      Remove
-                    </Button>
+                      {item.title}
+                    </Link>
+                    <strong className="mt-0.5 text-[1.15rem] font-extrabold text-primary">
+                      {priceLabel(item.priceZar)}
+                    </strong>
                   </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    shape="circle"
+                    variant="solid-light"
+                    onClick={() => remove(item.slug)}
+                    aria-label={`Remove ${item.title} from cart`}
+                    className="flex-none self-start transition-colors hover:border-danger hover:bg-danger hover:text-on-primary"
+                  >
+                    <Icon name="trash" size={16} />
+                  </Button>
                 </li>
               ))}
             </ul>
