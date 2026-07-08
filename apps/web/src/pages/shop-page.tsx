@@ -1,61 +1,56 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import {
-  ALL,
-  defaultProductFilters,
-  filterProducts,
-  publishedProducts,
-  type CmsSnapshot,
-  type ProductFilterState,
-} from '@designing-minds/cms'
+import { publishedProducts, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
-import { Field } from '../components/ui/field'
-import { Select } from '../components/ui/select'
-import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
+import { ChipGroup, FilterDrawer, FilterTrigger, makeToggle } from '../components/ui/filter-drawer'
 
 export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const subjectNames = useMemo(() => snapshot.subjects.map((s) => s.name), [snapshot])
   const nameToSlug = useMemo(() => new Map(snapshot.subjects.map((s) => [s.name, s.slug])), [snapshot])
 
-  const [filters, setFilters] = useState<ProductFilterState>(() => ({
-    ...defaultProductFilters,
-    grade: searchParams.get('grade') ?? defaultProductFilters.grade,
-    kind: searchParams.get('kind') ?? defaultProductFilters.kind,
-  }))
+  const initialGrade = searchParams.get('grade')
+  const initialKind = searchParams.get('kind')
 
-  const deferredQuery = useDeferredValue(filters.query)
+  const [query, setQuery] = useState('')
+  const [grades, setGrades] = useState<string[]>(initialGrade ? [initialGrade] : [])
+  const [terms, setTerms] = useState<string[]>([])
+  const [subjects, setSubjects] = useState<string[]>([])
+  const [formats, setFormats] = useState<string[]>([])
+  const [kinds, setKinds] = useState<string[]>(initialKind ? [initialKind] : [])
+  const [filtersOpen, setFiltersOpen] = useState(false)
+
+  const deferredQuery = useDeferredValue(query)
+  const q = deferredQuery.trim().toLowerCase()
   const products = publishedProducts(snapshot)
-  const visible = filterProducts(products, {
-    ...filters,
-    query: deferredQuery,
-    subject: filters.subject === ALL ? ALL : nameToSlug.get(filters.subject) ?? ALL,
+
+  const visible = products.filter((product) => {
+    if (grades.length && !grades.includes(product.grade)) return false
+    if (terms.length && !terms.includes(product.term)) return false
+    if (subjects.length && !subjects.some((name) => product.subjects.includes(nameToSlug.get(name) ?? name))) return false
+    if (formats.length && !formats.includes(product.resourceFormat)) return false
+    if (kinds.length && !kinds.includes(product.productKind)) return false
+    if (!q) return true
+    return `${product.title} ${product.shortDescription} ${product.subjects.join(' ')}`.toLowerCase().includes(q)
   })
 
-  const update = (patch: Partial<ProductFilterState>) => {
-    setFilters((current) => {
-      const next = { ...current, ...patch }
-      const params = new URLSearchParams()
-      if (next.grade !== ALL) params.set('grade', next.grade)
-      if (next.kind !== ALL) params.set('kind', next.kind)
-      setSearchParams(params, { replace: true })
-      return next
-    })
-  }
-
+  const activeCount = grades.length + terms.length + subjects.length + formats.length + kinds.length
   const reset = () => {
-    setFilters(defaultProductFilters)
-    setSearchParams(new URLSearchParams(), { replace: true })
+    setGrades([])
+    setTerms([])
+    setSubjects([])
+    setFormats([])
+    setKinds([])
+    setQuery('')
   }
 
   return (
     <>
       <PageHeader
-        eyebrow="Catalogue"
         title="All resources"
         lead={`Browse ${snapshot.stats.productCount} CAPS-aligned resources across grades, terms, subjects, formats, and offer types.`}
       >
@@ -65,37 +60,25 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur-md">
-        <Container className="flex flex-wrap items-end gap-3 py-4">
-          <div className="min-w-[200px] flex-1">
-            <Field label="Search">
-              <input
-                className="field"
-                value={filters.query}
-                onChange={(event) => update({ query: event.target.value })}
-                placeholder="e.g. Grade 5 maths"
-              />
-            </Field>
-          </div>
-          <div className="min-w-[150px]">
-            <Select label="Grade" value={filters.grade} options={[ALL, ...snapshot.valueLists.grades]} onChange={(v) => update({ grade: v })} />
-          </div>
-          <div className="min-w-[140px]">
-            <Select label="Term" value={filters.term} options={[ALL, ...snapshot.valueLists.terms]} onChange={(v) => update({ term: v })} />
-          </div>
-          <div className="min-w-[170px]">
-            <Select label="Subject" value={filters.subject} options={[ALL, ...subjectNames]} onChange={(v) => update({ subject: v })} />
-          </div>
-          <div className="min-w-[150px]">
-            <Select label="Format" value={filters.resourceFormat} options={[ALL, ...snapshot.valueLists.resourceFormats]} onChange={(v) => update({ resourceFormat: v })} />
-          </div>
-          <div className="min-w-[160px]">
-            <Select label="Type" value={filters.kind} options={[ALL, ...snapshot.valueLists.productKinds]} onChange={(v) => update({ kind: v })} />
-          </div>
-          <Button type="button" variant="soft" onClick={reset} className="ml-auto">
-            Reset filters
-          </Button>
+        <Container className="flex items-center gap-3 py-4">
+          <input
+            className="field w-full max-w-md"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search resources…"
+            aria-label="Search resources"
+          />
+          <FilterTrigger onClick={() => setFiltersOpen(true)} activeCount={activeCount} className="ml-auto" />
         </Container>
       </div>
+
+      <FilterDrawer open={filtersOpen} onOpenChange={setFiltersOpen} onReset={reset} resultCount={visible.length}>
+        <ChipGroup label="Grade" options={snapshot.valueLists.grades} selected={grades} onToggle={makeToggle(setGrades)} />
+        <ChipGroup label="Term" options={snapshot.valueLists.terms} selected={terms} onToggle={makeToggle(setTerms)} />
+        <ChipGroup label="Subject" options={subjectNames} selected={subjects} onToggle={makeToggle(setSubjects)} />
+        <ChipGroup label="Format" options={snapshot.valueLists.resourceFormats} selected={formats} onToggle={makeToggle(setFormats)} />
+        <ChipGroup label="Type" options={snapshot.valueLists.productKinds} selected={kinds} onToggle={makeToggle(setKinds)} />
+      </FilterDrawer>
 
       <section className="section">
         <Container>

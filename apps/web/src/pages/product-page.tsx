@@ -32,7 +32,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const subjects = getSubjectsForProduct(snapshot, product)
   const faqs = getFaqsByIds(snapshot, product.faqs)
   const included = getProductsBySlugs(snapshot, product.includedProductSlugs ?? [])
-  const related = relatedProducts(snapshot, product, 3)
+  const related = relatedProducts(snapshot, product, 4)
   const isComposite = product.productKind === 'Bundle' || product.productKind === 'Access Plan'
   // Each Access Plan is one fixed grade, and Essential is also one fixed term.
   // The grade is no longer chosen at checkout; see docs/decisions.md.
@@ -127,7 +127,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </section>
 
       {related.length > 0 ? (
-        <section className="section bg-surface-alt">
+        <section className="section bg-cream">
           <Container>
             <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
               <h3>Related resources</h3>
@@ -139,7 +139,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <Icon name="arrow" size={16} />
               </Link>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
               {related.map((entry) => (
                 <ProductCard key={entry.id} product={entry} />
               ))}
