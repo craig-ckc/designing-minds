@@ -67,20 +67,22 @@ const icons: Record<IconName, ComponentType<IconProps>> = {
 }
 
 /**
- * Themeable duotone Icon. Renders at `size="100%"` so it fills the fixed-size
- * wrapper each call site provides (e.g. `<span className="h-4 w-4">`) and picks
- * up `currentColor` from the surrounding text colour — matching the previous
- * inline-SVG behaviour. Pass `weight` to opt a glyph out of duotone.
+ * Themeable duotone Icon. Picks up `currentColor` from the surrounding text.
+ * By default renders at `size="100%"` to fill a fixed-size wrapper; pass a
+ * `size` (px number or CSS length) to size it directly and drop the wrapper
+ * `<span>`. Pass `weight` to opt a glyph out of duotone.
  */
 export function Icon({
   name,
   weight = 'duotone',
+  size = '100%',
   className,
 }: {
   name: IconName
   weight?: IconWeight
+  size?: number | string
   className?: string
 }) {
   const Glyph = icons[name]
-  return <Glyph weight={weight} size="100%" className={className} aria-hidden />
+  return <Glyph weight={weight} size={size} className={className} aria-hidden />
 }

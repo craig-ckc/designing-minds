@@ -28,6 +28,12 @@
   --color-primary-strong: #3a45cf; /* hover / pressed */
   --color-primary-tint: #ecebfd; /* soft blue backgrounds & chips */
 
+  /* ---- Semantic colour roles ------------------------------------------ */
+  --color-on-primary: #ffffff; /* text / icons on primary & dark surfaces */
+  --color-paper: #ffffff; /* product-cover A4 sheet white */
+  --color-danger: #c0362c; /* validation / error text & borders */
+  --color-danger-tint: #fbe9e7; /* error banner background */
+
   /* ---- Pastel palette (section + product colour-ways) ----------------- */
   --color-butter: #fbe08c;
   --color-blossom: #fbd2ea;
@@ -49,6 +55,54 @@
   --shadow-soft: 0 1px 2px rgba(41, 25, 10, 0.04), 0 6px 16px -8px rgba(41, 25, 10, 0.1);
   --shadow-card: 0 2px 4px rgba(41, 25, 10, 0.04), 0 18px 32px -18px rgba(41, 25, 10, 0.16);
   --shadow-lift: 0 4px 10px rgba(41, 25, 10, 0.06), 0 26px 48px -20px rgba(41, 25, 10, 0.22);
+
+  /* ---- Radius (semantic surface scale) --------------------------------
+     One rule per surface. rounded-lg (8px) stays for menu items / code. */
+  --radius-control: 0.75rem; /* 12px — buttons, inputs, select, notices */
+  --radius-card: 1rem; /* 16px — canonical card / raised surface */
+  --radius-panel: 1.5rem; /* 24px — large hero CTA panels */
+  --radius-pill: 9999px; /* pills, tags, badges, icon-buttons, avatars */
+
+  /* ---- Type scale (below heading level) -------------------------------
+     h1–h4 use the fluid clamp scale in @layer base; these govern the rest.
+     Generates text-caption / text-label / text-body / … utilities. */
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+  --text-label: 0.85rem;
+  --text-label--line-height: 1.45;
+  --text-body-sm: 0.9rem;
+  --text-body-sm--line-height: 1.5;
+  --text-body: 0.95rem;
+  --text-body--line-height: 1.55;
+  --text-body-lg: 1.05rem;
+  --text-body-lg--line-height: 1.55;
+  --text-page-title: 2rem; /* shell/commerce h1 smaller than the display h1 */
+  --text-page-title--line-height: 1.1;
+  --text-page-title--letter-spacing: -0.03em;
+  --text-page-title--font-weight: 800;
+  --text-display: clamp(2rem, 3.4vw, 2.8rem); /* stat numbers & big prices */
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 800;
+  --text-quote: clamp(1.3rem, 2.2vw, 1.6rem); /* pull-quotes / lead testimonial */
+  --text-quote--line-height: 1.3;
+  --text-quote--letter-spacing: -0.02em;
+
+  /* ---- Content widths (Container + prose columns) ----------------------
+     Generates max-w-page / max-w-prose / … utilities. */
+  --container-page: 1240px; /* page shell — single source of truth */
+  --container-wide: 980px; /* media-forward showcase rows */
+  --container-readable: 820px; /* long-form: FAQ, legal */
+  --container-prose: 680px; /* section headings & standard prose */
+  --container-narrow: 560px; /* notices / status pages */
+  --container-form: 460px; /* forms / auth */
+
+  /* ---- Layout constants (referenced via var() in arbitrary utilities) -- */
+  --control-h: 44px; /* Button md + Select trigger height */
+  --control-h-sm: 36px; /* Button sm */
+  --header-h: 72px; /* sticky header — mega-menu & filter bars align to it */
+  --sticky-offset: 96px; /* sticky sidebars / asides */
+  --pad-card: 1.5rem; /* default card interior padding (p-6) */
 }
 
 @layer base {
@@ -112,14 +166,15 @@
     @apply text-[clamp(1.05rem,1.6vw,1.22rem)] leading-[1.55] text-ink-soft;
   }
 
-  /* Soft raised surface card. */
+  /* Soft raised surface card — canonical 16px radius (--radius-card). */
   .card {
-    @apply rounded-lg border border-line bg-surface;
+    @apply rounded-card border border-line bg-surface;
   }
 
-  /* Form control (input / select / textarea). */
+  /* Form control (input / select / textarea) — shares --control-h and
+     --radius-control with Button and the Select trigger. */
   .field {
-    @apply w-full min-h-[44px] rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-[0.95rem]
+    @apply w-full min-h-[var(--control-h)] rounded-control border border-line-strong bg-surface px-3.5 py-2.5 text-body
            transition placeholder:text-muted
            focus:border-primary focus:outline focus:outline-2 focus:outline-primary/25 focus:-outline-offset-1;
   }
