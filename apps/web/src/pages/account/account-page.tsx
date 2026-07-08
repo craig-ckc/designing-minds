@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { type CmsSnapshot, ordersForCustomer, priceLabel } from '@designing-minds/cms'
 import { Button } from '../../components/ui/button'
+import { Card } from '../../components/ui/card'
 import { useAuth } from '../../lib/auth'
 import { AccountShell, SignedOut } from './account-shell'
 import { OrderStatusBadge } from './order-status-badge'
@@ -17,7 +18,7 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
   return (
     <AccountShell title={`Welcome back, ${customer.name.split(' ')[0]}`} intro="Your orders and account details in one place.">
       <div className="grid gap-8">
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+        <Card variant="surface" pad="none" className="grid grid-cols-2 gap-px overflow-hidden bg-line sm:grid-cols-3">
           {[
             { value: String(orders.length), label: 'Total orders' },
             { value: String(downloadable), label: 'Ready to download' },
@@ -25,15 +26,15 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
           ].map((stat) => (
             <div key={stat.label} className="bg-surface px-5 py-5">
               <strong className="block text-[1.6rem] font-semibold tracking-[-0.02em]">{stat.value}</strong>
-              <span className="text-[0.88rem] text-muted">{stat.label}</span>
+              <span className="text-label text-muted">{stat.label}</span>
             </div>
           ))}
-        </div>
+        </Card>
 
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h3>Recent orders</h3>
-            <Link to="/account/orders" className="text-[0.9rem] font-medium underline underline-offset-4">
+            <Link to="/account/orders" className="text-body-sm font-medium underline underline-offset-4">
               View all
             </Link>
           </div>
@@ -47,7 +48,7 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   >
                     <span>
                       <strong className="block">{order.reference}</strong>
-                      <span className="text-[0.88rem] text-muted">
+                      <span className="text-label text-muted">
                         {order.items.length} item{order.items.length === 1 ? '' : 's'} · {order.placedAt.slice(0, 10)}
                       </span>
                     </span>
@@ -60,24 +61,24 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
               ))}
             </ul>
           ) : (
-            <div className="card p-6 text-center">
+            <Card variant="surface" pad="md" className="text-center">
               <p className="text-muted">You have no orders yet.</p>
               <div className="mt-3 flex justify-center">
                 <Button to="/shop" variant="solid" size="sm">
                   Browse resources
                 </Button>
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
         <div>
           <h3 className="mb-4">Account details</h3>
-          <div className="card grid gap-3 p-6">
+          <Card variant="surface" pad="md" className="grid gap-3">
             <Detail label="Name" value={customer.name} />
             <Detail label="Email" value={customer.email} />
             <Detail label="Member since" value={customer.createdAt.slice(0, 10)} last />
-          </div>
+          </Card>
         </div>
       </div>
     </AccountShell>

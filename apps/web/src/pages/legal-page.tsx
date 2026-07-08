@@ -1,4 +1,4 @@
-import { Container } from '../components/ui/container'
+import { Section } from '../components/ui/section'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { PageHeader } from '../components/ui/headings'
 import { Button } from '../components/ui/button'
@@ -18,9 +18,8 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
         </div>
       </PageHeader>
 
-      <section className="section">
-        <Container>
-          <div className="mx-auto grid max-w-[760px] gap-9">
+      <Section>
+          <div className="mx-auto grid max-w-readable gap-9">
             {doc.sections.map((heading, index) => (
               <div key={heading} className="grid gap-3">
                 <h3>
@@ -41,8 +40,7 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
               </Button>
             </div>
           </div>
-        </Container>
-      </section>
+      </Section>
     </>
   )
 }

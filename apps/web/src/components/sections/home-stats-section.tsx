@@ -20,7 +20,7 @@ export function HomeStatsSection({ snapshot }: { snapshot: CmsSnapshot | null })
 
   return (
     <Section spacing="tight">
-      <p className="mb-8 text-center text-[0.95rem] font-medium text-muted">
+      <p className="mb-8 text-center text-body font-medium text-muted">
         Trusted by families across South Africa
       </p>
       <StatsRow stats={stats} />

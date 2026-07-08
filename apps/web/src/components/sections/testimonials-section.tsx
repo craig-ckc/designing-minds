@@ -1,35 +1,33 @@
 import { type Testimonial } from '@designing-minds/cms'
-import { Container } from '../ui/container'
+import { Section } from '../ui/section'
 import { Eyebrow } from '../ui/eyebrow'
 import { Placeholder } from '../ui/placeholder'
+import { Card } from '../ui/card'
+import { StarRating } from '../ui/star-rating'
 
 export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
   if (testimonials.length === 0) return null
   return (
-    <section className="section bg-surface-alt">
-      <Container>
-        <div className="mx-auto mb-9 max-w-[640px] text-center lg:mb-14">
+    <Section className="bg-surface-alt">
+        <div className="mx-auto mb-9 max-w-prose text-center lg:mb-14">
           <Eyebrow>What parents are saying</Eyebrow>
           <h2>Real stories from families across South Africa</h2>
         </div>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {testimonials.map((item) => (
-            <figure key={item.id} className="card flex flex-col gap-5 p-8">
-              <div className="text-[1.05rem] tracking-[2px] text-amber" aria-label="5 out of 5 stars">
-                ★★★★★
-              </div>
+            <Card as="figure" key={item.id} variant="surface" pad="lg" className="flex flex-col gap-5">
+              <StarRating value={5} size="md" />
               <blockquote className="text-[1.18rem] font-medium leading-[1.5] tracking-[-0.01em]">“{item.quote}”</blockquote>
               <figcaption className="mt-auto flex items-center gap-3">
                 <Placeholder circle className="h-11 w-11 flex-none" />
                 <span>
-                  <strong className="block text-[0.95rem] font-bold">{item.customerName}</strong>
-                  <span className="text-[0.85rem] text-muted">{item.context}</span>
+                  <strong className="block text-body font-bold">{item.customerName}</strong>
+                  <span className="text-label text-muted">{item.context}</span>
                 </span>
               </figcaption>
-            </figure>
+            </Card>
           ))}
         </div>
-      </Container>
-    </section>
+    </Section>
   )
 }

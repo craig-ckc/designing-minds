@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Field } from '../../components/ui/field'
 import { Button } from '../../components/ui/button'
+import { Notice } from '../../components/ui/notice'
 import { useAuth } from '../../lib/auth'
 import { AuthLayout } from './auth-layout'
 
@@ -59,9 +60,7 @@ export function ResetPasswordPage() {
         </>
       }
     >
-      {error ? (
-        <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p>
-      ) : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
       <Field label="New password">
         <input
           className="field"

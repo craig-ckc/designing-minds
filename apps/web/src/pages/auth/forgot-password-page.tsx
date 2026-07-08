@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Field } from '../../components/ui/field'
 import { Button } from '../../components/ui/button'
+import { Notice } from '../../components/ui/notice'
 import { useAuth } from '../../lib/auth'
 import { AuthLayout } from './auth-layout'
 
@@ -41,14 +42,12 @@ export function ForgotPasswordPage() {
       }
     >
       {sent ? (
-        <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">
+        <Notice tone="success">
           If an account exists for {email}, a password-reset link is on its way. Check your inbox (and spam folder).
-        </p>
+        </Notice>
       ) : (
         <>
-          {error ? (
-            <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p>
-          ) : null}
+          {error ? <Notice tone="error">{error}</Notice> : null}
           <Field label="Email">
             <input
               className="field"

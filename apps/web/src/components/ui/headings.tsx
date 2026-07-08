@@ -17,7 +17,7 @@ export function PageHeader({
   return (
     <section className="section-tight border-b border-line">
       <Container>
-        <div className="max-w-[680px]">
+        <div className="max-w-prose">
           {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
           <h1>{title}</h1>
           {lead ? <p className="mt-4 lead">{lead}</p> : null}

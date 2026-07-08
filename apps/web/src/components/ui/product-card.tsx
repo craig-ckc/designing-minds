@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { type Product, priceLabel } from '@designing-minds/cms'
+import { Button } from './button'
+import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
 import { addCartSlug } from '../../lib/cart'
@@ -10,7 +12,12 @@ export function ProductCard({ product }: { product: Product }) {
   const href = `/product/${product.slug}`
 
   return (
-    <article className="group flex flex-col rounded-2xl bg-surface-alt p-3 transition-shadow duration-200 hover:shadow-card">
+    <Card
+      as="article"
+      variant="surfaceAlt"
+      pad="none"
+      className="group flex flex-col p-3 transition-shadow duration-200 hover:shadow-card"
+    >
       <Link to={href} className="block">
         <ProductCover product={product} />
       </Link>
@@ -18,36 +25,37 @@ export function ProductCard({ product }: { product: Product }) {
       {/* Title + price */}
       <div className="flex flex-1 flex-col px-1 pb-0.5 pt-3">
         <Link to={href}>
-          <h3 className="text-[1.02rem] font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary">
+          <h3 className="text-body-lg font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary">
             {product.title}
           </h3>
         </Link>
         <div className="mt-auto flex items-center justify-between gap-3 pt-3">
           <span className="text-[1.2rem] font-extrabold text-primary">{priceLabel(product.priceZar)}</span>
           {inCart ? (
-            <Link
+            <Button
+              size="icon"
+              shape="circle"
+              variant="solid"
               to="/cart"
               aria-label="In cart — view cart"
-              className="grid h-10 w-10 flex-none place-items-center rounded-full bg-primary text-white shadow-soft"
+              className="flex-none"
             >
-              <span className="h-4 w-4">
-                <Icon name="check" />
-              </span>
-            </Link>
+              <Icon name="check" size={16} />
+            </Button>
           ) : (
-            <button
-              type="button"
+            <Button
+              size="icon"
+              shape="circle"
+              variant="solid-light"
               onClick={() => addCartSlug(product.slug)}
               aria-label={`Add ${product.title} to cart`}
-              className="grid h-10 w-10 flex-none place-items-center rounded-full bg-surface text-ink shadow-soft transition-colors hover:bg-primary hover:text-white"
+              className="flex-none hover:bg-primary hover:text-on-primary"
             >
-              <span className="h-4 w-4">
-                <Icon name="plus" />
-              </span>
-            </button>
+              <Icon name="plus" size={16} />
+            </Button>
           )}
         </div>
       </div>
-    </article>
+    </Card>
   )
 }

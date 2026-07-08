@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Container } from '../../components/ui/container'
+import { Section } from '../../components/ui/section'
 import { Eyebrow } from '../../components/ui/eyebrow'
 import { Button } from '../../components/ui/button'
 import { StatePanel } from '../../components/ui/state-panel'
@@ -8,7 +8,7 @@ import { useAuth } from '../../lib/auth'
 import { useNoindex } from '../../lib/use-noindex'
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
-  `block rounded-full px-3.5 py-2 text-[0.95rem] font-semibold ${isActive ? 'bg-surface-sunk text-ink' : 'text-ink-soft hover:bg-surface-sunk'}`
+  `block rounded-pill px-3.5 py-2 text-body font-semibold ${isActive ? 'bg-surface-sunk text-ink' : 'text-ink-soft hover:bg-surface-sunk'}`
 
 /** Shown when an account route is opened while signed out. */
 export function SignedOut() {
@@ -49,12 +49,11 @@ export function AccountShell({
   }
 
   return (
-    <section className="section">
-      <Container>
+    <Section>
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <Eyebrow>Customer Account</Eyebrow>
-            <h1 className="text-[2rem]">{title}</h1>
+            <h1 className="text-page-title">{title}</h1>
             {intro ? <p className="mt-2 text-muted">{intro}</p> : null}
           </div>
           <Button type="button" variant="text" onClick={signOut}>
@@ -62,7 +61,7 @@ export function AccountShell({
           </Button>
         </div>
         <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="lg:sticky lg:top-[var(--sticky-offset)] lg:self-start">
             <nav className="grid gap-1">
               <NavLink to="/account" end className={linkCls}>
                 Dashboard
@@ -77,7 +76,6 @@ export function AccountShell({
           </aside>
           <div>{children}</div>
         </div>
-      </Container>
-    </section>
+    </Section>
   )
 }

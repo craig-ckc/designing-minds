@@ -9,20 +9,18 @@ import { initials, useAuth } from '../../lib/auth'
 import { useCartSlugs } from '../../lib/use-cart'
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
-  `rounded-full px-3.5 py-2 text-[0.95rem] font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
+  `rounded-pill px-3.5 py-2 text-body font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
     isActive ? 'bg-surface-sunk text-ink' : 'text-ink-soft'
   }`
 
 /** Full-width promo bar above the nav; scrolls away as the sticky header pins. */
 function AnnouncementBar() {
   return (
-    <Link to="/shop" className="block bg-primary text-white transition-colors hover:bg-primary-strong">
-      <div className="mx-auto flex max-w-[1240px] items-center justify-center gap-2 px-5 py-2.5 text-center text-[0.85rem] font-semibold">
+    <Link to="/shop" className="block bg-primary text-on-primary transition-colors hover:bg-primary-strong">
+      <Container className="flex items-center justify-center gap-2 py-2.5 text-center text-label font-semibold">
         New — Term 4 CAPS resources for Grades 3–7 are here
-        <span className="h-4 w-4">
-          <Icon name="arrow" />
-        </span>
-      </div>
+        <Icon name="arrow" size={16} />
+      </Container>
     </Link>
   )
 }
@@ -36,11 +34,9 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         to="/cart"
         onClick={onNavigate}
-        className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.9rem] font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+        className="inline-flex items-center gap-2 rounded-pill px-3 py-2 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
       >
-        <span className="h-4 w-4">
-          <Icon name="cart" />
-        </span>
+        <Icon name="cart" size={16} />
         <span className="hidden sm:inline">Cart ({cartCount})</span>
       </Link>
 
@@ -48,10 +44,10 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/account"
           onClick={onNavigate}
-          className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-[0.9rem] font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+          className="flex items-center gap-2 rounded-pill py-1 pl-1 pr-3 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
           title={`${customer.name} — Customer Account`}
         >
-          <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-primary text-[0.78rem] font-bold tracking-[0.02em] text-white">
+          <span className="grid h-8 w-8 flex-none place-items-center rounded-pill bg-primary text-caption font-bold tracking-[0.02em] text-on-primary">
             {initials(customer.name)}
           </span>
           <span className="hidden max-w-[9ch] truncate sm:inline">{customer.name.split(' ')[0]}</span>
@@ -60,11 +56,9 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/login"
           onClick={onNavigate}
-          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.9rem] font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+          className="inline-flex items-center gap-2 rounded-pill px-3 py-2 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
         >
-          <span className="h-4 w-4">
-            <Icon name="user" />
-          </span>
+          <Icon name="user" size={16} />
           <span className="hidden sm:inline">Account</span>
         </Link>
       )}
@@ -79,16 +73,16 @@ function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClos
     <Link
       to={`/packages?plan=${tier.tier}`}
       onClick={onClose}
-      className={`group flex flex-col gap-2 rounded-2xl border p-5 transition hover:border-primary hover:shadow-soft ${
+      className={`group flex flex-col gap-2 rounded-card border p-5 transition hover:border-primary hover:shadow-soft ${
         tier.featured ? 'border-primary bg-primary-tint/40' : 'border-line'
       } ${compact ? '' : 'h-full'}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.72rem] font-bold uppercase tracking-[0.1em] text-muted">
+        <span className="text-caption font-bold uppercase tracking-[0.1em] text-muted">
           {tier.period === 'Year' ? 'Full year' : 'One term'}
         </span>
         {tier.featured ? (
-          <span className="rounded-full bg-primary px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.06em] text-white">
+          <span className="rounded-pill bg-primary px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.06em] text-on-primary">
             Best value
           </span>
         ) : null}
@@ -96,15 +90,13 @@ function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClos
       <span className="font-bold text-ink">{tier.title}</span>
       <span className="text-[1.4rem] font-extrabold tracking-[-0.02em] text-primary">{priceLabel(tier.fromPriceZar)}</span>
       {compact ? null : (
-        <span className="text-[0.88rem] text-muted">
+        <span className="text-label text-muted">
           Choose from {tier.gradeCount} grades{tier.period === 'Term' ? ', any term' : ''}.
         </span>
       )}
-      <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-[0.88rem] font-bold text-primary">
+      <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-label font-bold text-primary">
         Choose a grade
-        <span className="h-3.5 w-3.5">
-          <Icon name="arrow" />
-        </span>
+        <Icon name="arrow" size={14} />
       </span>
     </Link>
   )
@@ -114,12 +106,12 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
   return (
     <>
       {/* Visual dim only — outside clicks are handled by a document listener. */}
-      <div aria-hidden className="pointer-events-none fixed inset-x-0 bottom-0 top-[72px] z-30 bg-ink/10" />
+      <div aria-hidden className="pointer-events-none fixed inset-x-0 bottom-0 top-[var(--header-h)] z-30 bg-ink/10" />
       <div ref={panelRef} className="absolute inset-x-0 top-full z-40 hidden border-t border-line bg-surface shadow-card lg:block">
         <Container className="grid gap-10 py-10 lg:grid-cols-[1fr_1.7fr]">
           {/* Links */}
           <div>
-            <h5 className="mb-4 text-[0.82rem] font-semibold uppercase tracking-[0.1em] text-muted">Shop</h5>
+            <h5 className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">Shop</h5>
             <ul className="grid gap-2.5">
               <MegaLink to="/shop" onClose={onClose} label="All resources" sub="The full catalogue" />
               <MegaLink to="/grades" onClose={onClose} label="Grades" sub="Browse Grades 3–7" />
@@ -129,7 +121,7 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
 
           {/* Access plan tiers */}
           <div>
-            <h5 className="mb-4 text-[0.82rem] font-semibold uppercase tracking-[0.1em] text-muted">Access plans</h5>
+            <h5 className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">Access plans</h5>
             {tiers.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 {tiers.map((tier) => (
@@ -137,7 +129,7 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
                 ))}
               </div>
             ) : (
-              <p className="text-[0.9rem] text-muted">No access plans published yet.</p>
+              <p className="text-body-sm text-muted">No access plans published yet.</p>
             )}
           </div>
         </Container>
@@ -151,7 +143,7 @@ function MegaLink({ to, label, sub, onClose }: { to: string; label: string; sub:
     <li>
       <Link to={to} onClick={onClose} className="group block">
         <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">{label}</span>
-        <span className="block text-[0.85rem] text-muted">{sub}</span>
+        <span className="block text-label text-muted">{sub}</span>
       </Link>
     </li>
   )
@@ -200,7 +192,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
     <>
       <AnnouncementBar />
       <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md">
-      <Container className="flex min-h-[72px] items-center gap-7">
+      <Container className="flex min-h-[var(--header-h)] items-center gap-7">
         <Wordmark onClick={closeMega} />
 
         <nav className="ml-3 hidden items-center gap-1 lg:flex">
@@ -212,7 +204,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
             type="button"
             onClick={() => setMegaOpen((open) => !open)}
             aria-expanded={megaOpen}
-            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.95rem] font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
+            className={`flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-body font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
               megaOpen ? 'bg-surface-sunk text-ink' : 'text-ink-soft'
             }`}
           >
@@ -234,29 +226,25 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
           {/* Mobile menu */}
           <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
-            <Dialog.Trigger className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface-sunk lg:hidden">
-              <span className="h-5 w-5">
-                <Icon name="menu" />
-              </span>
+            <Dialog.Trigger className="grid h-10 w-10 place-items-center rounded-pill hover:bg-surface-sunk lg:hidden">
+              <Icon name="menu" size={20} />
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Backdrop className="fixed inset-0 z-40 bg-ink/20 backdrop-blur-sm" />
               <Dialog.Popup className="fixed inset-y-0 right-0 z-50 flex w-[84%] max-w-sm flex-col gap-1 overflow-y-auto rounded-l-3xl bg-surface p-6 shadow-lift">
                 <div className="mb-4 flex items-center justify-between">
-                  <Dialog.Title className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-muted">
+                  <Dialog.Title className="text-label font-semibold uppercase tracking-[0.12em] text-muted">
                     Menu
                   </Dialog.Title>
-                  <Dialog.Close className="grid h-9 w-9 place-items-center rounded-full hover:bg-surface-sunk">
-                    <span className="h-5 w-5">
-                      <Icon name="close" />
-                    </span>
+                  <Dialog.Close className="grid h-9 w-9 place-items-center rounded-pill hover:bg-surface-sunk">
+                    <Icon name="close" size={20} />
                   </Dialog.Close>
                 </div>
 
-                <NavLink to="/" end onClick={closeMobile} className="py-2 text-[1.05rem]">
+                <NavLink to="/" end onClick={closeMobile} className="py-2 text-body-lg">
                   Home
                 </NavLink>
-                <p className="mt-3 text-[0.82rem] font-semibold uppercase tracking-[0.1em] text-muted">Shop</p>
+                <p className="mt-3 text-label font-semibold uppercase tracking-[0.1em] text-muted">Shop</p>
                 <Link to="/shop" onClick={closeMobile} className="py-1.5 text-ink-soft">
                   All resources
                 </Link>
@@ -269,7 +257,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
                 {tiers.length > 0 ? (
                   <>
-                    <p className="mt-3 text-[0.82rem] font-semibold uppercase tracking-[0.1em] text-muted">Access plans</p>
+                    <p className="mt-3 text-label font-semibold uppercase tracking-[0.1em] text-muted">Access plans</p>
                     <div className="grid gap-3">
                       {tiers.map((tier) => (
                         <PlanTierCard key={tier.tier} tier={tier} onClose={closeMobile} compact />
@@ -279,18 +267,18 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
                 ) : null}
 
                 <div className="my-4 h-px bg-line" />
-                <NavLink to="/about" onClick={closeMobile} className="py-2 text-[1.05rem]">
+                <NavLink to="/about" onClick={closeMobile} className="py-2 text-body-lg">
                   About
                 </NavLink>
-                <NavLink to="/contact" onClick={closeMobile} className="py-2 text-[1.05rem]">
+                <NavLink to="/contact" onClick={closeMobile} className="py-2 text-body-lg">
                   Contact
                 </NavLink>
-                <NavLink to="/help" onClick={closeMobile} className="py-2 text-[1.05rem]">
+                <NavLink to="/help" onClick={closeMobile} className="py-2 text-body-lg">
                   Help
                 </NavLink>
 
                 <div className="my-4 h-px bg-line" />
-                <Link to="/cart" onClick={closeMobile} className="py-2 text-[1.05rem]">
+                <Link to="/cart" onClick={closeMobile} className="py-2 text-body-lg">
                   Cart ({cartCount})
                 </Link>
                 <MobileAccountLink onNavigate={closeMobile} />
@@ -309,7 +297,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
 function MobileAccountLink({ onNavigate }: { onNavigate: () => void }) {
   const { customer } = useAuth()
   return (
-    <Link to={customer ? '/account' : '/login'} onClick={onNavigate} className="py-2 text-[1.05rem]">
+    <Link to={customer ? '/account' : '/login'} onClick={onNavigate} className="py-2 text-body-lg">
       {customer ? `Account · ${customer.name.split(' ')[0]}` : 'Account / Log in'}
     </Link>
   )

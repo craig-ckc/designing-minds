@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { WHY_FEATURES } from '../../content/site'
+import { Card } from '../ui/card'
 import { Eyebrow } from '../ui/eyebrow'
 import { Icon, type IconName } from '../ui/icon'
 import { Section } from '../ui/section'
@@ -12,7 +13,7 @@ function ChipRow() {
   return (
     <div className="flex flex-wrap gap-4">
       {featureSubjects.map((s) => (
-        <span key={s} className="rounded-full bg-surface px-3 py-1.5 text-[0.8rem] font-semibold text-ink-soft shadow-soft">
+        <span key={s} className="rounded-pill bg-surface px-3 py-1.5 text-label font-semibold text-ink-soft shadow-soft">
           {s}
         </span>
       ))}
@@ -24,8 +25,8 @@ function MemoRows() {
   return (
     <div className="grid gap-4">
       {featureMemoRows.map((r) => (
-        <div key={r} className="flex items-center gap-4.5 rounded-lg bg-surface px-3 py-2 text-[0.85rem] shadow-soft">
-          <span className="grid h-5 w-5 flex-none place-items-center rounded-full bg-meadow text-forest">
+        <div key={r} className="flex items-center gap-4.5 rounded-lg bg-surface px-3 py-2 text-label shadow-soft">
+          <span className="grid h-5 w-5 flex-none place-items-center rounded-pill bg-meadow text-forest">
             <span className="h-3 w-3">
               <Icon name="check" />
             </span>
@@ -41,7 +42,7 @@ function DownloadRows() {
   return (
     <div className="grid gap-4">
       {featureDownloadFiles.map((r) => (
-        <div key={r} className="flex items-center justify-between gap-4 rounded-lg bg-surface px-3 py-2 text-[0.85rem] shadow-soft">
+        <div key={r} className="flex items-center justify-between gap-4 rounded-lg bg-surface px-3 py-2 text-label shadow-soft">
           <span className="flex items-center gap-4 truncate">
             <span className="h-4 w-4 flex-none text-primary">
               <Icon name="doc" />
@@ -73,29 +74,31 @@ function BentoCard({
   children: ReactNode
 }) {
   return (
-    <article
-      className={`card flex flex-col gap-6 p-7 ${
+    <Card
+      as="article"
+      pad="none"
+      className={`flex flex-col gap-6 p-7 ${
         wide ? 'lg:col-span-2 lg:flex-row lg:items-center lg:gap-8' : ''
       }`}
     >
       <div className={wide ? 'lg:w-1/2' : ''}>
-        <span className={`grid h-11 w-11 place-items-center rounded-xl ${tone}`}>
+        <span className={`grid h-11 w-11 place-items-center rounded-control ${tone}`}>
           <span className="h-6 w-6">
             <Icon name={icon} />
           </span>
         </span>
         <h4 className="mt-4">{title}</h4>
-        <p className="mt-2 text-[0.95rem] text-muted">{body}</p>
+        <p className="mt-2 text-body text-muted">{body}</p>
       </div>
       <div className={wide ? 'lg:w-1/2' : 'mt-auto'}>{children}</div>
-    </article>
+    </Card>
   )
 }
 
 export function FeatureBentoSection() {
   return (
     <Section className="bg-surface-alt">
-      <div className="mx-auto mb-10 max-w-[680px] text-center lg:mb-14">
+      <div className="mx-auto mb-10 max-w-prose text-center lg:mb-14">
         <div className="flex justify-center">
           <Eyebrow>Why families choose us</Eyebrow>
         </div>

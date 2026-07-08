@@ -13,6 +13,7 @@ import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Field } from '../components/ui/field'
 import { Select } from '../components/ui/select'
 import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
 import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
 
@@ -63,7 +64,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
       </PageHeader>
 
-      <div className="sticky top-[72px] z-20 border-b border-line bg-canvas/90 backdrop-blur-md">
+      <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur-md">
         <Container className="flex flex-wrap items-end gap-3 py-4">
           <div className="min-w-[200px] flex-1">
             <Field label="Search">
@@ -109,10 +110,10 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
               ))}
             </div>
           ) : (
-            <div className="card p-7 text-center">
+            <Card variant="surface" pad="none" className="p-7 text-center">
               <h4>No matching resources</h4>
               <p className="mt-2 text-muted">Try clearing a filter or searching for a different grade or subject.</p>
-            </div>
+            </Card>
           )}
         </Container>
       </section>

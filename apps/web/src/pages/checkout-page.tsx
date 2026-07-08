@@ -100,18 +100,18 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
     <section className="section">
       <Container>
         <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/cart', label: 'Cart' }]} current="Checkout" />
-        <h1 className="mb-8 text-[2rem]">Checkout</h1>
+        <h1 className="mb-8 text-page-title">Checkout</h1>
 
         <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
           <div className="grid gap-6">
-            <div className="grid gap-6 rounded-2xl border border-line p-6">
+            <div className="grid gap-6 rounded-card border border-line p-6">
               <h3>Your account</h3>
               {customer ? (
-                <p className="text-[0.92rem] text-muted">
+                <p className="text-body-sm text-muted">
                   Signed in as <strong>{customer.email}</strong>.
                 </p>
               ) : (
-                <p className="text-[0.92rem] text-muted">
+                <p className="text-body-sm text-muted">
                   Checkout requires a Customer Account.{' '}
                   <Link to="/login?redirect=/checkout" className="text-ink underline underline-offset-4">
                     Log in
@@ -123,15 +123,15 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   .
                 </p>
               )}
-              {error ? <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+              {error ? <p className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p> : null}
             </div>
 
           </div>
 
-          <aside className="grid gap-4 rounded-2xl border border-line p-6 lg:sticky lg:top-24">
+          <aside className="grid gap-4 rounded-card border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
             <h3>Order summary</h3>
             {items.length > 0 ? (
-              <ul className="grid gap-2 text-[0.92rem]">
+              <ul className="grid gap-2 text-body-sm">
                 {items.map((item) => (
                   <li key={item.slug} className="flex justify-between gap-3">
                     <span className="text-ink-soft">{item.title}</span>
@@ -140,7 +140,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-[0.9rem] text-muted">Your cart is empty.</p>
+              <p className="text-body-sm text-muted">Your cart is empty.</p>
             )}
             <div className="flex justify-between border-t border-line pt-3 text-[1.1rem] font-semibold">
               <span>Total</span>
@@ -149,7 +149,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <Button type="button" variant="solid" className="w-full" onClick={() => void pay()} disabled={submitting || items.length === 0}>
               {submitting ? 'Redirecting…' : 'Pay with PayFast'}
             </Button>
-            <p className="text-[0.82rem] text-muted">Single payment. Downloads unlock only after PayFast confirms payment.</p>
+            <p className="text-label text-muted">Single payment. Downloads unlock only after PayFast confirms payment.</p>
           </aside>
         </div>
       </Container>

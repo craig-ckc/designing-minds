@@ -1,8 +1,10 @@
 import { type AccessPlanTier, priceLabel } from '@designing-minds/cms'
-import { Container } from '../ui/container'
+import { Section } from '../ui/section'
 import { Eyebrow } from '../ui/eyebrow'
 import { Icon } from '../ui/icon'
 import { Button } from '../ui/button'
+import { Card } from '../ui/card'
+import { Pill } from '../ui/pill'
 import tierContent from '../../content/pricing/access-tier-content.json'
 
 // Tier copy is derived from the structural difference (term vs year) plus the
@@ -15,9 +17,8 @@ const periodLabel = (period: AccessPlanTier['period']) => (period === 'Year' ? '
 export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
   if (tiers.length === 0) return null
   return (
-    <section className="section" id="plans">
-      <Container>
-        <div className="mx-auto mb-9 max-w-[640px] text-center lg:mb-14">
+    <Section id="plans">
+        <div className="mx-auto mb-9 max-w-prose text-center lg:mb-14">
           <Eyebrow>Access plans</Eyebrow>
           <h2>Buy one term, or the whole year</h2>
           <p className="mt-4 lead">
@@ -29,11 +30,13 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
           {tiers.map((tier) => {
             const content = TIER_CONTENT[tier.tier]
             return (
-              <article
+              <Card
+                as="article"
                 key={tier.tier}
-                className={`flex flex-col gap-5 rounded-lg p-8 shadow-soft ${
-                  tier.featured ? 'border-2 border-primary bg-primary-tint/40' : 'border border-line bg-surface'
-                }`}
+                variant={tier.featured ? 'featured' : 'surface'}
+                pad="lg"
+                shadow="soft"
+                className="flex flex-col gap-5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -44,15 +47,15 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
                     </div>
                   </div>
                   {tier.featured ? (
-                    <span className="rounded-full bg-primary px-3 py-1 text-[0.72rem] font-bold uppercase tracking-[0.06em] text-white">
+                    <Pill tone="solid" size="sm" className="px-3 font-bold uppercase tracking-[0.06em]">
                       Best value
-                    </span>
+                    </Pill>
                   ) : null}
                 </div>
                 <ul className="grid gap-3">
                   {content.includes.map((feature) => (
-                    <li key={feature} className="flex gap-2.5 text-[0.95rem] text-ink-soft">
-                      <span className="mt-0.5 grid h-[20px] w-[20px] flex-none place-items-center rounded-full bg-primary text-white">
+                    <li key={feature} className="flex gap-2.5 text-body text-ink-soft">
+                      <span className="mt-0.5 grid h-[20px] w-[20px] flex-none place-items-center rounded-pill bg-primary text-on-primary">
                         <span className="h-3 w-3">
                           <Icon name="check" />
                         </span>
@@ -61,7 +64,7 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
                     </li>
                   ))}
                   {content.excludes.map((feature) => (
-                    <li key={feature} className="flex gap-2.5 text-[0.95rem] text-muted">
+                    <li key={feature} className="flex gap-2.5 text-body text-muted">
                       <span className="mt-0.5 h-[20px] w-[20px] flex-none text-muted">
                         <Icon name="close" />
                       </span>
@@ -72,11 +75,10 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
                 <Button to={`/packages?plan=${tier.tier}`} variant={tier.featured ? 'solid' : 'outline'} className="w-full">
                   {content.cta}
                 </Button>
-              </article>
+              </Card>
             )
           })}
         </div>
-      </Container>
-    </section>
+    </Section>
   )
 }

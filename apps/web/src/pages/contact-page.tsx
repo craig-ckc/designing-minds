@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CONTACT } from '../content/site'
 import { apiUrl } from '../lib/api'
-import { Container } from '../components/ui/container'
+import { Section } from '../components/ui/section'
 import { Eyebrow } from '../components/ui/eyebrow'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Field } from '../components/ui/field'
@@ -43,8 +43,7 @@ export function ContactPage() {
 
   return (
     <>
-      <section className="section">
-        <Container>
+      <Section>
           <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Contact" />
           <div className="grid items-start gap-9 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
             <div>
@@ -56,7 +55,7 @@ export function ContactPage() {
                 <ContactDetail label="Email" value={CONTACT.email} />
                 <ContactDetail label="Office" value={CONTACT.location} last />
               </div>
-              <p className="mt-6 text-[0.92rem] text-muted">
+              <p className="mt-6 text-body-sm text-muted">
                 Looking for download or printing help? Visit the{' '}
                 <Link to="/help" className="font-semibold text-primary underline underline-offset-4">
                   Help centre
@@ -100,7 +99,7 @@ export function ContactPage() {
                 </Button>
               ) : null}
               {sent ? (
-                <p className="text-[0.82rem] text-ink-soft">
+                <p className="text-label text-ink-soft">
                   Thanks — your message is on its way. We usually reply within one business day. You can also email us
                   directly at{' '}
                   <a href={`mailto:${CONTACT.email}`} className="underline underline-offset-4">
@@ -109,14 +108,13 @@ export function ContactPage() {
                   .
                 </p>
               ) : error ? (
-                <p className="text-[0.82rem] text-red-600">{error}</p>
+                <p className="text-label text-danger">{error}</p>
               ) : (
-                <p className="text-[0.82rem] text-muted">We usually reply within one business day.</p>
+                <p className="text-label text-muted">We usually reply within one business day.</p>
               )}
             </form>
           </div>
-        </Container>
-      </section>
+      </Section>
     </>
   )
 }
@@ -124,7 +122,7 @@ export function ContactPage() {
 function ContactDetail({ label, value, last }: { label: string; value: string; last?: boolean }) {
   return (
     <div className={`grid gap-1.5 py-[18px] ${last ? '' : 'border-b border-line'}`}>
-      <span className="text-[0.78rem] font-bold uppercase tracking-[0.08em] text-muted">{label}</span>
+      <span className="text-caption font-bold uppercase tracking-[0.08em] text-muted">{label}</span>
       <strong className="text-[1.1rem] font-bold">{value}</strong>
     </div>
   )

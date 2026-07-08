@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Field } from '../../components/ui/field'
 import { Button } from '../../components/ui/button'
+import { Notice } from '../../components/ui/notice'
 import { useAuth } from '../../lib/auth'
 import { AuthLayout } from './auth-layout'
 
@@ -42,14 +43,14 @@ export function LoginPage() {
         </>
       }
     >
-      {error ? <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
       <Field label="Email">
         <input className="field" type="email" placeholder="you@example.com" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </Field>
       <Field label="Password">
         <input className="field" type="password" placeholder="Your password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </Field>
-      <div className="-mt-1 text-[0.85rem]">
+      <div className="-mt-1 text-label">
         <Link to="/forgot-password" className="text-ink-soft underline underline-offset-4 hover:text-ink">
           Forgot password?
         </Link>

@@ -18,7 +18,7 @@ export function Placeholder({
   return (
     <div
       className={`relative grid place-items-center overflow-hidden bg-surface-sunk text-muted ${
-        circle ? 'rounded-full' : 'rounded-xl'
+        circle ? 'rounded-pill' : 'rounded-control'
       } ${className}`}
       style={ratio ? { aspectRatio: ratio } : undefined}
       aria-hidden={src ? undefined : true}
@@ -33,7 +33,7 @@ export function Placeholder({
         </svg>
       )}
       {label && !src ? (
-        <span className="absolute bottom-2.5 left-2.5 text-[0.72rem] font-medium text-muted">{label}</span>
+        <span className="absolute bottom-2.5 left-2.5 text-caption font-medium text-muted">{label}</span>
       ) : null}
     </div>
   )

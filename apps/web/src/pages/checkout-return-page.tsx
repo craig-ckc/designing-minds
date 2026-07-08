@@ -17,9 +17,9 @@ export function CheckoutReturnPage() {
   return (
     <section className="section">
       <Container>
-        <div className="mx-auto max-w-xl text-center">
-          <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-muted">Checkout</p>
-          <h1 className="mt-2 text-[2rem]">Payment received</h1>
+        <div className="mx-auto max-w-narrow text-center">
+          <p className="text-caption font-semibold uppercase tracking-[0.12em] text-muted">Checkout</p>
+          <h1 className="mt-2 text-page-title">Payment received</h1>
           <p className="mt-3 text-muted">PayFast is confirming the payment. Downloads appear on the Order Detail once the ITN has marked the order paid.</p>
           <div className="mt-6 flex justify-center gap-3">
             {orderId ? (

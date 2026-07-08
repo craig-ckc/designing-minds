@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { type CmsSnapshot, ordersForCustomer, priceLabel } from '@designing-minds/cms'
 import { Button } from '../../components/ui/button'
+import { Card } from '../../components/ui/card'
 import { useAuth } from '../../lib/auth'
 import { AccountShell, SignedOut } from './account-shell'
 import { OrderStatusBadge } from './order-status-badge'
@@ -24,7 +25,7 @@ export function OrderHistoryPage({ snapshot }: { snapshot: CmsSnapshot }) {
               >
                 <span>
                   <strong className="block">{order.reference}</strong>
-                  <span className="text-[0.88rem] text-muted">
+                  <span className="text-label text-muted">
                     {order.placedAt.slice(0, 10)} ·{' '}
                     {order.items.map((item) => item.title).join(', ')}
                   </span>
@@ -38,14 +39,14 @@ export function OrderHistoryPage({ snapshot }: { snapshot: CmsSnapshot }) {
           ))}
         </ul>
       ) : (
-        <div className="card p-6 text-center">
+        <Card variant="surface" pad="md" className="text-center">
           <p className="text-muted">You have no orders yet.</p>
           <div className="mt-3 flex justify-center">
             <Button to="/shop" variant="solid" size="sm">
               Browse resources
             </Button>
           </div>
-        </div>
+        </Card>
       )}
     </AccountShell>
   )

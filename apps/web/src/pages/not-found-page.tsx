@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Container } from '../components/ui/container'
+import { Section } from '../components/ui/section'
 import { Eyebrow } from '../components/ui/eyebrow'
 import { Icon } from '../components/ui/icon'
 import { Button } from '../components/ui/button'
@@ -12,9 +12,8 @@ const SUGGESTIONS = suggestions as { to: string; label: string; sub: string }[]
 
 export function NotFoundPage() {
   return (
-    <section className="section">
-      <Container>
-        <div className="mx-auto max-w-[640px] text-center">
+    <Section>
+        <div className="mx-auto max-w-prose text-center">
           <Eyebrow>404</Eyebrow>
           <h1 className="mt-3">Page not found</h1>
           <p className="mt-4 lead">
@@ -28,16 +27,16 @@ export function NotFoundPage() {
           </div>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-[760px] grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mx-auto mt-12 grid max-w-readable grid-cols-1 gap-4 sm:grid-cols-2">
           {SUGGESTIONS.map((item) => (
             <Link
               key={item.to}
               to={item.to}
-              className="group flex items-center justify-between gap-3 rounded-2xl border border-line p-5 transition hover:border-primary"
+              className="group flex items-center justify-between gap-3 rounded-card border border-line p-5 transition hover:border-primary"
             >
               <span>
                 <span className="block font-medium text-ink">{item.label}</span>
-                <span className="block text-[0.88rem] text-muted">{item.sub}</span>
+                <span className="block text-label text-muted">{item.sub}</span>
               </span>
               <span className="h-4 w-4 flex-none text-muted transition group-hover:text-ink">
                 <Icon name="arrow" />
@@ -45,7 +44,6 @@ export function NotFoundPage() {
             </Link>
           ))}
         </div>
-      </Container>
-    </section>
+    </Section>
   )
 }

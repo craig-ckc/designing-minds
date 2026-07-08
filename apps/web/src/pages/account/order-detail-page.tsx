@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { type CmsSnapshot, type OrderItem, getOrderById, getProductBySlug, paymentForOrder, priceLabel, resourceUnlockedByPlan } from '@designing-minds/cms'
 import { Icon } from '../../components/ui/icon'
 import { Button } from '../../components/ui/button'
+import { Card } from '../../components/ui/card'
+import { Notice } from '../../components/ui/notice'
 import { StatePanel } from '../../components/ui/state-panel'
 import { useAuth } from '../../lib/auth'
 import { apiUrl } from '../../lib/api'
@@ -96,33 +98,31 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
     <AccountShell title={`Order ${order.reference}`}>
       <div className="grid gap-8">
         {/* Receipt summary */}
-        <div className="card grid gap-4 p-6">
+        <Card variant="surface" pad="md" className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3>Receipt</h3>
-              <p className="text-[0.88rem] text-muted">Placed {order.placedAt.slice(0, 10)}</p>
+              <p className="text-label text-muted">Placed {order.placedAt.slice(0, 10)}</p>
             </div>
             <OrderStatusBadge status={order.status} />
           </div>
-          <div className="grid gap-2 border-t border-line pt-4 text-[0.92rem]">
+          <div className="grid gap-2 border-t border-line pt-4 text-body-sm">
             <Row label="Order reference" value={order.reference} />
             <Row label="Account" value={`${order.customerName} · ${order.customerEmail}`} />
             {payment ? <Row label="Payment" value={`${payment.provider} · ${payment.reference} · ${payment.status}`} /> : null}
             <Row label="Total" value={priceLabel(order.totalZar)} strong />
           </div>
-        </div>
+        </Card>
 
         {/* Purchased items + downloads */}
         <div>
           <h3 className="mb-4">Purchased items</h3>
           {!downloadable ? (
-            <p className="mb-4 rounded-xl border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">
+            <Notice tone="info" className="mb-4">
               Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.
-            </p>
+            </Notice>
           ) : null}
-          {downloadError ? (
-            <p className="mb-4 rounded-xl border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">{downloadError}</p>
-          ) : null}
+          {downloadError ? <Notice tone="error" className="mb-4">{downloadError}</Notice> : null}
           <ul className="grid gap-4">
             {order.items.map((item) => {
               const products = downloadProductsForItem(snapshot, item)
@@ -134,7 +134,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                       <Link to={`/product/${item.productSlug}`} className="font-medium hover:opacity-70">
                         {item.title}
                       </Link>
-                      <p className="text-[0.85rem] text-muted">{item.productKind}</p>
+                      <p className="text-label text-muted">{item.productKind}</p>
                     </div>
                     <strong>{priceLabel(item.priceZar)}</strong>
                   </div>
@@ -143,23 +143,21 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                     <ul className="mt-4 grid gap-2 border-t border-line pt-4">
                       {files.map((file) => (
                         <li key={file.id} className="flex items-center justify-between gap-3">
-                          <span className="flex items-center gap-2 text-[0.92rem]">
+                          <span className="flex items-center gap-2 text-body-sm">
                             <span className="h-4 w-4 text-muted">
                               <Icon name="doc" />
                             </span>
                             {file.productTitle === item.title ? file.label : `${file.productTitle} · ${file.label}`}
                           </span>
                           <Button type="button" variant={downloadable ? 'outline' : 'text'} size="sm" disabled={!downloadable} onClick={() => void download(file.id)}>
-                            <span className="h-4 w-4">
-                              <Icon name="download" />
-                            </span>
+                            <Icon name="download" size={16} />
                             Download
                           </Button>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-3 border-t border-line pt-3 text-[0.85rem] text-muted">
+                    <p className="mt-3 border-t border-line pt-3 text-label text-muted">
                       Files for bundles and access plans resolve from their included resources.
                     </p>
                   )}
@@ -169,7 +167,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
           </ul>
         </div>
 
-        <p className="text-[0.9rem] text-muted">
+        <p className="text-body-sm text-muted">
           Problem with a download?{' '}
           <Link to="/contact" className="text-ink underline underline-offset-4">
             Contact support

@@ -62,7 +62,7 @@ export function ProductCover({ product, className = '' }: { product: Product; cl
   const { band, fg, solid } = THEMES[key]
 
   return (
-    <div className={`relative aspect-[595/842] w-full overflow-hidden rounded-[0.24cqw] bg-white shadow-soft [container-type:inline-size] ${className}`} >
+    <div className={`relative aspect-[595/842] w-full overflow-hidden rounded-[0.24cqw] bg-paper shadow-soft [container-type:inline-size] ${className}`} >
       {/* top band — fixed height, absolutely positioned so text never reflows it */}
       <div className={`absolute inset-x-0 top-0 h-[42.87%] ${band}`} aria-hidden />
 
@@ -90,7 +90,7 @@ export function ProductCover({ product, className = '' }: { product: Product; cl
       {/* diagonal term ribbon (top-right corner) */}
       <div className="absolute left-[76.97%] top-[-5.23%] grid aspect-square w-[31.13%] place-items-center">
         <div className={`w-[117.7%] rotate-45 text-center ${solid}`}>
-          <span className="w-full font-extrabold leading-[1.2] tracking-[0.034cqw] text-white text-[4.36cqw]">
+          <span className="w-full font-extrabold leading-[1.2] tracking-[0.034cqw] text-on-primary text-[4.36cqw]">
             {product.term}
           </span>
         </div>

@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { Card } from './card'
 import { Container } from './container'
 
 type SectionSpacing = 'default' | 'tight' | 'none'
@@ -31,9 +32,9 @@ export function Section({
 
 export function SectionNotice({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-soft">
+    <Card variant="surface" pad="lg" shadow="soft" className="text-center">
       <h3>{title}</h3>
-      <p className="mx-auto mt-3 max-w-[560px] text-muted">{body}</p>
-    </div>
+      <p className="mx-auto mt-3 max-w-narrow text-muted">{body}</p>
+    </Card>
   )
 }

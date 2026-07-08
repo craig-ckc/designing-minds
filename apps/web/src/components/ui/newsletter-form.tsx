@@ -33,7 +33,7 @@ export function NewsletterForm({ compact, source = 'website' }: { compact?: bool
 
   if (status === 'sent') {
     return (
-      <p className={`max-w-[460px] text-[0.9rem] text-ink-soft ${compact ? 'mt-[18px]' : 'mt-6'}`}>
+      <p className={`max-w-form text-body-sm text-ink-soft ${compact ? 'mt-[18px]' : 'mt-6'}`}>
         Thanks! You’re on the list — look out for your free test in your inbox.
       </p>
     )
@@ -41,7 +41,7 @@ export function NewsletterForm({ compact, source = 'website' }: { compact?: bool
 
   return (
     <form
-      className={`flex max-w-[460px] flex-col gap-2.5 sm:flex-row ${compact ? 'mt-[18px]' : 'mt-6'}`}
+      className={`flex max-w-form flex-col gap-2.5 sm:flex-row ${compact ? 'mt-[18px]' : 'mt-6'}`}
       onSubmit={handleSubmit}
     >
       {/* Honeypot: hidden from humans, catches bots that fill every Field. */}
@@ -67,7 +67,7 @@ export function NewsletterForm({ compact, source = 'website' }: { compact?: bool
       <Button type="submit" variant="solid" disabled={status === 'submitting'}>
         {status === 'submitting' ? 'Submitting…' : compact ? 'Subscribe' : 'Get my free test'}
       </Button>
-      {error ? <p className="w-full text-[0.82rem] text-red-600 sm:mt-1">{error}</p> : null}
+      {error ? <p className="w-full text-label text-danger sm:mt-1">{error}</p> : null}
     </form>
   )
 }

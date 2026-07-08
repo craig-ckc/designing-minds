@@ -5,6 +5,7 @@ import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Placeholder } from '../components/ui/placeholder'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
+import { Card } from '../components/ui/card'
 import { useNoindex } from '../lib/use-noindex'
 import { removeCartSlug } from '../lib/cart'
 import { useCartSlugs } from '../lib/use-cart'
@@ -24,10 +25,10 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
     <section className="section">
       <Container>
         <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Cart" />
-        <h1 className="mb-8 text-[2rem]">Your cart</h1>
+        <h1 className="mb-8 text-page-title">Your cart</h1>
 
         {items.length === 0 ? (
-          <div className="card p-8 text-center">
+          <Card variant="surface" pad="lg" className="text-center">
             <h3>Your cart is empty</h3>
             <p className="mt-2 text-muted">Browse the catalogue and add resources to get started.</p>
             <div className="mt-4 flex justify-center">
@@ -35,7 +36,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 Browse resources
               </Button>
             </div>
-          </div>
+          </Card>
         ) : (
           <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             <ul className="grid gap-4">
@@ -56,7 +57,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
                     <Button
                       type="button"
                       onClick={() => remove(item.slug)}
-                      className="mt-auto self-start text-[0.85rem] text-muted underline underline-offset-4 hover:text-ink"
+                      className="mt-auto self-start text-label text-muted underline underline-offset-4 hover:text-ink"
                     >
                       Remove
                     </Button>
@@ -65,9 +66,9 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
               ))}
             </ul>
 
-            <aside className="grid gap-4 rounded-2xl border border-line p-6 lg:sticky lg:top-24">
+            <aside className="grid gap-4 rounded-card border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
               <h3>Order summary</h3>
-              <div className="grid gap-2 text-[0.95rem]">
+              <div className="grid gap-2 text-body">
                 <div className="flex justify-between">
                   <span className="text-muted">Subtotal ({items.length} items)</span>
                   <span>{priceLabel(subtotal)}</span>
@@ -80,8 +81,8 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <Button to="/checkout" variant="solid" className="w-full">
                 Proceed to checkout
               </Button>
-              <p className="text-[0.82rem] text-muted">Digital products · No shipping · Download after payment.</p>
-              <Link to="/shop" className="text-[0.9rem] text-ink underline underline-offset-4">
+              <p className="text-label text-muted">Digital products · No shipping · Download after payment.</p>
+              <Link to="/shop" className="text-body-sm text-ink underline underline-offset-4">
                 Continue shopping
               </Link>
             </aside>

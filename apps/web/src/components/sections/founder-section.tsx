@@ -10,13 +10,13 @@ export function FounderSection() {
         <Eyebrow>Meet Amy — Founder</Eyebrow>
         <h2>A teacher with a vision for stress-free learning</h2>
         <div className="mt-5 grid gap-4 text-ink-soft">
-          <p className="text-[1.02rem]">
+          <p className="text-body-lg">
             Hi, I’m Amy. After teaching in Vietnam and working with online schools in South Africa, I discovered how
             powerful accessible learning tools can be. I combined my experience in curriculum development with my love
             for teaching to create Designing Minds — a platform dedicated to helping learners feel confident, prepared,
             and supported.
           </p>
-          <p className="text-[1.02rem]">
+          <p className="text-body-lg">
             What excites me most is seeing how these resources not only improve marks, but also reduce stress and give
             learners belief in their own abilities.
           </p>

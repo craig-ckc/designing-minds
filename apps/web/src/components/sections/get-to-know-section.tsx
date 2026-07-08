@@ -41,21 +41,21 @@ export function GetToKnowSection() {
                 >
                   <span
                     className={`grid h-10 w-10 flex-none place-items-center rounded-md transition-colors ${
-                      isOpen ? 'bg-primary text-white' : 'bg-surface-sunk text-ink-soft'
+                      isOpen ? 'bg-primary text-on-primary' : 'bg-surface-sunk text-ink-soft'
                     }`}
                   >
                     <span className="h-5 w-5">
                       <Icon name={item.icon} />
                     </span>
                   </span>
-                  <span className="flex-1 text-[1.08rem] font-bold">{item.title}</span>
-                  <span className="grid h-7 w-7 flex-none place-items-center rounded-full border border-line text-ink-soft">
+                  <span className="flex-1 text-body-lg font-bold">{item.title}</span>
+                  <span className="grid h-7 w-7 flex-none place-items-center rounded-pill border border-line text-ink-soft">
                     <span className="h-3.5 w-3.5">
                       <Icon name="arrow" />
                     </span>
                   </span>
                 </Button>
-                {isOpen ? <p className="pb-5 pl-[54px] pr-4 text-[0.96rem] text-muted">{item.body}</p> : null}
+                {isOpen ? <p className="pb-5 pl-[54px] pr-4 text-body text-muted">{item.body}</p> : null}
               </div>
             )
           })}

@@ -1,8 +1,9 @@
 import { type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Container } from '../../components/ui/container'
+import { Section } from '../../components/ui/section'
 import { Eyebrow } from '../../components/ui/eyebrow'
 import { Button } from '../../components/ui/button'
+import { Notice } from '../../components/ui/notice'
 import { useNoindex } from '../../lib/use-noindex'
 
 /** Shared Shell for the noindex authentication pages. */
@@ -26,19 +27,18 @@ export function AuthLayout({
   const fromCheckout = params.get('redirect') === '/checkout'
 
   return (
-    <section className="section">
-      <Container>
-        <div className="mx-auto grid max-w-[440px] gap-6">
+    <Section>
+        <div className="mx-auto grid max-w-form gap-6">
           <div>
             <Eyebrow>{eyebrow}</Eyebrow>
-            <h1 className="text-[2rem]">{title}</h1>
+            <h1 className="text-page-title">{title}</h1>
             <p className="mt-3 text-muted">{intro}</p>
           </div>
 
           {fromCheckout ? (
-            <p className="rounded-2xl border border-primary/30 bg-primary-tint px-4 py-3 text-[0.9rem] text-ink-soft">
+            <Notice tone="info">
               You need an account to complete checkout. Sign in or create one to continue.
-            </p>
+            </Notice>
           ) : null}
 
           <form
@@ -57,12 +57,11 @@ export function AuthLayout({
             </Button>
           ) : null}
 
-          <div className="border-t border-line pt-4 text-[0.92rem] text-muted">{footer}</div>
-          <p className="text-[0.85rem] text-muted">
+          <div className="border-t border-line pt-4 text-body-sm text-muted">{footer}</div>
+          <p className="text-label text-muted">
             Need help? <Link to="/help" className="font-semibold text-primary underline underline-offset-4">Visit support</Link>
           </p>
         </div>
-      </Container>
-    </section>
+    </Section>
   )
 }

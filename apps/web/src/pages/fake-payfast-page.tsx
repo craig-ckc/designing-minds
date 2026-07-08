@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
 import { StatePanel } from '../components/ui/state-panel'
 import { apiUrl } from '../lib/api'
 import { clearCart } from '../lib/cart'
@@ -56,16 +57,16 @@ export function FakePayfastPage() {
     <section className="section">
       <Container>
         <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/cart', label: 'Cart' }, { to: '/checkout', label: 'Checkout' }]} current="Fake PayFast" />
-        <div className="mx-auto grid max-w-2xl gap-6 rounded-2xl border border-line bg-surface p-6">
+        <Card variant="surface" pad="md" className="mx-auto grid max-w-prose gap-6">
           <div>
-            <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-muted">PayFast test mode</p>
-            <h1 className="mt-2 text-[2rem]">Simulate payment</h1>
+            <p className="text-caption font-semibold uppercase tracking-[0.12em] text-muted">PayFast test mode</p>
+            <h1 className="mt-2 text-page-title">Simulate payment</h1>
             <p className="mt-3 text-muted">
               This test page replaces the PayFast handoff for order <strong>{orderId}</strong>.
             </p>
           </div>
 
-          {error ? <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+          {error ? <p className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p> : null}
 
           <div className="grid gap-3 border-t border-line pt-5 sm:grid-cols-2">
             <Button type="button" variant="solid" onClick={() => void completePayment()} disabled={submitting}>
@@ -76,13 +77,13 @@ export function FakePayfastPage() {
             </Button>
           </div>
 
-          <p className="text-[0.82rem] text-muted">
+          <p className="text-label text-muted">
             Successful test payments mark the pending PayFast payment as succeeded and unlock the order exactly like a completed ITN.
           </p>
-          <Link to="/checkout" className="text-[0.9rem] text-ink underline underline-offset-4">
+          <Link to="/checkout" className="text-body-sm text-ink underline underline-offset-4">
             Return to checkout
           </Link>
-        </div>
+        </Card>
       </Container>
     </section>
   )

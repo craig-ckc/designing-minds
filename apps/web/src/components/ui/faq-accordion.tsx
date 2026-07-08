@@ -12,15 +12,13 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
       {faqs.map((faq) => (
         <Accordion.Item
           key={faq.id}
-          className="overflow-hidden rounded-xl border border-line bg-surface px-5 shadow-soft transition-colors data-[panel-open]:border-primary/40"
+          className="overflow-hidden rounded-control border border-line bg-surface px-5 shadow-soft transition-colors data-[panel-open]:border-primary/40"
         >
           <Accordion.Header className="m-0">
-            <Accordion.Trigger className="group flex w-full items-center justify-between gap-4 py-4 text-left text-[1.05rem] font-bold hover:text-primary">
+            <Accordion.Trigger className="group flex w-full items-center justify-between gap-4 py-4 text-left text-body-lg font-bold hover:text-primary">
               {faq.question}
-              <span className="grid h-7 w-7 flex-none place-items-center rounded-full bg-surface-sunk text-ink-soft transition-transform group-data-[panel-open]:rotate-180">
-                <span className="h-4 w-4">
-                  <Icon name="chevron" />
-                </span>
+              <span className="grid h-7 w-7 flex-none place-items-center rounded-pill bg-surface-sunk text-ink-soft transition-transform group-data-[panel-open]:rotate-180">
+                <Icon name="chevron" size={16} />
               </span>
             </Accordion.Trigger>
           </Accordion.Header>

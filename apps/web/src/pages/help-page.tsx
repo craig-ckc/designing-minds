@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { type CmsSnapshot, type Faq } from '@designing-minds/cms'
-import { Container } from '../components/ui/container'
+import { Section } from '../components/ui/section'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { PageHeader } from '../components/ui/headings'
 import { FaqAccordion } from '../components/ui/faq-accordion'
@@ -35,9 +35,8 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
       </PageHeader>
 
-      <section className="section">
-        <Container className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+      <Section containerClassName="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+          <aside className="lg:sticky lg:top-[var(--sticky-offset)] lg:self-start">
             <h4 className="mb-3">Topics</h4>
             <ul className="grid gap-2 text-ink-soft">
               {byCategory.map(([category]) => (
@@ -50,7 +49,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </ul>
             <div className="mt-6 card p-5">
               <h4 className="mb-2">Still stuck?</h4>
-              <p className="mb-3 text-[0.92rem] text-muted">Reach our team and we’ll help you out.</p>
+              <p className="mb-3 text-body-sm text-muted">Reach our team and we’ll help you out.</p>
               <Button to="/contact" variant="solid" size="sm">
                 Contact support
               </Button>
@@ -65,8 +64,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
               </div>
             ))}
           </div>
-        </Container>
-      </section>
+      </Section>
     </>
   )
 }

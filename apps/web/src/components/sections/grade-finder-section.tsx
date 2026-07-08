@@ -28,7 +28,7 @@ export function GradeFinderSection({ snapshot }: { snapshot: CmsSnapshot | null 
             >
               <div className={`relative flex aspect-[16/10] items-center justify-center ${cw}`}>
                 <span className="text-[4rem] font-extrabold leading-none tracking-[-0.04em]">{number}</span>
-                <span className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-surface/80 text-ink transition-transform group-hover:translate-x-0.5">
+                <span className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-pill bg-surface/80 text-ink transition-transform group-hover:translate-x-0.5">
                   <span className="h-4 w-4">
                     <Icon name="arrow" />
                   </span>
@@ -36,7 +36,7 @@ export function GradeFinderSection({ snapshot }: { snapshot: CmsSnapshot | null 
               </div>
               <div className="p-5">
                 <h3 className="text-[1.4rem]">{grade}</h3>
-                <p className="mt-1 text-[0.92rem] text-muted line-clamp-2">
+                <p className="mt-1 text-body-sm text-muted line-clamp-2">
                   {GRADE_BLURB[grade] ?? 'CAPS-aligned tests and summaries.'}
                 </p>
               </div>

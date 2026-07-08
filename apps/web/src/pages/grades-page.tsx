@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
 import { type CmsSnapshot, productsForGrade } from '@designing-minds/cms'
 import { GRADE_BLURB, gradeToSlug } from '../content/site'
 import { Container } from '../components/ui/container'
+import { Card } from '../components/ui/card'
 import { Icon } from '../components/ui/icon'
 import { Placeholder } from '../components/ui/placeholder'
 import { Breadcrumb } from '../components/ui/breadcrumb'
@@ -22,26 +22,26 @@ export function GradesPage({ snapshot }: { snapshot: CmsSnapshot }) {
             {snapshot.valueLists.grades.map((grade) => {
               const count = productsForGrade(snapshot, grade).length
               return (
-                <Link
+                <Card
                   key={grade}
                   to={`/grades/${gradeToSlug(grade)}`}
-                  className="group flex flex-col gap-4 border border-line bg-surface p-6 transition hover:border-primary"
+                  variant="surface"
+                  pad="md"
+                  className="group flex flex-col gap-4 transition hover:border-primary"
                 >
                   <Placeholder label={grade} ratio="16 / 9" className="rounded-none" />
                   <div>
                     <h3>{grade}</h3>
                     <p className="mt-1.5 text-muted">{GRADE_BLURB[grade] ?? 'CAPS-aligned tests and summaries.'}</p>
                   </div>
-                  <div className="mt-auto flex items-center justify-between border-t border-line pt-3 text-[0.9rem]">
+                  <div className="mt-auto flex items-center justify-between border-t border-line pt-3 text-body-sm">
                     <span className="text-muted">{count} resources</span>
                     <span className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4">
                       Browse
-                      <span className="h-3.5 w-3.5">
-                        <Icon name="arrow" />
-                      </span>
+                      <Icon name="arrow" size={14} />
                     </span>
                   </div>
-                </Link>
+                </Card>
               )
             })}
           </div>

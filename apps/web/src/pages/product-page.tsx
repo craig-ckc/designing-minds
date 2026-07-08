@@ -57,7 +57,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
               {/* Description — CMS rich text stored as Markdown */}
               <div className="mt-8 text-ink-soft">
                 <h3 className="mb-4">About this {isComposite ? 'offer' : 'resource'}</h3>
-                <Markdown source={product.fullDescription} className="text-[1.02rem]" />
+                <Markdown source={product.fullDescription} className="text-body-lg" />
               </div>
 
               {/* Included content for bundles / access plans */}
@@ -80,7 +80,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                     <p className="text-muted">Included resources are being finalised.</p>
                   )}
                   {product.renewalNotes ? (
-                    <p className="mt-4 text-[0.9rem] text-muted">{product.renewalNotes}</p>
+                    <p className="mt-4 text-body-sm text-muted">{product.renewalNotes}</p>
                   ) : null}
                 </div>
               ) : null}
@@ -95,12 +95,12 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </div>
 
             {/* Buy box */}
-            <aside className="grid gap-[18px] rounded-2xl border border-line p-7 lg:sticky lg:top-24">
+            <aside className="grid gap-[18px] rounded-card border border-line p-7 lg:sticky lg:top-[var(--sticky-offset)]">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={product.productKind === 'Bundle' ? 'solid' : product.productKind === 'Access Plan' ? 'outline' : 'neutral'}>
                   {product.productKind}
                 </Badge>
-                <span className="text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-muted">
+                <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
                   {product.grade} · {product.term}
                 </span>
               </div>
@@ -117,12 +117,10 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <SpecRow label="Delivery" value="Instant download on Order Detail" last />
               </ul>
               <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(product.slug)}>
-                <span className="h-4 w-4">
-                  <Icon name="cart" />
-                </span>
+                <Icon name="cart" size={16} />
                 Add to cart
               </Button>
-              <p className="text-[0.82rem] text-muted">CAPS-aligned · Download after payment · Print at home</p>
+              <p className="text-label text-muted">CAPS-aligned · Download after payment · Print at home</p>
             </aside>
           </div>
         </Container>
@@ -138,9 +136,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 className="inline-flex items-center gap-1.5 border-b-[1.5px] border-current pb-0.5 font-medium hover:opacity-70"
               >
                 See all
-                <span className="h-4 w-4">
-                  <Icon name="arrow" />
-                </span>
+                <Icon name="arrow" size={16} />
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
