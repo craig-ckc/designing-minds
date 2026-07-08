@@ -1,45 +1,51 @@
 import { Link } from 'react-router-dom'
 import { type Product, priceLabel } from '@designing-minds/cms'
-import { Placeholder } from './ui/Placeholder'
-import { Chip } from './ui/Chip'
-import { Button } from './ui/Button'
+import { Icon } from './ui/Icon'
+import { ProductCover } from './ProductCover'
 import { addCartSlug } from '../lib/cart'
 import { useCartSlugs } from '../lib/useCart'
 
 export function ProductCard({ product }: { product: Product }) {
   const inCart = useCartSlugs().includes(product.slug)
+  const href = `/product/${product.slug}`
+
   return (
-    <article className="flex flex-col overflow-hidden border border-line bg-surface transition hover:border-ink">
-      <Link to={`/product/${product.slug}`} className="block relative">
-        <div className="flex flex-wrap items-center gap-2 absolute top-3 left-3 z-10">
-          {/* <Badge tone={KIND_TONE[product.productKind]}>{product.productKind}</Badge> */}
-          <Chip>{product.productKind}</Chip>
-          <Chip>{product.grade}</Chip>
-          <Chip>{product.term}</Chip>
-        </div>
-        <Placeholder ratio="4 / 3" label={product.resourceFormat} className="rounded-none" />
+    <article className="group flex flex-col rounded-2xl bg-surface-alt p-3 transition-shadow duration-200 hover:shadow-card">
+      <Link to={href} className="block">
+        <ProductCover product={product} />
       </Link>
-      <div className="flex flex-1 flex-col gap-2.5 px-5 pb-5 pt-[18px]">
-        <Link to={`/product/${product.slug}`} className="hover:opacity-70">
-          <h4 className="line-clamp-2 text-[1.02rem] leading-snug">{product.title}</h4>
+
+      {/* Title + price */}
+      <div className="flex flex-1 flex-col px-1 pb-0.5 pt-3">
+        <Link to={href}>
+          <h3 className="text-[1.02rem] font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary">
+            {product.title}
+          </h3>
         </Link>
-        <p className="line-clamp-2 flex-1 text-sm text-muted">{product.shortDescription}</p>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
-          <span className="font-semibold">{priceLabel(product.priceZar)}</span>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button to={`/product/${product.slug}`} variant="outline" size="sm">
-              View
-            </Button>
-            {inCart ? (
-              <Button to="/cart" variant="soft" size="sm">
-                In cart
-              </Button>
-            ) : (
-              <Button type="button" variant="solid" size="sm" onClick={() => addCartSlug(product.slug)}>
-                Add to cart
-              </Button>
-            )}
-          </div>
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
+          <span className="text-[1.2rem] font-extrabold text-primary">{priceLabel(product.priceZar)}</span>
+          {inCart ? (
+            <Link
+              to="/cart"
+              aria-label="In cart — view cart"
+              className="grid h-10 w-10 flex-none place-items-center rounded-full bg-primary text-white shadow-soft"
+            >
+              <span className="h-4 w-4">
+                <Icon name="check" />
+              </span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => addCartSlug(product.slug)}
+              aria-label={`Add ${product.title} to cart`}
+              className="grid h-10 w-10 flex-none place-items-center rounded-full bg-surface text-ink shadow-soft transition-colors hover:bg-primary hover:text-white"
+            >
+              <span className="h-4 w-4">
+                <Icon name="plus" />
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </article>
