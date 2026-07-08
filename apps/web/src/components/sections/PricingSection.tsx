@@ -47,26 +47,26 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
             step — nothing renews automatically.
           </p>
         </div>
-        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
           {tiers.map((tier) => {
             const content = TIER_CONTENT[tier.tier]
             return (
               <article
                 key={tier.tier}
-                className={`flex flex-col gap-5 rounded-[10px] bg-surface p-8 ${
-                  tier.featured ? 'border-2 border-ink' : 'border border-line'
+                className={`flex flex-col gap-5 rounded-lg p-8 shadow-soft ${
+                  tier.featured ? 'border-2 border-primary bg-primary-tint/40' : 'border border-line bg-surface'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3>{tier.title}</h3>
-                    <div className="flex items-baseline gap-1.5">
-                      <strong className="text-[2.4rem] font-semibold tracking-[-0.03em]">{priceLabel(tier.fromPriceZar)}</strong>
+                    <div className="mt-1 flex items-baseline gap-1.5">
+                      <strong className="text-[2.6rem] font-extrabold tracking-[-0.03em] text-primary">{priceLabel(tier.fromPriceZar)}</strong>
                       <span className="text-muted">once-off · {periodLabel(tier.period)}</span>
                     </div>
                   </div>
                   {tier.featured ? (
-                    <span className="rounded-full bg-ink px-2.5 py-1 text-[0.72rem] uppercase tracking-[0.08em] text-white">
+                    <span className="rounded-full bg-primary px-3 py-1 text-[0.72rem] font-bold uppercase tracking-[0.06em] text-white">
                       Best value
                     </span>
                   ) : null}
@@ -74,15 +74,17 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
                 <ul className="grid gap-3">
                   {content.includes.map((feature) => (
                     <li key={feature} className="flex gap-2.5 text-[0.95rem] text-ink-soft">
-                      <span className="mt-0.5 h-[18px] w-[18px] flex-none text-ink">
-                        <Icon name="check" />
+                      <span className="mt-0.5 grid h-[20px] w-[20px] flex-none place-items-center rounded-full bg-primary text-white">
+                        <span className="h-3 w-3">
+                          <Icon name="check" />
+                        </span>
                       </span>
                       <span>{feature}</span>
                     </li>
                   ))}
                   {content.excludes.map((feature) => (
                     <li key={feature} className="flex gap-2.5 text-[0.95rem] text-muted">
-                      <span className="mt-0.5 h-[18px] w-[18px] flex-none text-muted">
+                      <span className="mt-0.5 h-[20px] w-[20px] flex-none text-muted">
                         <Icon name="close" />
                       </span>
                       <span className="line-through decoration-line">{feature}</span>

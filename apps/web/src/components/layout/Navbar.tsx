@@ -4,24 +4,25 @@ import { Dialog } from '@base-ui/react/dialog'
 import { accessPlanTiers, priceLabel, type AccessPlanTier, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../ui/Container'
 import { Icon } from '../ui/Icon'
+import { Wordmark } from '../ui/Wordmark'
 import { initials, useAuth } from '../../lib/auth'
 import { useCartSlugs } from '../../lib/useCart'
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
-  `rounded-md px-3 py-2 text-[0.95rem] hover:bg-surface-alt hover:text-ink ${
-    isActive ? 'font-medium text-ink' : 'text-ink-soft'
+  `rounded-full px-3.5 py-2 text-[0.95rem] font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
+    isActive ? 'bg-surface-sunk text-ink' : 'text-ink-soft'
   }`
 
-function Logo({ onClick }: { onClick?: () => void }) {
+/** Full-width promo bar above the nav; scrolls away as the sticky header pins. */
+function AnnouncementBar() {
   return (
-    <Link to="/" onClick={onClick} className="flex items-center gap-3 font-semibold">
-      <span className="grid h-[38px] w-[38px] place-items-center rounded-lg bg-ink text-[0.95rem] tracking-[-0.04em] text-white">
-        DM
-      </span>
-      <span className="leading-tight hidden sm:block">
-        <span className="block text-[1.05rem] tracking-[-0.02em]">Designing Minds</span>
-        <span className="block text-[0.68rem] font-normal tracking-[0.04em] text-muted">CAPS-aligned resources</span>
-      </span>
+    <Link to="/shop" className="block bg-primary text-white transition-colors hover:bg-primary-strong">
+      <div className="mx-auto flex max-w-[1240px] items-center justify-center gap-2 px-5 py-2.5 text-center text-[0.85rem] font-semibold">
+        New — Term 4 CAPS resources for Grades 3–7 are here
+        <span className="h-4 w-4">
+          <Icon name="arrow" />
+        </span>
+      </div>
     </Link>
   )
 }
@@ -35,7 +36,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         to="/cart"
         onClick={onNavigate}
-        className="inline-flex items-center gap-2 rounded-md px-2 py-2 text-[0.9rem] text-ink-soft hover:bg-surface-alt hover:text-ink"
+        className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.9rem] font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
       >
         <span className="h-4 w-4">
           <Icon name="cart" />
@@ -47,10 +48,10 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/account"
           onClick={onNavigate}
-          className="flex items-center gap-2 rounded-md py-1 pl-1 pr-2.5 text-[0.9rem] text-ink-soft hover:bg-surface-alt hover:text-ink"
+          className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-[0.9rem] font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
           title={`${customer.name} — Customer Account`}
         >
-          <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-ink text-[0.78rem] font-semibold tracking-[0.02em] text-white">
+          <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-primary text-[0.78rem] font-bold tracking-[0.02em] text-white">
             {initials(customer.name)}
           </span>
           <span className="hidden max-w-[9ch] truncate sm:inline">{customer.name.split(' ')[0]}</span>
@@ -59,12 +60,12 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/login"
           onClick={onNavigate}
-          className="inline-flex items-center gap-2 rounded-md px-2 py-2 text-[0.9rem] text-ink-soft hover:bg-surface-alt hover:text-ink"
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.9rem] font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
         >
           <span className="h-4 w-4">
             <Icon name="user" />
           </span>
-          Account
+          <span className="hidden sm:inline">Account</span>
         </Link>
       )}
     </>
@@ -78,28 +79,28 @@ function PlanTierCard({ tier, onClose, compact }: { tier: AccessPlanTier; onClos
     <Link
       to={`/packages?plan=${tier.tier}`}
       onClick={onClose}
-      className={`group flex flex-col gap-2 rounded-[10px] border p-5 transition hover:border-ink ${
-        tier.featured ? 'border-ink' : 'border-line'
+      className={`group flex flex-col gap-2 rounded-2xl border p-5 transition hover:border-primary hover:shadow-soft ${
+        tier.featured ? 'border-primary bg-primary-tint/40' : 'border-line'
       } ${compact ? '' : 'h-full'}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-muted">
+        <span className="text-[0.72rem] font-bold uppercase tracking-[0.1em] text-muted">
           {tier.period === 'Year' ? 'Full year' : 'One term'}
         </span>
         {tier.featured ? (
-          <span className="rounded-full bg-ink px-2 py-0.5 text-[0.64rem] uppercase tracking-[0.08em] text-white">
+          <span className="rounded-full bg-primary px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.06em] text-white">
             Best value
           </span>
         ) : null}
       </div>
-      <span className="font-semibold text-ink">{tier.title}</span>
-      <span className="text-[1.3rem] font-semibold tracking-[-0.02em]">{priceLabel(tier.fromPriceZar)}</span>
+      <span className="font-bold text-ink">{tier.title}</span>
+      <span className="text-[1.4rem] font-extrabold tracking-[-0.02em] text-primary">{priceLabel(tier.fromPriceZar)}</span>
       {compact ? null : (
         <span className="text-[0.88rem] text-muted">
           Choose from {tier.gradeCount} grades{tier.period === 'Term' ? ', any term' : ''}.
         </span>
       )}
-      <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-[0.88rem] font-medium underline underline-offset-4">
+      <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-[0.88rem] font-bold text-primary">
         Choose a grade
         <span className="h-3.5 w-3.5">
           <Icon name="arrow" />
@@ -114,7 +115,7 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
     <>
       {/* Visual dim only — outside clicks are handled by a document listener. */}
       <div aria-hidden className="pointer-events-none fixed inset-x-0 bottom-0 top-[72px] z-30 bg-ink/10" />
-      <div ref={panelRef} className="absolute inset-x-0 top-full z-40 hidden border-t border-line bg-white shadow-sm lg:block">
+      <div ref={panelRef} className="absolute inset-x-0 top-full z-40 hidden border-t border-line bg-surface shadow-card lg:block">
         <Container className="grid gap-10 py-10 lg:grid-cols-[1fr_1.7fr]">
           {/* Links */}
           <div>
@@ -196,9 +197,11 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   }, [megaOpen])
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-white/90 backdrop-blur">
+    <>
+      <AnnouncementBar />
+      <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md">
       <Container className="flex min-h-[72px] items-center gap-7">
-        <Logo onClick={closeMega} />
+        <Wordmark onClick={closeMega} />
 
         <nav className="ml-3 hidden items-center gap-1 lg:flex">
           <NavLink to="/" end onClick={closeMega} className={navLinkCls}>
@@ -209,8 +212,8 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
             type="button"
             onClick={() => setMegaOpen((open) => !open)}
             aria-expanded={megaOpen}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-[0.95rem] hover:bg-surface-alt hover:text-ink ${
-              megaOpen ? 'font-medium text-ink' : 'text-ink-soft'
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.95rem] font-semibold transition-colors hover:bg-surface-sunk hover:text-ink ${
+              megaOpen ? 'bg-surface-sunk text-ink' : 'text-ink-soft'
             }`}
           >
             Shop
@@ -226,24 +229,24 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
           </NavLink>
         </nav>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
           <AccountControls onNavigate={closeMega} />
 
           {/* Mobile menu */}
           <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
-            <Dialog.Trigger className="grid h-10 w-10 place-items-center rounded-md hover:bg-surface-alt lg:hidden">
+            <Dialog.Trigger className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface-sunk lg:hidden">
               <span className="h-5 w-5">
                 <Icon name="menu" />
               </span>
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Backdrop className="fixed inset-0 z-40 bg-ink/20 backdrop-blur-sm" />
-              <Dialog.Popup className="fixed inset-y-0 right-0 z-50 flex w-[84%] max-w-sm flex-col gap-1 overflow-y-auto bg-surface p-6 shadow-xl">
+              <Dialog.Popup className="fixed inset-y-0 right-0 z-50 flex w-[84%] max-w-sm flex-col gap-1 overflow-y-auto rounded-l-3xl bg-surface p-6 shadow-lift">
                 <div className="mb-4 flex items-center justify-between">
                   <Dialog.Title className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-muted">
                     Menu
                   </Dialog.Title>
-                  <Dialog.Close className="grid h-9 w-9 place-items-center rounded-md hover:bg-surface-alt">
+                  <Dialog.Close className="grid h-9 w-9 place-items-center rounded-full hover:bg-surface-sunk">
                     <span className="h-5 w-5">
                       <Icon name="close" />
                     </span>
@@ -298,7 +301,8 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
       </Container>
 
       {megaOpen ? <ShopMega tiers={tiers} onClose={closeMega} panelRef={panelRef} /> : null}
-    </header>
+      </header>
+    </>
   )
 }
 

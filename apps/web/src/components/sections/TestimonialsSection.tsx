@@ -12,17 +12,17 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
           <Eyebrow>What parents are saying</Eyebrow>
           <h2>Real stories from families across South Africa</h2>
         </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {testimonials.map((item) => (
-            <figure key={item.id} className="card flex flex-col gap-5 p-[30px]">
-              <div className="tracking-[3px] text-ink" aria-label="5 out of 5 stars">
+            <figure key={item.id} className="card flex flex-col gap-5 p-8">
+              <div className="text-[1.05rem] tracking-[2px] text-amber" aria-label="5 out of 5 stars">
                 ★★★★★
               </div>
-              <blockquote className="text-[1.12rem] leading-[1.5]">“{item.quote}”</blockquote>
-              <figcaption className="flex items-center gap-3">
+              <blockquote className="text-[1.18rem] font-medium leading-[1.5] tracking-[-0.01em]">“{item.quote}”</blockquote>
+              <figcaption className="mt-auto flex items-center gap-3">
                 <Placeholder circle className="h-11 w-11 flex-none" />
                 <span>
-                  <strong className="block text-[0.95rem] font-semibold">{item.customerName}</strong>
+                  <strong className="block text-[0.95rem] font-bold">{item.customerName}</strong>
                   <span className="text-[0.85rem] text-muted">{item.context}</span>
                 </span>
               </figcaption>
