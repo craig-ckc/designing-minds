@@ -24,7 +24,7 @@ export function HomePage({ snapshot, loadError }: { snapshot: CmsSnapshot | null
       <HowItWorksSection />
       <BundleCtaSection />
       <HomeFaqSection snapshot={snapshot} loadError={loadError} />
-      <FinalCtaSection snapshot={snapshot} />
+      <FinalCtaSection />
     </>
   )
 }

@@ -6,7 +6,6 @@ export function BundleCtaSection() {
   return (
     <Section>
       <CtaBanner
-        eyebrow="Bundles & access plans"
         title="Cover a whole term or the full year in one purchase"
         body="Bundles group a grade’s resources into one discounted, once-off purchase. Access plans unlock a term or year — no auto-renewal."
       >

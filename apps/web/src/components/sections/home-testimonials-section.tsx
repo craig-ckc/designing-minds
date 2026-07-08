@@ -1,6 +1,5 @@
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { Card } from '../ui/card'
-import { Eyebrow } from '../ui/eyebrow'
 import { Placeholder } from '../ui/placeholder'
 import { Section } from '../ui/section'
 import { StarRating } from '../ui/star-rating'
@@ -19,7 +18,6 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
           <Placeholder ratio="1 / 1" className="mx-auto max-w-form bg-surface" label="Watch their story" />
         </div>
         <div className="order-1 lg:order-2">
-          <Eyebrow>What parents say</Eyebrow>
           <h2 className="max-w-[16ch]">Real stories from families across South Africa</h2>
           <blockquote className="mt-6 text-quote font-bold leading-[1.35] tracking-[-0.02em]">
             “{lead.quote}”

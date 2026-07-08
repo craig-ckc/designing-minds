@@ -26,7 +26,6 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
   return (
     <>
       <PageHeader
-        eyebrow="Help & support"
         title="Downloads, printing, accounts & more"
         lead="Answers to common questions about buying, downloading, printing, CAPS alignment, licensing, and refunds."
       >
@@ -35,7 +34,8 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
       </PageHeader>
 
-      <Section containerClassName="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+      <Section>
+        <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="lg:sticky lg:top-[var(--sticky-offset)] lg:self-start">
             <h4 className="mb-3">Topics</h4>
             <ul className="grid gap-2 text-ink-soft">
@@ -47,13 +47,6 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 </li>
               ))}
             </ul>
-            <div className="mt-6 card p-5">
-              <h4 className="mb-2">Still stuck?</h4>
-              <p className="mb-3 text-body-sm text-muted">Reach our team and we’ll help you out.</p>
-              <Button to="/contact" variant="solid" size="sm">
-                Contact support
-              </Button>
-            </div>
           </aside>
 
           <div className="grid gap-10">
@@ -64,6 +57,20 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Only once every topic has been exhausted. */}
+        <div className="mt-14 rounded-panel border border-line bg-cream p-8 text-center lg:mt-20 lg:p-12">
+          <h3 className="mx-auto max-w-[20ch]">Still stuck? We’re one message away</h3>
+          <p className="mx-auto mt-3 max-w-prose text-muted">
+            Can’t find what you’re looking for? Reach our team and we’ll help you out.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <Button to="/contact" variant="solid">
+              Contact support
+            </Button>
+          </div>
+        </div>
       </Section>
     </>
   )

@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
 import { WHY_FEATURES } from '../../content/site'
 import { Card } from '../ui/card'
-import { Eyebrow } from '../ui/eyebrow'
 import { Icon, type IconName } from '../ui/icon'
 import { Section } from '../ui/section'
 import { GrowthChart } from './growth-chart'
@@ -13,7 +12,7 @@ function ChipRow() {
   return (
     <div className="flex flex-wrap gap-4">
       {featureSubjects.map((s) => (
-        <span key={s} className="rounded-pill bg-surface px-3 py-1.5 text-label font-semibold text-ink-soft shadow-soft">
+        <span key={s} className="rounded-pill border border-line bg-surface px-3 py-1.5 text-label font-semibold text-ink-soft">
           {s}
         </span>
       ))}
@@ -25,7 +24,7 @@ function MemoRows() {
   return (
     <div className="grid gap-4">
       {featureMemoRows.map((r) => (
-        <div key={r} className="flex items-center gap-4.5 rounded-lg bg-surface px-3 py-2 text-label shadow-soft">
+        <div key={r} className="flex items-center gap-4.5 rounded-lg border border-line bg-surface px-3 py-2 text-label">
           <span className="grid h-5 w-5 flex-none place-items-center rounded-pill bg-meadow text-forest">
             <span className="h-3 w-3">
               <Icon name="check" />
@@ -42,7 +41,7 @@ function DownloadRows() {
   return (
     <div className="grid gap-4">
       {featureDownloadFiles.map((r) => (
-        <div key={r} className="flex items-center justify-between gap-4 rounded-lg bg-surface px-3 py-2 text-label shadow-soft">
+        <div key={r} className="flex items-center justify-between gap-4 rounded-lg border border-line bg-surface px-3 py-2 text-label">
           <span className="flex items-center gap-4 truncate">
             <span className="h-4 w-4 flex-none text-primary">
               <Icon name="doc" />
@@ -78,11 +77,11 @@ function BentoCard({
       as="article"
       pad="none"
       className={`flex flex-col gap-6 p-7 ${
-        wide ? 'lg:col-span-2 lg:flex-row lg:items-center lg:gap-8' : ''
+        wide ? 'lg:col-span-2 lg:flex-row lg:items-start lg:gap-8' : ''
       }`}
     >
       <div className={wide ? 'lg:w-1/2' : ''}>
-        <span className={`grid h-11 w-11 place-items-center rounded-control ${tone}`}>
+        <span className={`grid h-11 w-11 place-items-center rounded-lg ${tone}`}>
           <span className="h-6 w-6">
             <Icon name={icon} />
           </span>
@@ -97,11 +96,8 @@ function BentoCard({
 
 export function FeatureBentoSection() {
   return (
-    <Section className="bg-surface-alt">
+    <Section>
       <div className="mx-auto mb-10 max-w-prose text-center lg:mb-14">
-        <div className="flex justify-center">
-          <Eyebrow>Why families choose us</Eyebrow>
-        </div>
         <h2>Everything you need for the school term</h2>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">

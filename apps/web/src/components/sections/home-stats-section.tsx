@@ -7,13 +7,13 @@ export function HomeStatsSection({ snapshot }: { snapshot: CmsSnapshot | null })
   const stats = snapshot
     ? [
         { value: String(snapshot.stats.gradeCount), label: 'Grades supported' },
-        { value: '70+', label: 'Families helped' },
+        { value: '500+', label: 'Families helped' },
         { value: String(snapshot.stats.productCount), label: 'Resources & bundles' },
         { value: String(snapshot.stats.subjectCount), label: 'Subjects covered' },
       ]
     : [
         { value: String(fallbackGrades.length), label: 'Grades supported' },
-        { value: '70+', label: 'Families helped' },
+        { value: '500+', label: 'Families helped' },
         { value: '...', label: 'Resources & bundles' },
         { value: '...', label: 'Subjects covered' },
       ]
