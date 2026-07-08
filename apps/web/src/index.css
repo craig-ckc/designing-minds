@@ -1,22 +1,54 @@
 @import "tailwindcss";
 
 /* =========================================================================
-   Designing Minds — Relume-style wireframe theme (Tailwind v4, CSS-first)
+   Designing Minds — playful, pastel design system.
+   Art direction drawn from tryplayground.com: warm off-white canvas, bold
+   rounded Manrope display type, a vivid brand-blue primary, soft pastel
+   section/product colour pairs, generous radii and soft warm shadows.
+   Tailwind v4, CSS-first (@theme). Editing tokens here recolours the app.
    ========================================================================= */
 
 @theme {
-  --color-ink: #111113;
-  --color-ink-soft: #3d3d42;
-  --color-muted: #6c6c74;
-  --color-line: #d9d9de;
-  --color-line-strong: #b9b9c0;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f3f3f1;
-  --color-surface-sunk: #ebebe7;
-  --color-ph: #e4e4e1;
-  --color-ph-glyph: #b6b6b1;
+  /* ---- Warm neutrals -------------------------------------------------- */
+  --color-canvas: #fbfaf8; /* page background (warm off-white) */
+  --color-cream: #fcf6ea; /* warm hero / feature band (Tribe-style) */
+  --color-surface: #ffffff; /* cards, nav, raised surfaces */
+  --color-surface-alt: #f6f3ec; /* alt / cream section background */
+  --color-surface-sunk: #efeae1; /* sunk surface, secondary buttons, hover */
+  --color-ink: #1c1917; /* warm near-black — headings & primary text */
+  --color-ink-soft: #57534e; /* secondary text */
+  --color-muted: #79716b; /* tertiary text / captions */
+  --color-line: #ece8e1; /* hairline borders */
+  --color-line-strong: #ddd7cc; /* stronger borders / inputs */
+  --color-ph: #efeae1; /* placeholder fill */
+  --color-ph-glyph: #b9b0a4; /* placeholder glyph */
 
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* ---- Brand primary (Designing Mind blue) ---------------------------- */
+  --color-primary: #4b57e8;
+  --color-primary-strong: #3a45cf; /* hover / pressed */
+  --color-primary-tint: #ecebfd; /* soft blue backgrounds & chips */
+
+  /* ---- Pastel palette (section + product colour-ways) ----------------- */
+  --color-butter: #fbe08c;
+  --color-blossom: #fbd2ea;
+  --color-meadow: #cdefa4;
+  --color-periwinkle: #cdd6f8;
+  --color-lagoon: #bff0e6;
+
+  /* ---- Deep supporting shades (paired with the pastels above) --------- */
+  --color-amber: #b0600d;
+  --color-magenta: #c21b8e;
+  --color-forest: #0e4a39;
+  --color-navy: #17376b;
+  --color-teal: #0e3f3c;
+
+  /* ---- Type ----------------------------------------------------------- */
+  --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* ---- Soft, warm-tinted shadows -------------------------------------- */
+  --shadow-soft: 0 1px 2px rgba(41, 25, 10, 0.04), 0 6px 16px -8px rgba(41, 25, 10, 0.1);
+  --shadow-card: 0 2px 4px rgba(41, 25, 10, 0.04), 0 18px 32px -18px rgba(41, 25, 10, 0.16);
+  --shadow-lift: 0 4px 10px rgba(41, 25, 10, 0.06), 0 26px 48px -20px rgba(41, 25, 10, 0.22);
 }
 
 @layer base {
@@ -31,7 +63,7 @@
     margin: 0;
     min-width: 320px;
     line-height: 1.55;
-    @apply bg-surface text-ink;
+    @apply bg-canvas text-ink;
   }
 
   #root {
@@ -45,22 +77,25 @@
     text-decoration: none;
   }
 
+  /* Bold, rounded, tightly-set display headings (Manrope ExtraBold). */
   h1 {
-    @apply font-semibold leading-[1.12] tracking-[-0.02em] text-[clamp(2.4rem,5.2vw,3.9rem)];
+    @apply font-extrabold leading-[1.02] tracking-[-0.045em] text-[clamp(2.6rem,5.4vw,4.25rem)];
   }
   h2 {
-    @apply font-semibold leading-[1.12] tracking-[-0.02em] text-[clamp(1.9rem,3.6vw,2.85rem)];
+    @apply font-extrabold leading-[1.04] tracking-[-0.042em] text-[clamp(2rem,3.9vw,3.25rem)];
   }
   h3 {
-    @apply font-semibold leading-[1.15] tracking-[-0.02em] text-[clamp(1.35rem,2.2vw,1.7rem)];
+    @apply font-bold leading-[1.12] tracking-[-0.03em] text-[clamp(1.4rem,2.2vw,1.85rem)];
   }
   h4 {
-    @apply font-semibold leading-snug text-[1.12rem];
+    @apply font-bold leading-snug tracking-[-0.02em] text-[1.15rem];
   }
 
   /* Native accordion marker reset — the one thing utilities can't express */
   details > summary { list-style: none; cursor: pointer; }
   details > summary::-webkit-details-marker { display: none; }
+
+  ::selection { background: var(--color-primary); color: #fff; }
 }
 
 @layer components {
@@ -74,17 +109,19 @@
 
   /* Intro / lead paragraph. */
   .lead {
-    @apply text-[clamp(1.05rem,1.6vw,1.2rem)] text-ink-soft;
+    @apply text-[clamp(1.05rem,1.6vw,1.22rem)] leading-[1.55] text-ink-soft;
   }
 
-  /* Bordered surface card. */
+  /* Soft raised surface card. */
   .card {
-    @apply rounded-[10px] border border-line bg-surface;
+    @apply rounded-lg border border-line bg-surface shadow-soft;
   }
 
   /* Form control (input / select / textarea). */
   .field {
-    @apply w-full min-h-[46px] rounded-md border border-line-strong bg-surface px-3.5 py-2.5 focus:outline focus:outline-2 focus:outline-ink focus:-outline-offset-1;
+    @apply w-full min-h-[44px] rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-[0.95rem]
+           transition placeholder:text-muted
+           focus:border-primary focus:outline focus:outline-2 focus:outline-primary/25 focus:-outline-offset-1;
   }
 }
 
@@ -93,8 +130,8 @@
    compact typography that overrides the page-scale base heading styles.
    ========================================================================= */
 
-.rich-text h1 { font-size: 1.55rem; letter-spacing: -0.01em; margin: 0.9em 0 0.4em; }
-.rich-text h2 { font-size: 1.3rem; letter-spacing: -0.01em; margin: 0.9em 0 0.4em; }
+.rich-text h1 { font-size: 1.6rem; letter-spacing: -0.02em; margin: 0.9em 0 0.4em; }
+.rich-text h2 { font-size: 1.32rem; letter-spacing: -0.02em; margin: 0.9em 0 0.4em; }
 .rich-text h3 { font-size: 1.12rem; margin: 0.9em 0 0.4em; }
 .rich-text h4, .rich-text h5, .rich-text h6 { font-size: 1rem; margin: 0.9em 0 0.4em; }
 .rich-text p { margin: 0.5em 0; }
@@ -103,16 +140,17 @@
 .rich-text li { margin: 0.15em 0; }
 .rich-text hr { border: 0; border-top: 1px solid var(--color-line); margin: 1.2em 0; }
 .rich-text blockquote {
-  border-left: 2px solid var(--color-line-strong);
+  border-left: 3px solid var(--color-primary);
   padding-left: 0.9em;
   color: var(--color-ink-soft);
   margin: 0.7em 0;
 }
 .rich-text code {
   background: var(--color-surface-alt);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 0.1em 0.35em;
   font-size: 0.88em;
 }
+.rich-text a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
 .rich-text > :first-child { margin-top: 0; }
 .rich-text > :last-child { margin-bottom: 0; }
