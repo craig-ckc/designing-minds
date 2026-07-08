@@ -2,8 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import type {
   CmsRepository,
   CmsSnapshot,
+  ContactSubmission,
   Customer,
   Faq,
+  NewsletterSubmission,
   Order,
   Payment,
   Product,
@@ -30,6 +32,8 @@ const TABLES = {
   customers: 'users',
   orders: 'orders',
   payments: 'payments',
+  formContact: 'form_contact',
+  formNewsletter: 'form_newsletter',
   valueLists: 'value_lists',
   slugRedirects: 'active_slug_redirects',
 } as const
@@ -64,6 +68,26 @@ const numberizeOrder = (order: Order): Order => ({
 })
 const numberizePayment = (payment: Payment): Payment => ({ ...payment, amountZar: Number(payment.amountZar) })
 
+/**
+ * Extract rows, tolerating a not-yet-migrated table: a missing relation
+ * (PostgREST PGRST205 / Postgres 42P01) yields [] with a warning; any other
+ * error is real and rethrown. Used for newer, non-critical tables so a forgotten
+ * SQL patch can't break the whole snapshot (and thus the public build).
+ */
+const tolerateMissingTable = <T>(
+  result: { data: unknown; error: { code?: string; message: string } | null },
+  label: string,
+): T[] => {
+  if (result.error) {
+    if (result.error.code === 'PGRST205' || result.error.code === '42P01') {
+      console.warn(`[cms] ${label} not found — treating as empty. Apply the form-submissions SQL patch.`)
+      return []
+    }
+    throw new Error(result.error.message)
+  }
+  return (result.data as T[] | null) ?? []
+}
+
 const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] => ({
   productCount: snapshot.products.length,
   subjectCount: snapshot.subjects.length,
@@ -88,17 +112,22 @@ export const createSupabaseRepository = ({ url, publishableKey, audience }: Supa
     mode: 'supabase',
     canWrite: audience === 'admin',
     async getSnapshot() {
-      const [products, subjects, faqs, testimonials, customers, orders, payments, valueLists] = await Promise.all([
-        client.from(productReadTable).select('*'),
-        client.from(TABLES.subjects).select('*'),
-        client.from(TABLES.faqs).select('*'),
-        client.from(TABLES.testimonials).select('*'),
-        client.from(TABLES.customers).select('*'),
-        client.from(TABLES.orders).select('*'),
-        client.from(TABLES.payments).select('*'),
-        client.from(TABLES.valueLists).select('*'),
-      ])
+      const [products, subjects, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists] =
+        await Promise.all([
+          client.from(productReadTable).select('*'),
+          client.from(TABLES.subjects).select('*'),
+          client.from(TABLES.faqs).select('*'),
+          client.from(TABLES.testimonials).select('*'),
+          client.from(TABLES.customers).select('*'),
+          client.from(TABLES.orders).select('*'),
+          client.from(TABLES.payments).select('*'),
+          // Admin-only via RLS: returns [] for the public/customer client, rows for admins.
+          client.from(TABLES.formContact).select('*'),
+          client.from(TABLES.formNewsletter).select('*'),
+          client.from(TABLES.valueLists).select('*'),
+        ])
 
+      // Core tables must exist; any error is fatal.
       const firstError = [products, subjects, faqs, testimonials, customers, orders, payments, valueLists].find((r) => r.error)
       if (firstError?.error) {
         throw new Error(firstError.error.message)
@@ -115,6 +144,10 @@ export const createSupabaseRepository = ({ url, publishableKey, audience }: Supa
         customers: (customers.data as Customer[] | null) ?? [],
         orders: ((orders.data as Order[] | null) ?? []).map(numberizeOrder),
         payments: ((payments.data as Payment[] | null) ?? []).map(numberizePayment),
+        // Admin-only + newer than the core schema: tolerate a not-yet-migrated
+        // project so a missing form table never breaks the public web build.
+        formContact: tolerateMissingTable<ContactSubmission>(formContact, TABLES.formContact),
+        formNewsletter: tolerateMissingTable<NewsletterSubmission>(formNewsletter, TABLES.formNewsletter),
       }
       return { ...base, stats: buildStats(base) }
     },

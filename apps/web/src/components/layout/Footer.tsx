@@ -21,7 +21,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
           <p className="mt-3.5 max-w-[34ch] text-[0.95rem] text-muted">
             Affordable, CAPS-aligned printable tests that help learners across South Africa prepare with confidence.
           </p>
-          <NewsletterForm compact />
+          <NewsletterForm compact source="footer" />
         </div>
 
         <FooterColumn title="Shop by grade">

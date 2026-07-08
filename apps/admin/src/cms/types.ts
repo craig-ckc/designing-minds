@@ -17,7 +17,7 @@ import type { ValueLists } from '@designing-minds/cms'
 export type AdminRecord = Record<string, unknown> & { id: string }
 
 /** Sidebar grouping for collections. */
-export type CollectionGroupName = 'Catalogue' | 'Operations'
+export type CollectionGroupName = 'Catalogue' | 'Operations' | 'Submissions'
 
 /* --------------------------------- Fields ------------------------------ */
 
@@ -30,6 +30,7 @@ export type FieldType =
   | 'date'
   | 'datetime'
   | 'readonly'
+  | 'keyValue'
   | 'slug'
   | 'select'
   | 'reference'
@@ -60,8 +61,9 @@ type FieldBase = {
 }
 
 export type PrimitiveField = FieldBase & {
-  /** richText edits as WYSIWYG but stores a Markdown string. */
-  type: 'text' | 'textarea' | 'richText' | 'number' | 'boolean' | 'date' | 'datetime' | 'readonly'
+  /** richText edits as WYSIWYG but stores a Markdown string.
+   *  keyValue renders an object (e.g. a JSONB bag) as read-only label/value rows. */
+  type: 'text' | 'textarea' | 'richText' | 'number' | 'boolean' | 'date' | 'datetime' | 'readonly' | 'keyValue'
   /** number only: an empty input stores null instead of 0 (e.g. marks). */
   nullable?: boolean
 }

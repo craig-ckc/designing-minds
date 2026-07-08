@@ -1,24 +1,44 @@
 import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CONTACT } from '../content/site'
+import { apiUrl } from '../lib/api'
 import { Container } from '../components/ui/Container'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { Field } from '../components/ui/Field'
 import { Button } from '../components/ui/Button'
 
+type Status = 'idle' | 'submitting' | 'sent' | 'error'
+
 export function ContactPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
-  const [sent, setSent] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
+  const [status, setStatus] = useState<Status>('idle')
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const sent = status === 'sent'
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const body = `From: ${name} <${email}>\n\n${message}`
-    const mailto = `mailto:${CONTACT.email}?subject=${encodeURIComponent(`Website enquiry from ${name || 'a customer'}`)}&body=${encodeURIComponent(body)}`
-    window.location.href = mailto
-    setSent(true)
+    setStatus('submitting')
+    setError(null)
+    try {
+      const response = await fetch(apiUrl('/api/forms'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ form: 'contact', fields: { name, email, message }, website: honeypot }),
+      })
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error ?? 'Something went wrong. Please try again.')
+      }
+      setStatus('sent')
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Something went wrong. Please try again.')
+      setStatus('error')
+    }
   }
 
   return (
@@ -47,11 +67,22 @@ export function ContactPage() {
 
             <form className="card grid gap-[18px] p-7" onSubmit={handleSubmit}>
               <h3>Send us a message</h3>
+              {/* Honeypot: hidden from humans, catches bots that fill every field. */}
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
               <Field label="Name">
-                <input className="field" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
+                <input className="field" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required disabled={sent} />
               </Field>
               <Field label="Email">
-                <input className="field" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <input className="field" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={sent} />
               </Field>
               <Field label="Message">
                 <textarea
@@ -60,19 +91,25 @@ export function ContactPage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
+                  disabled={sent}
                 />
               </Field>
-              <Button type="submit" variant="solid">
-                Send message
-              </Button>
+              {!sent ? (
+                <Button type="submit" variant="solid" disabled={status === 'submitting'}>
+                  {status === 'submitting' ? 'Sending…' : 'Send message'}
+                </Button>
+              ) : null}
               {sent ? (
                 <p className="text-[0.82rem] text-ink-soft">
-                  Your email app should have opened. If not, email us directly at{' '}
+                  Thanks — your message is on its way. We usually reply within one business day. You can also email us
+                  directly at{' '}
                   <a href={`mailto:${CONTACT.email}`} className="underline underline-offset-4">
                     {CONTACT.email}
                   </a>
                   .
                 </p>
+              ) : error ? (
+                <p className="text-[0.82rem] text-red-600">{error}</p>
               ) : (
                 <p className="text-[0.82rem] text-muted">We usually reply within one business day.</p>
               )}

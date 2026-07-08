@@ -278,7 +278,7 @@ function NewsletterSection() {
             Subscribe for new releases and learning tips. We’ll send you a free CAPS-aligned practice resource to start.
           </p>
           <div className="mt-6 flex justify-center">
-            <NewsletterForm />
+            <NewsletterForm source="homepage" />
           </div>
         </div>
       </Container>

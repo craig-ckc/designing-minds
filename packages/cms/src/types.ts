@@ -195,6 +195,33 @@ export interface SlugRedirect {
   createdBy?: string | null
 }
 
+/* ----------------------------- Form submissions ------------------------ */
+
+/**
+ * A public form submission. Persisted only by the trusted functions app; the
+ * browser never writes these. Stable identity/metadata live in columns; the
+ * variable per-form fields live in `data` so new fields need no schema change.
+ * One interface per form table (form_<name>).
+ */
+interface FormSubmissionBase {
+  id: string
+  /** The submitted, non-promoted form fields. */
+  data: Record<string, unknown>
+  /** Page the form was submitted from (Referer), if known. */
+  sourceUrl: string | null
+  userAgent: string | null
+  createdAt: string
+}
+
+export interface ContactSubmission extends FormSubmissionBase {
+  name: string | null
+  email: string | null
+}
+
+export interface NewsletterSubmission extends FormSubmissionBase {
+  email: string | null
+}
+
 /* --------------------------------- Snapshot ---------------------------- */
 
 export interface CmsStats {
@@ -218,6 +245,10 @@ export interface CmsSnapshot {
   customers: Customer[]
   orders: Order[]
   payments: Payment[]
+  /** Contact-form submissions (admin-only; empty in the public snapshot). */
+  formContact: ContactSubmission[]
+  /** Newsletter signups (admin-only; empty in the public snapshot). */
+  formNewsletter: NewsletterSubmission[]
   stats: CmsStats
 }
 

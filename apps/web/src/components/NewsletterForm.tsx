@@ -1,24 +1,40 @@
 import { type FormEvent, useState } from 'react'
-import { CONTACT } from '../content/site'
+import { apiUrl } from '../lib/api'
 import { Button } from './ui/Button'
 
-export function NewsletterForm({ compact }: { compact?: boolean }) {
-  const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
+type Status = 'idle' | 'submitting' | 'sent' | 'error'
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+export function NewsletterForm({ compact, source = 'website' }: { compact?: boolean; source?: string }) {
+  const [email, setEmail] = useState('')
+  const [honeypot, setHoneypot] = useState('')
+  const [status, setStatus] = useState<Status>('idle')
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const mailto = `mailto:${CONTACT.email}?subject=${encodeURIComponent('Newsletter signup')}&body=${encodeURIComponent(
-      `Please add this address to the Designing Minds newsletter: ${email}`,
-    )}`
-    window.location.href = mailto
-    setSent(true)
+    setStatus('submitting')
+    setError(null)
+    try {
+      const response = await fetch(apiUrl('/api/forms'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ form: 'newsletter', fields: { email, source }, website: honeypot }),
+      })
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error ?? 'Something went wrong. Please try again.')
+      }
+      setStatus('sent')
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Something went wrong. Please try again.')
+      setStatus('error')
+    }
   }
 
-  if (sent) {
+  if (status === 'sent') {
     return (
       <p className={`max-w-[460px] text-[0.9rem] text-ink-soft ${compact ? 'mt-[18px]' : 'mt-6'}`}>
-        Thanks! Your email app should have opened to confirm your signup.
+        Thanks! You’re on the list — look out for your free test in your inbox.
       </p>
     )
   }
@@ -28,6 +44,17 @@ export function NewsletterForm({ compact }: { compact?: boolean }) {
       className={`flex max-w-[460px] flex-col gap-2.5 sm:flex-row ${compact ? 'mt-[18px]' : 'mt-6'}`}
       onSubmit={handleSubmit}
     >
+      {/* Honeypot: hidden from humans, catches bots that fill every field. */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hidden"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+      />
       <input
         className="field flex-1"
         type="email"
@@ -37,9 +64,10 @@ export function NewsletterForm({ compact }: { compact?: boolean }) {
         onChange={(e) => setEmail(e.target.value)}
         required
       />
-      <Button type="submit" variant="solid">
-        {compact ? 'Subscribe' : 'Get my free test'}
+      <Button type="submit" variant="solid" disabled={status === 'submitting'}>
+        {status === 'submitting' ? 'Submitting…' : compact ? 'Subscribe' : 'Get my free test'}
       </Button>
+      {error ? <p className="w-full text-[0.82rem] text-red-600 sm:mt-1">{error}</p> : null}
     </form>
   )
 }

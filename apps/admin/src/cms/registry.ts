@@ -337,6 +337,63 @@ const payments: AdminCollection = {
   ],
 }
 
+/* ----------------------------- Submissions ----------------------------- */
+/* Read-only public form submissions. Stable columns show in the list; the
+   variable submitted fields render from the JSONB `data` bag via the keyValue
+   field, so new form fields appear with no config change. */
+
+const formContact: AdminCollection = {
+  id: 'formContact',
+  label: 'Contact submissions',
+  singular: 'Contact submission',
+  group: 'Submissions',
+  titleField: 'email',
+  subtitleField: 'name',
+  readOnly: true,
+  searchFields: ['name', 'email'],
+  fields: [
+    { key: 'name', label: 'Name', type: 'readonly' },
+    { key: 'email', label: 'Email', type: 'readonly' },
+    { key: 'date', label: 'Received', type: 'readonly' },
+    { key: 'sourceUrl', label: 'Submitted from', type: 'readonly' },
+    { key: 'data', label: 'Message & fields', type: 'keyValue' },
+  ],
+  sections: [
+    { title: 'Submission', fields: ['name', 'email', 'date', 'sourceUrl'] },
+    { title: 'Details', fields: ['data'] },
+  ],
+  listColumns: [
+    { key: 'email', label: 'Email', width: 'minmax(240px, 2fr)' },
+    { key: 'name', label: 'Name', width: 'minmax(180px, 1.2fr)' },
+    { key: 'date', label: 'Received', width: '130px' },
+  ],
+}
+
+const formNewsletter: AdminCollection = {
+  id: 'formNewsletter',
+  label: 'Newsletter signups',
+  singular: 'Newsletter signup',
+  group: 'Submissions',
+  titleField: 'email',
+  subtitleField: 'date',
+  readOnly: true,
+  searchFields: ['email'],
+  fields: [
+    { key: 'email', label: 'Email', type: 'readonly' },
+    { key: 'date', label: 'Signed up', type: 'readonly' },
+    { key: 'sourceUrl', label: 'Submitted from', type: 'readonly' },
+    { key: 'data', label: 'Fields', type: 'keyValue' },
+  ],
+  sections: [
+    { title: 'Signup', fields: ['email', 'date', 'sourceUrl'] },
+    { title: 'Details', fields: ['data'] },
+  ],
+  listColumns: [
+    { key: 'email', label: 'Email', width: 'minmax(260px, 2fr)' },
+    { key: 'date', label: 'Signed up', width: '140px' },
+  ],
+}
+
 export const collectionRegistry: AdminCollection[] = [
   products,
   subjects,
@@ -345,6 +402,8 @@ export const collectionRegistry: AdminCollection[] = [
   orders,
   customers,
   payments,
+  formContact,
+  formNewsletter,
 ]
 
 export function getCollection(id: string | undefined): AdminCollection | undefined {

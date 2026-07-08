@@ -59,6 +59,8 @@ try {
       customers: [],
       orders: [],
       payments: [],
+      formContact: [],
+      formNewsletter: [],
       stats: { productCount: 0, subjectCount: 0, gradeCount: 0, bundleCount: 0, accessPlanCount: 0, orderCount: 0, customerCount: 0 },
     }
   } else {

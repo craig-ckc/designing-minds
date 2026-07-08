@@ -84,6 +84,27 @@ function mapPayment(snapshot: CmsSnapshot, payment: CmsSnapshot['payments'][numb
   }
 }
 
+function mapContactSubmission(submission: CmsSnapshot['formContact'][number]): AdminRecord {
+  return {
+    id: submission.id,
+    name: submission.name ?? '—',
+    email: submission.email ?? '—',
+    date: submission.createdAt.slice(0, 10),
+    sourceUrl: submission.sourceUrl ?? '—',
+    data: submission.data ?? {},
+  }
+}
+
+function mapNewsletterSubmission(submission: CmsSnapshot['formNewsletter'][number]): AdminRecord {
+  return {
+    id: submission.id,
+    email: submission.email ?? '—',
+    date: submission.createdAt.slice(0, 10),
+    sourceUrl: submission.sourceUrl ?? '—',
+    data: submission.data ?? {},
+  }
+}
+
 export function selectRecords(snapshot: CmsSnapshot, collectionId: string): AdminRecord[] {
   switch (collectionId) {
     case 'products':
@@ -100,6 +121,10 @@ export function selectRecords(snapshot: CmsSnapshot, collectionId: string): Admi
       return snapshot.customers.map((customer) => mapCustomer(snapshot, customer))
     case 'payments':
       return snapshot.payments.map((payment) => mapPayment(snapshot, payment))
+    case 'formContact':
+      return snapshot.formContact.map(mapContactSubmission)
+    case 'formNewsletter':
+      return snapshot.formNewsletter.map(mapNewsletterSubmission)
     default:
       return []
   }

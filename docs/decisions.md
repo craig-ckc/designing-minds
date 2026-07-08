@@ -88,3 +88,29 @@ Consequences:
 - Static snapshots must exclude operational records and private storage keys.
 - Product slug changes create permanent redirects.
 - Admin publish triggers a web rebuild through a server-side Vercel Deploy Hook.
+
+## Form Submissions Go Through The Functions API
+
+Status: accepted.
+
+Public form submissions (contact, newsletter) are operational writes, so they follow the same trust boundary as orders/payments: the browser POSTs to the functions app (`POST /api/forms`), which validates and writes with the Supabase secret key. The browser never inserts into the form tables directly — there is no anon-insert RLS policy; RLS is default-deny and admins read.
+
+One table per form, named `form_<name>` (`form_contact`, `form_newsletter`). Stable identity/metadata (email, name, `sourceUrl`, `userAgent`, `createdAt`) are real columns; the variable submitted fields live in a `data` jsonb bag. Adding a new field to a form needs no migration; adding a new form is a deliberate new table + one `FORMS` config entry in the handler.
+
+Consequences:
+
+- The contact/newsletter forms do NOT open the visitor's mail client, and are not wired to Mailchimp.
+- Submissions surface in the admin app as read-only "Submissions" collections; the jsonb `data` renders as key/value rows.
+- On submit the functions app sends a best-effort Resend notification to the Designing Minds inbox; a Resend failure never fails the (already-persisted) submission.
+
+## Transactional Email Via Resend; Marketing Via Mailchimp
+
+Status: accepted.
+
+Resend is the transactional/notification email provider: form-submission notifications now, and purchase/order emails as they are added. Supabase Auth handles account emails (signup confirmation, password reset) via its own SMTP. Mailchimp is reserved strictly for marketing campaigns and is not part of any form-submission or transactional flow.
+
+Consequences:
+
+- Functions carry `RESEND_API_KEY`, `RESEND_FROM`, `FORM_NOTIFICATIONS_TO`. Absent config disables sending (submissions still persist); it is never in a `VITE_` variable.
+- Password reset is a real flow in both the web and admin apps (`resetPasswordForEmail` + `updateUser`); Supabase must have `/reset-password` (web) and the admin origin allow-listed as redirect URLs.
+- Marketing list sync to Mailchimp, if added later, is a separate integration off the newsletter table — not a change to the submission path.

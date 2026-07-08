@@ -16,7 +16,7 @@ import type { CmsSnapshot } from '../types'
  *   catalog_products view)
  * - subjects: visible only
  * - faqs / testimonials: published only
- * - customers / orders / payments: always empty
+ * - customers / orders / payments / form submissions: always empty
  * - stats: recalculated from the public content
  *
  * Returns a `CmsSnapshot` (same shape) so the web client can hydrate from it
@@ -39,6 +39,8 @@ export const toPublicSnapshot = (snapshot: CmsSnapshot): CmsSnapshot => {
     customers: [],
     orders: [],
     payments: [],
+    formContact: [],
+    formNewsletter: [],
     stats: {
       productCount: products.length,
       subjectCount: subjects.length,

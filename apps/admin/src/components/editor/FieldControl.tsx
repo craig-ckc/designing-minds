@@ -32,6 +32,28 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
         return <div className={cn(FIELD, 'min-h-[42px] whitespace-pre-line text-ink-soft')}>{text}</div>
       }
 
+      /* Renders an object (e.g. a JSONB "data" bag) as read-only label/value
+         rows, so new form fields surface automatically with no config change. */
+      case 'keyValue': {
+        const entries =
+          value && typeof value === 'object' && !Array.isArray(value) ? Object.entries(value as Record<string, unknown>) : []
+        if (entries.length === 0) {
+          return <div className={cn(FIELD, 'min-h-[42px] text-ink-soft')}>No additional fields.</div>
+        }
+        return (
+          <dl className="grid gap-2.5 rounded-md border border-line bg-surface-alt p-3">
+            {entries.map(([key, entryValue]) => (
+              <div key={key} className="grid gap-0.5">
+                <dt className="text-[0.75rem] uppercase tracking-[0.06em] text-muted">{key}</dt>
+                <dd className="whitespace-pre-wrap text-[0.9rem] text-ink">
+                  {entryValue == null || entryValue === '' ? '—' : String(entryValue)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+
       /* Webflow-style toggle: label above (from FieldShell), switch + On/Off below. */
       case 'boolean': {
         const checked = Boolean(value)

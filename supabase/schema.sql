@@ -588,3 +588,47 @@ alter table public.slug_redirects enable row level security;
 drop policy if exists "Admin reads slug redirects" on public.slug_redirects;
 create policy "Admin reads slug redirects" on public.slug_redirects
   for select to authenticated using (public.is_admin());
+
+-- =========================================================================
+-- Form submissions (contact + newsletter)
+-- =========================================================================
+--
+-- Public forms are persisted ONLY by the trusted functions app (secret key),
+-- exactly like orders/payments — the browser never writes here, so there is no
+-- anon insert policy and RLS is default-deny for everyone but admins (read).
+-- One table per form (form_<name>): stable identity/metadata as columns, and
+-- the variable per-form fields in the "data" jsonb bag so new fields need no
+-- migration. See supabase/patch/2026-07-02-form-submissions.sql.
+
+create table if not exists public.form_contact (
+  id uuid primary key default gen_random_uuid(),
+  name text,
+  email text,
+  "data" jsonb not null default '{}'::jsonb,
+  "sourceUrl" text,
+  "userAgent" text,
+  "createdAt" timestamptz not null default now()
+);
+
+create index if not exists form_contact_created_idx on public.form_contact ("createdAt" desc);
+
+alter table public.form_contact enable row level security;
+drop policy if exists "Admin reads contact submissions" on public.form_contact;
+create policy "Admin reads contact submissions" on public.form_contact
+  for select to authenticated using (public.is_admin());
+
+create table if not exists public.form_newsletter (
+  id uuid primary key default gen_random_uuid(),
+  email text,
+  "data" jsonb not null default '{}'::jsonb,
+  "sourceUrl" text,
+  "userAgent" text,
+  "createdAt" timestamptz not null default now()
+);
+
+create index if not exists form_newsletter_created_idx on public.form_newsletter ("createdAt" desc);
+
+alter table public.form_newsletter enable row level security;
+drop policy if exists "Admin reads newsletter submissions" on public.form_newsletter;
+create policy "Admin reads newsletter submissions" on public.form_newsletter
+  for select to authenticated using (public.is_admin());

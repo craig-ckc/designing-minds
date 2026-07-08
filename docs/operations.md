@@ -9,7 +9,9 @@ This combines backend readiness, preview setup, static publishing, and launch ch
 | Supabase schema | Ready | `supabase/schema.sql` is the fresh-project schema; existing projects use `supabase/patch/` before patches are folded back. |
 | Public catalogue reads | Ready | Storefront reads `catalog_products`, never raw `products`. |
 | Admin CMS | Ready | Supabase Auth + `user_roles`; admin writes are gated by RLS. |
-| Customer auth | Ready | Supabase email/password Auth. |
+| Customer auth | Ready | Supabase email/password Auth, plus password reset in web + admin. |
+| Form submissions | Ready | Contact + newsletter POST to `/api/forms`; functions write `form_<name>` tables and send a Resend notification. Apply `supabase/patch/2026-07-02-form-submissions.sql`. |
+| Transactional email | Config-gated | Resend send is implemented; set `RESEND_API_KEY`/`RESEND_FROM`/`FORM_NOTIFICATIONS_TO` on functions to go live. Absent config skips sending (submissions still persist). |
 | Cart | Ready | Anonymous cart is local until sign-in; signed-in cart persists in Supabase. |
 | Checkout | Ready | Server re-resolves products/prices, blocks repurchases, and creates order/payment atomically. |
 | PayFast ITN | Ready | Signature, IP, amount, validation response, and idempotency are checked server-side. |
@@ -90,6 +92,9 @@ Functions:
 | `STORAGE_BUCKET` | Private product-file bucket |
 | `ALLOWED_ORIGINS` | Web/admin origins if direct cross-origin calls are used |
 | `VERCEL_WEB_DEPLOY_HOOK_URL` | Secret Deploy Hook for the web project |
+| `RESEND_API_KEY` | Resend API key (blank disables sending) |
+| `RESEND_FROM` | Verified sender, e.g. `Designing Minds <noreply@designingminds.co.za>` |
+| `FORM_NOTIFICATIONS_TO` | Inbox that receives contact + newsletter submissions |
 
 ## Static Publish Flow
 
@@ -113,6 +118,7 @@ Supabase:
 
 - [ ] Production Supabase project is separate from local/sandbox projects.
 - [ ] `supabase/schema.sql` and `supabase/seed.sql` have been applied.
+- [ ] Incremental patches in `supabase/patch/` are applied (incl. `2026-07-02-form-submissions.sql` for the contact/newsletter tables).
 - [ ] RLS is enabled on catalogue and operational tables.
 - [ ] `public.users` rows are created for new Auth users.
 - [ ] `user_roles` creates customer role on signup and cannot be changed by browser clients.
@@ -124,6 +130,7 @@ Auth and admin:
 
 - [ ] Email/password Auth is enabled.
 - [ ] Password reset email sending is configured.
+- [ ] Supabase Auth redirect URLs allow the web `/reset-password` route and the admin app origin (reset links land there).
 - [ ] Admin app has no public signup route.
 - [ ] Unauthenticated visitors see only login.
 - [ ] Authenticated non-admin users see not-authorized.

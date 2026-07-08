@@ -123,7 +123,10 @@ Orders
 Order Items
 Payments
 Slug Redirects
+Form Submissions (form_contact, form_newsletter)
 ```
+
+Contact and newsletter forms POST to the functions app (`/api/forms`), which writes `form_<name>` tables with the secret key and sends a Resend notification — the browser never writes them directly. Like Orders/Payments/Customers, submissions appear in the admin app as read-only views (a "Submissions" group), never as editable CMS collections. Each table keeps stable identity/metadata as columns and the variable submitted fields in a `data` jsonb bag.
 
 `public.users` stores the account profile for every authenticated person. `user_roles` distinguishes Customers from Administrators. Orders and carts keep `customerId` because only Customers own commerce records.
 
