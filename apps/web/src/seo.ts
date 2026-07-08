@@ -103,7 +103,7 @@ export interface PageMeta {
   image: string
 }
 
-const metaTags = ({ title, description, canonical, ogType, image }: PageMeta): string =>
+const metatags = ({ title, description, canonical, ogType, image }: PageMeta): string =>
   [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -132,7 +132,7 @@ interface Crumb {
 
 const breadcrumbList = (siteUrl: string, crumbs: Crumb[]) => ({
   '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
+  '@type': 'breadcrumbList',
   itemListElement: crumbs.map((crumb, index) => ({
     '@type': 'ListItem',
     position: index + 1,
@@ -259,7 +259,7 @@ export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: 
   return { ...fallback, canonical, ogType: 'website', image }
 }
 
-/** Generate the full <head> tag block for a prerendered route. */
+/** Generate the full <head> Tag block for a prerendered route. */
 export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: string): string {
   const meta = pageMetaFor(route, snapshot, siteUrl)
   const { canonical, image } = meta
@@ -333,7 +333,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
       const faqs = snapshot.faqs.filter((faq) => faq.published)
       if (faqs.length > 0) jsonLd.push(faqPage(faqs))
     }
-    // Breadcrumbs on browse, support, and legal pages (everything but home).
+    // breadcrumbs on browse, support, and legal pages (everything but home).
     if (route.path !== '/') {
       jsonLd.push(
         breadcrumbList(siteUrl, [
@@ -344,7 +344,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     }
   }
 
-  return [metaTags(meta), ...jsonLd.map(jsonLdScript)].join('\n    ')
+  return [metatags(meta), ...jsonLd.map(jsonLdScript)].join('\n    ')
 }
 
 /* ------------------------------ Sitemap + robots ----------------------- */
@@ -357,8 +357,8 @@ export function sitemapXml(routes: PublicRoute[], siteUrl: string, lastmod?: str
   const urls = routes
     .map((route) => {
       const loc = `${siteUrl}${route.path === '/' ? '/' : route.path}`
-      const lastmodTag = day ? `\n    <lastmod>${day}</lastmod>` : ''
-      return `  <url>\n    <loc>${escapeHtml(loc)}</loc>${lastmodTag}\n  </url>`
+      const lastmodtag = day ? `\n    <lastmod>${day}</lastmod>` : ''
+      return `  <url>\n    <loc>${escapeHtml(loc)}</loc>${lastmodtag}\n  </url>`
     })
     .join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`

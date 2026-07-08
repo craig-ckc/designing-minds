@@ -3,7 +3,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import type { CmsSnapshot } from '@designing-minds/cms'
 import './index.css'
-import App from './App.tsx'
+import App from './app.tsx'
 import { AuthProvider } from './lib/auth.tsx'
 
 declare global {
@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-const container = document.getElementById('root')!
+const Container = document.getElementById('root')!
 const bootstrap = window.__DM_PUBLIC_SNAPSHOT__ ?? null
 
 const tree = (
@@ -27,10 +27,10 @@ const tree = (
 )
 
 // Prerendered pages ship server-rendered markup + a bootstrap snapshot, so we
-// hydrate them. The SPA fallback shell ships an empty root with no snapshot, so
+// hydrate them. The SPA fallback Shell ships an empty root with no snapshot, so
 // we render from scratch (functional routes load their own data).
-if (bootstrap && container.hasChildNodes()) {
-  hydrateRoot(container, tree)
+if (bootstrap && Container.hasChildNodes()) {
+  hydrateRoot(Container, tree)
 } else {
-  createRoot(container).render(tree)
+  createRoot(Container).render(tree)
 }

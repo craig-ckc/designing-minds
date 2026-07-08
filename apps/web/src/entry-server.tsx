@@ -3,7 +3,7 @@ import { StrictMode } from 'react'
 import { renderToString } from 'react-dom/server'
 import { StaticRouter } from 'react-router'
 import type { CmsSnapshot } from '@designing-minds/cms'
-import App from './App.tsx'
+import App from './app.tsx'
 import { AuthProvider } from './lib/auth.tsx'
 
 /* -------------------------------------------------------------------------

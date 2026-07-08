@@ -54,8 +54,8 @@ export const FUNCTIONAL_NOINDEX_PATHS = [
 /**
  * Path prefixes for the client-rendered functional area (auth, cart, checkout,
  * account). These pages are not prerendered — they load their own data and
- * serve the noindex SPA shell. The deploy config matches these prefixes (and
- * any sub-path, e.g. /account/orders/:id) to the shell with a 200, while every
+ * serve the noindex SPA Shell. The deploy config matches these prefixes (and
+ * any sub-path, e.g. /account/orders/:id) to the Shell with a 200, while every
  * other unknown URL falls through to a genuine 404 instead of a soft 404.
  */
 export const FUNCTIONAL_SPA_PREFIXES = [

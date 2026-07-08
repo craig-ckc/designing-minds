@@ -1,0 +1,38 @@
+{
+  "privacy": {
+    "title": "Privacy Policy",
+    "eyebrow": "Legal",
+    "sections": [
+      "Information we collect",
+      "How we use your information",
+      "Cookies and analytics",
+      "Data retention",
+      "Your rights",
+      "Contact"
+    ]
+  },
+  "terms": {
+    "title": "Terms & Conditions",
+    "eyebrow": "Legal",
+    "sections": [
+      "Using the site",
+      "Accounts",
+      "Purchases and payment",
+      "Digital delivery",
+      "Acceptable use and licensing",
+      "Liability",
+      "Contact"
+    ]
+  },
+  "refund": {
+    "title": "Refund Policy",
+    "eyebrow": "Legal",
+    "sections": [
+      "Digital products",
+      "Duplicate or accidental purchases",
+      "How to request a refund",
+      "Processing time",
+      "Contact"
+    ]
+  }
+}

@@ -2,7 +2,7 @@
    Markdown renderer for CMS rich text (product full descriptions).
 
    The admin's rich text editor stores Markdown; this renders it back into
-   real elements — headings, dividers, lists, quotes, bold/italic/links.
+   real elements — Headings, dividers, lists, quotes, bold/italic/links.
    It builds React elements directly (never raw HTML), so CMS content cannot
    inject markup, and it needs no dependencies.
    ------------------------------------------------------------------------- */
