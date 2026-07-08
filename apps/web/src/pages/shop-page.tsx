@@ -87,7 +87,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <span className="text-muted">Sorted by catalogue order</span>
           </div>
           {visible.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {visible.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
