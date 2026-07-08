@@ -19,6 +19,8 @@ import { AboutPage } from './pages/AboutPage'
 import { LegalPage } from './pages/LegalPage'
 import { SignUpPage } from './pages/auth/SignUpPage'
 import { LoginPage } from './pages/auth/LoginPage'
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { AccountPage } from './pages/account/AccountPage'
 import { OrderHistoryPage } from './pages/account/OrderHistoryPage'
 import { OrderDetailPage } from './pages/account/OrderDetailPage'
@@ -114,6 +116,8 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
       {/* Authentication */}
       <Route path="/sign-up" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Customer Account */}
       <Route path="/account" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <AccountPage snapshot={ready} />}</SnapshotGate>} />

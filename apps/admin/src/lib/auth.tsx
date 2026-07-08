@@ -7,8 +7,14 @@ interface AdminAuthValue {
   session: Session | null
   loading: boolean
   isAdmin: boolean
+  /** True after arriving via a password-reset link, until the password is set. */
+  recovery: boolean
   signIn: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  /** Send a password-reset email that links back to the admin app. */
+  resetPassword: (email: string) => Promise<void>
+  /** Set a new password for the recovery session established by the email link. */
+  updatePassword: (password: string) => Promise<void>
 }
 
 const AdminAuthContext = createContext<AdminAuthValue | null>(null)
@@ -17,6 +23,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [recovery, setRecovery] = useState(false)
 
   const loadRole = useCallback(async (nextSession: Session | null) => {
     setSession(nextSession)
@@ -35,7 +42,10 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       if (!cancelled) void loadRole(data.session)
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // A reset-link arrival fires PASSWORD_RECOVERY with a temporary session.
+      // Flag it so the app shows the reset screen instead of the workspace.
+      if (event === 'PASSWORD_RECOVERY') setRecovery(true)
       void loadRole(nextSession)
     })
     return () => {
@@ -54,7 +64,21 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(error.message)
   }, [])
 
-  const value = useMemo(() => ({ session, loading, isAdmin, signIn, logout }), [isAdmin, loading, logout, session, signIn])
+  const resetPassword = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+    if (error) throw new Error(error.message)
+  }, [])
+
+  const updatePassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw new Error(error.message)
+    setRecovery(false)
+  }, [])
+
+  const value = useMemo(
+    () => ({ session, loading, isAdmin, recovery, signIn, logout, resetPassword, updatePassword }),
+    [isAdmin, loading, logout, recovery, resetPassword, session, signIn, updatePassword],
+  )
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>
 }
 

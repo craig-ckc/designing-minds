@@ -12,10 +12,11 @@ import { ScrollArea } from './components/primitives'
 import { AdminWorkspace } from './screens/AdminWorkspace'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { useAdminAuth } from './lib/auth'
 
 function App() {
-  const { session, loading: authLoading, isAdmin } = useAdminAuth()
+  const { session, loading: authLoading, isAdmin, recovery } = useAdminAuth()
   const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -72,6 +73,12 @@ function App() {
 
   if (authLoading) {
     return <StatePanel eyebrow="Admin" title="Checking access…" />
+  }
+
+  // A password-reset link establishes a temporary session, so this must take
+  // precedence over both the login gate and the workspace.
+  if (recovery) {
+    return <ResetPasswordPage />
   }
 
   if (!session) {

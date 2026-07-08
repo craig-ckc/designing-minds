@@ -13,6 +13,10 @@ interface AuthValue {
   signUp: (name: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   getAccessToken: () => Promise<string | null>
+  /** Send a password-reset email that links back to /reset-password. */
+  resetPassword: (email: string) => Promise<void>
+  /** Set a new password for the recovery session established by the email link. */
+  updatePassword: (password: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthValue | null>(null)
@@ -91,6 +95,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data.session?.access_token ?? null
   }, [])
 
+  const resetPassword = useCallback(async (email: string) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) throw new Error(error.message)
+  }, [])
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw new Error(error.message)
+  }, [])
+
   const value = useMemo<AuthValue>(
     () => ({
       customer: customerFromSession(session),
@@ -100,8 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       logout,
       getAccessToken,
+      resetPassword,
+      updatePassword,
     }),
-    [getAccessToken, loading, logout, session, signIn, signUp],
+    [getAccessToken, loading, logout, resetPassword, session, signIn, signUp, updatePassword],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

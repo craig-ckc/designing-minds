@@ -49,6 +49,11 @@ export function LoginPage() {
       <Field label="Password">
         <input className="field" type="password" placeholder="Your password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </Field>
+      <div className="-mt-1 text-[0.85rem]">
+        <Link to="/forgot-password" className="text-ink-soft underline underline-offset-4 hover:text-ink">
+          Forgot password?
+        </Link>
+      </div>
       <Button type="submit" variant="solid" className="w-full" disabled={submitting}>
         {submitting ? 'Logging in…' : 'Log in'}
       </Button>

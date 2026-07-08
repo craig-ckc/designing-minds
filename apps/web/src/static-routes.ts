@@ -40,6 +40,8 @@ export const STATIC_INDEXABLE_PATHS = [
 export const FUNCTIONAL_NOINDEX_PATHS = [
   '/sign-up',
   '/login',
+  '/forgot-password',
+  '/reset-password',
   '/account',
   '/account/orders',
   '/cart',
@@ -56,7 +58,15 @@ export const FUNCTIONAL_NOINDEX_PATHS = [
  * any sub-path, e.g. /account/orders/:id) to the shell with a 200, while every
  * other unknown URL falls through to a genuine 404 instead of a soft 404.
  */
-export const FUNCTIONAL_SPA_PREFIXES = ['/sign-up', '/login', '/cart', '/account', '/checkout'] as const
+export const FUNCTIONAL_SPA_PREFIXES = [
+  '/sign-up',
+  '/login',
+  '/forgot-password',
+  '/reset-password',
+  '/cart',
+  '/account',
+  '/checkout',
+] as const
 
 /**
  * The full set of routes to prerender for a given snapshot: fixed static pages,
