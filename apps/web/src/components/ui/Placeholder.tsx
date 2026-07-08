@@ -1,30 +1,39 @@
-/* The signature Relume placeholder image block. */
+/* Clean image stand-in. Renders a real image when `src` is provided, otherwise
+   a quiet neutral panel with a subtle image glyph. */
 export function Placeholder({
   ratio,
   label,
   circle,
+  src,
+  alt = '',
   className = '',
 }: {
   ratio?: string
   label?: string
   circle?: boolean
+  src?: string
+  alt?: string
   className?: string
 }) {
   return (
     <div
-      className={`relative grid place-items-center overflow-hidden bg-ph text-ph-glyph ${
-        circle ? 'rounded-full' : 'rounded-[10px]'
+      className={`relative grid place-items-center overflow-hidden bg-surface-sunk text-muted ${
+        circle ? 'rounded-full' : 'rounded-xl'
       } ${className}`}
       style={ratio ? { aspectRatio: ratio } : undefined}
-      aria-hidden="true"
+      aria-hidden={src ? undefined : true}
     >
-      <svg className="h-11 w-11 opacity-90" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="6" y="9" width="36" height="30" rx="3" />
-        <circle cx="17" cy="19" r="3.5" />
-        <path d="M9 35l10-9 7 6 6-5 7 6" />
-      </svg>
-      {label ? (
-        <span className="absolute bottom-3 left-3 text-[0.72rem] uppercase tracking-[0.08em] text-muted">{label}</span>
+      {src ? (
+        <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      ) : (
+        <svg className="h-8 w-8 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <circle cx="8.5" cy="9.5" r="1.6" />
+          <path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5" />
+        </svg>
+      )}
+      {label && !src ? (
+        <span className="absolute bottom-2.5 left-2.5 text-[0.72rem] font-medium text-muted">{label}</span>
       ) : null}
     </div>
   )

@@ -8,14 +8,19 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
     return <p className="text-muted">No questions have been added yet.</p>
   }
   return (
-    <Accordion.Root className="border-t border-line">
+    <Accordion.Root className="grid gap-3">
       {faqs.map((faq) => (
-        <Accordion.Item key={faq.id} className="border-b border-line">
+        <Accordion.Item
+          key={faq.id}
+          className="overflow-hidden rounded-xl border border-line bg-surface px-5 shadow-soft transition-colors data-[panel-open]:border-primary/40"
+        >
           <Accordion.Header className="m-0">
-            <Accordion.Trigger className="group flex w-full items-center justify-between gap-4 py-4 text-left text-[1.02rem] font-medium hover:opacity-80">
+            <Accordion.Trigger className="group flex w-full items-center justify-between gap-4 py-4 text-left text-[1.05rem] font-bold hover:text-primary">
               {faq.question}
-              <span className="h-4 w-4 flex-none text-muted transition-transform group-data-[panel-open]:rotate-180">
-                <Icon name="chevron" />
+              <span className="grid h-7 w-7 flex-none place-items-center rounded-full bg-surface-sunk text-ink-soft transition-transform group-data-[panel-open]:rotate-180">
+                <span className="h-4 w-4">
+                  <Icon name="chevron" />
+                </span>
               </span>
             </Accordion.Trigger>
           </Accordion.Header>

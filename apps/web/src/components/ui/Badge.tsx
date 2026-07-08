@@ -1,13 +1,13 @@
 import { type ReactNode } from 'react'
 import { cn, cv } from '@designing-minds/utils'
 
-/** Small pill for product kinds, formats, and statuses. Monochrome wireframe tones. */
+/** Small pill for product kinds, formats, and statuses. */
 const badge = cv({
-  base: ['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.72rem] font-medium uppercase tracking-[0.04em]'],
+  base: ['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold tracking-[0.02em]'],
   variants: {
     tone: {
-      neutral: ['border border-line text-muted'],
-      solid: ['bg-ink text-white'],
+      neutral: ['bg-surface-sunk text-ink-soft'],
+      solid: ['bg-primary text-white'],
       outline: ['border border-line-strong text-ink-soft'],
     },
   },

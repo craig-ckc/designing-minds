@@ -14,20 +14,23 @@ export type ButtonSize = 'md' | 'sm'
 
 /** Button styling via the team `cv` variant builder. */
 const button = cv({
-  base: ['inline-flex items-center justify-center gap-2 font-medium transition disabled:opacity-50'],
+  base: [
+    'inline-flex items-center justify-center gap-2 rounded-xl font-semibold',
+    'transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.98] disabled:opacity-50',
+  ],
   variants: {
     variant: {
-      solid: ['rounded-md border-[1.5px] border-ink bg-ink text-white hover:opacity-85'],
-      'solid-light': ['rounded-md border-[1.5px] border-white bg-white text-ink hover:opacity-85'],
-      soft: ['rounded-md border-[1.5px] border-surface-alt bg-surface-alt text-ink hover:bg-surface-sunk'],
-      outline: ['rounded-md border-[1.5px] border-ink text-ink hover:bg-surface-alt'],
-      'outline-light': ['rounded-md border-[1.5px] border-white text-white hover:bg-white/10'],
-      text: ['text-ink underline underline-offset-4 hover:opacity-70'],
-      'text-light': ['text-white underline underline-offset-4 hover:opacity-70'],
+      solid: ['bg-primary text-white shadow-soft hover:bg-primary-strong'],
+      'solid-light': ['bg-white text-ink shadow-soft hover:bg-white/90'],
+      soft: ['bg-surface-sunk text-ink hover:bg-line-strong'],
+      outline: ['border-[1.5px] border-line-strong text-ink hover:border-primary hover:bg-surface-alt'],
+      'outline-light': ['border-[1.5px] border-white/55 text-white hover:bg-white/10'],
+      text: ['font-semibold text-primary hover:opacity-70'],
+      'text-light': ['font-semibold text-white hover:opacity-70'],
     },
     size: {
-      md: ['min-h-[46px] px-[22px] text-[0.97rem]'],
-      sm: ['min-h-[38px] px-3.5 text-[0.9rem]'],
+      md: ['min-h-[44px] px-5 text-[0.92rem]'],
+      sm: ['min-h-[36px] px-3.5 text-[0.85rem]'],
     },
   },
   defaultVariants: { variant: 'text', size: 'md' },

@@ -2,8 +2,8 @@ import { type ReactNode } from 'react'
 
 export function Tag({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-[0.82rem] text-ink-soft">
-      <span className="h-1.5 w-1.5 rounded-full bg-ink" />
+    <span className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface px-4 py-2 text-[0.85rem] font-medium text-ink-soft shadow-soft">
+      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
       {children}
     </span>
   )
