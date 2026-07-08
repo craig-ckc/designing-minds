@@ -116,12 +116,12 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
         <div>
           <h3 className="mb-4">Purchased items</h3>
           {!downloadable ? (
-            <p className="mb-4 rounded-md border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">
+            <p className="mb-4 rounded-xl border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">
               Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.
             </p>
           ) : null}
           {downloadError ? (
-            <p className="mb-4 rounded-md border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">{downloadError}</p>
+            <p className="mb-4 rounded-xl border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">{downloadError}</p>
           ) : null}
           <ul className="grid gap-4">
             {order.items.map((item) => {

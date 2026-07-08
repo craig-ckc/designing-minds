@@ -63,7 +63,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
       </PageHeader>
 
-      <div className="sticky top-[72px] z-20 border-b border-line bg-white/95 backdrop-blur">
+      <div className="sticky top-[72px] z-20 border-b border-line bg-canvas/90 backdrop-blur-md">
         <Container className="flex flex-wrap items-end gap-3 py-4">
           <div className="min-w-[200px] flex-1">
             <Field label="Search">
@@ -103,7 +103,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <span className="text-muted">Sorted by catalogue order</span>
           </div>
           {visible.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
               {visible.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

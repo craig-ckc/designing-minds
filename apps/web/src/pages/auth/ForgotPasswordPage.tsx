@@ -41,13 +41,13 @@ export function ForgotPasswordPage() {
       }
     >
       {sent ? (
-        <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">
+        <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">
           If an account exists for {email}, a password-reset link is on its way. Check your inbox (and spam folder).
         </p>
       ) : (
         <>
           {error ? (
-            <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p>
+            <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p>
           ) : null}
           <Field label="Email">
             <input

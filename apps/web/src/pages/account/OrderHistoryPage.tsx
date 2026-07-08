@@ -20,7 +20,7 @@ export function OrderHistoryPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <li key={order.id}>
               <Link
                 to={`/account/orders/${order.id}`}
-                className="grid gap-3 border border-line bg-surface px-5 py-4 hover:border-ink sm:grid-cols-[1fr_auto] sm:items-center"
+                className="grid gap-3 border border-line bg-surface px-5 py-4 hover:border-primary sm:grid-cols-[1fr_auto] sm:items-center"
               >
                 <span>
                   <strong className="block">{order.reference}</strong>

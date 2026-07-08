@@ -37,7 +37,7 @@ export function NotFoundPage() {
             <Link
               key={item.to}
               to={item.to}
-              className="group flex items-center justify-between gap-3 rounded-[10px] border border-line p-5 transition hover:border-ink"
+              className="group flex items-center justify-between gap-3 rounded-2xl border border-line p-5 transition hover:border-primary"
             >
               <span>
                 <span className="block font-medium text-ink">{item.label}</span>

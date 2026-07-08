@@ -51,7 +51,7 @@ export function SignUpPage() {
         </>
       }
     >
-      {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+      {error ? <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
       <Field label="Full name">
         <input className="field" placeholder="Your name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required />
       </Field>

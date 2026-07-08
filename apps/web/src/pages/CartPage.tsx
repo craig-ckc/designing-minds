@@ -65,7 +65,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
               ))}
             </ul>
 
-            <aside className="grid gap-4 rounded-[10px] border border-line p-6 lg:sticky lg:top-24">
+            <aside className="grid gap-4 rounded-2xl border border-line p-6 lg:sticky lg:top-24">
               <h3>Order summary</h3>
               <div className="grid gap-2 text-[0.95rem]">
                 <div className="flex justify-between">

@@ -58,7 +58,7 @@ export function ContactPage() {
               </div>
               <p className="mt-6 text-[0.92rem] text-muted">
                 Looking for download or printing help? Visit the{' '}
-                <Link to="/help" className="text-ink underline underline-offset-4">
+                <Link to="/help" className="font-semibold text-primary underline underline-offset-4">
                   Help centre
                 </Link>
                 .
@@ -124,8 +124,8 @@ export function ContactPage() {
 function ContactDetail({ label, value, last }: { label: string; value: string; last?: boolean }) {
   return (
     <div className={`grid gap-1.5 py-[18px] ${last ? '' : 'border-b border-line'}`}>
-      <span className="text-[0.82rem] uppercase tracking-[0.08em] text-muted">{label}</span>
-      <strong className="text-[1.1rem] font-medium">{value}</strong>
+      <span className="text-[0.78rem] font-bold uppercase tracking-[0.08em] text-muted">{label}</span>
+      <strong className="text-[1.1rem] font-bold">{value}</strong>
     </div>
   )
 }

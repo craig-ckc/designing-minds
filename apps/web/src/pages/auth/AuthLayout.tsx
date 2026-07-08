@@ -36,7 +36,7 @@ export function AuthLayout({
           </div>
 
           {fromCheckout ? (
-            <p className="rounded-md border border-line bg-surface-alt px-4 py-3 text-[0.9rem] text-ink-soft">
+            <p className="rounded-2xl border border-primary/30 bg-primary-tint px-4 py-3 text-[0.9rem] text-ink-soft">
               You need an account to complete checkout. Sign in or create one to continue.
             </p>
           ) : null}
@@ -59,7 +59,7 @@ export function AuthLayout({
 
           <div className="border-t border-line pt-4 text-[0.92rem] text-muted">{footer}</div>
           <p className="text-[0.85rem] text-muted">
-            Need help? <Link to="/help" className="text-ink underline underline-offset-4">Visit support</Link>
+            Need help? <Link to="/help" className="font-semibold text-primary underline underline-offset-4">Visit support</Link>
           </p>
         </div>
       </Container>

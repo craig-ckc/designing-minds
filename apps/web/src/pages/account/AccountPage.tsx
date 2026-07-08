@@ -17,7 +17,7 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
   return (
     <AccountShell title={`Welcome back, ${customer.name.split(' ')[0]}`} intro="Your orders and account details in one place.">
       <div className="grid gap-8">
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-line bg-line sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
           {[
             { value: String(orders.length), label: 'Total orders' },
             { value: String(downloadable), label: 'Ready to download' },
@@ -43,7 +43,7 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <li key={order.id}>
                   <Link
                     to={`/account/orders/${order.id}`}
-                    className="flex flex-wrap items-center justify-between gap-3 border border-line bg-surface px-5 py-4 hover:border-ink"
+                    className="flex flex-wrap items-center justify-between gap-3 border border-line bg-surface px-5 py-4 hover:border-primary"
                   >
                     <span>
                       <strong className="block">{order.reference}</strong>

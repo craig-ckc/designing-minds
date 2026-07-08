@@ -8,7 +8,7 @@ import { useAuth } from '../../lib/auth'
 import { useNoindex } from '../../lib/useNoindex'
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
-  `block rounded-md px-3 py-2 text-[0.95rem] ${isActive ? 'bg-surface-alt font-medium text-ink' : 'text-ink-soft hover:bg-surface-alt'}`
+  `block rounded-full px-3.5 py-2 text-[0.95rem] font-semibold ${isActive ? 'bg-surface-sunk text-ink' : 'text-ink-soft hover:bg-surface-sunk'}`
 
 /** Shown when an account route is opened while signed out. */
 export function SignedOut() {

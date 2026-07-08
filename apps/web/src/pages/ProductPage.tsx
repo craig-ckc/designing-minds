@@ -95,7 +95,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </div>
 
             {/* Buy box */}
-            <aside className="grid gap-[18px] rounded-[10px] border border-line p-7 lg:sticky lg:top-24">
+            <aside className="grid gap-[18px] rounded-2xl border border-line p-7 lg:sticky lg:top-24">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={product.productKind === 'Bundle' ? 'solid' : product.productKind === 'Access Plan' ? 'outline' : 'neutral'}>
                   {product.productKind}

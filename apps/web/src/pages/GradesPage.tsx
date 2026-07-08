@@ -25,7 +25,7 @@ export function GradesPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <Link
                   key={grade}
                   to={`/grades/${gradeToSlug(grade)}`}
-                  className="group flex flex-col gap-4 border border-line bg-surface p-6 transition hover:border-ink"
+                  className="group flex flex-col gap-4 border border-line bg-surface p-6 transition hover:border-primary"
                 >
                   <Placeholder label={grade} ratio="16 / 9" className="rounded-none" />
                   <div>

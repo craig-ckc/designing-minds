@@ -56,7 +56,7 @@ export function FakePayfastPage() {
     <section className="section">
       <Container>
         <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/cart', label: 'Cart' }, { to: '/checkout', label: 'Checkout' }]} current="Fake PayFast" />
-        <div className="mx-auto grid max-w-2xl gap-6 rounded-[10px] border border-line bg-surface p-6">
+        <div className="mx-auto grid max-w-2xl gap-6 rounded-2xl border border-line bg-surface p-6">
           <div>
             <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-muted">PayFast test mode</p>
             <h1 className="mt-2 text-[2rem]">Simulate payment</h1>
@@ -65,7 +65,7 @@ export function FakePayfastPage() {
             </p>
           </div>
 
-          {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+          {error ? <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
 
           <div className="grid gap-3 border-t border-line pt-5 sm:grid-cols-2">
             <Button type="button" variant="solid" onClick={() => void completePayment()} disabled={submitting}>

@@ -11,7 +11,7 @@ import { CtaBanner } from '../components/sections/CtaBanner'
 
 function SectionNotice({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
+    <div className="rounded-2xl border border-line bg-surface p-8 text-center">
       <h3>{title}</h3>
       <p className="mx-auto mt-3 max-w-[560px] text-muted">{body}</p>
     </div>

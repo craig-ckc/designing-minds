@@ -104,7 +104,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
         <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
           <div className="grid gap-6">
-            <div className="grid gap-6 rounded-[10px] border border-line p-6">
+            <div className="grid gap-6 rounded-2xl border border-line p-6">
               <h3>Your account</h3>
               {customer ? (
                 <p className="text-[0.92rem] text-muted">
@@ -123,12 +123,12 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   .
                 </p>
               )}
-              {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+              {error ? <p className="rounded-xl border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
             </div>
 
           </div>
 
-          <aside className="grid gap-4 rounded-[10px] border border-line p-6 lg:sticky lg:top-24">
+          <aside className="grid gap-4 rounded-2xl border border-line p-6 lg:sticky lg:top-24">
             <h3>Order summary</h3>
             {items.length > 0 ? (
               <ul className="grid gap-2 text-[0.92rem]">
