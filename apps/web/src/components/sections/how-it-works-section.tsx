@@ -12,7 +12,7 @@ export function HowItWorksSection() {
   const go = (dir: number) => setActive((a) => Math.min(Math.max(a + dir, 0), steps.length - 1))
 
   return (
-    <Section className="bg-cream">
+    <Section>
       <div className="mx-auto mb-10 max-w-prose text-center lg:mb-14">
         <h2>From cart to classroom in minutes</h2>
       </div>

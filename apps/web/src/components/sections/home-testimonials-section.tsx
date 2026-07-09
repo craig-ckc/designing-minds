@@ -12,7 +12,7 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
   const cards = items.slice(1, 4)
 
   return (
-    <Section className="bg-cream">
+    <Section>
       <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
         <div className="order-2 lg:order-1">
           <Placeholder ratio="1 / 1" className="mx-auto max-w-form bg-surface" label="Watch their story" />

@@ -190,7 +190,7 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
 export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
   return (
-    <Section className="bg-cream" containerClassName="py-16 text-center lg:py-24" spacing="none">
+    <Section containerClassName="py-16 text-center lg:py-24" spacing="none">
       <Link
         to="/shop"
         className="inline-flex items-center gap-4 rounded-pill border border-primary/20 bg-primary-tint px-4 py-1.5 text-label font-bold text-primary transition-colors hover:bg-primary/10"

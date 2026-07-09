@@ -7,7 +7,7 @@ import { Section, SectionNotice } from '../ui/section'
 export function HomeFaqSection({ snapshot, loadError }: { snapshot: CmsSnapshot | null; loadError?: string | null }) {
   const homeFaqs = snapshot?.faqs.filter((f) => f.published).slice(0, 6) ?? []
   return (
-    <Section className="bg-cream">
+    <Section>
       <div className="mx-auto max-w-readable">
         <div className="mb-8 text-center">
           <h2>Common questions</h2>

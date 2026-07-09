@@ -60,7 +60,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
 
         {/* Only once every topic has been exhausted. */}
-        <div className="mt-14 rounded-panel border border-line bg-cream p-8 text-center lg:mt-20 lg:p-12">
+        <div className="mt-14 rounded-panel border border-line p-8 text-center lg:mt-20 lg:p-12">
           <h3 className="mx-auto max-w-[20ch]">Still stuck? We’re one message away</h3>
           <p className="mx-auto mt-3 max-w-prose text-muted">
             Can’t find what you’re looking for? Reach our team and we’ll help you out.

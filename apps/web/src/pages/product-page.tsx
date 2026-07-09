@@ -127,7 +127,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </section>
 
       {related.length > 0 ? (
-        <section className="section bg-cream">
+        <section className="section">
           <Container>
             <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
               <h3>Related resources</h3>
