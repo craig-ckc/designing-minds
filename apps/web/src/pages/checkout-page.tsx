@@ -103,7 +103,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/cart', label: 'Cart' }]} current="Checkout" />
         <h1 className="mb-8 text-page-title">Checkout</h1>
 
-        <div className="mx-auto grid max-w-xl gap-5">
+        <div className="mx-auto grid max-w-xl gap-4">
           {/* Account status first — a slim confirmation, not a whole column. */}
           {customer ? (
             <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-4">

@@ -17,12 +17,12 @@ export function EditorSection({
   divided?: boolean
 }) {
   return (
-    <section className={cn('grid gap-5', divided && 'border-t border-line pt-7')}>
+    <section className={cn('grid gap-4', divided && 'border-t border-line pt-7')}>
       <header className="grid gap-1">
         <h3 className="text-[1.05rem]">{title}</h3>
         {hint ? <p className="text-[0.82rem] text-muted">{hint}</p> : null}
       </header>
-      <div className="grid gap-5">{children}</div>
+      <div className="grid gap-4">{children}</div>
     </section>
   )
 }

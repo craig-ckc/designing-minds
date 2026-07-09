@@ -34,7 +34,7 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
                 variant={tier.featured ? 'featured' : 'surface'}
                 pad="lg"
                 shadow="soft"
-                className="flex flex-col gap-5"
+                className="flex flex-col gap-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

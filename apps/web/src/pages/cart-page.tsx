@@ -41,7 +41,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             <ul className="grid gap-4">
               {items.map((item) => (
-                <li key={item.slug} className="flex items-center gap-5 rounded-card border border-line bg-surface p-4">
+                <li key={item.slug} className="flex items-center gap-4 rounded-card border border-line bg-surface p-4">
                   <Link to={`/product/${item.slug}`} className="w-20 flex-none sm:w-[88px]">
                     <ProductCover product={item} />
                   </Link>
