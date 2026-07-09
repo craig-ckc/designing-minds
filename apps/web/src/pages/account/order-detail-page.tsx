@@ -128,39 +128,45 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
               const products = downloadProductsForItem(snapshot, item)
               const files = products.flatMap((product) => product.purchasedFiles.map((file) => ({ ...file, productTitle: product.title })))
               return (
-                <li key={item.id} className="border border-line bg-surface p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <Link to={`/product/${item.productSlug}`} className="font-medium hover:opacity-70">
-                        {item.title}
-                      </Link>
-                      <p className="text-label text-muted">{item.productKind}</p>
+                <li key={item.id}>
+                  <Card variant="surface" pad="md" as="article">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <Link to={`/product/${item.productSlug}`} className="font-semibold hover:text-primary">
+                          {item.title}
+                        </Link>
+                        <span className="mt-1.5 inline-flex rounded-pill bg-surface-sunk px-2.5 py-0.5 text-caption font-semibold uppercase tracking-wide text-muted">
+                          {item.productKind}
+                        </span>
+                      </div>
+                      <strong className="tabular-nums">{priceLabel(item.priceZar)}</strong>
                     </div>
-                    <strong>{priceLabel(item.priceZar)}</strong>
-                  </div>
 
-                  {files.length > 0 ? (
-                    <ul className="mt-4 grid gap-2 border-t border-line pt-4">
-                      {files.map((file) => (
-                        <li key={file.id} className="flex items-center justify-between gap-3">
-                          <span className="flex items-center gap-2 text-body-sm">
-                            <span className="h-4 w-4 text-muted">
-                              <Icon name="doc" />
+                    {files.length > 0 ? (
+                      <ul className="mt-4 grid gap-1.5 border-t border-line pt-4">
+                        {files.map((file) => (
+                          <li key={file.id} className="flex items-center justify-between gap-3">
+                            <span className="flex min-w-0 items-center gap-3 text-body-sm">
+                              <span className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-primary-tint text-primary">
+                                <Icon name="doc" size={18} />
+                              </span>
+                              <span className="truncate">
+                                {file.productTitle === item.title ? file.label : `${file.productTitle} · ${file.label}`}
+                              </span>
                             </span>
-                            {file.productTitle === item.title ? file.label : `${file.productTitle} · ${file.label}`}
-                          </span>
-                          <Button type="button" variant={downloadable ? 'outline' : 'text'} size="sm" disabled={!downloadable} onClick={() => void download(file.id)}>
-                            <Icon name="download" size={16} />
-                            Download
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-3 border-t border-line pt-3 text-label text-muted">
-                      Files for bundles and access plans resolve from their included resources.
-                    </p>
-                  )}
+                            <Button type="button" variant={downloadable ? 'outline' : 'text'} size="sm" disabled={!downloadable} onClick={() => void download(file.id)}>
+                              <Icon name="download" size={16} />
+                              Download
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-3 border-t border-line pt-3 text-label text-muted">
+                        Files for bundles and access plans resolve from their included resources.
+                      </p>
+                    )}
+                  </Card>
                 </li>
               )
             })}
