@@ -4,7 +4,6 @@ export function OurStorySection() {
   return (
     <Section containerClassName="text-center">
       <div className="mx-auto max-w-prose">
-        <p className="mb-4 text-label font-bold uppercase tracking-[0.14em] text-primary">Why we exist</p>
         <h2 className="mx-auto max-w-[20ch]">Where a passion for teaching meets a heart for learners</h2>
         <div className="mx-auto mt-6 grid max-w-[58ch] gap-4 text-body-lg text-ink-soft">
           <p>

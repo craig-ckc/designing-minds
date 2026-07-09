@@ -7,6 +7,7 @@ export function Placeholder({
   circle,
   src,
   alt = '',
+  flush,
   className = '',
 }: {
   ratio?: string
@@ -14,11 +15,15 @@ export function Placeholder({
   circle?: boolean
   src?: string
   alt?: string
+  /** Drop the built-in radius so a parent's `overflow-hidden` controls the
+   *  corners — used for full-bleed images inside a card. */
+  flush?: boolean
   className?: string
 }) {
+  const radius = flush ? '' : circle ? 'rounded-pill' : 'rounded-control'
   return (
     <div
-      className={`relative overflow-hidden bg-surface-sunk ${circle ? 'rounded-pill' : 'rounded-control'} ${className}`}
+      className={`relative overflow-hidden bg-surface-sunk ${radius} ${className}`}
       style={ratio ? { aspectRatio: ratio } : undefined}
       aria-hidden={src ? undefined : true}
     >

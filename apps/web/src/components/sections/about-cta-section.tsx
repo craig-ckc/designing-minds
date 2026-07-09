@@ -9,7 +9,7 @@ export function AboutCtaSection() {
         title="Ready to support your child’s learning journey?"
         body="Explore our printable CAPS-aligned tests and learning resources, made to build confidence, reduce stress, and make learning fun."
       >
-        <Button to="/shop" variant="text-light">
+        <Button to="/shop" variant="solid-light">
           Browse Tests
         </Button>
       </CtaBanner>
