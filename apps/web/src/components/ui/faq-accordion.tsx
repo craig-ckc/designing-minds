@@ -17,8 +17,8 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
         <Accordion.Item key={faq.id} value={faq.id} className="border-b border-line">
           <Accordion.Header className="m-0">
             <Accordion.Trigger className="group flex w-full items-start gap-4 py-5 text-left">
-              <span className="mt-0.5 grid h-6 w-6 flex-none place-items-center text-primary transition-[transform,color] duration-200 group-data-[panel-open]:rotate-45 group-data-[panel-open]:text-ink">
-                <Icon name="plus" size={22} />
+              <span className="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full bg-current/15 text-primary transition-[transform,color] duration-200 group-data-[panel-open]:rotate-45 group-data-[panel-open]:text-ink">
+                <Icon name="plus" size={16} weight={'bold'} />
               </span>
               <span className="flex-1 text-body-lg font-bold leading-snug text-ink transition-colors group-hover:text-primary">
                 {faq.question}

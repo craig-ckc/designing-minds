@@ -44,7 +44,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/account"
           onClick={onNavigate}
-          className="flex items-center gap-2 rounded-pill py-1 pl-1 pr-3 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+          className="flex items-center gap-2 rounded-pill py-1 px-1 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
           title={`${customer.name} — Customer Account`}
         >
           <span className="grid h-8 w-8 flex-none place-items-center rounded-pill bg-primary text-caption font-bold tracking-[0.02em] text-on-primary">
