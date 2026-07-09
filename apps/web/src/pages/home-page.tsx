@@ -7,15 +7,22 @@ import { GetToKnowSection } from '../components/sections/get-to-know-section'
 import { GradeFinderSection } from '../components/sections/grade-finder-section'
 import { HomeFaqSection } from '../components/sections/home-faq-section'
 import { HomeHeroSection } from '../components/sections/home-hero-section'
-import { HomeStatsSection } from '../components/sections/home-stats-section'
+import { StatsSection, type Stat } from '../components/sections/stats-section'
 import { HomeTestimonialsSection } from '../components/sections/home-testimonials-section'
 import { HowItWorksSection } from '../components/sections/how-it-works-section'
+import fallbackGrades from '../content/home/fallback-grades.json'
 
 export function HomePage({ snapshot, loadError }: { snapshot: CmsSnapshot | null; loadError?: string | null }) {
+  const stats: Stat[] = [
+    { value: String(snapshot ? snapshot.stats.gradeCount : fallbackGrades.length), label: 'Grades supported', icon: 'book' },
+    { value: '500+', label: 'Families helped', icon: 'user' },
+    { value: snapshot ? String(snapshot.stats.productCount) : '...', label: 'Resources & bundles', icon: 'doc' },
+    { value: snapshot ? String(snapshot.stats.subjectCount) : '...', label: 'Subjects covered', icon: 'palette' },
+  ]
   return (
     <>
       <HomeHeroSection snapshot={snapshot} />
-      <HomeStatsSection snapshot={snapshot} />
+      <StatsSection stats={stats} caption="Trusted by families across South Africa" />
       <GetToKnowSection />
       <HomeTestimonialsSection snapshot={snapshot} />
       <FeatureBentoSection />
