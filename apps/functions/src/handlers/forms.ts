@@ -1,6 +1,7 @@
 import { badRequest, created, serverError, type Handler } from '../lib/http.ts'
 import { createServiceClient } from '../lib/supabase.ts'
-import { sendFormNotification } from '../lib/email.ts'
+import { sendFormNotification, sendSubscriptionConfirmation } from '../lib/email.ts'
+import { unsubscribeToken, upsertContact, type MailchimpStatus } from '../lib/mailchimp.ts'
 
 /* -------------------------------------------------------------------------
    Public form submissions (contact + newsletter).
@@ -25,6 +26,22 @@ interface FormConfig {
   label: string
   /** Notification subject line. */
   subject: (fields: Record<string, string>) => string
+  /**
+   * When set, upsert the submitter (by email) into the Mailchimp audience and
+   * send them our branded confirmation email. `statusIfNew` applies only to
+   * brand-new contacts — existing contacts keep their subscription status, so
+   * an update never re-subscribes an opt-out.
+   *
+   * `consentField`, when set, gates the sync on a truthy value for that field
+   * (a marketing-consent checkbox): no consent → no Mailchimp, no confirmation.
+   * Forms without a `consentField` sync every submission (signing up is itself
+   * the opt-in, e.g. the newsletter).
+   */
+  mailchimp?: {
+    statusIfNew: MailchimpStatus
+    tags?: string[]
+    consentField?: string
+  }
 }
 
 const FORMS: Record<string, FormConfig> = {
@@ -34,6 +51,7 @@ const FORMS: Record<string, FormConfig> = {
     columns: ['name', 'email'],
     label: 'contact enquiry',
     subject: (fields) => `New contact enquiry from ${fields.name}`,
+    mailchimp: { statusIfNew: 'subscribed', tags: ['contact-form'], consentField: 'marketing' },
   },
   newsletter: {
     table: 'form_newsletter',
@@ -41,7 +59,27 @@ const FORMS: Record<string, FormConfig> = {
     columns: ['email'],
     label: 'newsletter signup',
     subject: (fields) => `New newsletter signup: ${fields.email}`,
+    mailchimp: { statusIfNew: 'subscribed', tags: ['newsletter'] },
   },
+}
+
+// Recognised truthy values for a consent checkbox (browsers send "on"/"true").
+const CONSENT_VALUES = new Set(['true', 'on', 'yes', '1'])
+const hasConsent = (value: string | undefined) => value != null && CONSENT_VALUES.has(value.trim().toLowerCase())
+
+// Public origin used to build the one-click unsubscribe link. Null when unset,
+// in which case the confirmation email falls back to reply-to-unsubscribe.
+const siteBase = (): string | null => {
+  const configured = process.env.SITE_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL
+  if (!configured) return null
+  const trimmed = configured.replace(/\/+$/, '')
+  return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
+}
+
+const unsubscribeUrlFor = (email: string): string | undefined => {
+  const base = siteBase()
+  if (!base) return undefined
+  return `${base}/unsubscribe?e=${encodeURIComponent(email)}&t=${unsubscribeToken(email)}`
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -135,6 +173,42 @@ export const forms: Handler = async (req) => {
     })
   } catch (error) {
     console.error('form notification email failed:', error instanceof Error ? error.message : error)
+  }
+
+  // Best-effort audience sync: when the submitter has opted in, add or update
+  // them in Mailchimp and send our own branded confirmation. Like the
+  // notification email, the submission is already persisted so any failure here
+  // must not fail the request.
+  const mc = config.mailchimp
+  const optedIn = mc != null && (mc.consentField == null || hasConsent(fields[mc.consentField]))
+  if (mc && optedIn && fields.email) {
+    const [firstName, ...lastNameParts] = (fields.name ?? '').split(/\s+/).filter(Boolean)
+    let synced = false
+    try {
+      synced = await upsertContact({
+        email: fields.email,
+        firstName: firstName || undefined,
+        lastName: lastNameParts.length > 0 ? lastNameParts.join(' ') : undefined,
+        statusIfNew: mc.statusIfNew,
+        tags: mc.tags,
+      })
+    } catch (error) {
+      console.error('mailchimp contact upsert failed:', error instanceof Error ? error.message : error)
+    }
+
+    // Only confirm when a contact was actually added/updated, so we never tell
+    // someone they're subscribed when the sync was skipped or failed.
+    if (synced) {
+      try {
+        await sendSubscriptionConfirmation({
+          to: fields.email,
+          firstName: firstName || undefined,
+          unsubscribeUrl: unsubscribeUrlFor(fields.email),
+        })
+      } catch (error) {
+        console.error('subscription confirmation email failed:', error instanceof Error ? error.message : error)
+      }
+    }
   }
 
   return created({ ok: true })

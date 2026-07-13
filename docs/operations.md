@@ -12,6 +12,7 @@ This combines backend readiness, preview setup, static publishing, and launch ch
 | Customer auth | Ready | Supabase email/password Auth, plus password reset in web + admin. |
 | Form submissions | Ready | Contact + newsletter POST to `/api/forms`; functions write `form_<name>` tables and send a Resend notification. Apply `supabase/patch/2026-07-02-form-submissions.sql`. |
 | Transactional email | Config-gated | Resend send is implemented; set `RESEND_API_KEY`/`RESEND_FROM`/`FORM_NOTIFICATIONS_TO` on functions to go live. Absent config skips sending (submissions still persist). |
+| Mailchimp audience sync | Config-gated | Opt-in submitters are upserted (add or update, status `subscribed`) into a Mailchimp audience: newsletter signups always, contact enquiries only when the marketing-consent checkbox is ticked. On a successful sync we send our own branded confirmation email (via Resend) with a signed one-click unsubscribe link (`/unsubscribe` → sets the contact to `unsubscribed`). Set `MAILCHIMP_API_KEY`/`MAILCHIMP_AUDIENCE_ID` on functions to go live; the unsubscribe link also needs `SITE_URL`. Absent config skips the sync (submissions still persist). |
 | Cart | Ready | Anonymous cart is local until sign-in; signed-in cart persists in Supabase. |
 | Checkout | Ready | Server re-resolves products/prices, blocks repurchases, and creates order/payment atomically. |
 | PayFast ITN | Ready | Signature, IP, amount, validation response, and idempotency are checked server-side. |
@@ -95,6 +96,8 @@ Functions:
 | `RESEND_API_KEY` | Resend API key (blank disables sending) |
 | `RESEND_FROM` | Verified sender, e.g. `Designing Minds <noreply@designingminds.co.za>` |
 | `FORM_NOTIFICATIONS_TO` | Inbox that receives contact + newsletter submissions |
+| `MAILCHIMP_API_KEY` | Mailchimp API key; `-usX` suffix picks the datacenter (blank disables sync) |
+| `MAILCHIMP_AUDIENCE_ID` | Mailchimp audience/list ID to sync submitters into |
 
 ## Static Publish Flow
 

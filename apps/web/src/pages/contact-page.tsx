@@ -30,6 +30,7 @@ export function ContactPage() {
   const [email, setEmail] = useState('')
   const [topic, setTopic] = useState(TOPICS[0])
   const [message, setMessage] = useState('')
+  const [marketing, setMarketing] = useState(false)
   const [honeypot, setHoneypot] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -47,7 +48,7 @@ export function ContactPage() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           form: 'contact',
-          fields: { name, firstName, lastName, email, topic, message },
+          fields: { name, firstName, lastName, email, topic, message, marketing: String(marketing) },
           website: honeypot,
         }),
       })
@@ -139,6 +140,17 @@ export function ContactPage() {
               disabled={sent}
             />
           </Field>
+          {!sent ? (
+            <label className="flex items-start gap-2.5 text-body-sm text-ink-soft">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 flex-none accent-primary"
+                checked={marketing}
+                onChange={(e) => setMarketing(e.target.checked)}
+              />
+              <span>Email me occasionally about new resources, bundles, and classroom ideas. You can unsubscribe anytime.</span>
+            </label>
+          ) : null}
           {!sent ? (
             <Button type="submit" variant="solid" disabled={status === 'submitting'}>
               {status === 'submitting' ? 'Sending…' : 'Send message'}
