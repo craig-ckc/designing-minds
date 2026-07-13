@@ -134,7 +134,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
           {/* Then the order details underneath. */}
           <div className="grid gap-4 rounded-card border border-line bg-surface p-6">
-            <h3>Order summary</h3>
+            <h2>Order summary</h2>
             {items.length > 0 ? (
               <ul className="grid gap-2 text-body-sm">
                 {items.map((item) => (

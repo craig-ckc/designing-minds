@@ -45,6 +45,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
             ]}
             current={product.title}
           />
+          <h1 className="sr-only">{product.title}</h1>
 
           <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
             <div>
@@ -54,14 +55,14 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
               {/* Description — CMS rich text stored as Markdown */}
               <div className="mt-8 text-ink-soft">
-                <h3 className="mb-4">About this {isComposite ? 'offer' : 'resource'}</h3>
+                <h2 className="mb-4">About this {isComposite ? 'offer' : 'resource'}</h2>
                 <Markdown source={product.fullDescription} className="text-body-lg" />
               </div>
 
               {/* Included content for bundles / access plans */}
               {isComposite ? (
                 <div className="mt-8">
-                  <h3 className="mb-4">What’s included</h3>
+                  <h2 className="mb-4">What’s included</h2>
                   {product.accessPeriod ? (
                     <p className="mb-4 text-ink-soft">
                       Access period: <strong>{product.accessPeriod === 'Year' ? 'Full year' : 'One term'}</strong>.{' '}
@@ -86,7 +87,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
               {/* FAQ */}
               {faqs.length > 0 ? (
                 <div className="mt-10">
-                  <h3 className="mb-4">Questions about this resource</h3>
+                  <h2 className="mb-4">Questions about this resource</h2>
                   <FaqAccordion faqs={faqs} />
                 </div>
               ) : null}
@@ -102,7 +103,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   {product.grade} · {product.term}
                 </span>
               </div>
-              <h1 className="text-[1.7rem]">{product.title}</h1>
+              <div className="text-[1.7rem] font-bold leading-tight tracking-[-0.02em]">{product.title}</div>
               <div className="text-[2.4rem] font-semibold tracking-[-0.03em]">{priceLabel(product.priceZar)}</div>
               <ul className="grid gap-3">
                 <SpecRow label="Grade" value={product.grade} />
@@ -128,7 +129,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <section className="section">
           <Container>
             <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
-              <h3>Related resources</h3>
+              <h2>Related resources</h2>
               <Link
                 to={`/shop?grade=${encodeURIComponent(product.grade)}`}
                 className="inline-flex items-center gap-1.5 border-b-[1.5px] border-current pb-0.5 font-medium hover:opacity-70"

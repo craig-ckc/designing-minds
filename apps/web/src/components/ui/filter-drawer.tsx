@@ -104,7 +104,7 @@ export function ChipGroup({
 }) {
   return (
     <div>
-      <h4 className="mb-3 text-label font-semibold uppercase tracking-[0.08em] text-muted">{label}</h4>
+      <h3 className="mb-3 text-label font-semibold uppercase tracking-[0.08em] text-muted">{label}</h3>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const on = selected.includes(option)

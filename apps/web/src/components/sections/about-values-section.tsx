@@ -39,7 +39,7 @@ export function AboutValuesSection() {
               >
                 <Icon name={value.icon} size={28} />
               </span>
-              <h4>{value.title}</h4>
+              <h3>{value.title}</h3>
               <p className="mt-2 text-body text-muted">{value.body}</p>
             </div>
           </Card>

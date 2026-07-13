@@ -105,7 +105,7 @@ function BentoCard({
             <Icon name={icon} />
           </span>
         </span>
-        <h4 className="mt-4">{title}</h4>
+        <h3 className="mt-4">{title}</h3>
         <p className="mt-2 text-body text-muted">{body}</p>
       </div>
       <div className={wide ? 'lg:w-1/2' : 'mt-auto'}>{children}</div>

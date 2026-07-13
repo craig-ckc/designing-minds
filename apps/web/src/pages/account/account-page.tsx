@@ -33,7 +33,7 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <h3>Recent orders</h3>
+            <h2>Recent orders</h2>
             <Link to="/account/orders" className="text-body-sm font-medium underline underline-offset-4">
               View all
             </Link>
@@ -53,7 +53,7 @@ export function AccountPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
 
         <div>
-          <h3 className="mb-4">Account details</h3>
+          <h2 className="mb-4">Account details</h2>
           <Card variant="surface" pad="md" className="grid gap-3">
             <Detail label="Name" value={customer.name} />
             <Detail label="Email" value={customer.email} />

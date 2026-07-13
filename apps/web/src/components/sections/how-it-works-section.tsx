@@ -45,7 +45,7 @@ export function HowItWorksSection() {
                 <p className={`text-caption font-bold uppercase tracking-[0.08em] ${isActive ? 'text-primary' : 'text-muted'}`}>
                   {s.when}
                 </p>
-                <h4 className="mt-1">{s.title}</h4>
+                <h3 className="mt-1">{s.title}</h3>
                 <ul className="mt-3 grid gap-4 text-body text-ink-soft">
                   {s.items.map((it) => (
                     <li key={it} className="flex gap-4.5">

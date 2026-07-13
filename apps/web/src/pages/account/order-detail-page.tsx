@@ -101,7 +101,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
         <Card variant="surface" pad="md" className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3>Receipt</h3>
+              <h2>Receipt</h2>
               <p className="text-label text-muted">Placed {order.placedAt.slice(0, 10)}</p>
             </div>
             <OrderStatusBadge status={order.status} />
@@ -116,7 +116,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
 
         {/* Purchased items + downloads */}
         <div>
-          <h3 className="mb-4">Purchased items</h3>
+          <h2 className="mb-4">Purchased items</h2>
           {!downloadable ? (
             <Notice tone="info" className="mb-4">
               Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.

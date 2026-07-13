@@ -34,9 +34,9 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
           <div className="mx-auto grid max-w-readable gap-9">
             {doc.sections.map((heading, index) => (
               <div key={heading} className="grid gap-3">
-                <h3>
+                <h2>
                   {index + 1}. {heading}
-                </h3>
+                </h2>
                 <p className="text-ink-soft">
                   Placeholder policy copy for “{heading}”. Final legal wording will be supplied before launch.
                 </p>

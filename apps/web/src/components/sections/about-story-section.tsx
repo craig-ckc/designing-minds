@@ -37,7 +37,7 @@ export function AboutStorySection() {
                 <Icon name={step.icon} size={22} />
               </span>
               <div className="pt-1">
-                <h4>{step.title}</h4>
+                <h3>{step.title}</h3>
                 <p className="mt-1.5 text-body text-ink-soft">{step.body}</p>
               </div>
             </li>

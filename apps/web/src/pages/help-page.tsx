@@ -37,7 +37,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
       <Section>
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="lg:sticky lg:top-[var(--sticky-offset)] lg:self-start">
-            <h4 className="mb-3">Topics</h4>
+            <h2 className="mb-3">Topics</h2>
             <ul className="grid gap-2 text-ink-soft">
               {byCategory.map(([category]) => (
                 <li key={category}>
@@ -52,7 +52,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <div className="grid gap-10">
             {byCategory.map(([category, faqs]) => (
               <div key={category} id={categorySlug(category)}>
-                <h3 className="mb-3">{category}</h3>
+                <h2 className="mb-3">{category}</h2>
                 <FaqAccordion faqs={faqs} />
               </div>
             ))}
@@ -61,7 +61,7 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
         {/* Only once every topic has been exhausted. */}
         <div className="mt-14 rounded-panel border border-line p-8 text-center lg:mt-20 lg:p-12">
-          <h3 className="mx-auto max-w-[20ch]">Still stuck? We’re one message away</h3>
+          <h2 className="mx-auto max-w-[20ch]">Still stuck? We’re one message away</h2>
           <p className="mx-auto mt-3 max-w-prose text-muted">
             Can’t find what you’re looking for? Reach our team and we’ll help you out.
           </p>

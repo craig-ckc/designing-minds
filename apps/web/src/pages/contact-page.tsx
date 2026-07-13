@@ -84,7 +84,7 @@ export function ContactPage() {
         </div>
 
         <form className="card grid gap-[18px] p-7" onSubmit={handleSubmit}>
-          <h3>Send us a message</h3>
+          <h2>Send us a message</h2>
           {/* Honeypot: hidden from humans, catches bots that fill every Field. */}
           <input
             type="text"

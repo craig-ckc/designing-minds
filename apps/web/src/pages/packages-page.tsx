@@ -98,7 +98,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
       <section className="section">
         <Container>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h4>{visible.length} results</h4>
+            <h2>{visible.length} results</h2>
             <span className="text-muted">Sorted by catalogue order</span>
           </div>
           {visible.length > 0 ? (
@@ -109,7 +109,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </div>
           ) : (
             <Card variant="surface" pad="none" className="p-7 text-center">
-              <h4>No matching packages</h4>
+              <h2>No matching packages</h2>
               <p className="mt-2 text-muted">Try clearing a filter or choosing a different grade.</p>
             </Card>
           )}

@@ -29,7 +29,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
         {items.length === 0 ? (
           <Card variant="surface" pad="lg" className="text-center">
-            <h3>Your cart is empty</h3>
+            <h2>Your cart is empty</h2>
             <p className="mt-2 text-muted">Browse the catalogue and add resources to get started.</p>
             <div className="mt-4 flex justify-center">
               <Button to="/shop" variant="solid">
@@ -72,7 +72,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </ul>
 
             <aside className="grid gap-4 rounded-card border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
-              <h3>Order summary</h3>
+              <h2>Order summary</h2>
               <div className="grid gap-2 text-body">
                 <div className="flex justify-between">
                   <span className="text-muted">Subtotal ({items.length} items)</span>

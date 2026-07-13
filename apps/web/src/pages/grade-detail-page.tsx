@@ -52,7 +52,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
       <section className="section">
         <Container>
           <div className="mb-6 flex items-center justify-between gap-4">
-            <h4>{visible.length} resources</h4>
+            <h2>{visible.length} resources</h2>
           </div>
           {visible.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -62,7 +62,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </div>
           ) : (
             <Card variant="surface" pad="none" className="p-7 text-center">
-              <h4>Nothing here yet</h4>
+              <h2>Nothing here yet</h2>
               <p className="mt-2 text-muted">No published resources match this term for {grade}.</p>
             </Card>
           )}
@@ -72,7 +72,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
       <section className="section-tight bg-surface-alt">
         <Container className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h3>Cover {grade} in one purchase</h3>
+            <h2>Cover {grade} in one purchase</h2>
             <p className="mt-1.5 text-muted">See term bundles, full-year bundles, and access plans.</p>
           </div>
           <Link to="/packages" className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4">
