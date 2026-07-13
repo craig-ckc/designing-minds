@@ -32,7 +32,7 @@ This combines backend readiness, preview setup, static publishing, and launch ch
 
 ## Preview Environment
 
-Use separate Vercel projects for web, admin, and functions. For client testing, point everything at sandbox services and set fake PayFast on functions.
+Use separate Vercel projects for web, admin, and functions. For client testing, point everything at sandbox services and set `PAYFAST_MODE=sandbox` on functions. This runs the real redirect + ITN flow against `sandbox.payfast.co.za`, matching production. Leave the PayFast credentials blank to use PayFast's default sandbox account, or set your own from the sandbox portal.
 
 Preferred preview routing: web rewrites `/api/*` to the functions branch preview URL, keeping the `/api` prefix:
 
@@ -48,7 +48,7 @@ Preview functions env:
 | --- | --- |
 | `SUPABASE_URL` | Sandbox Supabase URL |
 | `SUPABASE_SECRET_KEY` | Sandbox service-role/secret key |
-| `FAKE_PAYFAST_ENABLED` | `true` |
+| `PAYFAST_MODE` | `sandbox` |
 | `STORAGE_BUCKET` | Sandbox private bucket |
 | `SITE_URL` | Web preview URL |
 
@@ -59,7 +59,7 @@ Preview web/admin env:
 | `VITE_SUPABASE_URL` | Sandbox Supabase URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Sandbox publishable/anon key |
 
-Preview smoke test: sign up, add a product, pay through fake PayFast, land on paid Order Detail, and download a file.
+Preview smoke test: sign up, add a product, pay through the PayFast sandbox, land on paid Order Detail, and download a file.
 
 ## Production Environment
 
@@ -87,8 +87,8 @@ Functions:
 | `PAYFAST_MERCHANT_ID` | PayFast production credential |
 | `PAYFAST_MERCHANT_KEY` | PayFast production credential |
 | `PAYFAST_PASSPHRASE` | PayFast production secret |
-| `PAYFAST_MODE` | Production mode |
-| `PAYFAST_ALLOWED_IPS` | Live ITN source IP allowlist |
+| `PAYFAST_MODE` | Production mode (`live`) |
+| `PAYFAST_ALLOWED_IPS` | Optional ITN source-IP override; leave blank to resolve PayFast's ITN hosts via DNS |
 | `STORAGE_BUCKET` | Private product-file bucket |
 | `ALLOWED_ORIGINS` | Web/admin origins if direct cross-origin calls are used |
 | `VERCEL_WEB_DEPLOY_HOOK_URL` | Secret Deploy Hook for the web project |
