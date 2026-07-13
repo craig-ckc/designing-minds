@@ -33,3 +33,9 @@ test('catalogue pages establish sequential heading levels', () => {
   assert.match(product, /<h2 className="mb-4">About this/)
   assert.doesNotMatch(product, /<h3/)
 })
+
+test('homepage states the pricing model in readable text', () => {
+  const hero = read('components/sections/home-hero-section.tsx')
+
+  assert.match(hero, /Individual resources start at R50, with discounted once-off bundles available\./)
+})

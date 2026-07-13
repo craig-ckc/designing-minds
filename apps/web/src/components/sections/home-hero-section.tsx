@@ -217,6 +217,9 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
           </span>
         </Button>
       </div>
+      <p className="mt-4 text-body-sm font-semibold text-ink-soft">
+        Individual resources start at R50, with discounted once-off bundles available.
+      </p>
       <div className="mt-5 flex items-center justify-center gap-4 text-body-sm text-ink-soft">
         <StarRating size="sm" className="text-[1rem]" />
         <span className="font-semibold text-ink">Loved by 500+ families</span> across South Africa
