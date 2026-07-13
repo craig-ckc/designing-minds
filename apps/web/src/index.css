@@ -10,9 +10,9 @@
 
 @theme {
   /* ---- Warm neutrals -------------------------------------------------- */
-  --color-canvas: #fbfaf8; /* page background (warm off-white) */
+  --color-canvas: #ffffff; /* page background (warm off-white) */
   --color-cream: #fcf6ea; /* warm hero / feature band (Tribe-style) */
-  --color-surface: #ffffff; /* cards, nav, raised surfaces */
+  --color-surface: #FBFAF9; /* cards, nav, raised surfaces */
   --color-surface-alt: #f6f3ec; /* alt / cream section background */
   --color-surface-sunk: #efeae1; /* sunk surface, secondary buttons, hover */
   --color-ink: #1c1917; /* warm near-black — headings & primary text */
@@ -24,9 +24,9 @@
   --color-ph-glyph: #b9b0a4; /* placeholder glyph */
 
   /* ---- Brand primary (Designing Mind blue) ---------------------------- */
-  --color-primary: #4b57e8;
-  --color-primary-strong: #3a45cf; /* hover / pressed */
-  --color-primary-tint: #ecebfd; /* soft blue backgrounds & chips */
+  --color-primary: #F15699;
+  --color-primary-strong: #E55391; /* hover / pressed */
+  --color-primary-tint: #FEEEF3; /* soft blue backgrounds & chips */
   --color-primary-edge: color-mix(in oklab, var(--color-primary-strong), black 22%); /* hairline edge on the solid button */
 
   /* Primary-button surface — subtle vertical brand-blue gradient (lighter
@@ -196,7 +196,7 @@
   /* Form control (input / select / textarea) — shares --control-h and
      --radius-control with Button and the Select trigger. */
   .field {
-    @apply w-full min-h-[var(--control-h)] rounded-control border border-line-strong bg-surface px-3.5 py-2.5 text-body
+    @apply w-full min-h-[var(--control-h)] rounded-control border border-line-strong bg-canvas px-3.5 py-2.5 text-body
            transition placeholder:text-muted
            focus:border-primary focus:outline focus:outline-2 focus:outline-primary/25 focus:-outline-offset-1;
   }

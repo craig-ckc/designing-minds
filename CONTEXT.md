@@ -68,16 +68,18 @@ _Avoid_: Page-specific FAQ collection
 The global collection of reusable customer quotes and outcomes.
 _Avoid_: Page-specific testimonial collection
 
-**Subject Collection**:
-The collection of learning subjects used to classify and describe products.
-_Avoid_: Subject option field
+**Subjects (Value List)**:
+The controlled list of learning subjects used to classify products. Subjects are a
+Value List (`value_lists.subjects`), not a Collection — a Product stores its subject
+display names directly. Edited in the database, like Grades and Terms.
+_Avoid_: Subject Collection, Subject option field
 
 **Field**:
 A defined attribute of a record, such as a Product's title, slug, short description, price, grade, or term. Fields are part of the record's shape; they are not independently managed content records.
 _Avoid_: Controlled field
 
 **Value List**:
-A database-sourced set of allowed values that certain Fields draw from — Grades, Terms, Product Kinds, Resource Formats, and Years. Value Lists are edited directly in the database (not through the admin app) and appear as fixed select options on records.
+A database-sourced set of allowed values that certain Fields draw from — Grades, Terms, Product Kinds, Resource Formats, Years, and Subjects. Value Lists are edited directly in the database (not through the admin app) and appear as fixed select options on records.
 _Avoid_: Controlled field, option collection
 
 **Reference Field**:
@@ -147,17 +149,17 @@ _Avoid_: Marketing page
 - The **FAQ Collection** is global and can be reused across static pages, browse pages, product pages, and checkout support.
 - The **Testimonial Collection** is global and can be reused across static pages, browse pages, and product pages.
 - Static pages can query reusable collection content directly without page-to-content reference fields.
-- Products and Subjects may reference FAQs when specific questions should appear in those contexts.
-- Testimonials are standalone reusable content and do not need product, subject, or page reference fields for launch.
+- Products may reference FAQs when specific questions should appear in those contexts.
+- Testimonials are standalone reusable content and do not need product or page reference fields for launch.
 - **Static Pages** are not **Collections**.
 - **Static Pages** remain fixed website routes; they may display content from **Collections** without becoming collections themselves.
 - **Static Pages** can be documented by **Page Family** when several routes share the same structure.
 - **Customers** and **Orders** may be stored in the database, but they are not **Collections**.
 - An **Administrator** manages catalogue **Collections** and can view all **Customers**, **Orders**, and **Payments**; an Administrator is not a **Customer** and does not place **Orders**.
 - Every **Customer** and every **Administrator** is exactly one authenticated account.
-- **Value Lists** supply the allowed values for fields like Grade, Term, Product Kind, Resource Format, and Year; **Reference Fields** are for relationships between **Collections**.
+- **Value Lists** supply the allowed values for fields like Grade, Term, Product Kind, Resource Format, Year, and Subject; **Reference Fields** are for relationships between **Collections**.
 - **Value Lists** are stored in the database and changed there directly; they are not managed through an admin screen, and Grades, Terms, and Product Kinds are effectively fixed for launch.
-- Products reference one or more items from the **Subject Collection** through a required multi-select relationship.
+- Products carry one or more **Subjects** (a required multi-select) whose allowed values come from the **Subjects Value List**; the subject names are stored directly on the Product.
 
 ## Example dialogue
 

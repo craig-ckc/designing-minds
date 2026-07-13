@@ -132,7 +132,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                   <Card variant="surface" pad="md" as="article">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <Link to={`/product/${item.productSlug}`} className="font-semibold hover:text-primary">
+                        <Link to={`/shop/${item.productSlug}`} className="font-semibold hover:text-primary">
                           {item.title}
                         </Link>
                         <span className="mt-1.5 inline-flex rounded-pill bg-surface-sunk px-2.5 py-0.5 text-caption font-semibold uppercase tracking-wide text-muted">

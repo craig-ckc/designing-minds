@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { publishedProducts, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
@@ -6,22 +6,21 @@ import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Card } from '../components/ui/card'
 import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
-import { ChipGroup, FilterDrawer, FilterTrigger, makeToggle } from '../components/ui/filter-drawer'
+import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
+import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
+
+const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format', 'kind'] as const
 
 export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
-  const [searchParams] = useSearchParams()
-  const subjectNames = useMemo(() => snapshot.subjects.map((s) => s.name), [snapshot])
-  const nameToSlug = useMemo(() => new Map(snapshot.subjects.map((s) => [s.name, s.slug])), [snapshot])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const subjectNames = snapshot.valueLists.subjects
 
-  const initialGrade = searchParams.get('grade')
-  const initialKind = searchParams.get('kind')
-
-  const [query, setQuery] = useState('')
-  const [grades, setGrades] = useState<string[]>(initialGrade ? [initialGrade] : [])
-  const [terms, setTerms] = useState<string[]>([])
-  const [subjects, setSubjects] = useState<string[]>([])
-  const [formats, setFormats] = useState<string[]>([])
-  const [kinds, setKinds] = useState<string[]>(initialKind ? [initialKind] : [])
+  const query = searchParams.get('q') ?? ''
+  const grades = readQueryList(searchParams, 'grade', snapshot.valueLists.grades)
+  const terms = readQueryList(searchParams, 'term', snapshot.valueLists.terms)
+  const subjects = readQueryList(searchParams, 'subject', subjectNames)
+  const formats = readQueryList(searchParams, 'format', snapshot.valueLists.resourceFormats)
+  const kinds = readQueryList(searchParams, 'kind', snapshot.valueLists.productKinds)
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   const deferredQuery = useDeferredValue(query)
@@ -31,7 +30,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const visible = products.filter((product) => {
     if (grades.length && !grades.includes(product.grade)) return false
     if (terms.length && !terms.includes(product.term)) return false
-    if (subjects.length && !subjects.some((name) => product.subjects.includes(nameToSlug.get(name) ?? name))) return false
+    if (subjects.length && !subjects.some((name) => product.subjects.includes(name))) return false
     if (formats.length && !formats.includes(product.resourceFormat)) return false
     if (kinds.length && !kinds.includes(product.productKind)) return false
     if (!q) return true
@@ -39,14 +38,8 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   })
 
   const activeCount = grades.length + terms.length + subjects.length + formats.length + kinds.length
-  const reset = () => {
-    setGrades([])
-    setTerms([])
-    setSubjects([])
-    setFormats([])
-    setKinds([])
-    setQuery('')
-  }
+  const toggle = (key: string) => (value: string) => setSearchParams(toggleQueryValue(searchParams, key, value))
+  const reset = () => setSearchParams(clearQueryValues(searchParams, SHOP_FILTER_KEYS))
 
   return (
     <>
@@ -64,7 +57,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <input
             className="field w-full max-w-md"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => setSearchParams(setQueryValue(searchParams, 'q', event.target.value), { replace: true })}
             placeholder="Search resources…"
             aria-label="Search resources"
           />
@@ -73,11 +66,11 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </div>
 
       <FilterDrawer open={filtersOpen} onOpenChange={setFiltersOpen} onReset={reset} resultCount={visible.length}>
-        <ChipGroup label="Grade" options={snapshot.valueLists.grades} selected={grades} onToggle={makeToggle(setGrades)} />
-        <ChipGroup label="Term" options={snapshot.valueLists.terms} selected={terms} onToggle={makeToggle(setTerms)} />
-        <ChipGroup label="Subject" options={subjectNames} selected={subjects} onToggle={makeToggle(setSubjects)} />
-        <ChipGroup label="Format" options={snapshot.valueLists.resourceFormats} selected={formats} onToggle={makeToggle(setFormats)} />
-        <ChipGroup label="Type" options={snapshot.valueLists.productKinds} selected={kinds} onToggle={makeToggle(setKinds)} />
+        <ChipGroup label="Grade" options={snapshot.valueLists.grades} selected={grades} onToggle={toggle('grade')} />
+        <ChipGroup label="Term" options={snapshot.valueLists.terms} selected={terms} onToggle={toggle('term')} />
+        <ChipGroup label="Subject" options={subjectNames} selected={subjects} onToggle={toggle('subject')} />
+        <ChipGroup label="Format" options={snapshot.valueLists.resourceFormats} selected={formats} onToggle={toggle('format')} />
+        <ChipGroup label="Type" options={snapshot.valueLists.productKinds} selected={kinds} onToggle={toggle('kind')} />
       </FilterDrawer>
 
       <section className="section">

@@ -5,7 +5,6 @@ import type {
   Product,
   ProductKind,
   ResourceFormat,
-  Subject,
   Testimonial,
 } from '../types'
 
@@ -28,14 +27,6 @@ export const toParagraphs = (value: string) =>
 
 export const getProductBySlug = (snapshot: CmsSnapshot, slug: string) =>
   snapshot.products.find((product) => product.slug === slug)
-
-export const getSubjectBySlug = (snapshot: CmsSnapshot, slug: string) =>
-  snapshot.subjects.find((subject) => subject.slug === slug)
-
-export const getSubjectsForProduct = (snapshot: CmsSnapshot, product: Product): Subject[] =>
-  product.subjects
-    .map((slug) => snapshot.subjects.find((subject) => subject.slug === slug))
-    .filter((subject): subject is Subject => Boolean(subject))
 
 export const getFaqsByIds = (snapshot: CmsSnapshot, ids: string[]): Faq[] =>
   ids
@@ -174,11 +165,6 @@ const upsert = <T extends { id: string }>(items: T[], next: T): T[] => {
 export const updateProductInSnapshot = (snapshot: CmsSnapshot, product: Product): CmsSnapshot => ({
   ...snapshot,
   products: upsert(snapshot.products, product).sort((a, b) => a.sortOrder - b.sortOrder),
-})
-
-export const updateSubjectInSnapshot = (snapshot: CmsSnapshot, subject: Subject): CmsSnapshot => ({
-  ...snapshot,
-  subjects: upsert(snapshot.subjects, subject).sort((a, b) => a.sortOrder - b.sortOrder),
 })
 
 export const updateFaqInSnapshot = (snapshot: CmsSnapshot, faq: Faq): CmsSnapshot => ({

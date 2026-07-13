@@ -19,11 +19,11 @@ export function AboutHeroSection() {
   return (
     <Section className="overflow-hidden" containerClassName="text-center" spacing="tight">
       <div className="mx-auto max-w-readable">
-        <h1>Helping learners thrive, one test at a time</h1>
+        <h1>Shaping confident learners, one test at a time</h1>
         <p className="mx-auto mt-6 max-w-prose lead">
-          We believe learning should be simple, accessible, and stress-free. Designing Minds makes affordable,
-          CAPS-aligned practice tests that help learners prepare with confidence — and empower parents to guide
-          learning at home.
+          At Designing Minds, we believe learning should be simple, accessible, and stress-free. That’s why we create
+          affordable, CAPS-aligned practice tests that help learners prepare for exams with confidence, while empowering
+          parents to guide their children’s education at home.
         </p>
         <div className="relative z-10 mt-8 flex flex-wrap justify-center gap-3">
           <Button to="/shop" variant="solid">

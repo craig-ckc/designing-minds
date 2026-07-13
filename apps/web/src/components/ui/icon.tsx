@@ -22,9 +22,11 @@ import { PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple'
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus'
 import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck'
 import { ShoppingCartIcon } from '@phosphor-icons/react/dist/ssr/ShoppingCart'
+import { SmileyIcon } from '@phosphor-icons/react/dist/ssr/Smiley'
 import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle'
 import { StarIcon } from '@phosphor-icons/react/dist/ssr/Star'
 import { TrashIcon } from '@phosphor-icons/react/dist/ssr/Trash'
+import { TrendUpIcon } from '@phosphor-icons/react/dist/ssr/TrendUp'
 import { UserIcon } from '@phosphor-icons/react/dist/ssr/User'
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X'
 
@@ -38,6 +40,7 @@ export type IconName =
   | 'download'
   | 'spark'
   | 'plus'
+  | 'smile'
   | 'chevron'
   | 'menu'
   | 'close'
@@ -49,6 +52,7 @@ export type IconName =
   | 'palette'
   | 'pencil'
   | 'trash'
+  | 'trend'
   | 'filter'
   | 'phone'
   | 'mail'
@@ -64,6 +68,7 @@ const icons: Record<IconName, ComponentType<IconProps>> = {
   download: DownloadSimpleIcon,
   spark: SparkleIcon,
   plus: PlusIcon,
+  smile: SmileyIcon,
   chevron: CaretDownIcon,
   menu: ListIcon,
   close: XIcon,
@@ -75,6 +80,7 @@ const icons: Record<IconName, ComponentType<IconProps>> = {
   palette: PaletteIcon,
   pencil: PencilSimpleIcon,
   trash: TrashIcon,
+  trend: TrendUpIcon,
   filter: FunnelIcon,
   phone: PhoneIcon,
   mail: EnvelopeSimpleIcon,

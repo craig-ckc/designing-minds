@@ -114,3 +114,17 @@ Consequences:
 - Functions carry `RESEND_API_KEY`, `RESEND_FROM`, `FORM_NOTIFICATIONS_TO`. Absent config disables sending (submissions still persist); it is never in a `VITE_` variable.
 - Password reset is a real flow in both the web and admin apps (`resetPasswordForEmail` + `updateUser`); Supabase must have `/reset-password` (web) and the admin origin allow-listed as redirect URLs.
 - Marketing list sync to Mailchimp, if added later, is a separate integration off the newsletter table — not a change to the submission path.
+
+## Subjects Are A Value List, Not A Table
+
+Status: accepted.
+
+The `public.subjects` table was dropped; subjects are now a Value List (`value_lists.subjects`) exactly like Grades and Terms. A Product stores its subject **display names** directly in `products.subjects` (and `includedSubjects`) — there is no table to join, no slug↔name resolution, and no per-subject metadata.
+
+The old table carried `shortLabel`, `description`, `accent`, `seo`, and per-subject `faqs`; only `shortLabel` and `name` were ever rendered, and nothing user-facing routed to a subject (no `/subjects/:slug` page). The product page now shows full subject names.
+
+Consequences:
+
+- Editing the subject vocabulary is a database edit to `value_lists.subjects`, not an admin CRUD screen; the admin product editor picks subjects from that list (`multiReference` → `valueList: 'subjects'`).
+- `products.subjects` is the single source of truth for a product's subjects; shop filters, search, related-products, and SEO all read the names directly.
+- The catalogue reseed and this change ship together in `supabase/patch/2026-07-12-reseed-catalog-from-client-list.sql`; `schema.sql` and `seed.sql` reflect the value-list model for fresh installs.

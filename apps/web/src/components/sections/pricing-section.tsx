@@ -24,7 +24,7 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
             step — nothing renews automatically.
           </p>
         </div>
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {tiers.map((tier) => {
             const content = TIER_CONTENT[tier.tier]
             return (
@@ -70,7 +70,7 @@ export function PricingSection({ tiers }: { tiers: AccessPlanTier[] }) {
                     </li>
                   ))}
                 </ul>
-                <Button to={`/packages?plan=${tier.tier}`} variant={tier.featured ? 'solid' : 'outline'} className="w-full">
+                <Button to={`/packages?plan=${tier.tier}`} variant={tier.featured ? 'solid' : 'outline'} className="w-full mt-auto">
                   {content.cta}
                 </Button>
               </Card>

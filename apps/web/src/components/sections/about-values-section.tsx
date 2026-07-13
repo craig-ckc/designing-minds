@@ -1,19 +1,25 @@
 import { Card } from '../ui/card'
-import { Placeholder } from '../ui/placeholder'
+import { Icon, type IconName } from '../ui/icon'
 import { Section } from '../ui/section'
 
-const VALUES: { title: string; body: string }[] = [
+const VALUES: { title: string; body: string; icon: IconName; iconClassName: string }[] = [
   {
-    title: 'Made by teachers',
-    body: 'Every test and summary is written by practising South African teachers and mapped to the CAPS curriculum.',
+    title: 'CAPS-aligned',
+    body: 'Suitable for learners in every South African province and aligned with the CAPS curriculum.',
+    icon: 'check',
+    iconClassName: 'bg-primary-tint text-primary',
   },
   {
-    title: 'Affordable & once-off',
-    body: 'Buy once, download instantly, and print as often as you like. No subscriptions, no renewals, no surprises.',
+    title: 'Easy to use',
+    body: 'Detailed memorandums make marking simple, while instant downloads let you print whenever you need to.',
+    icon: 'smile',
+    iconClassName: 'bg-lagoon text-teal',
   },
   {
     title: 'Built for confidence',
-    body: 'Real classroom-style questions that ease exam anxiety and help learners believe in what they can do.',
+    body: 'Familiar classroom-style questions help reduce exam stress and build confidence before assessment day.',
+    icon: 'trend',
+    iconClassName: 'bg-butter text-amber',
   },
 ]
 
@@ -21,13 +27,18 @@ export function AboutValuesSection() {
   return (
     <Section>
       <div className="mx-auto mb-10 max-w-prose text-center lg:mb-14">
-        <h2>Learning that’s simple, honest, and kind</h2>
+        <h2>Learning support designed for real families</h2>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {VALUES.map((value) => (
           <Card key={value.title} as="article" pad="none" className="overflow-hidden text-center">
-            <Placeholder ratio="1 / 1" flush />
-            <div className="p-7">
+            <div className="p-7 sm:p-8">
+              <span
+                className={`mx-auto mb-5 grid h-14 w-14 place-items-center rounded-pill ${value.iconClassName}`}
+                aria-hidden
+              >
+                <Icon name={value.icon} size={28} />
+              </span>
               <h4>{value.title}</h4>
               <p className="mt-2 text-body text-muted">{value.body}</p>
             </div>

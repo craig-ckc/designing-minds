@@ -159,18 +159,9 @@ create or replace view public.catalog_products
 with (security_invoker = on) as
   select * from private.published_products();
 
-create table if not exists public.subjects (
-  id uuid primary key default gen_random_uuid(),
-  slug text not null unique,
-  name text not null,
-  "shortLabel" text not null default '',
-  description text not null default '',
-  "sortOrder" integer not null default 0,
-  visible boolean not null default true,
-  faqs text[] not null default '{}',
-  accent text,
-  seo jsonb
-);
+-- Subjects are a controlled value list (value_lists.subjects), not a table.
+-- products.subjects / includedSubjects store subject display names directly,
+-- self-describing like grade/term. See the value_lists seed below.
 
 create table if not exists public.faqs (
   id uuid primary key default gen_random_uuid(),
@@ -202,10 +193,16 @@ create table if not exists public.value_lists (
 insert into public.value_lists (key, values)
 values
   ('grades', array['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7']),
-  ('terms', array['Term 1', 'Term 2', 'Term 3', 'Term 4']),
+  ('terms', array['Any Term', 'Term 1', 'Term 2', 'Term 3', 'Term 4']),
   ('years', array['2024', '2025', '2026']),
   ('productKinds', array['Single', 'Bundle', 'Access Plan']),
-  ('resourceFormats', array['Test / Assessment', 'Summary'])
+  ('resourceFormats', array['Summary', 'Test / Assessment']),
+  ('subjects', array[
+    'Afrikaans First Additional Language', 'Economic Management Sciences (EMS)',
+    'English First Additional Language', 'English Home Language', 'Geography', 'History',
+    'Life Orientation', 'Life Skills', 'Life Skills (PSW)', 'Mathematics',
+    'Natural Science', 'Natural Science and Technology', 'Technology'
+  ])
 on conflict (key) do nothing;
 
 -- =========================================================================
@@ -406,7 +403,6 @@ grant execute on function public.create_pending_order(uuid, uuid, text, uuid, te
 
 alter table public.user_roles enable row level security;
 alter table public.products enable row level security;
-alter table public.subjects enable row level security;
 alter table public.faqs enable row level security;
 alter table public.testimonials enable row level security;
 alter table public.value_lists enable row level security;
@@ -418,11 +414,9 @@ alter table public.cart_items enable row level security;
 
 -- Drop old wall-version policies so this file can be re-applied during setup.
 drop policy if exists "Authenticated write products" on public.products;
-drop policy if exists "Authenticated write subjects" on public.subjects;
 drop policy if exists "Authenticated write faqs" on public.faqs;
 drop policy if exists "Authenticated write testimonials" on public.testimonials;
 drop policy if exists "Public read products" on public.products;
-drop policy if exists "Public read subjects" on public.subjects;
 drop policy if exists "Public read faqs" on public.faqs;
 drop policy if exists "Public read testimonials" on public.testimonials;
 drop policy if exists "Customer reads self" on public.users;
@@ -435,7 +429,6 @@ create policy "User reads own role" on public.user_roles
   for select to authenticated using ("userId" = auth.uid());
 
 -- Catalogue collections and value lists: public reads go through sanitized views; admin-only writes.
-create policy "Public read subjects" on public.subjects for select to anon, authenticated using (true);
 create policy "Public read faqs" on public.faqs for select to anon, authenticated using (true);
 create policy "Public read testimonials" on public.testimonials for select to anon, authenticated using (true);
 create policy "Public read value lists" on public.value_lists for select to anon, authenticated using (true);
@@ -443,7 +436,6 @@ create policy "Public read value lists" on public.value_lists for select to anon
 grant select on public.catalog_products to anon, authenticated;
 
 create policy "Admin write products" on public.products for all to authenticated using (public.is_admin()) with check (public.is_admin());
-create policy "Admin write subjects" on public.subjects for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "Admin write faqs" on public.faqs for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "Admin write testimonials" on public.testimonials for all to authenticated using (public.is_admin()) with check (public.is_admin());
 

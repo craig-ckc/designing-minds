@@ -5,18 +5,18 @@ import { Section } from '../ui/section'
 const STEPS: { icon: IconName; title: string; body: string }[] = [
   {
     icon: 'globe',
-    title: 'It started in the classroom',
-    body: 'After teaching in Vietnam and working with online schools back home in South Africa, I saw first-hand how the right resources change the way a child learns.',
+    title: 'Meaningful learning, wherever it happens',
+    body: 'After teaching in Vietnam and working with online schools in South Africa, I discovered how powerful accessible learning tools can be.',
   },
   {
     icon: 'pencil',
-    title: 'Built by a teacher, for real learning',
-    body: 'I combined years of curriculum development with everyday classroom experience to write CAPS-aligned tests and summaries that parents could actually trust.',
+    title: 'Experience turned into practical support',
+    body: 'I combined my experience in curriculum development and my love for teaching to create Designing Minds — a platform dedicated to helping learners feel confident, prepared, and supported.',
   },
   {
     icon: 'spark',
-    title: 'Confidence over cramming',
-    body: 'Designing Minds grew into affordable printable resources that ease exam-day stress and help learners believe in what they can do.',
+    title: 'More confidence, less stress',
+    body: 'What excites me most is seeing these resources improve marks, reduce stress, and give learners belief in their abilities.',
   },
 ]
 
@@ -24,10 +24,9 @@ export function AboutStorySection() {
   return (
     <Section containerClassName="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
       <div>
-        <h2 className="max-w-[18ch]">From one classroom to homes across South Africa</h2>
+        <h2 className="max-w-[18ch]">Meet Amy — founder of Designing Minds</h2>
         <p className="mt-5 max-w-[52ch] text-body-lg text-ink-soft">
-          Hi, I’m Amy — the teacher behind Designing Minds. Here’s how a classroom idea grew into resources used by
-          families right across South Africa.
+          A teacher with a vision for stress-free learning.
         </p>
 
         <ol className="relative mt-10 grid gap-8">

@@ -1,21 +1,22 @@
-import { useRef } from 'react'
+// import { useRef } from 'react'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { GradeCard } from '../ui/grade-card'
-import { Icon } from '../ui/icon'
+// import { Icon } from '../ui/icon'
 import { Section } from '../ui/section'
 import fallbackGrades from '../../content/home/fallback-grades.json'
+import { productsForGrade } from '../../lib/products';
 
 export function GradeFinderSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const grades = snapshot?.valueLists.grades ?? fallbackGrades
-  const scroller = useRef<HTMLDivElement>(null)
+  // const scroller = useRef<HTMLDivElement>(null)
 
-  const scrollByCard = (dir: number) => {
-    const el = scroller.current
-    if (!el) return
-    const card = el.querySelector<HTMLElement>('[data-card]')
-    const amount = card ? card.offsetWidth + 16 : el.clientWidth * 0.8
-    el.scrollBy({ left: dir * amount, behavior: 'smooth' })
-  }
+  // const scrollByCard = (dir: number) => {
+  //   const el = scroller.current
+  //   if (!el) return
+  //   const card = el.querySelector<HTMLElement>('[data-card]')
+  //   const amount = card ? card.offsetWidth + 16 : el.clientWidth * 0.8
+  //   el.scrollBy({ left: dir * amount, behavior: 'smooth' })
+  // }
 
   return (
     <Section>
@@ -26,7 +27,7 @@ export function GradeFinderSection({ snapshot }: { snapshot: CmsSnapshot | null 
             CAPS-aligned tests, memos and summaries for Grades 3 to 7 — pick your child’s grade to start.
           </p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <button
             type="button"
             aria-label="Previous grades"
@@ -47,13 +48,16 @@ export function GradeFinderSection({ snapshot }: { snapshot: CmsSnapshot | null 
               <Icon name="arrow" />
             </span>
           </button>
-        </div>
+        </div> */}
       </div>
 
-      <div
-        ref={scroller}
-        className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-2 scroll-pl-5 [--edge:1.25rem] [mask-image:linear-gradient(to_right,transparent,#000_var(--edge),#000_calc(100%-var(--edge)),transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_var(--edge),#000_calc(100%-var(--edge)),transparent)] [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-8 sm:px-8 sm:scroll-pl-8 sm:[--edge:2rem] lg:-mx-12 lg:px-12 lg:scroll-pl-12 lg:[--edge:3rem] [&::-webkit-scrollbar]:hidden"
-      >
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {grades.map((grade) => (
+          <GradeCard key={grade} grade={grade} count={snapshot ? productsForGrade(snapshot, grade).length : 0} />
+        ))}
+      </div>
+
+      {/* <div ref={scroller} className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-2 scroll-pl-5 [--edge:1.25rem] [mask-image:linear-gradient(to_right,transparent,#000_var(--edge),#000_calc(100%-var(--edge)),transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_var(--edge),#000_calc(100%-var(--edge)),transparent)] [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-8 sm:px-8 sm:scroll-pl-8 sm:[--edge:2rem] lg:-mx-12 lg:px-12 lg:scroll-pl-12 lg:[--edge:3rem] [&::-webkit-scrollbar]:hidden" >
         {grades.map((grade) => (
           <GradeCard
             key={grade}
@@ -61,7 +65,7 @@ export function GradeFinderSection({ snapshot }: { snapshot: CmsSnapshot | null 
             className="w-[78%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]"
           />
         ))}
-      </div>
+      </div> */}
     </Section>
   )
 }

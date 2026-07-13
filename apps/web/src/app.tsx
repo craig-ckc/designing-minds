@@ -101,7 +101,7 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
       <Route path="/bundles" element={<Navigate to="/packages" replace />} />
 
       {/* Product */}
-      <Route path="/product/:slug" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <ProductPage snapshot={ready} />}</SnapshotGate>} />
+      <Route path="/shop/:slug" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <ProductPage snapshot={ready} />}</SnapshotGate>} />
 
       {/* Support + company */}
       <Route path="/help" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <HelpPage snapshot={ready} />}</SnapshotGate>} />

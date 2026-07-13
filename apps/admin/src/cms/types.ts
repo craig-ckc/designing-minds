@@ -6,7 +6,7 @@
    columns, and one generic FieldControl/RecordEditor renders any of them.
 
    Adapted for Designing Minds: a record is the existing typed domain object
-   (Product / Subject / …) addressed by field.key — not a generic values bag —
+   (Product / FAQ / …) addressed by field.key — not a generic values bag —
    so the typed @designing-minds/cms repository and its snapshot mutators are
    reused unchanged. See cms/adapter.ts.
    ------------------------------------------------------------------------- */
@@ -38,7 +38,7 @@ export type FieldType =
   | 'fileList'
 
 /** Collections that a Reference Field can point at. */
-export type ReferenceCollection = 'subjects' | 'faqs' | 'products'
+export type ReferenceCollection = 'faqs' | 'products'
 
 /** Where a select's options come from: a static list or a Value List. */
 export type SelectSource =
@@ -70,7 +70,7 @@ export type PrimitiveField = FieldBase & {
 
 export type SlugField = FieldBase & {
   type: 'slug'
-  /** Shown under the input as a live URL preview, e.g. `www.designingminds.co.za/product/`. */
+  /** Shown under the input as a live URL preview, e.g. `www.designingminds.co.za/shop/`. */
   urlPrefix?: string
 }
 

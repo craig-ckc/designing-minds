@@ -1,7 +1,6 @@
 import {
   getFaqsByIds,
   getProductBySlug,
-  getSubjectsForProduct,
   productsForGrade,
   type CmsSnapshot,
   type Faq,
@@ -268,7 +267,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
   if (route.kind === 'product' && route.productSlug) {
     // pageMetaFor already threw if the product is missing, so it exists here.
     const product = getProductBySlug(snapshot, route.productSlug)!
-    const subjectNames = getSubjectsForProduct(snapshot, product).map((subject) => subject.name)
+    const subjectNames = product.subjects
     jsonLd.push({
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -317,7 +316,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
       ]),
     )
     if (products.length > 0) {
-      jsonLd.push(itemList(siteUrl, `${grade} CAPS resources`, products.map((product) => `/product/${product.slug}`)))
+      jsonLd.push(itemList(siteUrl, `${grade} CAPS resources`, products.map((product) => `/shop/${product.slug}`)))
     }
   } else {
     if (route.path === '/') {
@@ -326,7 +325,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     if (route.path === '/shop') {
       const products = snapshot.products.filter((product) => product.published)
       if (products.length > 0) {
-        jsonLd.push(itemList(siteUrl, 'CAPS-aligned resources', products.map((product) => `/product/${product.slug}`)))
+        jsonLd.push(itemList(siteUrl, 'CAPS-aligned resources', products.map((product) => `/shop/${product.slug}`)))
       }
     }
     if (route.path === '/help') {

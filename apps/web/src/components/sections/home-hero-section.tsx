@@ -168,16 +168,21 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot | null }) {
         </ArrowButton>
       </div>
 
-      <div className="rounded-card border border-line bg-surface p-2 shadow-card sm:p-4">
+      <div className="rounded-card bg-surface p-2 shadow-card sm:p-4">
         <div className="mb-3 flex items-center gap-1.5">
           <span className="text-label font-semibold text-muted">{activeGrade} · CAPS-aligned resources</span>
         </div>
         {covers.length ? (
-          <div key={activeGrade} className="grid animate-fade-up grid-cols-2 gap-4 sm:grid-cols-4">
-            {covers.map((p) => (
-              <Link key={p.id} to={`/product/${p.slug}`} className="block transition-transform hover:-translate-y-1">
-                <ProductCover product={p} />
-              </Link>
+          // Keyed on the grade so a swap remounts the grid: the outgoing covers
+          // vanish at once (no exit animation) while the incoming ones fade up
+          // in a slight cascade via per-item animation-delay.
+          <div key={activeGrade} className="grid grid-cols-2 sm:grid-cols-4">
+            {covers.map((p, i) => (
+              <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${i * 70}ms` }}>
+                <Link to={`/shop/${p.slug}`} className="block transition-transform hover:-translate-y-1">
+                  <ProductCover product={p} />
+                </Link>
+              </div>
             ))}
           </div>
         ) : (
@@ -195,7 +200,7 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
         to="/shop"
         className="inline-flex items-center gap-4 rounded-pill border border-primary/20 bg-primary-tint px-4 py-1.5 text-label font-bold text-primary transition-colors hover:bg-primary/10"
       >
-        New · Term 4 resources for Grades 3–7
+        New · Resources for Grades 3–7
         <span className="h-3.5 w-3.5">
           <Icon name="arrow" />
         </span>

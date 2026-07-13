@@ -55,7 +55,6 @@ Admin-managed collections:
 
 ```text
 Products
-Subjects
 FAQs
 Testimonials
 ```
@@ -78,13 +77,9 @@ featured, published, sort/order metadata, SEO metadata, faqs
 
 Bundle and Access Plan products can reference included products whose Product Kind is `Single`. Access Plans are normal products with fixed grade and term/year fields; checkout does not ask the customer to choose a grade.
 
-### Subjects
-
-Subjects classify Products and support grade/catalogue browsing. Products require at least one Subject. Subjects may carry description, label, sort order, visibility, optional presentation metadata, and referenced FAQs.
-
 ### FAQs
 
-FAQs are reusable support content with question, answer, category, sort order, and published status. Static pages, Products, and Subjects can display relevant FAQs.
+FAQs are reusable support content with question, answer, category, sort order, and published status. Static pages and Products can display relevant FAQs.
 
 ### Testimonials
 
@@ -100,16 +95,20 @@ Terms
 Years
 Product Kinds
 Resource Formats
+Subjects
 ```
 
-Grades, Terms, and Product Kinds are effectively fixed for launch. Years and Resource Formats can be extended by database edit. A new Product Kind also requires code changes because the editor and site branch on known kinds.
+Grades, Terms, and Product Kinds are effectively fixed for launch. Years, Resource Formats, and Subjects can be extended by database edit. A new Product Kind also requires code changes because the editor and site branch on known kinds.
+
+Subjects classify Products and support catalogue browsing. Products require at least one Subject; a product stores its subject **display names** directly in `subjects` (there is no Subjects table to join). Edit the list of subjects in `value_lists.subjects`, like grades and terms.
 
 Launch values:
 
 - Grades: Grade 3, Grade 4, Grade 5, Grade 6, Grade 7.
-- Terms: Term 1, Term 2, Term 3, Term 4.
+- Terms: Any Term, Term 1, Term 2, Term 3, Term 4.
 - Product Kinds: Single, Bundle, Access Plan.
 - Resource Formats: Test / Assessment, Summary.
+- Subjects: Afrikaans First Additional Language, Economic Management Sciences (EMS), English First Additional Language, English Home Language, Geography, History, Life Orientation, Life Skills, Life Skills (PSW), Mathematics, Natural Science, Natural Science and Technology, Technology.
 
 ## Operational Records
 

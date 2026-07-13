@@ -6,11 +6,13 @@ import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Card } from '../components/ui/card'
 import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
-import { ChipGroup, FilterDrawer, FilterTrigger, makeToggle } from '../components/ui/filter-drawer'
+import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
+import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
 import offers from '../content/packages/package-offers.json'
 
 // The "Offer" dimension replaces the old tabs, and reads the same as the Shop's chips.
 const OFFERS = offers as string[]
+const PACKAGE_FILTER_KEYS = ['q', 'offer', 'grade', 'term', 'plan'] as const
 
 const matchesOffer = (product: Product, offer: string) => {
   switch (offer) {
@@ -28,7 +30,7 @@ const matchesOffer = (product: Product, offer: string) => {
 }
 
 export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const packages = useMemo(
     () => publishedProducts(snapshot).filter((p) => p.productKind === 'Bundle' || p.productKind === 'Access Plan'),
     [snapshot],
@@ -36,13 +38,12 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
   // Deep-links from the homepage/nav tiers (?plan=essential|premium) pre-select the Offer.
   const planParam = searchParams.get('plan')
-  const initialOffer = planParam === 'premium' ? 'Premium access' : planParam === 'essential' ? 'Essential access' : null
-  const initialGrade = searchParams.get('grade')
-
-  const [offerSel, setOfferSel] = useState<string[]>(initialOffer ? [initialOffer] : [])
-  const [grades, setGrades] = useState<string[]>(initialGrade ? [initialGrade] : [])
-  const [terms, setTerms] = useState<string[]>([])
-  const [query, setQuery] = useState('')
+  const legacyOffer = planParam === 'premium' ? 'Premium access' : planParam === 'essential' ? 'Essential access' : null
+  const queryOffers = readQueryList(searchParams, 'offer', OFFERS)
+  const offerSel = queryOffers.length ? queryOffers : legacyOffer ? [legacyOffer] : []
+  const grades = readQueryList(searchParams, 'grade', snapshot.valueLists.grades)
+  const terms = readQueryList(searchParams, 'term', snapshot.valueLists.terms)
+  const query = searchParams.get('q') ?? ''
   const [filtersOpen, setFiltersOpen] = useState(false)
   const deferredQuery = useDeferredValue(query)
   const q = deferredQuery.trim().toLowerCase()
@@ -56,12 +57,14 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
   })
 
   const activeCount = offerSel.length + grades.length + terms.length
-  const reset = () => {
-    setOfferSel([])
-    setGrades([])
-    setTerms([])
-    setQuery('')
+  const toggle = (key: string) => (value: string) => {
+    const current = new URLSearchParams(searchParams)
+    if (key === 'offer' && legacyOffer && !current.has('offer')) current.append('offer', legacyOffer)
+    const next = toggleQueryValue(current, key, value)
+    if (key === 'offer') next.delete('plan')
+    setSearchParams(next)
   }
+  const reset = () => setSearchParams(clearQueryValues(searchParams, PACKAGE_FILTER_KEYS))
 
   return (
     <>
@@ -79,7 +82,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <input
             className="field w-full max-w-md"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => setSearchParams(setQueryValue(searchParams, 'q', event.target.value), { replace: true })}
             placeholder="Search packages…"
             aria-label="Search packages"
           />
@@ -88,9 +91,9 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </div>
 
       <FilterDrawer open={filtersOpen} onOpenChange={setFiltersOpen} onReset={reset} resultCount={visible.length}>
-        <ChipGroup label="Offer" options={OFFERS} selected={offerSel} onToggle={makeToggle(setOfferSel)} />
-        <ChipGroup label="Grade" options={snapshot.valueLists.grades} selected={grades} onToggle={makeToggle(setGrades)} />
-        <ChipGroup label="Term" options={snapshot.valueLists.terms} selected={terms} onToggle={makeToggle(setTerms)} />
+        <ChipGroup label="Offer" options={OFFERS} selected={offerSel} onToggle={toggle('offer')} />
+        <ChipGroup label="Grade" options={snapshot.valueLists.grades} selected={grades} onToggle={toggle('grade')} />
+        <ChipGroup label="Term" options={snapshot.valueLists.terms} selected={terms} onToggle={toggle('term')} />
       </FilterDrawer>
 
       <section className="section">

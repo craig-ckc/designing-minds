@@ -10,7 +10,6 @@ import type {
   Payment,
   Product,
   SlugRedirect,
-  Subject,
   Testimonial,
   ValueLists,
 } from '../types'
@@ -24,7 +23,6 @@ interface SupabaseRepositoryOptions {
 const TABLES = {
   products: 'products',
   catalogProducts: 'catalog_products',
-  subjects: 'subjects',
   faqs: 'faqs',
   testimonials: 'testimonials',
   // Account profiles live in the `users` table (see docs/decisions.md).
@@ -44,6 +42,7 @@ const DEFAULT_VALUE_LISTS: ValueLists = {
   years: [],
   productKinds: [],
   resourceFormats: [],
+  subjects: [],
 }
 
 interface ValueListRow {
@@ -90,7 +89,7 @@ const tolerateMissingTable = <T>(
 
 const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] => ({
   productCount: snapshot.products.length,
-  subjectCount: snapshot.subjects.length,
+  subjectCount: snapshot.valueLists.subjects.length,
   gradeCount: snapshot.valueLists.grades.length,
   bundleCount: snapshot.products.filter((p) => p.productKind === 'Bundle').length,
   accessPlanCount: snapshot.products.filter((p) => p.productKind === 'Access Plan').length,
@@ -112,10 +111,9 @@ export const createSupabaseRepository = ({ url, publishableKey, audience }: Supa
     mode: 'supabase',
     canWrite: audience === 'admin',
     async getSnapshot() {
-      const [products, subjects, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists] =
+      const [products, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists] =
         await Promise.all([
           client.from(productReadTable).select('*'),
-          client.from(TABLES.subjects).select('*'),
           client.from(TABLES.faqs).select('*'),
           client.from(TABLES.testimonials).select('*'),
           client.from(TABLES.customers).select('*'),
@@ -128,7 +126,7 @@ export const createSupabaseRepository = ({ url, publishableKey, audience }: Supa
         ])
 
       // Core tables must exist; any error is fatal.
-      const firstError = [products, subjects, faqs, testimonials, customers, orders, payments, valueLists].find((r) => r.error)
+      const firstError = [products, faqs, testimonials, customers, orders, payments, valueLists].find((r) => r.error)
       if (firstError?.error) {
         throw new Error(firstError.error.message)
       }
@@ -138,7 +136,6 @@ export const createSupabaseRepository = ({ url, publishableKey, audience }: Supa
         source: 'supabase',
         valueLists: rowsToValueLists(valueLists.data as ValueListRow[] | null),
         products: ((products.data as Product[] | null) ?? []).map(numberizeProduct),
-        subjects: (subjects.data as Subject[] | null) ?? [],
         faqs: (faqs.data as Faq[] | null) ?? [],
         testimonials: (testimonials.data as Testimonial[] | null) ?? [],
         customers: (customers.data as Customer[] | null) ?? [],
@@ -172,11 +169,6 @@ export const createSupabaseRepository = ({ url, publishableKey, audience }: Supa
       const res = await client.from(TABLES.products).upsert({ ...product, updatedAt: new Date().toISOString() }).select().single()
       if (res.error) throw new Error(res.error.message)
       return res.data as Product
-    },
-    async saveSubject(subject: Subject) {
-      const res = await client.from(TABLES.subjects).upsert(subject).select().single()
-      if (res.error) throw new Error(res.error.message)
-      return res.data as Subject
     },
     async saveFaq(faq: Faq) {
       const res = await client.from(TABLES.faqs).upsert(faq).select().single()

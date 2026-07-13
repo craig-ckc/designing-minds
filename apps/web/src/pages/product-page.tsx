@@ -3,7 +3,6 @@ import {
   getFaqsByIds,
   getProductBySlug,
   getProductsBySlugs,
-  getSubjectsForProduct,
   priceLabel,
   relatedProducts,
   type CmsSnapshot,
@@ -11,11 +10,12 @@ import {
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Icon } from '../components/ui/icon'
-import { Placeholder } from '../components/ui/placeholder'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { FaqAccordion } from '../components/ui/faq-accordion'
+import { IncludedProduct } from '../components/ui/included-product'
 import { ProductCard } from '../components/ui/product-card'
+import { ProductCover } from '../components/ui/product-cover'
 import { SpecRow } from '../components/ui/spec-row'
 import { addCartSlug } from '../lib/cart'
 import { Markdown } from '../lib/markdown'
@@ -29,14 +29,10 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
     return <NotFoundPage />
   }
 
-  const subjects = getSubjectsForProduct(snapshot, product)
   const faqs = getFaqsByIds(snapshot, product.faqs)
   const included = getProductsBySlugs(snapshot, product.includedProductSlugs ?? [])
   const related = relatedProducts(snapshot, product, 4)
   const isComposite = product.productKind === 'Bundle' || product.productKind === 'Access Plan'
-  // Each Access Plan is one fixed grade, and Essential is also one fixed term.
-  // The grade is no longer chosen at checkout; see docs/decisions.md.
-  const isAccessPlan = product.productKind === 'Access Plan'
 
   return (
     <>
@@ -52,7 +48,9 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
           <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
             <div>
-              <Placeholder label={`${product.resourceFormat} preview`} ratio="4 / 3.2" />
+              <div className="flex justify-center px-8 py-4 sm:px-12">
+                <ProductCover product={product} className="max-w-[22rem]" />
+              </div>
 
               {/* Description — CMS rich text stored as Markdown */}
               <div className="mt-8 text-ink-soft">
@@ -70,10 +68,10 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                       {product.deliveryRules}
                     </p>
                   ) : null}
-                  {isAccessPlan ? null : included.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  {included.length > 0 ? (
+                    <div className="space-y-2">
                       {included.map((entry) => (
-                        <ProductCard key={entry.id} product={entry} />
+                        <IncludedProduct key={entry.id} product={entry} />
                       ))}
                     </div>
                   ) : (
@@ -110,7 +108,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <SpecRow label="Grade" value={product.grade} />
                 <SpecRow label="Term" value={product.term} />
                 <SpecRow label="Year" value={product.year} />
-                <SpecRow label="Subjects" value={subjects.map((s) => s.shortLabel).join(', ') || '—'} />
+                <SpecRow label="Subjects" value={product.subjects.join(', ') || '—'} />
                 <SpecRow label="Type" value={product.productKind} />
                 <SpecRow label="Format" value={product.resourceFormat} />
                 <SpecRow label="Marks" value={product.marks ? `${product.marks} marks` : 'Not applicable'} />

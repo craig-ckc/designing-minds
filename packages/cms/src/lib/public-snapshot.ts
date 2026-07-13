@@ -14,7 +14,6 @@ import type { CmsSnapshot } from '../types'
  * Strip a full CMS snapshot down to public catalogue content only:
  * - products: published only (storage keys are already removed upstream by the
  *   catalog_products view)
- * - subjects: visible only
  * - faqs / testimonials: published only
  * - customers / orders / payments / form submissions: always empty
  * - stats: recalculated from the public content
@@ -24,7 +23,6 @@ import type { CmsSnapshot } from '../types'
  */
 export const toPublicSnapshot = (snapshot: CmsSnapshot): CmsSnapshot => {
   const products = snapshot.products.filter((product) => product.published)
-  const subjects = snapshot.subjects.filter((subject) => subject.visible)
   const faqs = snapshot.faqs.filter((faq) => faq.published)
   const testimonials = snapshot.testimonials.filter((testimonial) => testimonial.published)
 
@@ -33,7 +31,6 @@ export const toPublicSnapshot = (snapshot: CmsSnapshot): CmsSnapshot => {
     source: snapshot.source,
     valueLists: snapshot.valueLists,
     products,
-    subjects,
     faqs,
     testimonials,
     customers: [],
@@ -43,7 +40,7 @@ export const toPublicSnapshot = (snapshot: CmsSnapshot): CmsSnapshot => {
     formNewsletter: [],
     stats: {
       productCount: products.length,
-      subjectCount: subjects.length,
+      subjectCount: snapshot.valueLists.subjects.length,
       gradeCount: snapshot.valueLists.grades.length,
       bundleCount: products.filter((product) => product.productKind === 'Bundle').length,
       accessPlanCount: products.filter((product) => product.productKind === 'Access Plan').length,

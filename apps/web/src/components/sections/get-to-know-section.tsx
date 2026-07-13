@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Accordion } from '@base-ui/react/accordion'
 import { Button } from '../ui/button'
 import { Icon, type IconName } from '../ui/icon'
-import { Placeholder } from '../ui/placeholder'
 import { Section } from '../ui/section'
 import getToKnowItems from '../../content/home/get-to-know-items.json'
 
@@ -114,7 +113,11 @@ export function GetToKnowSection() {
           })}
         </Accordion.Root>
 
-        <Placeholder ratio="4 / 3" className="bg-surface" />
+        <div className="relative hidden lg:block aspect-[4/3]">
+          <img src="/images/image-04.png" alt="" className="absolute inset-0 w-full h-full object-contain" />
+        </div>
+
+        {/* <Placeholder ratio="4 / 3" className="bg-surface" /> */}
       </div>
     </Section>
   )

@@ -8,7 +8,6 @@ export {
   productsForGrade,
   relatedProducts,
   getProductBySlug,
-  getSubjectsForProduct,
   getFaqsByIds,
   getProductsBySlugs,
   filterProducts,

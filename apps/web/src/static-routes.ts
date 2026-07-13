@@ -13,7 +13,7 @@ import { gradeToSlug, slugToGrade } from './content/site'
 export type RouteKind = 'static' | 'grade' | 'product'
 
 export interface PublicRoute {
-  /** Absolute path, e.g. "/", "/shop", "/grades/grade-4", "/product/foo". */
+  /** Absolute path, e.g. "/", "/shop", "/grades/grade-4", "/shop/foo". */
   path: string
   kind: RouteKind
   /** Grade label (e.g. "Grade 4") for grade routes. */
@@ -82,7 +82,7 @@ export function getPublicRoutes(snapshot: CmsSnapshot): PublicRoute[] {
 
   for (const product of snapshot.products) {
     if (!product.published) continue
-    routes.push({ path: `/product/${product.slug}`, kind: 'product', productSlug: product.slug })
+    routes.push({ path: `/shop/${product.slug}`, kind: 'product', productSlug: product.slug })
   }
 
   return routes

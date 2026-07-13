@@ -12,7 +12,7 @@ export function Wordmark({
 }) {
   return (
     <Link to="/" onClick={onClick} className={`flex items-center gap-2.5 ${className}`}>
-      <Logo className="w-25 flex-none text-primary" />
+      <Logo className="w-35 flex-none text-primary" />
     </Link>
   )
 }

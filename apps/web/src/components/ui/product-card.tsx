@@ -9,21 +9,21 @@ import { useCartSlugs } from '../../lib/use-cart'
 
 export function ProductCard({ product }: { product: Product }) {
   const inCart = useCartSlugs().includes(product.slug)
-  const href = `/product/${product.slug}`
+  const href = `/shop/${product.slug}`
 
   return (
     <Card
       as="article"
       variant="surface"
       pad="none"
-      className="group flex flex-col rounded-lg p-3 transition-colors duration-200 hover:border-primary/40"
+      className="group flex flex-col rounded-lg transition-colors duration-200 hover:border-primary/40"
     >
       <Link to={href} className="block">
         <ProductCover product={product} />
       </Link>
 
       {/* Title + price */}
-      <div className="flex flex-1 flex-col px-1 pb-0.5 pt-3">
+      <div className="flex flex-1 flex-col p-3 pt-0">
         <Link to={href}>
           <h3 className="text-body-lg font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary">
             {product.title}

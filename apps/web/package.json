@@ -10,6 +10,7 @@
     "optimize:images": "node scripts/optimize-images.mjs dist",
     "prerender": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/prerender.mjs",
     "lint": "eslint .",
+    "test": "node --experimental-strip-types --test ../../tests/web/*.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

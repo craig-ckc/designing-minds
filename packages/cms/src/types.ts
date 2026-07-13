@@ -2,8 +2,8 @@
    Designing Minds content model.
 
    Mirrors docs/site-and-content-model.md:
-   - Collections  : Products, Subjects, FAQs, Testimonials
-   - Value lists  : Grades, Terms, Years, Product Kinds, Resource Formats
+   - Collections  : Products, FAQs, Testimonials
+   - Value lists  : Grades, Terms, Years, Product Kinds, Resource Formats, Subjects
    - Operational  : Users, User Roles, Carts, Orders, Order Items, Payments
 
    Pages are intentionally NOT modelled here — static pages are owned by the
@@ -15,7 +15,7 @@ export type CmsProviderMode = 'seed' | 'local' | 'supabase'
 /* -------------------------------- Value lists -------------------------- */
 
 export type Grade = 'Grade 3' | 'Grade 4' | 'Grade 5' | 'Grade 6' | 'Grade 7'
-export type Term = 'Term 1' | 'Term 2' | 'Term 3' | 'Term 4'
+export type Term = 'Any Term' | 'Term 1' | 'Term 2' | 'Term 3' | 'Term 4'
 export type ProductKind = 'Single' | 'Bundle' | 'Access Plan'
 export type ResourceFormat = 'Test / Assessment' | 'Summary'
 
@@ -23,6 +23,10 @@ export type ResourceFormat = 'Test / Assessment' | 'Summary'
  * Database-sourced allowed-value lists that certain Product fields draw from.
  * Edited directly in the database (see docs/decisions.md) — the admin shows them as
  * fixed select options and never writes to them.
+ *
+ * `subjects` is the controlled subject vocabulary (display names). Subjects are a
+ * value list, not a table — a Product carries its subject names directly in
+ * `Product.subjects`, so there is nothing to join.
  */
 export interface ValueLists {
   grades: Grade[]
@@ -30,6 +34,7 @@ export interface ValueLists {
   years: string[]
   productKinds: ProductKind[]
   resourceFormats: ResourceFormat[]
+  subjects: string[]
 }
 
 /* --------------------------------- Shared ------------------------------ */
@@ -65,7 +70,7 @@ export interface Product {
   year: string
   productKind: ProductKind
   resourceFormat: ResourceFormat
-  /** Subject slugs. Required multi-select: at least one. */
+  /** Subject display names, drawn from value_lists.subjects. Required: at least one. */
   subjects: string[]
   marks: number | null
   purchasedFiles: ProductFile[]
@@ -87,22 +92,9 @@ export interface Product {
 
   /* Shared by Bundle and Access Plan. Included products must have Product Kind `Single`. */
   includedProductSlugs?: string[]
+  /** Subject display names (value_lists.subjects), matching Product.subjects. */
   includedSubjects?: string[]
   includedTerms?: Term[]
-}
-
-export interface Subject {
-  id: string
-  slug: string
-  name: string
-  shortLabel: string
-  description: string
-  sortOrder: number
-  visible: boolean
-  /** Optional FAQ ids referenced by this subject. */
-  faqs: string[]
-  accent?: string
-  seo?: SeoMeta
 }
 
 export interface Faq {
@@ -239,7 +231,6 @@ export interface CmsSnapshot {
   source: string
   valueLists: ValueLists
   products: Product[]
-  subjects: Subject[]
   faqs: Faq[]
   testimonials: Testimonial[]
   customers: Customer[]
@@ -261,7 +252,6 @@ export interface CmsRepository {
   /** System-managed redirects whose target is a currently-published product. */
   getSlugRedirects: () => Promise<SlugRedirect[]>
   saveProduct: (product: Product) => Promise<Product>
-  saveSubject: (subject: Subject) => Promise<Subject>
   saveFaq: (faq: Faq) => Promise<Faq>
   saveTestimonial: (testimonial: Testimonial) => Promise<Testimonial>
 }

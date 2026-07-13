@@ -1,4 +1,4 @@
-import { type Dispatch, type ReactNode, type SetStateAction } from 'react'
+import { type ReactNode } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { ScrollArea } from '@base-ui/react/scroll-area'
 import { Button } from './button'
@@ -128,9 +128,3 @@ export function ChipGroup({
     </div>
   )
 }
-
-/** Helper: build a toggler for a string[] state setter. */
-export const makeToggle =
-  (setter: Dispatch<SetStateAction<string[]>>) =>
-  (value: string) =>
-    setter((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]))

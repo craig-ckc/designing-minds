@@ -16,14 +16,12 @@ import {
   ordersForCustomer,
   updateFaqInSnapshot,
   updateProductInSnapshot,
-  updateSubjectInSnapshot,
   updateTestimonialInSnapshot,
   type CmsRepository,
   type CmsSnapshot,
   type Faq,
   type Product,
   type ProductFile,
-  type Subject,
   type Testimonial,
 } from '@designing-minds/cms'
 import { supabase } from '../lib/supabase'
@@ -109,8 +107,6 @@ export function selectRecords(snapshot: CmsSnapshot, collectionId: string): Admi
   switch (collectionId) {
     case 'products':
       return snapshot.products as unknown as AdminRecord[]
-    case 'subjects':
-      return snapshot.subjects as unknown as AdminRecord[]
     case 'faqs':
       return snapshot.faqs as unknown as AdminRecord[]
     case 'testimonials':
@@ -168,19 +164,6 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         updatedAt: '',
       }
       return product as unknown as AdminRecord
-    }
-    case 'subjects': {
-      const subject: Subject = {
-        id,
-        slug: '',
-        name: 'New subject',
-        shortLabel: '',
-        description: '',
-        sortOrder: snapshot.subjects.length + 1,
-        visible: true,
-        faqs: [],
-      }
-      return subject as unknown as AdminRecord
     }
     case 'faqs': {
       const faq: Faq = {
@@ -253,8 +236,6 @@ export function buildFieldContext(snapshot: CmsSnapshot): FieldContext {
     optionsForReference: (field: ReferenceField) => {
       if ('valueList' in field) return toOptions(snapshot.valueLists[field.valueList])
       switch (field.collection) {
-        case 'subjects':
-          return snapshot.subjects.map((s) => ({ label: s.name, value: s.slug }))
         case 'faqs':
           return snapshot.faqs.map((f) => ({ label: f.question, value: f.id }))
         case 'products':
@@ -287,10 +268,6 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
         case 'products': {
           const saved = await repository.saveProduct(record as unknown as Product)
           return { saved: saved as unknown as AdminRecord, apply: (s) => updateProductInSnapshot(s, saved) }
-        }
-        case 'subjects': {
-          const saved = await repository.saveSubject(record as unknown as Subject)
-          return { saved: saved as unknown as AdminRecord, apply: (s) => updateSubjectInSnapshot(s, saved) }
         }
         case 'faqs': {
           const saved = await repository.saveFaq(record as unknown as Faq)

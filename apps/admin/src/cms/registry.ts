@@ -11,7 +11,6 @@
 import type { AdminCollection, AdminRecord, FieldOption } from './types'
 
 const PUBLISH_LABELS = { on: 'Published', off: 'Draft', verbOn: 'Publish', verbOff: 'Unpublish' }
-const VISIBLE_LABELS = { on: 'Visible', off: 'Hidden', verbOn: 'Show', verbOff: 'Hide' }
 
 const boolOptions = (on: string, off: string): FieldOption[] => [
   { label: on, value: 'true' },
@@ -44,7 +43,7 @@ const products: AdminCollection = {
   ],
   fields: [
     { key: 'title', label: 'Name', type: 'text', required: true },
-    { key: 'slug', label: 'Slug', type: 'slug', required: true, urlPrefix: 'www.designingminds.co.za/product/' },
+    { key: 'slug', label: 'Slug', type: 'slug', required: true, urlPrefix: 'www.designingminds.co.za/shop/' },
     { key: 'shortDescription', label: 'Short description', type: 'textarea' },
     { key: 'fullDescription', label: 'Full description', type: 'richText', helpText: 'Rich text, stored as Markdown and rendered on the product page.' },
 
@@ -59,14 +58,7 @@ const products: AdminCollection = {
     { key: 'term', label: 'Term', type: 'select', valueList: 'terms', required: true },
     { key: 'year', label: 'Year', type: 'select', valueList: 'years', required: true },
     { key: 'marks', label: 'Marks', type: 'number', nullable: true },
-    {
-      key: 'subjects',
-      label: 'Subjects (at least one)',
-      type: 'multiReference',
-      collection: 'subjects',
-      valueKey: 'slug',
-      required: true,
-    },
+    { key: 'subjects', label: 'Subjects (at least one)', type: 'multiReference', valueList: 'subjects', required: true },
 
     { key: 'bundleScope', label: 'Bundle scope', type: 'select', options: [
       { label: 'Term', value: 'Term' },
@@ -89,7 +81,7 @@ const products: AdminCollection = {
       valueKey: 'slug',
       filter: isIndividualResource,
     },
-    { key: 'includedSubjects', label: 'Included subjects', type: 'multiReference', collection: 'subjects', valueKey: 'slug' },
+    { key: 'includedSubjects', label: 'Included subjects', type: 'multiReference', valueList: 'subjects' },
     { key: 'includedTerms', label: 'Included terms', type: 'multiReference', valueList: 'terms' },
 
     { key: 'purchasedFiles', label: 'Purchased files', type: 'fileList' },
@@ -135,40 +127,11 @@ const products: AdminCollection = {
   ],
 }
 
-/* --------------------------------- Subjects ---------------------------- */
-
-const subjects: AdminCollection = {
-  id: 'subjects',
-  label: 'Subjects',
-  singular: 'Subject',
-  group: 'Catalogue',
-  titleField: 'name',
-  subtitleField: 'slug',
-  statusField: 'visible',
-  statusLabels: VISIBLE_LABELS,
-  searchFields: ['name', 'slug', 'shortLabel'],
-  filters: [{ key: 'visible', label: 'Visibility', options: boolOptions('Visible', 'Hidden') }],
-  fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'shortLabel', label: 'Short label', type: 'text' },
-    { key: 'slug', label: 'Slug', type: 'slug', required: true },
-    { key: 'sortOrder', label: 'Sort order', type: 'number' },
-    { key: 'description', label: 'Description', type: 'textarea' },
-    { key: 'visible', label: 'Visible on the website', type: 'boolean' },
-    { key: 'faqs', label: 'Related FAQs', type: 'multiReference', collection: 'faqs', valueKey: 'id' },
-  ],
-  sections: [
-    { title: 'Details', fields: ['name', 'shortLabel', 'slug', 'sortOrder', 'description', 'visible'] },
-    { title: 'Related FAQs', fields: ['faqs'] },
-  ],
-  listColumns: [
-    { key: 'name', label: 'Name', width: 'minmax(200px, 1.4fr)' },
-    { key: 'slug', label: 'Slug', width: '180px' },
-    { key: 'shortLabel', label: 'Short label', width: '180px' },
-    { key: 'sortOrder', label: 'Order', width: '90px' },
-    { key: 'visible', label: 'Visibility', width: '140px', valueType: 'visibility' },
-  ],
-}
+/* --------------------------------- Subjects ----------------------------
+   Subjects are a Value List (value_lists.subjects), not a Collection. The
+   product editor picks them via the `subjects` / `includedSubjects`
+   multiReference fields above (valueList: 'subjects'). Edit the list of
+   subjects directly in the database, like grades and terms. */
 
 /* ----------------------------------- FAQs ------------------------------ */
 
@@ -396,7 +359,6 @@ const formNewsletter: AdminCollection = {
 
 export const collectionRegistry: AdminCollection[] = [
   products,
-  subjects,
   faqs,
   testimonials,
   orders,

@@ -18,7 +18,7 @@ function AnnouncementBar() {
   return (
     <Link to="/shop" className="block bg-primary text-on-primary transition-colors hover:bg-primary-strong">
       <Container className="flex items-center justify-center gap-2 py-2.5 text-center text-label font-semibold">
-        New — Term 4 CAPS resources for Grades 3–7 are here
+        New — CAPS resources for Grades 3–7 are here
         <Icon name="arrow" size={16} />
       </Container>
     </Link>
@@ -28,16 +28,25 @@ function AnnouncementBar() {
 function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
   const { customer } = useAuth()
   const cartCount = useCartSlugs().length
+  const cartLabel = `Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`
 
   return (
     <>
       <Link
         to="/cart"
         onClick={onNavigate}
+        aria-label={cartLabel}
         className="inline-flex items-center gap-2 rounded-pill px-3 py-2 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
       >
-        <Icon name="cart" size={16} />
-        <span className="hidden sm:inline">Cart ({cartCount})</span>
+        <span className="relative inline-flex">
+          <Icon name="cart" size={16} />
+          {cartCount > 0 ? (
+            <span className="absolute -right-2.5 -top-2.5 grid min-h-4 min-w-4 place-items-center rounded-pill bg-primary px-1 text-[0.625rem] font-extrabold leading-none text-on-primary ring-2 ring-canvas">
+              {cartCount > 99 ? '99+' : cartCount}
+            </span>
+          ) : null}
+        </span>
+        <span className="hidden sm:inline">Cart</span>
       </Link>
 
       {customer ? (

@@ -13,10 +13,10 @@ const cardStyles = cv({
   base: ['rounded-card'],
   variants: {
     variant: {
-      surface: ['border border-line bg-surface'],
-      surfaceAlt: ['border border-line bg-surface-alt'],
+      surface: ['bg-surface'],
+      surfaceAlt: ['bg-surface-alt'],
       featured: ['border-2 border-primary bg-primary-tint/40'],
-      interactive: ['border border-line bg-surface transition-colors hover:border-line-strong'],
+      interactive: ['bg-surface transition-colors hover:border-line-strong'],
       onPrimary: ['bg-primary text-on-primary'],
     },
     pad: {
