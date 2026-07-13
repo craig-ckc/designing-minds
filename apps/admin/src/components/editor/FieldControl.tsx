@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { useState, type DragEvent, type ReactNode } from 'react'
 import { cn } from '@designing-minds/utils'
 import type { ProductFile } from '@designing-minds/cms'
 import type { AdminField, AdminRecord, FieldContext, ReferenceField, SelectField } from '../../cms/types'
@@ -22,6 +22,7 @@ type Props = {
 export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading, uploadError, disabled }: Props) {
   const value = getPath(record, field.key)
   const inputId = `${record.id}:${field.key}`
+  const [dragActive, setDragActive] = useState(false)
 
   return <FieldShell field={field} inputId={inputId}>{renderControl()}</FieldShell>
 
@@ -29,7 +30,7 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
     switch (field.type) {
       case 'readonly': {
         const text = value == null || value === '' ? '—' : String(value)
-        return <div className={cn(FIELD, 'min-h-[42px] whitespace-pre-line text-ink-soft')}>{text}</div>
+        return <div className={cn(FIELD, 'whitespace-pre-line text-ink-soft')}>{text}</div>
       }
 
       /* Renders an object (e.g. a JSONB "data" bag) as read-only label/value
@@ -38,7 +39,7 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
         const entries =
           value && typeof value === 'object' && !Array.isArray(value) ? Object.entries(value as Record<string, unknown>) : []
         if (entries.length === 0) {
-          return <div className={cn(FIELD, 'min-h-[42px] text-ink-soft')}>No additional fields.</div>
+          return <div className={cn(FIELD, 'text-ink-soft')}>No additional fields.</div>
         }
         return (
           <dl className="grid gap-2.5 rounded-md border border-line bg-surface-alt p-3">
@@ -189,27 +190,60 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
 
   function renderFileList(): ReactNode {
     const files = Array.isArray(value) ? (value as ProductFile[]) : []
+
+    const onDrop = (e: DragEvent<HTMLLabelElement>) => {
+      e.preventDefault()
+      setDragActive(false)
+      if (uploading) return
+      const file = e.dataTransfer.files?.[0]
+      if (file) onUpload?.(file)
+    }
+
     return (
       <div className="grid gap-2">
-        <div className="flex items-center justify-between">
+        {!disabled ? (
+          <label
+            onDragOver={(e) => {
+              e.preventDefault()
+              if (!dragActive) setDragActive(true)
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={onDrop}
+            className={cn(
+              'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-control border-2 border-dashed px-4 py-5 text-center transition',
+              dragActive ? 'border-primary bg-primary-tint' : 'border-line-strong bg-surface-alt hover:border-primary',
+              uploading && 'pointer-events-none opacity-70',
+            )}
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-surface text-ink-soft">
+              <span className="h-4 w-4">
+                <Icon name="download" />
+              </span>
+            </span>
+            <span className="text-[0.85rem] font-medium text-ink">
+              {uploading ? 'Uploading…' : dragActive ? 'Drop to upload' : 'Drag & drop a file here'}
+            </span>
+            {!uploading ? (
+              <span className="text-[0.8rem] text-muted">
+                or <span className="font-medium text-primary">click to browse</span>
+              </span>
+            ) : null}
+            <input
+              className="sr-only"
+              type="file"
+              disabled={uploading}
+              onChange={(e) => e.target.files?.[0] && onUpload?.(e.target.files[0])}
+            />
+          </label>
+        ) : null}
+        {uploadError ? <p className="text-[0.82rem] text-danger">{uploadError}</p> : null}
+        {files.length > 0 ? (
           <span className="text-[0.82rem] text-muted">
-            {files.length} file{files.length === 1 ? '' : 's'}
+            {files.length} file{files.length === 1 ? '' : 's'} attached
           </span>
-          {!disabled ? (
-            <label className="cursor-pointer text-[0.85rem] underline underline-offset-4">
-              {uploading ? 'Uploading…' : 'Upload'}
-              <input
-                className="sr-only"
-                type="file"
-                disabled={uploading}
-                onChange={(e) => e.target.files?.[0] && onUpload?.(e.target.files[0])}
-              />
-            </label>
-          ) : null}
-        </div>
-        {uploadError ? <p className="text-[0.82rem] text-red-600">{uploadError}</p> : null}
+        ) : null}
         {files.length === 0 ? (
-          <p className="text-[0.85rem] text-muted">No files attached.</p>
+          disabled ? <p className="text-[0.85rem] text-muted">No files attached.</p> : null
         ) : (
           <ul className="grid gap-1.5">
             {files.map((file) => (
@@ -224,7 +258,7 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
                   <span className="truncate pl-6 text-[0.78rem] text-muted">{file.storageKey ?? 'No storage key yet'}</span>
                 </span>
                 {!disabled ? (
-                  <Button variant="text" onClick={() => onUpdate(field.key, files.filter((f) => f.id !== file.id))}>
+                  <Button variant="ghost" size="sm" onClick={() => onUpdate(field.key, files.filter((f) => f.id !== file.id))}>
                     Remove
                   </Button>
                 ) : null}

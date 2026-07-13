@@ -38,7 +38,7 @@ export function FilterPopover({
           </span>
           Filter
           {active > 0 ? (
-            <span className="grid h-4 min-w-4 place-items-center rounded-full bg-ink px-1 text-[0.68rem] font-semibold text-white">
+            <span className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[0.68rem] font-semibold text-on-primary">
               {active}
             </span>
           ) : null}
@@ -49,7 +49,7 @@ export function FilterPopover({
       <div className="flex flex-none items-center justify-between border-b border-line px-3.5 py-2.5">
         <span className="text-[0.8rem] font-semibold uppercase tracking-[0.08em] text-muted">Filters</span>
         {active > 0 ? (
-          <Button variant="text" className="text-[0.82rem]" onClick={() => onChange({})}>
+          <Button variant="ghost" size="sm" onClick={() => onChange({})}>
             Clear all
           </Button>
         ) : null}

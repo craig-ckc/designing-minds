@@ -48,7 +48,7 @@ export function RecordsToolbar({
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={`Search ${title.toLowerCase()}…`}
           aria-label={`Search ${title.toLowerCase()}`}
-          className="min-h-0 h-[34px] w-[200px] pl-8 pr-3 text-[0.85rem]"
+          className="min-h-0 h-8 w-[200px] pl-8 pr-3 text-[0.85rem]"
         />
       </div>
 
@@ -59,7 +59,7 @@ export function RecordsToolbar({
         size="sm"
         onClick={onToggleSelecting}
         aria-pressed={selecting}
-        className={cn(selecting && 'border-ink bg-surface-alt text-ink')}
+        className={cn(selecting && 'border-primary bg-primary-tint text-primary hover:border-primary hover:text-primary')}
       >
         <span className="h-3.5 w-3.5">
           <Icon name="check" />

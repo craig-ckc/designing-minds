@@ -38,7 +38,7 @@ export function RecordListPane({
         ) : null}
       </div>
 
-      <ScrollArea className="min-h-0 flex-1" viewportClassName="p-2">
+      <ScrollArea className="min-h-0 flex-1" viewportClassName="flex flex-col gap-1 p-2">
         {records.map((record) => {
           const active = record.id === selectedId
           const subtitle = getRecordSubtitle(collection, record)
@@ -48,7 +48,7 @@ export function RecordListPane({
               type="button"
               onClick={() => onSelect(record.id)}
               className={cn(
-                'flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition',
+                'flex w-full items-center gap-2.5 rounded-md px-2 py-1 text-left transition',
                 active ? 'bg-surface-alt font-medium text-ink' : 'text-ink-soft hover:bg-surface-alt hover:text-ink',
               )}
             >

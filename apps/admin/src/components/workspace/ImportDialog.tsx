@@ -92,13 +92,14 @@ export function ImportDialog({
             {collection.label.toLowerCase()}. Blank cells keep the current value. Nothing is saved until you confirm the
             preview.
           </p>
-          {fileError ? <p className="text-[0.85rem] text-red-600">{fileError}</p> : null}
+          {fileError ? <p className="text-[0.85rem] text-danger">{fileError}</p> : null}
           <div className="flex flex-wrap items-center gap-2.5">
             <Button variant="solid" size="sm" onClick={() => fileInput.current?.click()}>
               Choose CSV file
             </Button>
             <Button
-              variant="text"
+              variant="outline"
+              size="sm"
               onClick={() => downloadCsv(`${collection.id}-template.csv`, buildCsv(collection, []))}
             >
               Download template
@@ -205,7 +206,7 @@ function PreviewStep({
                       {row.errors.length === 0 ? (
                         <span className="text-muted">—</span>
                       ) : (
-                        <ul className="grid gap-0.5 text-[0.82rem] text-red-600">
+                        <ul className="grid gap-0.5 text-[0.82rem] text-danger">
                           {row.errors.map((error) => (
                             <li key={error}>{error}</li>
                           ))}

@@ -152,10 +152,10 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onUpload 
             {selecting ? (
               <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line bg-surface-alt px-6 py-2 text-[0.85rem]">
                 <span className="font-medium">{selected.size} selected</span>
-                <Button variant="text" onClick={() => setSelected(new Set(filtered.map((record) => record.id)))}>
+                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(filtered.map((record) => record.id)))}>
                   Select all {filtered.length}
                 </Button>
-                <Button variant="text" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
+                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
                   Clear
                 </Button>
                 <span className="ml-auto flex flex-wrap items-center gap-2">

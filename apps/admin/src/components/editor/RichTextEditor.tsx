@@ -39,8 +39,8 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        'rich-text overflow-hidden rounded-md border border-line-strong bg-surface',
-        'focus-within:outline focus-within:outline-2 focus-within:outline-ink focus-within:-outline-offset-1',
+        'rich-text overflow-hidden rounded-control border border-line-strong bg-surface',
+        'focus-within:outline focus-within:outline-2 focus-within:outline-primary focus-within:-outline-offset-1',
         disabled && 'opacity-70',
       )}
     >
@@ -77,7 +77,7 @@ function ToolButton({
       className={cn(
         'grid h-7 min-w-7 place-items-center rounded px-1.5 text-[0.8rem] font-medium text-ink-soft transition',
         'hover:bg-surface-alt hover:text-ink',
-        active && 'bg-ink text-white hover:bg-ink hover:text-white',
+        active && 'bg-primary text-on-primary hover:bg-primary hover:text-on-primary',
         className,
       )}
     >

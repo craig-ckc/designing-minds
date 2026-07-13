@@ -26,7 +26,7 @@ function TopBar() {
   return (
     <header className="sticky top-0 z-30 flex h-12 flex-none items-center gap-3 border-b border-line bg-surface px-3">
       <div className="flex min-w-0 items-center gap-2.5">
-        <span className="grid h-7 w-7 flex-none place-items-center rounded-md bg-ink text-[0.72rem] font-semibold tracking-[-0.04em] text-white">
+        <span className="grid h-7 w-7 flex-none place-items-center rounded-md bg-primary text-[0.72rem] font-bold tracking-[-0.04em] text-on-primary">
           DM
         </span>
         <span className="hidden truncate text-[0.9rem] font-semibold tracking-[-0.01em] sm:block">Designing Minds</span>
@@ -63,7 +63,7 @@ function TopBar() {
             <button
               type="button"
               aria-label="Account"
-              className="grid h-7 w-7 flex-none place-items-center rounded-full bg-surface-sunk text-[0.72rem] font-semibold text-ink-soft transition hover:bg-surface-alt focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-1"
+              className="grid h-7 w-7 flex-none place-items-center rounded-full bg-surface-sunk text-[0.72rem] font-semibold text-ink-soft transition hover:bg-surface-alt focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1"
             >
               {initial}
             </button>
@@ -74,7 +74,7 @@ function TopBar() {
             <span className="block truncate text-[0.85rem] text-ink">{email}</span>
           </MenuLabel>
           <MenuLabel className="flex items-center gap-1.5">
-            <span className={`h-1.5 w-1.5 rounded-full ${repository.canWrite ? 'bg-ink' : 'bg-line-strong'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${repository.canWrite ? 'bg-primary' : 'bg-line-strong'}`} />
             {repository.canWrite ? 'Write access' : 'Read only'}
           </MenuLabel>
           <MenuSeparator />
@@ -125,11 +125,11 @@ export function Shell({
           {message || error ? (
             <div className="pointer-events-none absolute bottom-4 right-4 z-20 max-w-sm">
               {error ? (
-                <div className="pointer-events-auto rounded-md border border-ink bg-surface px-4 py-2.5 text-[0.9rem] text-ink shadow-lg">
+                <div className="pointer-events-auto rounded-control border border-danger bg-danger-tint px-4 py-2.5 text-[0.9rem] text-danger shadow-lg">
                   {error}
                 </div>
               ) : (
-                <div className="pointer-events-auto rounded-md border border-line bg-surface px-4 py-2.5 text-[0.9rem] text-ink-soft shadow-lg">
+                <div className="pointer-events-auto rounded-control border border-line bg-surface px-4 py-2.5 text-[0.9rem] text-ink-soft shadow-lg">
                   {message}
                 </div>
               )}

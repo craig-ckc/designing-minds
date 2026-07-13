@@ -2,23 +2,46 @@ import { type ReactNode } from 'react'
 import { cn, cv } from '@designing-minds/utils'
 import type { OrderStatus, PaymentStatus, ProductKind } from '@designing-minds/cms'
 
-/** Monochrome status pill — varies by fill/outline/opacity, never colour. */
-const pill = cv({
-  base: ['inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.72rem] font-medium uppercase tracking-[0.06em]'],
+type Tone = 'solid' | 'outline' | 'muted'
+
+/**
+ * Status shown as a plain text label with a single leading tone dot — the
+ * table's answer to the old pill/chip. Tone drives the dot colour and the
+ * text emphasis (live → brand pink, in-progress → ink, inactive → faded),
+ * never a filled background. Export names keep the `Pill` suffix so callers
+ * (RecordTable, DashboardPage) don't churn.
+ */
+const dotStyles = cv({
+  base: ['h-1.5 w-1.5 flex-none rounded-full'],
   variants: {
     tone: {
-      solid: ['border border-ink bg-ink text-white'],
-      outline: ['border border-line-strong bg-surface text-ink'],
-      muted: ['border border-line bg-surface-alt text-muted'],
+      solid: ['bg-primary'],
+      outline: ['bg-ink-soft'],
+      muted: ['bg-line-strong'],
     },
   },
   defaultVariants: { tone: 'outline' },
 })
 
-type Tone = 'solid' | 'outline' | 'muted'
+const labelStyles = cv({
+  base: ['capitalize'],
+  variants: {
+    tone: {
+      solid: ['text-ink'],
+      outline: ['text-ink-soft'],
+      muted: ['text-muted'],
+    },
+  },
+  defaultVariants: { tone: 'outline' },
+})
 
 export function Pill({ children, tone, className }: { children: ReactNode; tone?: Tone; className?: string }) {
-  return <span className={cn(pill({ tone }), className)}>{children}</span>
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap', labelStyles({ tone }), className)}>
+      <span className={dotStyles({ tone })} aria-hidden />
+      {children}
+    </span>
+  )
 }
 
 const ORDER_TONE: Record<OrderStatus, Tone> = {

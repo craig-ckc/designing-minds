@@ -190,7 +190,8 @@ export function SelectField({
 
 export function Chip({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-full border border-line px-2.5 py-1 text-[0.72rem] uppercase tracking-[0.04em] text-muted">
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[0.85rem] text-ink-soft">
+      <span className="h-1.5 w-1.5 flex-none rounded-full bg-line-strong" aria-hidden />
       {children}
     </span>
   )
@@ -220,17 +221,21 @@ export function PageHeader({
   )
 }
 
-/* Monochrome status pill — varies by fill / outline / opacity, never colour. */
+/* Status shown as a text label with a leading tone dot (matches Badge.tsx). */
 export function StatusBadge({ status }: { status: 'Paid' | 'Pending' | 'Refunded' }) {
-  const styles: Record<string, string> = {
-    Paid: 'border-ink bg-ink text-white',
-    Pending: 'border-line-strong bg-surface text-ink',
-    Refunded: 'border-line bg-surface-alt text-muted',
+  const dot: Record<string, string> = {
+    Paid: 'bg-primary',
+    Pending: 'bg-ink-soft',
+    Refunded: 'bg-line-strong',
+  }
+  const text: Record<string, string> = {
+    Paid: 'text-ink',
+    Pending: 'text-ink-soft',
+    Refunded: 'text-muted',
   }
   return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.72rem] font-medium uppercase tracking-[0.06em] ${styles[status]}`}
-    >
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${text[status]}`}>
+      <span className={`h-1.5 w-1.5 flex-none rounded-full ${dot[status]}`} aria-hidden />
       {status}
     </span>
   )

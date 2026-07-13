@@ -1,22 +1,70 @@
 @import "tailwindcss";
 
 /* =========================================================================
-   Designing Minds — Relume-style wireframe theme (Tailwind v4, CSS-first)
+   Designing Minds — Admin theme (Tailwind v4, CSS-first).
+   Shares the public site's art direction (see apps/web/src/index.css):
+   warm off-white canvas, Manrope display type, a vivid brand-pink primary
+   and warm neutrals. The admin keeps its own dense sizing — only colour,
+   type and radius come across. Editing tokens here recolours the app.
    ========================================================================= */
 
 @theme {
-  --color-ink: #111113;
-  --color-ink-soft: #3d3d42;
-  --color-muted: #6c6c74;
-  --color-line: #d9d9de;
-  --color-line-strong: #b9b9c0;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f3f3f1;
-  --color-surface-sunk: #ebebe7;
-  --color-ph: #e4e4e1;
-  --color-ph-glyph: #b6b6b1;
+  /* ---- Warm neutrals -------------------------------------------------- */
+  --color-canvas: #fbfaf8; /* app background (warm off-white) */
+  --color-cream: #fcf6ea; /* warm accent band */
+  --color-surface: #ffffff; /* cards, panels, raised surfaces */
+  --color-surface-alt: #f6f3ec; /* thead / hover / selected row */
+  --color-surface-sunk: #efeae1; /* sunk surface, secondary buttons, hover */
+  --color-ink: #1c1917; /* warm near-black — headings & primary text */
+  --color-ink-soft: #57534e; /* secondary text */
+  --color-muted: #79716b; /* tertiary text / captions */
+  --color-line: #ece8e1; /* hairline borders */
+  --color-line-strong: #ddd7cc; /* stronger borders / inputs */
+  --color-ph: #efeae1; /* placeholder fill */
+  --color-ph-glyph: #b9b0a4; /* placeholder glyph */
 
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* ---- Brand primary (Designing Minds pink) --------------------------- */
+  --color-primary: #f15699;
+  --color-primary-strong: #e55391; /* hover / pressed */
+  --color-primary-tint: #feeef3; /* soft brand backgrounds & active chips */
+  --color-primary-edge: color-mix(in oklab, var(--color-primary-strong), black 22%); /* hairline edge on the solid button */
+
+  /* Primary-button surface — subtle vertical brand gradient (lighter top →
+     deeper bottom), mirrored from the public site. Derived from the tokens
+     above, so editing the brand pink recolours the button too. */
+  --gradient-primary: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-primary), white 10%) 0%,
+    var(--color-primary-strong) 100%
+  );
+  --gradient-primary-hover: linear-gradient(
+    180deg,
+    var(--color-primary) 0%,
+    color-mix(in oklab, var(--color-primary-strong), black 12%) 100%
+  );
+
+  /* ---- Semantic colour roles ------------------------------------------ */
+  --color-on-primary: #ffffff; /* text / icons on primary & dark surfaces */
+  --color-danger: #c0362c; /* validation / error text & borders */
+  --color-danger-tint: #fbe9e7; /* error banner background */
+
+  --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* ---- Elevation ------------------------------------------------------
+     Flat by design: separation comes from borders and surface tints, not
+     drop shadows. These are `none` so any lingering shadow-* utility is a
+     no-op; reintroduce a value here to bring a subtle shadow back. */
+  --shadow-soft: none;
+  --shadow-card: none;
+  --shadow-lift: none;
+
+  /* ---- Radius (semantic surface scale) --------------------------------
+     Tighter than the public site — this is a dense workspace, so controls
+     and cards read crisper with a smaller radius. */
+  --radius-control: 0.5rem; /* 8px — buttons, inputs, select, notices */
+  --radius-card: 0.625rem; /* 10px — canonical card / raised surface */
+  --radius-panel: 1.5rem; /* 24px — large panels */
+  --radius-pill: 9999px; /* pills, badges, icon-buttons, avatars */
 }
 
 @layer base {
@@ -31,7 +79,7 @@
     margin: 0;
     min-width: 320px;
     line-height: 1.55;
-    @apply bg-surface text-ink;
+    @apply bg-canvas text-ink;
   }
 
   #root {
@@ -45,32 +93,36 @@
     text-decoration: none;
   }
 
+  /* Bold, tightly-set Manrope display headings (matches the public site);
+     the admin keeps its own compact clamp sizes. */
   h1 {
-    @apply font-semibold leading-[1.12] tracking-[-0.02em] text-[clamp(2.4rem,5.2vw,3.9rem)];
+    @apply font-extrabold leading-[1.06] tracking-[-0.04em] text-[clamp(2.4rem,5.2vw,3.9rem)];
   }
   h2 {
-    @apply font-semibold leading-[1.12] tracking-[-0.02em] text-[clamp(1.9rem,3.6vw,2.85rem)];
+    @apply font-extrabold leading-[1.08] tracking-[-0.035em] text-[clamp(1.9rem,3.6vw,2.85rem)];
   }
   h3 {
-    @apply font-semibold leading-[1.15] tracking-[-0.02em] text-[clamp(1.35rem,2.2vw,1.7rem)];
+    @apply font-bold leading-[1.15] tracking-[-0.03em] text-[clamp(1.35rem,2.2vw,1.7rem)];
   }
   h4 {
-    @apply font-semibold leading-snug text-[1.12rem];
+    @apply font-bold leading-snug tracking-[-0.02em] text-[1.12rem];
   }
 
   /* Native accordion marker reset — the one thing utilities can't express */
   details > summary { list-style: none; cursor: pointer; }
   details > summary::-webkit-details-marker { display: none; }
 
-  /* Monochrome focus: nothing on mouse-click, an ink ring for keyboard users —
+  /* Brand focus: nothing on mouse-click, a primary ring for keyboard users —
      never the browser's default blue outline. */
   :focus:not(:focus-visible) {
     outline: none;
   }
   :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+
+  ::selection { background: var(--color-primary); color: #fff; }
 }
 
 /* =========================================================================
@@ -94,16 +146,17 @@
 .rich-text li { margin: 0.15em 0; }
 .rich-text hr { border: 0; border-top: 1px solid var(--color-line); margin: 1.1em 0; }
 .rich-text blockquote {
-  border-left: 2px solid var(--color-line-strong);
+  border-left: 3px solid var(--color-primary);
   padding-left: 0.9em;
   color: var(--color-ink-soft);
   margin: 0.6em 0;
 }
 .rich-text code {
   background: var(--color-surface-alt);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 0.1em 0.35em;
   font-size: 0.88em;
 }
+.rich-text a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
 .rich-text > :first-child, .rich-text .tiptap > :first-child { margin-top: 0; }
 .rich-text > :last-child, .rich-text .tiptap > :last-child { margin-bottom: 0; }

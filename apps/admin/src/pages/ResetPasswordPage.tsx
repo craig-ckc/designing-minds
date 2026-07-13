@@ -52,7 +52,7 @@ export function ResetPasswordPage() {
           Confirm password
           <Input type="password" value={confirm} onChange={(event) => setConfirm(event.target.value)} autoComplete="new-password" required />
         </label>
-        <Button type="submit" variant="solid" size="md" disabled={submitting} className="h-[46px] w-full">
+        <Button type="submit" variant="solid" size="md" disabled={submitting} className="h-[42px] w-full">
           {submitting ? 'Saving…' : 'Update password'}
         </Button>
       </form>

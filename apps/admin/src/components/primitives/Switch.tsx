@@ -1,7 +1,7 @@
 import { Switch as BaseSwitch } from '@base-ui/react/switch'
 import { cn } from '@designing-minds/utils'
 
-/** Monochrome toggle switch on the Base UI Switch primitive (Webflow-style On/Off). */
+/** Brand toggle switch on the Base UI Switch primitive (Webflow-style On/Off). */
 export function Switch({
   checked,
   onCheckedChange,
@@ -24,8 +24,8 @@ export function Switch({
       aria-label={ariaLabel}
       className={cn(
         'relative h-5 w-9 flex-none rounded-full border border-line-strong bg-surface-alt p-0.5 transition-colors',
-        'data-[checked]:border-ink data-[checked]:bg-ink',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-1',
+        'data-[checked]:border-primary-edge data-[checked]:bg-primary',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
         'disabled:cursor-not-allowed disabled:opacity-50',
       )}
     >

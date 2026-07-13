@@ -6,7 +6,7 @@ import { CARD } from '../components/tokens'
 
 function StatCard({ icon, value, label, to }: { icon: IconName; value: string; label: string; to: string }) {
   return (
-    <Link to={to} className={`flex flex-col gap-3 p-5 transition hover:border-ink ${CARD}`}>
+    <Link to={to} className={`flex flex-col gap-3 p-5 transition hover:border-primary ${CARD}`}>
       <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-surface-sunk text-ink-soft">
         <span className="h-5 w-5">
           <Icon name={icon} />
@@ -38,8 +38,14 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
       <div className="mt-8">
         <div className="mb-4 flex items-center justify-between">
           <h3>Recent orders</h3>
-          <Link to="/orders" className="text-[0.9rem] font-medium underline underline-offset-4">
+          <Link
+            to="/orders"
+            className="inline-flex items-center gap-1 text-[0.9rem] font-medium text-ink-soft transition hover:text-primary"
+          >
             View all
+            <span className="h-3.5 w-3.5">
+              <Icon name="arrow" />
+            </span>
           </Link>
         </div>
         <TableWrap>
@@ -57,7 +63,10 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
               {recent.map((order) => (
                 <tr key={order.id} className="hover:bg-surface-alt">
                   <Td>
-                    <Link to={`/orders/${order.id}`} className="font-medium underline underline-offset-4">
+                    <Link
+                      to={`/orders/${order.id}`}
+                      className="font-medium underline-offset-4 transition hover:text-primary hover:underline"
+                    >
                       {order.reference}
                     </Link>
                   </Td>

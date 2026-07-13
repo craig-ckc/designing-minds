@@ -62,7 +62,7 @@ export function LoginPage() {
                 <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
               </label>
             ) : null}
-            <Button type="submit" variant="solid" size="md" disabled={submitting} className="h-[46px] w-full">
+            <Button type="submit" variant="solid" size="md" disabled={submitting} className="h-[42px] w-full">
               {submitting ? (forgot ? 'Sending…' : 'Logging in…') : forgot ? 'Send reset link' : 'Log in'}
             </Button>
           </>
@@ -71,7 +71,7 @@ export function LoginPage() {
         <button
           type="button"
           onClick={() => switchMode(forgot ? 'login' : 'forgot')}
-          className="justify-self-start text-[0.85rem] text-ink-soft underline underline-offset-4 hover:text-ink"
+          className="justify-self-start text-[0.85rem] text-ink-soft underline-offset-4 hover:text-ink hover:underline"
         >
           {forgot ? 'Back to log in' : 'Forgot password?'}
         </button>

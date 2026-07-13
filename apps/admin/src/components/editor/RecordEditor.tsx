@@ -78,15 +78,15 @@ export function RecordEditor({
         </div>
 
         <div className="ml-auto flex flex-none items-center gap-3">
-          {error ? <span className="text-[0.85rem] text-red-600">{error}</span> : null}
+          {error ? <span className="text-[0.85rem] text-danger">{error}</span> : null}
           {editable && dirty && !error ? (
             <span className="flex items-center gap-1.5 text-[0.8rem] text-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-ink" />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               Unsaved changes
             </span>
           ) : null}
           {editable && collection.statusField && labels ? (
-            <Button variant="text" onClick={onToggleStatus} disabled={saving}>
+            <Button variant="soft" size="md" onClick={onToggleStatus} disabled={saving}>
               {statusOn ? labels.verbOff : labels.verbOn}
             </Button>
           ) : null}

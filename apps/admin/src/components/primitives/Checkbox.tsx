@@ -2,7 +2,7 @@ import { Checkbox as BaseCheckbox } from '@base-ui/react/checkbox'
 import { cn } from '@designing-minds/utils'
 import { Icon } from '../ui'
 
-/** Monochrome checkbox on the Base UI Checkbox primitive. */
+/** Brand checkbox on the Base UI Checkbox primitive. */
 export function Checkbox({
   checked,
   onCheckedChange,
@@ -26,9 +26,9 @@ export function Checkbox({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        'grid h-4 w-4 flex-none place-items-center rounded border border-line-strong bg-surface text-white transition',
-        'data-[checked]:border-ink data-[checked]:bg-ink',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-1',
+        'grid h-4 w-4 flex-none place-items-center rounded border border-line-strong bg-surface text-on-primary transition',
+        'data-[checked]:border-primary-edge data-[checked]:bg-primary',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
