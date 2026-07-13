@@ -10,6 +10,13 @@ test('product detail media uses the centered shared product cover', () => {
   assert.doesNotMatch(productPageSource, /<Placeholder/)
 })
 
+test('product cover thumbnails do not repeat the full inline logo SVG', () => {
+  const coverSource = readFileSync(new URL('../../apps/web/src/components/ui/product-cover.tsx', import.meta.url), 'utf8')
+
+  assert.doesNotMatch(coverSource, /import \{ Logo \}/)
+  assert.match(coverSource, />\s*Designing Minds\s*<\/span>/)
+})
+
 test('bundle and access-plan contents use the non-interactive included product component', () => {
   assert.match(productPageSource, /import \{ IncludedProduct \} from '\.\.\/components\/ui\/included-product'/)
   assert.match(productPageSource, /included\.map\(\(entry\) => \([\s\S]*<IncludedProduct key=\{entry\.id\} product=\{entry\} \/>/)

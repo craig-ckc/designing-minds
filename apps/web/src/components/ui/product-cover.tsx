@@ -1,6 +1,5 @@
 import { type Product } from '@designing-minds/cms'
 import { subjectIllustration, termColorway, type SubjectIllustration } from '../../lib/cover-mappings'
-import { Logo } from './logo'
 
 /**
  * Product "book cover" thumbnail, rebuilt from the Figma A4 frame (595×842).
@@ -56,9 +55,9 @@ function CoverFace({ product, illustration, className = '' }: { product: Product
         </div>
 
         <div className={`absolute left-[7.56%] top-0 h-full w-[0.34cqw] opacity-30 ${solid}`} aria-hidden />
-        <div className="absolute left-[13.78%] top-[4.16%] w-[16.13%]">
-          <Logo className={`block w-full ${fg}`} />
-        </div>
+        <span className={`absolute left-[13.78%] top-[4.16%] text-[2.5cqw] font-extrabold uppercase tracking-[0.08em] ${fg}`}>
+          Designing Minds
+        </span>
         <p className={`absolute left-[13.78%] top-[11.64%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.034cqw] opacity-80 ${fg} text-[4.36cqw]`}>
           {product.grade}
         </p>
