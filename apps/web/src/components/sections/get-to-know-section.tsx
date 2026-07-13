@@ -16,7 +16,6 @@ const INTERVAL_MS = 5000
 
 export function GetToKnowSection() {
   const [active, setActive] = useState(0)
-  const [paused, setPaused] = useState(false)
   const [reduced, setReduced] = useState(false)
   // Bumped on manual selection so the progress timer restarts from zero.
   const [cycle, setCycle] = useState(0)
@@ -35,12 +34,11 @@ export function GetToKnowSection() {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
-  // Single rAF clock drives the underline fill and the auto-advance, so they
-  // stay in sync and pause together on hover. Width is written imperatively to
-  // avoid a React render per frame.
+  // Single rAF clock drives the underline fill and the auto-advance. Width is
+  // written imperatively to avoid a React render per frame.
   useEffect(() => {
     if (fillRef.current) fillRef.current.style.width = '0%'
-    if (paused || reduced || items.length < 2) return
+    if (reduced || items.length < 2) return
     let raf = 0
     let start: number | null = null
     const tick = (t: number) => {
@@ -55,7 +53,7 @@ export function GetToKnowSection() {
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [paused, reduced, cycle])
+  }, [reduced, cycle])
 
   return (
     <Section>
@@ -75,13 +73,7 @@ export function GetToKnowSection() {
         </div>
       </div>
 
-      <div
-        className="mt-10 grid gap-8 lg:mt-14 lg:grid-cols-2 lg:items-center"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onFocusCapture={() => setPaused(true)}
-        onBlurCapture={() => setPaused(false)}
-      >
+      <div className="mt-10 grid gap-8 lg:mt-14 lg:grid-cols-2 lg:items-center">
         <Accordion.Root
           multiple={false}
           value={[active]}

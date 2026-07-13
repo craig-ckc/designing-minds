@@ -12,7 +12,7 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
     return <p className="text-muted">No questions have been added yet.</p>
   }
   return (
-    <Accordion.Root multiple={false} defaultValue={[]} className="border-t border-line">
+    <Accordion.Root multiple defaultValue={[]} className="border-t border-line">
       {faqs.map((faq) => (
         <Accordion.Item key={faq.id} value={faq.id} className="border-b border-line">
           <Accordion.Header className="m-0">
