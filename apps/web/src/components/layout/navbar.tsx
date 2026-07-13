@@ -53,6 +53,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/account"
           onClick={onNavigate}
+          aria-label={`${customer.name} — Customer account`}
           className="flex items-center gap-2 rounded-pill py-1 px-1 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
           title={`${customer.name} — Customer Account`}
         >
@@ -64,6 +65,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           to="/login"
           onClick={onNavigate}
+          aria-label="Log in to your account"
           className="inline-flex items-center gap-2 rounded-pill px-3 py-2 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
         >
           <Icon name="user" size={16} />
@@ -131,7 +133,7 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
         <Container className="grid gap-10 py-10 lg:grid-cols-[1fr_1.7fr]">
           {/* Links */}
           <div>
-            <h5 className="mb-3 text-label font-semibold uppercase tracking-[0.1em] text-muted">Browse</h5>
+            <p className="mb-3 text-label font-semibold uppercase tracking-[0.1em] text-muted">Browse</p>
             <ul className="-mx-3 grid gap-1">
               <MegaLink to="/shop" onClose={onClose} icon="doc" label="All resources" sub="The full catalogue" />
               <MegaLink to="/grades" onClose={onClose} icon="book" label="Grades" sub="Browse Grades 3–7" />
@@ -141,7 +143,7 @@ function ShopMega({ tiers, onClose, panelRef }: { tiers: AccessPlanTier[]; onClo
 
           {/* Access plan tiers */}
           <div>
-            <h5 className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">Access plans</h5>
+            <p className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">Access plans</p>
             {tiers.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 {tiers.map((tier) => (
@@ -251,7 +253,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
           {/* Mobile menu */}
           <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
-            <Dialog.Trigger className="grid h-10 w-10 place-items-center rounded-pill hover:bg-surface-sunk lg:hidden">
+            <Dialog.Trigger aria-label="Open navigation menu" className="grid h-10 w-10 place-items-center rounded-pill hover:bg-surface-sunk lg:hidden">
               <Icon name="menu" size={20} />
             </Dialog.Trigger>
             <Dialog.Portal>
@@ -261,7 +263,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
                   <Dialog.Title className="text-label font-semibold uppercase tracking-[0.12em] text-muted">
                     Menu
                   </Dialog.Title>
-                  <Dialog.Close className="grid h-9 w-9 place-items-center rounded-pill hover:bg-surface-sunk">
+                  <Dialog.Close aria-label="Close navigation menu" className="grid h-9 w-9 place-items-center rounded-pill hover:bg-surface-sunk">
                     <Icon name="close" size={20} />
                   </Dialog.Close>
                 </div>

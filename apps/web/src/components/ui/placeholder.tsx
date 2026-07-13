@@ -27,7 +27,7 @@ export function Placeholder({
       style={ratio ? { aspectRatio: ratio } : undefined}
       aria-hidden={src ? undefined : true}
     >
-      <img src={src ?? '/placeholder-image.svg'} alt={alt} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <img src={src ?? '/placeholder-image.svg'} alt={alt} aria-hidden={alt ? undefined : true} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       {label ? (
         <span className="absolute bottom-2.5 left-2.5 rounded-pill bg-surface/80 px-2 py-0.5 text-caption font-medium text-muted backdrop-blur-sm">
           {label}

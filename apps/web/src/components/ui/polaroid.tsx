@@ -26,7 +26,7 @@ export function Polaroid({
       style={{ transform: `rotate(${rotate})` }}
     >
       <div className="overflow-hidden rounded-[4px] bg-surface-sunk" style={{ aspectRatio: ratio }}>
-        <img src={src ?? '/placeholder-image.svg'} alt={alt} className="h-full w-full object-cover" loading="lazy" />
+        <img src={src ?? '/placeholder-image.svg'} alt={alt} aria-hidden={alt ? undefined : true} className="h-full w-full object-cover" loading="lazy" />
       </div>
       {caption ? (
         <figcaption className="pt-2.5 pb-0.5 text-center text-caption font-bold uppercase tracking-[0.12em] text-muted">

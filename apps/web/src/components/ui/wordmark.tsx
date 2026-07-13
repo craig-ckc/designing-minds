@@ -11,7 +11,7 @@ export function Wordmark({
   className?: string
 }) {
   return (
-    <Link to="/" onClick={onClick} className={`flex items-center gap-2.5 ${className}`}>
+    <Link to="/" onClick={onClick} aria-label="Designing Minds home" className={`flex items-center gap-2.5 ${className}`}>
       <Logo className="w-35 flex-none text-primary" />
     </Link>
   )

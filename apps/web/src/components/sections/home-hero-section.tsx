@@ -178,7 +178,7 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
           <div key={activeGrade} className="grid grid-cols-2 sm:grid-cols-4">
             {covers.map((p, i) => (
               <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${i * 70}ms` }}>
-                <Link to={`/shop/${p.slug}`} className="block transition-transform hover:-translate-y-1">
+                <Link to={`/shop/${p.slug}`} aria-label={`View ${p.title}`} className="block transition-transform hover:-translate-y-1">
                   <ProductCover product={p} />
                 </Link>
               </div>

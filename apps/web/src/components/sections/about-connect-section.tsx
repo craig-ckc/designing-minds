@@ -9,10 +9,10 @@ function ConnectCard({ title, body, children, image }: { title: string, body: st
     <Card as="article" pad="none" className="flex flex-col overflow-hidden min-h-[36rem] relative">
       {/* <Placeholder ratio="16 / 10" flush className="mt-auto" /> */}
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden" aria-hidden="true">
-        <img src={image} alt="" className="w-full h-full object-contain" />
+        <img src={image} alt="" aria-hidden="true" className="w-full h-full object-contain" />
       </div>
       <div className="p-7 sm:p-8 relative">
-        <h4 className="max-w-[18ch]">{title}</h4>
+        <h3 className="max-w-[18ch]">{title}</h3>
         <p className="mt-2 max-w-[44ch] text-body text-muted">{body}</p>
         <div className="mt-6">{children}</div>
       </div>

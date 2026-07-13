@@ -61,7 +61,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
         </Container>
 
         <div aria-hidden className="h-[clamp(9rem,20vw,18rem)]" >
-          <img src="/images/image-03.png" alt="" className="w-full h-full object-cover" />
+          <img src="/images/image-03.png" alt="" aria-hidden="true" className="w-full h-full object-cover" />
         </div>
 
         <div className="bg-[#FDF6F0]" >
@@ -78,7 +78,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
 function FooterColumn({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <h5 className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">{title}</h5>
+      <h2 className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">{title}</h2>
       <ul className="grid gap-2.5">{children}</ul>
     </div>
   )

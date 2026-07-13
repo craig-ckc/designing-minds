@@ -18,7 +18,7 @@ export function ProductCard({ product }: { product: Product }) {
       pad="none"
       className="group flex flex-col rounded-lg transition-colors duration-200 hover:border-primary/40"
     >
-      <Link to={href} className="block">
+      <Link to={href} aria-label={`View ${product.title}`} className="block">
         <ProductCover product={product} />
       </Link>
 

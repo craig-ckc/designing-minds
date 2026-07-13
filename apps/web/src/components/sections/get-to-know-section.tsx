@@ -110,7 +110,7 @@ export function GetToKnowSection() {
         </Accordion.Root>
 
         <div className="relative hidden lg:block aspect-[4/3]">
-          <img src="/images/image-04.png" alt="" className="absolute inset-0 w-full h-full object-contain" />
+          <img src="/images/image-04.png" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-contain" />
         </div>
 
         {/* <Placeholder ratio="4 / 3" className="bg-surface" /> */}
