@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { PAYFAST_FIELD_ORDER, signPayfastFields, signaturePayload, verifyPayfastSignature } from './payfast.ts'
+import { PAYFAST_FIELD_ORDER, signPayfastFields, signaturePayload, verifyPayfastSignature } from '../../apps/functions/src/lib/payfast.ts'
 
 describe('signaturePayload (redirect / documentation order)', () => {
   it('emits fields in documentation order and url-encodes values', () => {

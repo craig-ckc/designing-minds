@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { amountMatches, formatPayfastAmount, fromCents, toCents } from './money.ts'
+import { amountMatches, formatPayfastAmount, fromCents, toCents } from '../../apps/functions/src/lib/money.ts'
 
 describe('toCents', () => {
   it('converts numbers and strings to integer cents', () => {

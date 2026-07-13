@@ -7,7 +7,7 @@
     "dev": "node --watch --env-file-if-exists=.env.local --experimental-strip-types src/server.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --root ../.. tests/functions"
   },
   "dependencies": {
     "@designing-minds/cms": "file:../../packages/cms",
