@@ -42,7 +42,7 @@ export const paymentWebhook: Handler = async (req) => {
   const fields = asFields(req.body)
   try {
     if (!verifyPayfastSignature(fields)) throw new PermanentItnRejection('Invalid PayFast signature.')
-    if (!verifyPayfastSourceIp(req.headers)) throw new PermanentItnRejection('Invalid PayFast source IP.')
+    if (!(await verifyPayfastSourceIp(req.headers))) throw new PermanentItnRejection('Invalid PayFast source IP.')
 
     const paymentId = String(fields.m_payment_id ?? '')
     const pfPaymentId = String(fields.pf_payment_id ?? '')

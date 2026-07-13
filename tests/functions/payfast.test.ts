@@ -1,6 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { PAYFAST_FIELD_ORDER, signPayfastFields, signaturePayload, verifyPayfastSignature } from '../../apps/functions/src/lib/payfast.ts'
+import {
+  PAYFAST_FIELD_ORDER,
+  SANDBOX_MERCHANT_ID,
+  SANDBOX_MERCHANT_KEY,
+  payfastCredentials,
+  signPayfastFields,
+  signaturePayload,
+  verifyPayfastSignature,
+  verifyPayfastSourceIp,
+} from '../../apps/functions/src/lib/payfast.ts'
 
 describe('signaturePayload (redirect / documentation order)', () => {
   it('emits fields in documentation order and url-encodes values', () => {
@@ -100,5 +109,54 @@ describe('verifyPayfastSignature (ITN / received order)', () => {
 
   it('rejects a missing signature', () => {
     expect(verifyPayfastSignature(itnFields())).toBe(false)
+  })
+})
+
+describe('payfastCredentials', () => {
+  const original = { ...process.env }
+
+  afterEach(() => {
+    process.env.PAYFAST_MODE = original.PAYFAST_MODE
+    process.env.PAYFAST_MERCHANT_ID = original.PAYFAST_MERCHANT_ID
+    process.env.PAYFAST_MERCHANT_KEY = original.PAYFAST_MERCHANT_KEY
+  })
+
+  it('returns the configured credentials when both are set', () => {
+    process.env.PAYFAST_MERCHANT_ID = 'my-id'
+    process.env.PAYFAST_MERCHANT_KEY = 'my-key'
+    expect(payfastCredentials()).toEqual({ merchantId: 'my-id', merchantKey: 'my-key' })
+  })
+
+  it('falls back to the PayFast sandbox test account when unset in sandbox mode', () => {
+    process.env.PAYFAST_MODE = 'sandbox'
+    delete process.env.PAYFAST_MERCHANT_ID
+    delete process.env.PAYFAST_MERCHANT_KEY
+    expect(payfastCredentials()).toEqual({ merchantId: SANDBOX_MERCHANT_ID, merchantKey: SANDBOX_MERCHANT_KEY })
+  })
+
+  it('throws in live mode when credentials are missing', () => {
+    process.env.PAYFAST_MODE = 'live'
+    delete process.env.PAYFAST_MERCHANT_ID
+    delete process.env.PAYFAST_MERCHANT_KEY
+    expect(() => payfastCredentials()).toThrow(/PAYFAST_MERCHANT_ID/)
+  })
+})
+
+describe('verifyPayfastSourceIp', () => {
+  const original = process.env.PAYFAST_ALLOWED_IPS
+
+  afterEach(() => {
+    if (original === undefined) delete process.env.PAYFAST_ALLOWED_IPS
+    else process.env.PAYFAST_ALLOWED_IPS = original
+  })
+
+  it('rejects a request with no source IP header', async () => {
+    expect(await verifyPayfastSourceIp({})).toBe(false)
+  })
+
+  it('accepts a source IP in the configured allowlist without a DNS lookup', async () => {
+    process.env.PAYFAST_ALLOWED_IPS = '41.74.179.194, 197.97.145.144'
+    expect(await verifyPayfastSourceIp({ 'x-forwarded-for': '197.97.145.144' })).toBe(true)
+    expect(await verifyPayfastSourceIp({ 'x-real-ip': '41.74.179.194' })).toBe(true)
   })
 })
