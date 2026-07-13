@@ -3,7 +3,7 @@ import { badRequest, created, serverError, unauthorized, type Handler } from '..
 import { createServiceClient } from '../lib/supabase.ts'
 import { requireUser } from '../lib/auth.ts'
 import { formatPayfastAmount, toCents } from '../lib/money.ts'
-import { buildPayfastProcess } from '../lib/payfast.ts'
+import { buildPayfastProcess, payfastCredentials } from '../lib/payfast.ts'
 
 interface CheckoutInput {
   items: { productSlug: string }[]
@@ -108,24 +108,11 @@ export const checkout: Handler = async (req) => {
     })
     if (orderCreateError) throw new Error(orderCreateError.message)
 
-    if (process.env.FAKE_PAYFAST_ENABLED === 'true') {
-      return created({
-        orderId,
-        paymentId,
-        reference,
-        fakePayfast: {
-          path: `/checkout/fake-payfast?order=${orderId}`,
-        },
-      })
-    }
-
     const baseUrl = siteUrl()
-    if (!process.env.PAYFAST_MERCHANT_ID || !process.env.PAYFAST_MERCHANT_KEY) {
-      throw new Error('PAYFAST_MERCHANT_ID and PAYFAST_MERCHANT_KEY must be set.')
-    }
+    const { merchantId, merchantKey } = payfastCredentials()
     const payfast = buildPayfastProcess({
-      merchant_id: process.env.PAYFAST_MERCHANT_ID,
-      merchant_key: process.env.PAYFAST_MERCHANT_KEY,
+      merchant_id: merchantId,
+      merchant_key: merchantKey,
       return_url: `${baseUrl}/checkout/return?order=${orderId}`,
       cancel_url: `${baseUrl}/checkout/cancel?order=${orderId}`,
       notify_url: `${baseUrl}/api/payment-webhook`,

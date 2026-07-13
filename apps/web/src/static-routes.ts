@@ -46,7 +46,6 @@ export const FUNCTIONAL_NOINDEX_PATHS = [
   '/account/orders',
   '/cart',
   '/checkout',
-  '/checkout/fake-payfast',
   '/checkout/return',
   '/checkout/cancel',
 ] as const

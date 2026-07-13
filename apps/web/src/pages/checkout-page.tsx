@@ -21,13 +21,7 @@ interface PayfastCheckoutResponse extends CheckoutBaseResponse {
   }
 }
 
-interface FakePayfastCheckoutResponse extends CheckoutBaseResponse {
-  fakePayfast: {
-    path: string
-  }
-}
-
-type CheckoutResponse = PayfastCheckoutResponse | FakePayfastCheckoutResponse
+type CheckoutResponse = PayfastCheckoutResponse
 
 const postToPayfast = ({ url, fields }: PayfastCheckoutResponse['payfast']) => {
   const form = document.createElement('form')
@@ -82,10 +76,6 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
       const body = (await response.json()) as CheckoutResponse | { error?: string }
       if (!response.ok) throw new Error('error' in body && body.error ? body.error : 'Unable to start checkout.')
       const checkout = body as CheckoutResponse
-      if ('fakePayfast' in checkout && checkout.fakePayfast) {
-        navigate(checkout.fakePayfast.path)
-        return
-      }
       if ('payfast' in checkout) {
         postToPayfast(checkout.payfast)
         return
