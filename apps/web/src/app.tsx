@@ -28,6 +28,7 @@ import { CartPage } from './pages/cart-page'
 import { CheckoutPage } from './pages/checkout-page'
 import { CheckoutReturnPage } from './pages/checkout-return-page'
 import { CheckoutCancelPage } from './pages/checkout-cancel-page'
+import { UnsubscribePage } from './pages/unsubscribe-page'
 import { NotFoundPage } from './pages/not-found-page'
 
 function SnapshotGate({
@@ -134,6 +135,8 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
       <Route path="/checkout" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <CheckoutPage snapshot={ready} />}</SnapshotGate>} />
       <Route path="/checkout/return" element={<CheckoutReturnPage />} />
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
+
+      <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

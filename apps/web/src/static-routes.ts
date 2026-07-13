@@ -48,6 +48,7 @@ export const FUNCTIONAL_NOINDEX_PATHS = [
   '/checkout',
   '/checkout/return',
   '/checkout/cancel',
+  '/unsubscribe',
 ] as const
 
 /**

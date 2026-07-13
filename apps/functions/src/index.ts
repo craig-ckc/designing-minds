@@ -4,6 +4,7 @@ import { issueDownload } from './handlers/issue-download.ts'
 import { adminUploadUrl } from './handlers/admin-upload-url.ts'
 import { adminRebuildWeb } from './handlers/admin-rebuild-web.ts'
 import { forms } from './handlers/forms.ts'
+import { unsubscribe } from './handlers/unsubscribe.ts'
 import type { Handler } from './lib/http.ts'
 
 /**
@@ -16,9 +17,10 @@ export const handlers: Record<string, Handler> = {
   '/payment-webhook': paymentWebhook,
   '/issue-download': issueDownload,
   '/forms': forms,
+  '/unsubscribe': unsubscribe,
   '/admin/upload-url': adminUploadUrl,
   '/admin/rebuild-web': adminRebuildWeb,
 }
 
-export { checkout, paymentWebhook, issueDownload, forms, adminUploadUrl, adminRebuildWeb }
+export { checkout, paymentWebhook, issueDownload, forms, unsubscribe, adminUploadUrl, adminRebuildWeb }
 export type { Handler, HandlerRequest, HandlerResponse } from './lib/http.ts'
