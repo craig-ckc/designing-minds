@@ -2,13 +2,13 @@ import { type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { CONTACT, gradeToSlug } from '../../content/site'
-import { repository } from '../../repository'
 import { Container } from '../ui/container'
 import { Wordmark } from '../ui/wordmark'
 import { NewsletterForm } from '../ui/newsletter-form'
 
 export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const grades = snapshot?.valueLists.grades ?? []
+  const currentYear = new Date().getFullYear()
   return (
     <footer className="mt-auto border-t border-line bg-surface">
       <div
@@ -66,8 +66,8 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
         <div className="bg-[#FDF6F0]" >
           <Container className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-t border-line/70 py-5.5 text-label text-muted">
-            <span>© 2026 Designing Minds. All rights reserved.</span>
-            <span>Made for South African learners · {repository.mode}</span>
+            <span>© {currentYear} Designing Minds. All rights reserved.</span>
+            <span>Made for South African learners</span>
           </Container>
         </div>
       </div>

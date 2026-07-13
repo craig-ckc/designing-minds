@@ -10,3 +10,9 @@ test('footer uses the supplied illustration as a responsive decorative backgroun
   assert.match(footerSource, /bg-bottom bg-no-repeat/)
   assert.match(footerSource, /aria-hidden className="h-\[clamp\(9rem,20vw,18rem\)\]"/)
 })
+
+test('footer derives the copyright year at runtime', () => {
+  assert.match(footerSource, /const currentYear = new Date\(\)\.getFullYear\(\)/)
+  assert.match(footerSource, /© \{currentYear\} Designing Minds/)
+  assert.doesNotMatch(footerSource, /© 2026 Designing Minds/)
+})
