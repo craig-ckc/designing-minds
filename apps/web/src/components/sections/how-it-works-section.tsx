@@ -3,9 +3,23 @@ import { Card } from '../ui/card'
 import { Icon } from '../ui/icon'
 import { Section } from '../ui/section'
 import { GrowthChart } from './growth-chart'
-import howItWorksSteps from '../../content/home/how-it-works-steps.json'
-
-const steps = howItWorksSteps as { when: string; title: string; items: string[] }[]
+const steps = [
+  {
+    when: 'Today',
+    title: 'Buy & download',
+    items: ['Choose your grade and term', 'Pay securely by card', 'Download instantly on your order page'],
+  },
+  {
+    when: 'This week',
+    title: 'Print & practise',
+    items: ['Print at home, as often as you like', 'Work through CAPS-aligned tests', 'Mark with the included memo'],
+  },
+  {
+    when: 'By term-end',
+    title: 'Exam-ready',
+    items: ['Revise with concise summaries', 'Build confidence before exams', 'Re-download anytime from your account'],
+  },
+] as const
 
 export function HowItWorksSection() {
   const [active, setActive] = useState(0)

@@ -2,11 +2,23 @@ import { Section } from '../components/ui/section'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { PageHeader } from '../components/ui/headings'
 import { Button } from '../components/ui/button'
-import legalDocs from '../content/legal/legal-docs.json'
 
 type LegalKind = 'privacy' | 'terms' | 'refund'
 
-const CONTENT = legalDocs as Record<LegalKind, { title: string; sections: string[] }>
+const CONTENT: Record<LegalKind, { title: string; sections: string[] }> = {
+  privacy: {
+    title: 'Privacy Policy',
+    sections: ['Information we collect', 'How we use your information', 'Cookies and analytics', 'Data retention', 'Your rights', 'Contact'],
+  },
+  terms: {
+    title: 'Terms & Conditions',
+    sections: ['Using the site', 'Accounts', 'Purchases and payment', 'Digital delivery', 'Acceptable use and licensing', 'Liability', 'Contact'],
+  },
+  refund: {
+    title: 'Refund Policy',
+    sections: ['Digital products', 'Duplicate or accidental purchases', 'How to request a refund', 'Processing time', 'Contact'],
+  },
+}
 
 export function LegalPage({ kind }: { kind: LegalKind }) {
   const doc = CONTENT[kind]

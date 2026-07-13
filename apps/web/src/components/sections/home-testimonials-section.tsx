@@ -3,11 +3,11 @@ import { Card } from '../ui/card'
 import { Placeholder } from '../ui/placeholder'
 import { Section } from '../ui/section'
 import { StarRating } from '../ui/star-rating'
-import fallbackTestimonials from '../../content/home/fallback-testimonials.json'
 
 export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
-  const published = snapshot?.testimonials.filter((t) => t.published) ?? []
-  const items = published.length > 0 ? published : fallbackTestimonials
+  const items = snapshot?.testimonials.filter((t) => t.published) ?? []
+  if (items.length === 0) return null
+
   const lead = items[0]
   const cards = items.slice(1, 4)
 

@@ -8,7 +8,6 @@ import { Placeholder } from '../ui/placeholder'
 import { ProductCover } from '../ui/product-cover'
 import { Section } from '../ui/section'
 import { StarRating } from '../ui/star-rating'
-import fallbackGrades from '../../content/home/fallback-grades.json'
 
 /** Auto-advance cadence for the grade carousel. */
 const INTERVAL_MS = 6000
@@ -45,15 +44,15 @@ function ArrowButton({
   )
 }
 
-function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot | null }) {
-  const grades = useMemo(() => (snapshot?.valueLists.grades ?? fallbackGrades).slice(0, 5), [snapshot])
+function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
+  const grades = useMemo(() => snapshot.valueLists.grades.slice(0, 5), [snapshot])
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
   const [reduced, setReduced] = useState(false)
   // Bumped on any manual navigation so the countdown restarts from zero.
   const [cycle, setCycle] = useState(0)
   const ringRef = useRef<SVGCircleElement>(null)
-  const products = useMemo(() => (snapshot ? publishedProducts(snapshot) : []), [snapshot])
+  const products = useMemo(() => publishedProducts(snapshot), [snapshot])
   const activeGrade = grades[active]
 
   const covers = useMemo(() => {
@@ -222,7 +221,7 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
         <StarRating size="sm" className="text-[1rem]" />
         <span className="font-semibold text-ink">Loved by 500+ families</span> across South Africa
       </div>
-      <HeroShowcase snapshot={snapshot} />
+      {snapshot && snapshot.valueLists.grades.length > 0 ? <HeroShowcase snapshot={snapshot} /> : null}
     </Section>
   )
 }

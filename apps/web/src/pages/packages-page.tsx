@@ -8,10 +8,9 @@ import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
-import offers from '../content/packages/package-offers.json'
 
 // The "Offer" dimension replaces the old tabs, and reads the same as the Shop's chips.
-const OFFERS = offers as string[]
+const OFFERS = ['Term bundles', 'Full-year bundles', 'Essential access', 'Premium access']
 const PACKAGE_FILTER_KEYS = ['q', 'offer', 'grade', 'term', 'plan'] as const
 
 const matchesOffer = (product: Product, offer: string) => {

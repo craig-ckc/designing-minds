@@ -2,12 +2,16 @@ import { Link } from 'react-router-dom'
 import { Section } from '../components/ui/section'
 import { Icon } from '../components/ui/icon'
 import { Button } from '../components/ui/button'
-import suggestions from '../content/navigation/not-found-suggestions.json'
 
 // Shown for any route React Router can't match. On Vercel this only renders
 // once the SPA fallback rewrite serves index.html for the deep link (see
 // apps/web/vercel.json); without that rewrite the CDN 404s before React loads.
-const SUGGESTIONS = suggestions as { to: string; label: string; sub: string }[]
+const SUGGESTIONS = [
+  { to: '/shop', label: 'All resources', sub: 'Browse the full CAPS-aligned catalogue' },
+  { to: '/packages', label: 'Bundles & access plans', sub: 'Save with a term or full-year plan' },
+  { to: '/grades', label: 'Browse by grade', sub: 'Grades 3 to 7' },
+  { to: '/help', label: 'Help & FAQs', sub: 'Answers to common questions' },
+]
 
 export function NotFoundPage() {
   return (

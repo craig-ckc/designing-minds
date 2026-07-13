@@ -1,14 +1,8 @@
 /* Brand-level static content. Catalogue data (products, subjects, FAQs,
    testimonials) now comes from the CMS snapshot — not this file. */
 
-import proofPoints from './brand/proof-points.json'
-import whyFeatures from './brand/why-features.json'
-import contact from './brand/contact.json'
-import gradeBlurbs from './brand/grade-blurbs.json'
-
-export const PROOF_POINTS = proofPoints
-
-export const WHY_FEATURES = whyFeatures
+import contact from './contact.json'
+import gradeBlurbs from './grade-blurbs.json'
 
 export const CONTACT = contact
 

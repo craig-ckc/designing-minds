@@ -4,11 +4,33 @@ import { Icon } from '../ui/icon'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
 import { Pill } from '../ui/pill'
-import tierContent from '../../content/pricing/access-tier-content.json'
 
 // Tier copy is derived from the structural difference (term vs year) plus the
 // shared inclusions. See docs/decisions.md.
-const TIER_CONTENT = tierContent as Record<AccessPlanTier['tier'], { includes: string[]; excludes: string[]; cta: string }>
+const TIER_CONTENT: Record<AccessPlanTier['tier'], { includes: string[]; excludes: string[]; cta: string }> = {
+  essential: {
+    includes: [
+      'One term of resources for one grade',
+      'All core subjects',
+      'Two CAPS-aligned tests per subject',
+      'A memorandum with every test',
+      'Instant download on your order page',
+    ],
+    excludes: ['Other terms — bought separately', 'Priority new releases'],
+    cta: 'Choose a grade & term',
+  },
+  premium: {
+    includes: [
+      'Every term — the full school year',
+      'All core subjects',
+      'Two CAPS-aligned tests per subject',
+      'A memorandum with every test',
+      'Instant download on your order page',
+    ],
+    excludes: [],
+    cta: 'Choose a grade',
+  },
+}
 
 const periodLabel = (period: AccessPlanTier['period']) => (period === 'Year' ? 'per year' : 'per term')
 
