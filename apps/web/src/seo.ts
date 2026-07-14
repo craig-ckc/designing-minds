@@ -19,7 +19,7 @@ import type { PublicRoute } from './static-routes'
 
 export const SITE_NAME = 'Designing Minds'
 export const DEFAULT_DESCRIPTION =
-  'CAPS-aligned tests, assessments, and summaries for Grades 3–7. Instant download after payment, print at home.'
+  'CAPS-aligned tests, assessments, and summaries for Grades 3–7. CAPS is South Africa’s Curriculum and Assessment Policy Statement. Instant download; print at home.'
 
 /** Site-wide social share image (1200×630). No per-product images exist yet, so
  *  every page shares this default until product artwork is added to the CMS. */
@@ -44,7 +44,8 @@ const STATIC_META: Record<string, StaticMeta> = {
   },
   '/grades': {
     title: 'Browse resources by grade | Designing Minds',
-    description: 'Find CAPS-aligned learning resources organised by grade, from Grade 3 to Grade 7.',
+    description:
+      'Find CAPS-aligned learning resources organised by grade, from Grade 3 to Grade 7. CAPS is South Africa’s Curriculum and Assessment Policy Statement.',
   },
   '/packages': {
     title: 'Bundles & Access Plans | Designing Minds',
@@ -57,7 +58,8 @@ const STATIC_META: Record<string, StaticMeta> = {
   },
   '/about': {
     title: 'About Designing Minds',
-    description: 'Teacher-led, CAPS-aligned learning resources for South African primary-school learners.',
+    description:
+      'Teacher-led, CAPS-aligned learning resources for South African primary-school learners. CAPS means Curriculum and Assessment Policy Statement.',
   },
   '/contact': {
     title: 'Contact Designing Minds',

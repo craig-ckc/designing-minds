@@ -209,7 +209,8 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
       <h1 className="mx-auto mt-6 max-w-[15ch]">Practice resources that build confidence at home</h1>
       <p className="mx-auto mt-5 max-w-narrow text-body-lg leading-[1.55] text-ink-soft">
         Teacher-made, parent-tested printable tests and summaries for Grades 3 to 7 — bought once, downloaded
-        instantly, printed as often as you like.
+        instantly, printed as often as you like. They align with South Africa’s national curriculum: CAPS, the
+        Curriculum and Assessment Policy Statement.
       </p>
       <div className="mt-7 flex justify-center">
         <Button to="/shop" variant="solid">

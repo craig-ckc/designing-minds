@@ -23,7 +23,8 @@ export function AboutHeroSection() {
         <p className="mx-auto mt-6 max-w-prose lead">
           At Designing Minds, we believe learning should be simple, accessible, and stress-free. That’s why we create
           affordable, CAPS-aligned practice tests that help learners prepare for exams with confidence, while empowering
-          parents to guide their children’s education at home.
+          parents to guide their children’s education at home. CAPS stands for Curriculum and Assessment Policy
+          Statement, the national curriculum policy used in South African schools.
         </p>
         <div className="relative z-10 mt-8 flex flex-wrap justify-center gap-3">
           <Button to="/shop" variant="solid">
