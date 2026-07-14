@@ -136,8 +136,10 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
                   i === active ? 'text-primary' : 'text-ink-soft hover:text-ink',
                 )}
               >
-                <span className="hidden sm:inline">{g}</span>
-                <span className="sm:hidden">{num}</span>
+                <span>
+                  <span className="hidden sm:inline">Grade </span>
+                  {num}
+                </span>
               </button>
             )
           })}

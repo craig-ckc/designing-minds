@@ -39,3 +39,11 @@ test('homepage states the pricing model in readable text', () => {
 
   assert.match(hero, /Individual resources start at R50, with discounted once-off bundles available\./)
 })
+
+test('homepage grade selector exposes each grade label only once', () => {
+  const hero = read('components/sections/home-hero-section.tsx')
+
+  assert.match(hero, /aria-label=\{g\}/)
+  assert.match(hero, /<span className="hidden sm:inline">Grade <\/span>\s*\{num\}/)
+  assert.doesNotMatch(hero, /<span className="hidden sm:inline">\{g\}<\/span>/)
+})
