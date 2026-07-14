@@ -4,6 +4,7 @@ import {
   productsForGrade,
   type CmsSnapshot,
   type Faq,
+  type Testimonial,
 } from '@designing-minds/cms'
 import { CONTACT, GRADE_BLURB } from './content/site'
 import type { PublicRoute } from './static-routes'
@@ -142,7 +143,14 @@ const breadcrumbList = (siteUrl: string, crumbs: Crumb[]) => ({
   })),
 })
 
-const organization = (siteUrl: string) => ({
+const testimonialReview = (testimonial: Testimonial) => ({
+  '@type': 'Review',
+  author: { '@type': 'Person', name: testimonial.customerName },
+  reviewBody: testimonial.quote,
+  ...(testimonial.sourceDate ? { datePublished: testimonial.sourceDate } : {}),
+})
+
+const organization = (siteUrl: string, testimonials: Testimonial[] = []) => ({
   '@context': 'https://schema.org',
   // EducationalOrganization is the precise entity type for an edtech publisher;
   // it inherits every Organization property (logo, contact, etc.) and gives AI
@@ -157,6 +165,7 @@ const organization = (siteUrl: string) => ({
   telephone: CONTACT.phone,
   areaServed: 'ZA',
   address: { '@type': 'PostalAddress', addressLocality: CONTACT.location },
+  ...(testimonials.length ? { review: testimonials.map(testimonialReview) } : {}),
 })
 
 const website = (siteUrl: string) => ({
@@ -322,7 +331,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     }
   } else {
     if (route.path === '/') {
-      jsonLd.push(organization(siteUrl), website(siteUrl))
+      jsonLd.push(organization(siteUrl, snapshot.testimonials.filter((testimonial) => testimonial.published)), website(siteUrl))
     }
     if (route.path === '/shop') {
       const products = snapshot.products.filter((product) => product.published)

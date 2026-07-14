@@ -14,14 +14,14 @@ import { HowItWorksSection } from '../components/sections/how-it-works-section'
 export function HomePage({ snapshot, loadError }: { snapshot: CmsSnapshot | null; loadError?: string | null }) {
   const stats: Stat[] = [
     { value: snapshot ? String(snapshot.stats.gradeCount) : '...', label: 'Grades supported', icon: 'book' },
-    { value: '500+', label: 'Families helped', icon: 'user' },
+    { value: 'CAPS', label: 'South African curriculum', icon: 'shield' },
     { value: snapshot ? String(snapshot.stats.productCount) : '...', label: 'Resources & bundles', icon: 'doc' },
     { value: snapshot ? String(snapshot.stats.subjectCount) : '...', label: 'Subjects covered', icon: 'palette' },
   ]
   return (
     <>
       <HomeHeroSection snapshot={snapshot} />
-      <StatsSection stats={stats} caption="Trusted by families across South Africa" />
+      <StatsSection stats={stats} caption="Practice resources designed for South African learners" />
       <GetToKnowSection />
       <HomeTestimonialsSection snapshot={snapshot} />
       <FeatureBentoSection />

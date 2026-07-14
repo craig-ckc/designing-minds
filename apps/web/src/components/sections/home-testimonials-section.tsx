@@ -2,7 +2,6 @@ import { type CmsSnapshot } from '@designing-minds/cms'
 import { Card } from '../ui/card'
 import { Placeholder } from '../ui/placeholder'
 import { Section } from '../ui/section'
-import { StarRating } from '../ui/star-rating'
 
 export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const items = snapshot?.testimonials.filter((t) => t.published) ?? []
@@ -12,7 +11,7 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
   const cards = items.slice(1, 4)
 
   return (
-    <Section>
+    <Section id="parent-stories">
       <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
         <div className="order-2 lg:order-1">
           <Placeholder ratio="1 / 1" className="mx-auto max-w-form bg-surface" label="Watch their story" />
@@ -33,7 +32,6 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
         <div className="mt-12 grid gap-4 sm:grid-cols-3">
           {cards.map((t) => (
             <Card as="figure" key={t.id} pad="md" className="flex flex-col gap-3">
-              <StarRating size="sm" className="tracking-[2px]" />
               <blockquote className="text-body leading-[1.5]">“{t.quote}”</blockquote>
               <figcaption className="mt-auto text-body-sm">
                 <strong className="font-bold">{t.customerName}</strong>{' '}

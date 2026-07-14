@@ -7,7 +7,6 @@ import { Icon } from '../ui/icon'
 import { Placeholder } from '../ui/placeholder'
 import { ProductCover } from '../ui/product-cover'
 import { Section } from '../ui/section'
-import { StarRating } from '../ui/star-rating'
 
 /** Auto-advance cadence for the grade carousel. */
 const INTERVAL_MS = 6000
@@ -195,6 +194,8 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
 }
 
 export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
+  const hasPublishedTestimonials = snapshot?.testimonials.some((testimonial) => testimonial.published) ?? false
+
   return (
     <Section containerClassName="py-16 text-center lg:py-24" spacing="none">
       <Link
@@ -223,10 +224,17 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
       <p className="mt-4 text-body-sm font-semibold text-ink-soft">
         Individual resources start at R50, with discounted once-off bundles available.
       </p>
-      <div className="mt-5 flex items-center justify-center gap-4 text-body-sm text-ink-soft">
-        <StarRating size="sm" className="text-[1rem]" />
-        <span className="font-semibold text-ink">Loved by 500+ families</span> across South Africa
-      </div>
+      {hasPublishedTestimonials ? (
+        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-2 text-body-sm text-ink-soft">
+          Customer feedback from South African parents and tutors
+          <a href="#parent-stories" className="inline-flex items-center gap-1 font-bold text-primary hover:underline">
+            Read their experiences
+            <span className="h-3.5 w-3.5" aria-hidden>
+              <Icon name="arrow" />
+            </span>
+          </a>
+        </p>
+      ) : null}
       {snapshot && snapshot.valueLists.grades.length > 0 ? <HeroShowcase snapshot={snapshot} /> : null}
     </Section>
   )

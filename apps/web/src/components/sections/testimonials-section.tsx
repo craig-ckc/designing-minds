@@ -2,7 +2,6 @@ import { type Testimonial } from '@designing-minds/cms'
 import { Section } from '../ui/section'
 import { Placeholder } from '../ui/placeholder'
 import { Card } from '../ui/card'
-import { StarRating } from '../ui/star-rating'
 
 export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
   if (testimonials.length === 0) return null
@@ -14,7 +13,6 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {testimonials.map((item) => (
             <Card as="figure" key={item.id} variant="surface" pad="lg" className="flex flex-col gap-4">
-              <StarRating value={5} size="md" />
               <blockquote className="text-[1.18rem] font-medium leading-[1.5] tracking-[-0.01em]">“{item.quote}”</blockquote>
               <figcaption className="mt-auto flex items-center gap-3">
                 <Placeholder circle className="h-11 w-11 flex-none" />

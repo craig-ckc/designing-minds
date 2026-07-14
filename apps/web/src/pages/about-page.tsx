@@ -10,7 +10,7 @@ import { StatsSection, type Stat } from '../components/sections/stats-section'
 
 export function AboutPage({ snapshot, loadError }: { snapshot: CmsSnapshot | null; loadError?: string | null }) {
   const stats: Stat[] = [
-    { value: '500+', label: 'Families helped', icon: 'user' },
+    { value: 'South Africa', label: 'Designed for local learners', icon: 'user' },
     { value: snapshot ? String(snapshot.stats.gradeCount) : '5', label: 'Grades supported', icon: 'book' },
     { value: snapshot ? String(snapshot.stats.productCount) : '…', label: 'Resources created', icon: 'doc' },
     { value: '100%', label: 'CAPS aligned', icon: 'shield' },
