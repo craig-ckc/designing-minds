@@ -1,5 +1,5 @@
 import { type CmsSnapshot } from '@designing-minds/cms'
-import { AccessPlansSection } from '../components/sections/access-plans-section'
+import { HomeBundlesSection } from '../components/sections/home-bundles-section'
 import { BundleCtaSection } from '../components/sections/bundle-cta-section'
 import { FeatureBentoSection } from '../components/sections/feature-bento-section'
 import { FinalCtaSection } from '../components/sections/final-cta-section'
@@ -23,10 +23,10 @@ export function HomePage({ snapshot, loadError }: { snapshot: CmsSnapshot | null
       <HomeHeroSection snapshot={snapshot} />
       <StatsSection stats={stats} caption="Practice resources designed for South African learners" />
       <GetToKnowSection />
+      <HomeBundlesSection snapshot={snapshot} loadError={loadError} />
       <HomeTestimonialsSection snapshot={snapshot} />
       <FeatureBentoSection />
       <GradeFinderSection snapshot={snapshot} loadError={loadError} />
-      <AccessPlansSection snapshot={snapshot} loadError={loadError} />
       <HowItWorksSection />
       <BundleCtaSection />
       <HomeFaqSection snapshot={snapshot} loadError={loadError} />

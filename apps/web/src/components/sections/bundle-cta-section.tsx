@@ -7,10 +7,10 @@ export function BundleCtaSection() {
     <Section>
       <CtaBanner
         title="Cover a whole term or the full year in one purchase"
-        body="Bundles group a grade’s resources into one discounted, once-off purchase. Access plans unlock a term or year — no auto-renewal."
+        body="Bundles group a grade’s available tests and memorandums into one discounted, once-off purchase."
       >
         <Button to="/packages" variant="solid-light">
-          Browse bundles &amp; plans
+          Browse bundles
         </Button>
         <Button to="/about" variant="outline-light">
           Learn more
@@ -19,4 +19,3 @@ export function BundleCtaSection() {
     </Section>
   )
 }
-

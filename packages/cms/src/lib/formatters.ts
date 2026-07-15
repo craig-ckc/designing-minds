@@ -56,6 +56,36 @@ export const bundleProducts = (snapshot: CmsSnapshot) =>
 export const accessPlanProducts = (snapshot: CmsSnapshot) =>
   publishedProducts(snapshot).filter((p) => p.productKind === 'Access Plan')
 
+export type BundleTierScope = 'Term' | 'Full Year'
+
+export interface BundleTier {
+  scope: BundleTierScope
+  title: string
+  fromPriceZar: number
+  gradeCount: number
+  featured: boolean
+}
+
+/** Summarise the published term and full-year bundles for catalogue entry points. */
+export const bundleTiers = (snapshot: CmsSnapshot): BundleTier[] => {
+  const bundles = bundleProducts(snapshot)
+  const tiers: BundleTier[] = []
+  const add = (scope: BundleTierScope, title: string, fromPriceZar: number) => {
+    const subset = bundles.filter((product) => product.bundleScope === scope)
+    if (subset.length === 0) return
+    tiers.push({
+      scope,
+      title,
+      fromPriceZar,
+      gradeCount: new Set(subset.map((product) => product.grade)).size,
+      featured: scope === 'Full Year',
+    })
+  }
+  add('Term', 'Term bundles', 350)
+  add('Full Year', 'Full-year bundles', 1200)
+  return tiers
+}
+
 export type AccessPlanTierKey = 'essential' | 'premium'
 
 export interface AccessPlanTier {

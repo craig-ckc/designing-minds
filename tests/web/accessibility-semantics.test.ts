@@ -9,8 +9,10 @@ test('shared icon-only navigation controls have accessible names', () => {
   const wordmark = read('components/ui/wordmark.tsx')
 
   assert.match(navbar, /aria-label="Log in to your account"/)
-  assert.match(navbar, /aria-label="Open navigation menu"/)
-  assert.match(navbar, /aria-label="Close navigation menu"/)
+  // The single mobile toggle names both states via a dynamic aria-label, so accept
+  // either the static ("…") or expression ('…') attribute form.
+  assert.match(navbar, /aria-label=(?:"|\{[^}]*')Open navigation menu/)
+  assert.match(navbar, /['"]Close navigation menu['"]/)
   assert.match(wordmark, /aria-label="Designing Minds home"/)
 })
 
