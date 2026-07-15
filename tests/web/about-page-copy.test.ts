@@ -22,3 +22,15 @@ test('about values use content-specific icons instead of placeholders', () => {
   assert.match(valuesSource, /<Icon name=\{value\.icon\} size=\{28\} \/>/)
   assert.doesNotMatch(valuesSource, /Placeholder/)
 })
+
+test('about introduction is concise and the story uses a responsive split layout', () => {
+  const heroSource = sectionSource('about-hero-section')
+  const storySource = sectionSource('our-story-section')
+
+  assert.match(heroSource, /Affordable practice tests aligned with CAPS/)
+  assert.doesNotMatch(heroSource, /At Designing Minds, we believe learning should be simple/)
+  assert.match(storySource, /lg:grid-cols-\[1\.1fr_0\.9fr\]/)
+  assert.match(storySource, /lg:col-start-2 lg:row-start-1/)
+  assert.match(storySource, /lg:col-start-1 lg:row-start-1/)
+  assert.doesNotMatch(storySource, /containerClassName="text-center"/)
+})

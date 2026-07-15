@@ -42,10 +42,13 @@ function coverTitle(product: Product): string {
 /** One cover face — its own container context so everything scales to its width. */
 function CoverFace({ product, illustration, className = '' }: { product: Product; illustration: SubjectIllustration; className?: string }) {
   const { band, fg, solid } = termColorway(product.term)
+  // The whole face is decorative: its text and glyphs are announced once, via the
+  // aria-label on the ProductCover wrapper. Hiding it here keeps that label from
+  // being fragmented into loose strings by a screen reader.
   return (
-    <div className={`[container-type:inline-size] ${className}`}>
+    <div aria-hidden className={`[container-type:inline-size] ${className}`}>
       <div className="relative aspect-[595/842] w-full overflow-hidden rounded-[1.8cqw] bg-paper [box-shadow:0_0.7cqw_2.2cqw_-0.7cqw_rgba(41,25,10,0.14),0_2.8cqw_6.4cqw_-2.2cqw_rgba(41,25,10,0.18)]">
-        <div className={`absolute inset-x-0 bottom-0 ${band}`} aria-hidden >
+        <div className={`absolute inset-x-0 bottom-0 ${band}`}>
           <svg width="100%" viewBox="0 0 595 513" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M414.742 7.04244C560.002 7.04244 595.002 101.411 595.002 101.411V513.012H0.000923993C0.000923993 513.012 -0.00298001 165.498 0.00526146 16.9019C52.1023 16.9019 90.839 34.508 90.839 34.508C90.839 34.508 135.895 0 186.602 0C242.924 0 283.773 40.1419 283.773 40.1419C283.773 40.1419 329.533 7.04244 414.742 7.04244Z" fill="currentColor" />
           </svg>
@@ -54,14 +57,14 @@ function CoverFace({ product, illustration, className = '' }: { product: Product
           </svg>
         </div>
 
-        <div className={`absolute left-[7.56%] top-0 h-full w-[0.34cqw] opacity-30 ${solid}`} aria-hidden />
+        <div className={`absolute left-[7.56%] top-0 h-full w-[0.34cqw] opacity-30 ${solid}`} />
         <span className={`absolute left-[13.78%] top-[4.16%] text-[2.5cqw] font-extrabold uppercase tracking-[0.08em] ${fg}`}>
           Designing Minds
         </span>
         <p className={`absolute left-[13.78%] top-[11.64%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.034cqw] opacity-80 ${fg} text-[4.36cqw]`}>
           {product.grade}
         </p>
-        <div className={`absolute left-[13.78%] top-[16.87%] h-px w-[74.29%] opacity-30 ${solid}`} aria-hidden />
+        <div className={`absolute left-[13.78%] top-[16.87%] h-px w-[74.29%] opacity-30 ${solid}`} />
         <p className={`absolute left-[13.78%] top-[19.36%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.069cqw] ${fg} text-[6.89cqw] line-clamp-3`}>
           {coverTitle(product)}
         </p>
@@ -75,7 +78,6 @@ function CoverFace({ product, illustration, className = '' }: { product: Product
         <img
           src={`/${illustration}`}
           alt=""
-          aria-hidden
           loading="lazy"
           decoding="async"
           className="absolute left-1/2 top-[46.2%] aspect-square w-[71.43%] -translate-x-1/2 object-contain"
@@ -90,7 +92,7 @@ export function ProductCover({ product, className = '' }: { product: Product; cl
 
   if (!isStacked) {
     return (
-      <div className="relative aspect-[595/842] w-full flex items-center justify-center">
+      <div role="img" aria-label={product.title} className="relative aspect-[595/842] w-full flex items-center justify-center">
         <div className="w-[80%]">
           <CoverFace product={product} illustration={subjectKey(product)} className={`w-full ${className}`} />
         </div>
@@ -109,7 +111,7 @@ export function ProductCover({ product, className = '' }: { product: Product; cl
   ]
 
   return (
-    <div className={`w-full ${className}`}>
+    <div role="img" aria-label={product.title} className={`w-full ${className}`}>
       <div className="relative aspect-[595/842]">
         {layers.map((layer, i) => (
           <div key={i} className="absolute inset-0 flex items-center justify-center">
