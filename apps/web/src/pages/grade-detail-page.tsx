@@ -73,7 +73,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <Container className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2>Cover {grade} in one purchase</h2>
-            <p className="mt-1.5 text-muted">See term bundles, full-year bundles, and access plans.</p>
+            <p className="mt-1.5 text-muted">See term bundles, full-year bundles, and plans.</p>
           </div>
           <Link to="/packages" className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4">
             Browse bundles &amp; plans

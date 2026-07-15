@@ -49,9 +49,9 @@ const STATIC_META: Record<string, StaticMeta> = {
       'Find CAPS-aligned learning resources organised by grade, from Grade 3 to Grade 7. CAPS is South Africa’s Curriculum and Assessment Policy Statement.',
   },
   '/packages': {
-    title: 'Bundles & Access Plans | Designing Minds',
+    title: 'Bundles & Plans | Designing Minds',
     description:
-      'Save with bundles and Essential or Premium Access Plans that cover a grade for a term or the full year.',
+      'Save with bundles and Essential or Premium plans that cover a grade for a term or the full year.',
   },
   '/help': {
     title: 'Help & FAQs | Designing Minds',
@@ -397,7 +397,7 @@ export function llmsTxt(routes: PublicRoute[], siteUrl: string): string {
     '/': 'Home',
     '/shop': 'Shop — browse and filter all resources',
     '/grades': 'Browse by grade',
-    '/packages': 'Bundles & Access Plans',
+    '/packages': 'Bundles & Plans',
     '/help': 'Help & FAQs',
     '/about': 'About Designing Minds',
     '/contact': 'Contact',

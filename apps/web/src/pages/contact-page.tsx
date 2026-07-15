@@ -16,7 +16,7 @@ const TOPICS = [
   'General enquiry',
   'Finding the right resource',
   'Downloads & printing',
-  'Bundles & access plans',
+  'Bundles & plans',
   'Billing & payments',
   'My account',
   'Schools & bulk orders',

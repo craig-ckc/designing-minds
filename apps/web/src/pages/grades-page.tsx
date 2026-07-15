@@ -9,7 +9,7 @@ export function GradesPage({ snapshot }: { snapshot: CmsSnapshot }) {
     <>
       <PageHeader
         title="Grades 3 to 7"
-        lead="Pick a grade to see its CAPS-aligned resources, bundles, and access plans. CAPS stands for Curriculum and Assessment Policy Statement, South Africa’s national curriculum policy."
+        lead="Pick a grade to see its CAPS-aligned resources, bundles, and plans. CAPS stands for Curriculum and Assessment Policy Statement, South Africa’s national curriculum policy."
       >
         <div className="mt-6">
           <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Grades" />

@@ -7,7 +7,7 @@ const items: { icon: IconName; title: string; body: string }[] = [
   { icon: 'doc', title: 'Practice tests', body: 'Two CAPS-aligned tests per subject, each with a full memorandum for stress-free marking.' },
   { icon: 'book', title: 'Summaries & notes', body: 'Concise, curriculum-aligned summaries that help learners revise the key concepts fast.' },
   { icon: 'download', title: 'Instant download', body: 'Files unlock on your order page the moment payment succeeds — print as often as you like.' },
-  { icon: 'spark', title: 'Term & year bundles', body: 'Group a grade’s resources into one discounted, once-off purchase — no subscriptions.' },
+  { icon: 'spark', title: 'Term & year bundles', body: 'Group the resources for a grade into one discounted, once-off purchase — no subscriptions.' },
   { icon: 'shield', title: 'Your account', body: 'Every purchase is saved to your account, ready to re-download whenever you need it.' },
 ]
 

@@ -58,7 +58,7 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
       <div className="mx-auto mb-9 max-w-prose text-center lg:mb-14">
         <h2>Save with a term or full-year bundle</h2>
         <p className="mt-4 lead">
-          Get a grade’s available tests and memorandums together in one discounted, once-off purchase.
+          Get all the available tests and memorandums for a grade together in one discounted, once-off purchase.
         </p>
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">

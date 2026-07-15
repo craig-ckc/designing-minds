@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button'
 // apps/web/vercel.json); without that rewrite the CDN 404s before React loads.
 const SUGGESTIONS = [
   { to: '/shop', label: 'All resources', sub: 'Browse the full CAPS-aligned catalogue' },
-  { to: '/packages', label: 'Bundles & access plans', sub: 'Save with a term or full-year plan' },
+  { to: '/packages', label: 'Bundles & plans', sub: 'Save with a term or full-year plan' },
   { to: '/grades', label: 'Browse by grade', sub: 'Grades 3 to 7' },
   { to: '/help', label: 'Help & FAQs', sub: 'Answers to common questions' },
 ]

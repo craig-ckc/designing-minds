@@ -97,7 +97,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <aside className="grid gap-[18px] rounded-card border border-line p-7 lg:sticky lg:top-[var(--sticky-offset)]">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={product.productKind === 'Bundle' ? 'solid' : product.productKind === 'Access Plan' ? 'outline' : 'neutral'}>
-                  {product.productKind}
+                  {product.productKind === 'Access Plan' ? 'Plan' : product.productKind}
                 </Badge>
                 <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
                   {product.grade} · {product.term}

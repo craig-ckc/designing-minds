@@ -69,10 +69,10 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
     <>
       <PageHeader
         title="Buy more, save more"
-        lead="Bundles group a grade’s resources into one discounted, once-off purchase. Access plans unlock a single grade for a term or the full year — none of these renew automatically."
+        lead="Bundles group the resources for a grade into one discounted, once-off purchase. Plans unlock a single grade for a term or the full year — none of these renew automatically."
       >
         <div className="mt-6">
-          <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Packages" />
+          <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Bundles & plans" />
         </div>
       </PageHeader>
 
@@ -82,8 +82,8 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
             className="field w-full max-w-md"
             value={query}
             onChange={(event) => setSearchParams(setQueryValue(searchParams, 'q', event.target.value), { replace: true })}
-            placeholder="Search packages…"
-            aria-label="Search packages"
+            placeholder="Search bundles & plans…"
+            aria-label="Search bundles and plans"
           />
           <FilterTrigger onClick={() => setFiltersOpen(true)} activeCount={activeCount} className="ml-auto" />
         </Container>
@@ -109,7 +109,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </div>
           ) : (
             <Card variant="surface" pad="none" className="p-7 text-center">
-              <h2>No matching packages</h2>
+              <h2>No matching bundles or plans</h2>
               <p className="mt-2 text-muted">Try clearing a filter or choosing a different grade.</p>
             </Card>
           )}
