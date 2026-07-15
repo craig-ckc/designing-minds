@@ -9,6 +9,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { buildHtml, createSnapshotAsset } from './prerender-html.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const webRoot = path.resolve(here, '..')
@@ -85,19 +86,12 @@ if (template.includes('__DM_PUBLIC_SNAPSHOT__') || !template.includes('<div id="
   fail('dist/index.html is not a pristine client build (re-run `vite build` before prerendering).')
 }
 
-const serializeSnapshot = (value) => JSON.stringify(value).replace(/</g, '\\u003c')
-
-const buildHtml = (headTags, bootstrap, appHtml) =>
-  template
-    .replace(/<title>[\s\S]*?<\/title>/, '')
-    .replace('</head>', `    ${headTags}\n    ${bootstrap}\n  </head>`)
-    .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)
-
 const routeToFile = (routePath) =>
   routePath === '/' ? path.join(distDir, 'index.html') : path.join(distDir, routePath, 'index.html')
 
 const routes = server.getPublicRoutes(snapshot)
-const bootstrapScript = `<script>window.__DM_PUBLIC_SNAPSHOT__=${serializeSnapshot(snapshot)}</script>`
+const snapshotAsset = createSnapshotAsset(snapshot)
+await writeFile(path.join(distDir, snapshotAsset.fileName), snapshotAsset.source, 'utf8')
 
 for (const route of routes) {
   let appHtml
@@ -107,7 +101,12 @@ for (const route of routes) {
     fail(`Failed to render ${route.path}: ${error instanceof Error ? error.message : String(error)}`)
   }
   const headTags = server.renderHead(route, snapshot, siteUrl)
-  const html = buildHtml(headTags, bootstrapScript, appHtml)
+  const html = buildHtml({
+    template,
+    headTags,
+    snapshotScript: snapshotAsset.scriptTag,
+    appHtml,
+  })
   const file = routeToFile(route.path)
   await mkdir(path.dirname(file), { recursive: true })
   await writeFile(file, html, 'utf8')

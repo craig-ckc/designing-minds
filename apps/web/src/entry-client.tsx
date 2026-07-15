@@ -8,7 +8,7 @@ import { AuthProvider } from './lib/auth.tsx'
 
 declare global {
   interface Window {
-    /** Build-time public snapshot embedded by the prerender step. */
+    /** Build-time public snapshot loaded by the prerendered page. */
     __DM_PUBLIC_SNAPSHOT__?: CmsSnapshot
   }
 }
