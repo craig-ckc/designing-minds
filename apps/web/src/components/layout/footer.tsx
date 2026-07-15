@@ -60,8 +60,8 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
           </FooterColumn>
         </Container>
 
-        <div aria-hidden className="h-[clamp(9rem,20vw,18rem)]" >
-          <img src="/images/image-03.png" alt="" aria-hidden="true" className="w-full h-full object-cover" />
+        <div className="h-[clamp(9rem,20vw,18rem)]" >
+          <img src="/images/image-03.png" alt="A parent helping a child with schoolwork at a desk" className="w-full h-full object-cover" />
         </div>
 
         <div className="bg-[#FDF6F0]" >

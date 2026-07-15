@@ -39,6 +39,12 @@ function coverTitle(product: Product): string {
   return t || product.subjects[0] || product.productKind
 }
 
+/** Readable subject name from an illustration path ("subjects/mathematics.avif" → "Mathematics"). */
+function illustrationLabel(illustration: SubjectIllustration): string {
+  const name = illustration.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') ?? ''
+  return name.charAt(0).toUpperCase() + name.slice(1)
+}
+
 /** One cover face — its own container context so everything scales to its width. */
 function CoverFace({ product, illustration, className = '' }: { product: Product; illustration: SubjectIllustration; className?: string }) {
   const { band, fg, solid } = termColorway(product.term)
@@ -77,7 +83,7 @@ function CoverFace({ product, illustration, className = '' }: { product: Product
         </div>
         <img
           src={`/${illustration}`}
-          alt=""
+          alt={`${illustrationLabel(illustration)} illustration`}
           loading="lazy"
           decoding="async"
           className="absolute left-1/2 top-[46.2%] aspect-square w-[71.43%] -translate-x-1/2 object-contain"
