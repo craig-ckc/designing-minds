@@ -8,6 +8,7 @@ import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
+import { useDeferredCatalog } from '../lib/deferred-catalog'
 
 // The "Offer" dimension replaces the old tabs, and reads the same as the Shop's chips.
 const OFFERS = ['Term bundles', 'Full-year bundles', 'Essential access', 'Premium access']
@@ -54,6 +55,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
     if (q && !`${product.title} ${product.shortDescription}`.toLowerCase().includes(q)) return false
     return true
   })
+  const renderedPackages = useDeferredCatalog(visible)
 
   const activeCount = offerSel.length + grades.length + terms.length
   const toggle = (key: string) => (value: string) => {
@@ -103,7 +105,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
           </div>
           {visible.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {visible.map((product) => (
+              {renderedPackages.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

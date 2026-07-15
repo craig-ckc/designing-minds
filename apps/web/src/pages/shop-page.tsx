@@ -8,6 +8,7 @@ import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
+import { useDeferredCatalog } from '../lib/deferred-catalog'
 
 const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format', 'kind'] as const
 
@@ -36,6 +37,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
     if (!q) return true
     return `${product.title} ${product.shortDescription} ${product.subjects.join(' ')}`.toLowerCase().includes(q)
   })
+  const renderedProducts = useDeferredCatalog(visible)
 
   const activeCount = grades.length + terms.length + subjects.length + formats.length + kinds.length
   const toggle = (key: string) => (value: string) => setSearchParams(toggleQueryValue(searchParams, key, value))
@@ -81,7 +83,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
           </div>
           {visible.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {visible.map((product) => (
+              {renderedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
