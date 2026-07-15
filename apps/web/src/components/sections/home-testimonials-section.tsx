@@ -14,6 +14,7 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
   return (
     <Section id="parent-stories">
       <h2 className="max-w-[20ch]">Real stories from families across South Africa</h2>
+      <p className="mt-3 text-body-sm text-muted">Based on verified customer orders to date.</p>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
         <div className="order-2 lg:order-1">
