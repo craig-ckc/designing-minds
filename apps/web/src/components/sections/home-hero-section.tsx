@@ -7,6 +7,7 @@ import { Icon } from '../ui/icon'
 import { Placeholder } from '../ui/placeholder'
 import { ProductCover } from '../ui/product-cover'
 import { Section } from '../ui/section'
+import { StarRating } from '../ui/star-rating'
 
 /** Auto-advance cadence for the grade carousel. */
 const INTERVAL_MS = 6000
@@ -209,9 +210,8 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
       </Link>
       <h1 className="mx-auto mt-6 max-w-[15ch]">Practice resources that build confidence at home</h1>
       <p className="mx-auto mt-5 max-w-narrow text-body-lg leading-[1.55] text-ink-soft">
-        Teacher-made, parent-tested printable tests and summaries for Grades 3 to 7 — bought once, downloaded
-        instantly, printed as often as you like. They align with South Africa’s national curriculum: CAPS, the
-        Curriculum and Assessment Policy Statement.
+        Teacher-made, parent-tested printable tests and summaries for Grades 3 to 7, aligned with South Africa’s
+        national curriculum — CAPS, the Curriculum and Assessment Policy Statement.
       </p>
       <div className="mt-7 flex justify-center">
         <Button to="/shop" variant="solid">
@@ -225,15 +225,13 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
         Individual resources start at R50, with discounted once-off bundles available.
       </p>
       {hasPublishedTestimonials ? (
-        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-2 text-body-sm text-ink-soft">
-          Customer feedback from South African parents and tutors
-          <a href="#parent-stories" className="inline-flex items-center gap-1 font-bold text-primary hover:underline">
-            Read their experiences
-            <span className="h-3.5 w-3.5" aria-hidden>
-              <Icon name="arrow" />
-            </span>
-          </a>
-        </p>
+        <a
+          href="#parent-stories"
+          className="group mt-5 inline-flex items-center gap-2 text-body-sm font-semibold text-ink-soft transition-colors hover:text-ink"
+        >
+          <StarRating value={4.9} size="sm" />
+          <span className="underline underline-offset-4 decoration-1">4.9 stars from 500+ families</span>
+        </a>
       ) : null}
       {snapshot && snapshot.valueLists.grades.length > 0 ? <HeroShowcase snapshot={snapshot} /> : null}
     </Section>
