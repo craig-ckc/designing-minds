@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type {
   CmsRepository,
   CmsSnapshot,
@@ -17,6 +17,7 @@ import type {
 interface SupabaseRepositoryOptions {
   url: string
   publishableKey: string
+  client?: SupabaseClient
   audience: 'public' | 'admin'
 }
 
@@ -103,8 +104,11 @@ const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] 
  * stored Supabase session, so RLS determines whether operational rows and
  * catalogue writes are available.
  */
-export const createSupabaseRepository = ({ url, publishableKey, audience }: SupabaseRepositoryOptions): CmsRepository => {
-  const client = createClient(url, publishableKey)
+export const createSupabaseRepository = ({ url, publishableKey, client: providedClient, audience }: SupabaseRepositoryOptions): CmsRepository => {
+  // Browser apps inject their auth client so repository reads share the same
+  // session and storage lock. Build-time callers can still create an isolated
+  // client from URL + publishable key.
+  const client = providedClient ?? createClient(url, publishableKey)
   const productReadTable = audience === 'public' ? TABLES.catalogProducts : TABLES.products
 
   return {
