@@ -23,8 +23,8 @@ Set the server environment variables from `docs/operations.md`.
 The Supabase secret key is server-only — never ship it to the browser.
 
 To test checkout, set `PAYFAST_MODE=sandbox` (the default). `/checkout` returns a
-handoff to `sandbox.payfast.co.za`; leave the PayFast credentials blank to use
-PayFast's default sandbox account.
+handoff to `sandbox.payfast.co.za`; leave the PayFast merchant ID, merchant key,
+and passphrase blank to use the public passphrase-enabled sandbox account.
 
 ## Deploy
 
