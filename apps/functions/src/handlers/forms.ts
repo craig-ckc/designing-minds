@@ -70,7 +70,7 @@ const hasConsent = (value: string | undefined) => value != null && CONSENT_VALUE
 // Public origin used to build the one-click unsubscribe link. Null when unset,
 // in which case the confirmation email falls back to reply-to-unsubscribe.
 const siteBase = (): string | null => {
-  const configured = process.env.SITE_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL
+  const configured = process.env.SITE_URL
   if (!configured) return null
   const trimmed = configured.replace(/\/+$/, '')
   return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`

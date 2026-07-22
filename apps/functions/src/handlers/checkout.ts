@@ -25,9 +25,10 @@ function isCheckoutInput(value: unknown): value is CheckoutInput {
 }
 
 const siteUrl = () => {
-  const configured = process.env.SITE_URL ?? process.env.VERCEL_PROJECT_PRODUCTION_URL
+  const configured = process.env.SITE_URL
   if (!configured) throw new Error('SITE_URL must be set for checkout URLs.')
-  return configured.startsWith('http') ? configured : `https://${configured}`
+  const trimmed = configured.replace(/\/+$/, '')
+  return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
 }
 
 const orderReference = () => `DM-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`

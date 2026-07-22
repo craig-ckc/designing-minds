@@ -53,6 +53,8 @@ const setCorsHeaders = (req: VercelRequest, res: VercelResponse) => {
   res.setHeader('Vary', 'Origin')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type')
+  res.setHeader('Cache-Control', 'no-store')
+  res.setHeader('X-Content-Type-Options', 'nosniff')
 }
 
 export const handleVercel = async (handler: Handler, req: VercelRequest, res: VercelResponse) => {
