@@ -12,18 +12,14 @@ export function UnsubscribePage() {
   const [params] = useSearchParams()
   const email = params.get('e') ?? ''
   const token = params.get('t') ?? ''
-  const [status, setStatus] = useState<Status>('working')
+  const hasSignedLink = Boolean(email && token)
+  const [status, setStatus] = useState<Status>(() => (hasSignedLink ? 'working' : 'invalid'))
   // Guard against the effect running twice (React 18 StrictMode double-invoke).
   const started = useRef(false)
 
   useEffect(() => {
-    if (started.current) return
+    if (!hasSignedLink || started.current) return
     started.current = true
-
-    if (!email || !token) {
-      setStatus('invalid')
-      return
-    }
 
     void (async () => {
       try {
@@ -41,7 +37,7 @@ export function UnsubscribePage() {
         setStatus('error')
       }
     })()
-  }, [email, token])
+  }, [email, hasSignedLink, token])
 
   const content = {
     working: { title: 'Unsubscribing…', body: 'One moment while we update your preferences.' },

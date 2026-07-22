@@ -66,6 +66,7 @@ export const FUNCTIONAL_SPA_PREFIXES = [
   '/cart',
   '/account',
   '/checkout',
+  '/unsubscribe',
 ] as const
 
 /**
@@ -108,7 +109,7 @@ export function matchPath(pathname: string, snapshot: CmsSnapshot): PublicRoute 
     return grade ? { path, kind: 'grade', grade } : null
   }
 
-  const productMatch = path.match(/^\/product\/([^/]+)$/)
+  const productMatch = path.match(/^\/shop\/([^/]+)$/)
   if (productMatch) {
     const slug = productMatch[1]
     const exists = snapshot.products.some((product) => product.slug === slug && product.published)

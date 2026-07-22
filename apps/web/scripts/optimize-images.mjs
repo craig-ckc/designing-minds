@@ -31,7 +31,14 @@ const targetDir = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve
 const RASTER_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp'])
 
 /** Basenames that must keep their original format (no AVIF, no recompression). */
-const EXCLUDE_BASENAMES = new Set(['og-image.png', 'favicon.png', 'apple-touch-icon.png'])
+const EXCLUDE_BASENAMES = new Set([
+  'og-image.png',
+  'favicon.png',
+  'favicon-32x32.png',
+  'apple-touch-icon.png',
+  'icon-192.png',
+  'icon-512.png',
+])
 
 /** Encoder settings. Tune here; AVIF is the primary, the fallback is smaller too. */
 const AVIF = { quality: 50, effort: 5 }

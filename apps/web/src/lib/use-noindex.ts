@@ -6,12 +6,17 @@ import { useEffect } from 'react'
  */
 export function useNoindex() {
   useEffect(() => {
-    const meta = document.createElement('meta')
-    meta.name = 'robots'
-    meta.content = 'noindex'
-    document.head.appendChild(meta)
+    const existing = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]')
+    const meta = existing ?? document.createElement('meta')
+    const previous = existing?.content ?? null
+    if (!existing) {
+      meta.name = 'robots'
+      document.head.appendChild(meta)
+    }
+    meta.content = 'noindex,nofollow'
     return () => {
-      meta.remove()
+      if (previous === null) meta.remove()
+      else meta.content = previous
     }
   }, [])
 }

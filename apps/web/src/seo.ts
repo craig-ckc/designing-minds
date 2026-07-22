@@ -125,6 +125,7 @@ const metatags = ({ title, description, canonical, ogType, image }: PageMeta): s
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
+    `<meta name="twitter:image:alt" content="${escapeHtml(OG_IMAGE_ALT)}" />`,
   ].join('\n    ')
 
 interface Crumb {
@@ -134,7 +135,7 @@ interface Crumb {
 
 const breadcrumbList = (siteUrl: string, crumbs: Crumb[]) => ({
   '@context': 'https://schema.org',
-  '@type': 'breadcrumbList',
+  '@type': 'BreadcrumbList',
   itemListElement: crumbs.map((crumb, index) => ({
     '@type': 'ListItem',
     position: index + 1,
@@ -158,7 +159,7 @@ const organization = (siteUrl: string, testimonials: Testimonial[] = []) => ({
   '@type': 'EducationalOrganization',
   name: SITE_NAME,
   url: `${siteUrl}/`,
-  logo: `${siteUrl}/favicon.svg`,
+  logo: `${siteUrl}/icon-512.png`,
   image: `${siteUrl}${DEFAULT_OG_IMAGE}`,
   description: DEFAULT_DESCRIPTION,
   email: CONTACT.email,

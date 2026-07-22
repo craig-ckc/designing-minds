@@ -1,6 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from '../repository'
+import { getCollection } from '../cms/registry'
+import { selectRecord } from '../cms/adapter'
+import { getRecordTitle } from '../cms/record'
 import { useAdminAuth } from '../lib/auth'
 import { useUnsavedChanges } from '../lib/unsaved'
 import { CollectionSidebar } from './workspace/CollectionSidebar'
@@ -10,7 +14,44 @@ import { PublishButton } from './PublishButton'
 
 /* ----------------------------- Top app bar ----------------------------- */
 
-function TopBar() {
+function AdminBreadcrumb({ snapshot }: { snapshot: CmsSnapshot | null }) {
+  const { pathname } = useLocation()
+  const trail = useMemo(() => {
+    const [, collectionId, recordId] = pathname.split('/')
+    const collection = getCollection(collectionId)
+    if (!collection) return { title: 'Dashboard', collection: null, record: null }
+
+    const record =
+      !recordId ? null : recordId === 'new' ? `New ${collection.singular.toLowerCase()}` : snapshot
+        ? getRecordTitle(collection, selectRecord(snapshot, collection.id, recordId) ?? { id: recordId })
+        : collection.singular
+    return { title: record ?? collection.label, collection, record }
+  }, [pathname, snapshot])
+
+  useEffect(() => {
+    document.title = `${trail.title} | Designing Minds Admin`
+  }, [trail.title])
+
+  if (!trail.collection) return <span className="hidden text-[0.8rem] text-muted md:block">Dashboard</span>
+
+  return (
+    <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 text-[0.8rem] md:flex">
+      <Link to="/" className="text-muted transition hover:text-ink">Dashboard</Link>
+      <span aria-hidden className="text-line-strong">/</span>
+      {trail.record ? (
+        <>
+          <Link to={`/${trail.collection.id}`} className="text-muted transition hover:text-ink">{trail.collection.label}</Link>
+          <span aria-hidden className="text-line-strong">/</span>
+          <span aria-current="page" className="max-w-64 truncate text-ink-soft">{trail.record}</span>
+        </>
+      ) : (
+        <span aria-current="page" className="text-ink-soft">{trail.collection.label}</span>
+      )}
+    </nav>
+  )
+}
+
+function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const { session, logout } = useAdminAuth()
   const unsaved = useUnsavedChanges()
   const [confirmLogout, setConfirmLogout] = useState(false)
@@ -34,6 +75,9 @@ function TopBar() {
           Admin
         </span>
       </div>
+
+      <span aria-hidden className="hidden text-line-strong md:block">/</span>
+      <AdminBreadcrumb snapshot={snapshot} />
 
       <div className="ml-auto flex flex-none items-center gap-2">
         {!repository.canWrite ? (
@@ -113,7 +157,7 @@ export function Shell({
 }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <TopBar />
+      <TopBar snapshot={snapshot} />
       <div className="flex min-h-0 flex-1">
         <aside className="hidden w-[256px] flex-none border-r border-line bg-surface lg:block">
           {snapshot ? <CollectionSidebar snapshot={snapshot} /> : null}

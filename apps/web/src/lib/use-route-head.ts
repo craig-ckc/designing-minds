@@ -37,24 +37,52 @@ function upsertCanonical(href: string) {
   el.setAttribute('href', href)
 }
 
+function removeCanonical() {
+  document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.remove()
+}
+
+function removeMeta(attr: 'name' | 'property', key: string) {
+  document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)?.remove()
+}
+
+const functionalTitle = (pathname: string): string => {
+  if (pathname === '/sign-up') return `Create account | ${SITE_NAME}`
+  if (pathname === '/login') return `Log in | ${SITE_NAME}`
+  if (pathname === '/forgot-password') return `Forgot password | ${SITE_NAME}`
+  if (pathname === '/reset-password') return `Reset password | ${SITE_NAME}`
+  if (pathname === '/cart') return `Cart | ${SITE_NAME}`
+  if (pathname === '/checkout') return `Checkout | ${SITE_NAME}`
+  if (pathname.startsWith('/checkout/')) return `Payment status | ${SITE_NAME}`
+  if (pathname === '/account') return `Customer Account | ${SITE_NAME}`
+  if (pathname === '/account/orders') return `Order History | ${SITE_NAME}`
+  if (pathname.startsWith('/account/orders/')) return `Order Detail | ${SITE_NAME}`
+  if (pathname === '/unsubscribe') return `Unsubscribe | ${SITE_NAME}`
+  return `Page not found | ${SITE_NAME}`
+}
+
 export function useRouteHead(snapshot: CmsSnapshot | null) {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    // Without a snapshot we can't resolve product/grade metadata; the initial
-    // prerendered head stays in place until one arrives.
-    if (!snapshot) return
-
-    const route = matchPath(pathname, snapshot)
+    const route = snapshot ? matchPath(pathname, snapshot) : null
     if (!route) {
-      // Functional (cart/checkout/account/auth) or unknown page: just keep a
-      // sensible tab title.
-      document.title = SITE_NAME
+      // Functional and unknown routes are noindex and must not inherit a
+      // canonical or social tags from the last public page visited in the SPA.
+      document.title = functionalTitle(pathname)
+      upsertMeta('name', 'robots', 'noindex,nofollow')
+      removeCanonical()
+      for (const key of ['description', 'twitter:title', 'twitter:description', 'twitter:image', 'twitter:image:alt']) removeMeta('name', key)
+      for (const key of ['og:title', 'og:description', 'og:url', 'og:type', 'og:image', 'og:image:alt']) removeMeta('property', key)
       return
     }
 
+    // `route` can only be non-null when a snapshot was supplied above; keep
+    // the invariant explicit for TypeScript and future refactors.
+    if (!snapshot) return
+
     const meta = pageMetaFor(route, snapshot, window.location.origin)
     document.title = meta.title
+    upsertMeta('name', 'robots', 'index,follow')
     upsertMeta('name', 'description', meta.description)
     upsertMeta('property', 'og:title', meta.title)
     upsertMeta('property', 'og:description', meta.description)
