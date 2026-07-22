@@ -23,6 +23,8 @@ This combines backend readiness, preview setup, static publishing, and launch ch
 | Refund initiation | Deferred | Payment/refund state exists; operational refund handling is manual/admin for launch. |
 | Stale pending sweep | Deferred | Add scheduled cleanup after launch if needed. |
 
+“Ready” in this table means the implementation is present and verified in the codebase. Production is not launch-ready until the environment, DNS, provider, and end-to-end checks below are complete.
+
 ## Security Boundaries
 
 - Browser clients use only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
@@ -64,12 +66,21 @@ Preview smoke test: sign up, add a product, pay through the PayFast sandbox, lan
 
 ## Production Environment
 
-Web/admin:
+Web:
 
 | Variable | Purpose |
 | --- | --- |
 | `VITE_SUPABASE_URL` | Public Supabase URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Publishable/anon key |
+| `VITE_API_BASE_URL` | Functions origin when not using same-origin rewrites |
+
+Admin:
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_SUPABASE_URL` | Public Supabase URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Publishable/anon key |
+| `VITE_WEB_URL` | Production storefront origin used by Preview |
 | `VITE_API_BASE_URL` | Functions origin when not using same-origin rewrites |
 
 Web static generation:
@@ -85,6 +96,7 @@ Functions:
 | --- | --- |
 | `SUPABASE_URL` | Supabase URL |
 | `SUPABASE_SECRET_KEY` | Server-only Supabase key |
+| `SITE_URL` | Public storefront origin used for payment and unsubscribe URLs |
 | `PAYFAST_MERCHANT_ID` | PayFast production credential |
 | `PAYFAST_MERCHANT_KEY` | PayFast production credential |
 | `PAYFAST_PASSPHRASE` | PayFast production secret |
@@ -98,6 +110,8 @@ Functions:
 | `FORM_NOTIFICATIONS_TO` | Inbox that receives contact + newsletter submissions |
 | `MAILCHIMP_API_KEY` | Mailchimp API key; `-usX` suffix picks the datacenter (blank disables sync) |
 | `MAILCHIMP_AUDIENCE_ID` | Mailchimp audience/list ID to sync submitters into |
+
+Use one canonical storefront origin everywhere. Attach it to the web project, redirect the alternate `www`/apex hostname to it, and use the same origin for `VITE_SITE_URL`, functions `SITE_URL`, admin `VITE_WEB_URL`, PayFast return/cancel/notify URLs, and Supabase Auth redirect allowlists. Environment changes only affect a new deployment; redeploy each affected project after changing them.
 
 ## Static Publish Flow
 
@@ -122,6 +136,7 @@ Supabase:
 - [ ] Production Supabase project is separate from local/sandbox projects.
 - [ ] `supabase/schema.sql` and `supabase/seed.sql` have been applied.
 - [ ] Incremental patches in `supabase/patch/` are applied (incl. `2026-07-02-form-submissions.sql` for the contact/newsletter tables).
+- [ ] `2026-07-22-shop-product-redirects.sql` is applied so future slug changes preserve canonical `/shop/*` URLs.
 - [ ] RLS is enabled on catalogue and operational tables.
 - [ ] `public.users` rows are created for new Auth users.
 - [ ] `user_roles` creates customer role on signup and cannot be changed by browser clients.
@@ -142,10 +157,13 @@ Auth and admin:
 Vercel:
 
 - [ ] Web, admin, and functions projects are deployed to production origins.
+- [ ] The launch domain is attached to the web project and DNS no longer serves the previous site.
+- [ ] Exactly one `www`/apex hostname is canonical and the other permanently redirects to it.
 - [ ] Production env vars are set on the correct project and scope.
 - [ ] No secret key or PayFast passphrase appears in a `VITE_` variable.
 - [ ] Preview env vars point only to sandbox services.
 - [ ] `/api/*` routing works from web/admin to functions.
+- [ ] Unknown public routes return HTTP 404; functional routes return HTTP 200 with `noindex,nofollow`.
 
 PayFast:
 
@@ -168,6 +186,8 @@ Catalogue and static web:
 - [ ] Product files have labels, filenames, and storage keys.
 - [ ] Value Lists match launch catalogue needs.
 - [ ] `view-source:` on public pages shows real prerendered content, canonical tags, and JSON-LD where relevant.
+- [ ] Titles, descriptions, canonicals, Open Graph URLs/images, and Twitter cards use the launch origin.
+- [ ] SVG/PNG favicons, Apple touch icon, web manifest icons, and the 1200×630 OG image return HTTP 200.
 - [ ] `/sitemap.xml` lists indexable routes only.
 - [ ] `/robots.txt` disallows functional routes.
 - [ ] Old product slugs redirect and are absent from the sitemap.
@@ -180,6 +200,14 @@ Smoke tests:
 - [ ] PayFast returns to Order Detail and the order becomes paid after ITN.
 - [ ] Paid Order Detail shows working download actions.
 - [ ] Admin can sign in, edit/save a product, upload a file, and publish the web build.
+- [ ] Contact and newsletter submissions persist; configured notification/audience integrations receive them.
+- [ ] Password-reset links land on the correct web/admin production origins.
+
+Code quality:
+
+- [ ] `npm run lint`, `npm test`, and `npm run build` pass from the repository root.
+- [ ] `npm audit --omit=dev` reports no known production dependency vulnerabilities.
+- [ ] `npm outdated` has no unexpected in-range updates; major upgrades are reviewed separately.
 
 Monitoring:
 

@@ -12,7 +12,7 @@ Indexable public routes:
 /grades/
 /grades/grade-[3-7]/
 /packages/
-/product/[product-slug]/
+/shop/[product-slug]/
 /help/
 /contact/
 /about/
@@ -26,14 +26,19 @@ Functional noindex routes:
 ```text
 /sign-up/
 /login/
+/forgot-password/
+/reset-password/
 /account/
 /account/orders/
 /account/orders/[order-id]/
 /cart/
 /checkout/
+/checkout/return/
+/checkout/cancel/
+/unsubscribe/
 ```
 
-`/bundles/` is legacy and redirects to `/packages/`. Product pages are canonical top-level routes, not nested under shop, grades, or packages.
+`/bundles/` is legacy and redirects to `/packages/`. Product pages use the canonical `/shop/[product-slug]/` route regardless of whether the visitor discovered them through Shop, Grades, or Packages.
 
 ## Page Families
 
@@ -41,11 +46,11 @@ Functional noindex routes:
 | --- | --- | --- | --- |
 | Entry pages | `/`, `/about/`, `/contact/`, `/help/` | Introduce the brand, build trust, answer questions, and send customers into catalogue/support flows. | Featured Products, FAQs, Testimonials where useful. |
 | Browse pages | `/shop/`, `/grades/`, `/grades/grade-[3-7]/`, `/packages/` | Help customers narrow the catalogue before opening a Product Detail. | Products, Subjects, Value Lists, contextual FAQs. |
-| Product detail | `/product/[product-slug]/` | Explain one purchasable Product and let the customer add it to cart. | Product, Subjects, related Products, referenced FAQs. |
+| Product detail | `/shop/[product-slug]/` | Explain one purchasable Product and let the customer add it to cart. | Product, Subjects, related Products, referenced FAQs. |
 | Legal pages | `/privacy-policy/`, `/terms/`, `/refund-policy/` | Set expectations for privacy, purchases, digital delivery, refunds, licensing, and support. | Static copy for launch. |
-| Auth pages | `/sign-up/`, `/login/` | Create or access a Customer Account, including checkout-driven auth. | Supabase Auth session only. |
+| Auth pages | `/sign-up/`, `/login/`, `/forgot-password/`, `/reset-password/` | Create, access, or recover a Customer Account, including checkout-driven auth. | Supabase Auth session only. |
 | Account pages | `/account/`, `/account/orders/`, `/account/orders/[order-id]/` | Show customer details, order history, receipts, and download actions. | User profile, Orders, Order Items, Payments, Products. |
-| Commerce flow | `/cart/`, `/checkout/` | Review selected Products, require a Customer Account, create payment, and return to Order Detail. | Cart, Products, Orders, Payments. |
+| Commerce flow | `/cart/`, `/checkout/`, `/checkout/return/`, `/checkout/cancel/` | Review selected Products, require a Customer Account, create payment, and return to Order Detail. | Cart, Products, Orders, Payments. |
 
 Downloads are only shown from Order Detail. There is no standalone downloads page.
 

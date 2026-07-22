@@ -99,7 +99,7 @@ One table per form, named `form_<name>` (`form_contact`, `form_newsletter`). Sta
 
 Consequences:
 
-- The contact/newsletter forms do NOT open the visitor's mail client, and are not wired to Mailchimp.
+- The contact/newsletter forms do not open the visitor's mail client. They persist through the Functions API; eligible opt-ins are then synced to Mailchimp as a best-effort secondary action.
 - Submissions surface in the admin app as read-only "Submissions" collections; the jsonb `data` renders as key/value rows.
 - On submit the functions app sends a best-effort Resend notification to the Designing Minds inbox; a Resend failure never fails the (already-persisted) submission.
 
@@ -107,13 +107,13 @@ Consequences:
 
 Status: accepted.
 
-Resend is the transactional/notification email provider: form-submission notifications now, and purchase/order emails as they are added. Supabase Auth handles account emails (signup confirmation, password reset) via its own SMTP. Mailchimp is reserved strictly for marketing campaigns and is not part of any form-submission or transactional flow.
+Resend is the transactional/notification email provider: form-submission notifications and subscription confirmations now, and purchase/order emails as they are added. Supabase Auth handles account emails (signup confirmation, password reset) via its own SMTP. Mailchimp is reserved strictly for marketing audiences and campaigns; the Functions API syncs eligible form opt-ins after their submission has already been persisted.
 
 Consequences:
 
 - Functions carry `RESEND_API_KEY`, `RESEND_FROM`, `FORM_NOTIFICATIONS_TO`. Absent config disables sending (submissions still persist); it is never in a `VITE_` variable.
 - Password reset is a real flow in both the web and admin apps (`resetPasswordForEmail` + `updateUser`); Supabase must have `/reset-password` (web) and the admin origin allow-listed as redirect URLs.
-- Marketing list sync to Mailchimp, if added later, is a separate integration off the newsletter table — not a change to the submission path.
+- Mailchimp sync is best effort and never determines whether a form submission succeeds. Newsletter signups opt in by submitting; contact enquiries sync only when marketing consent is present.
 
 ## Subjects Are A Value List, Not A Table
 

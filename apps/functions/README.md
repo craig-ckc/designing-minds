@@ -5,12 +5,15 @@ the web and admin front-ends call the **same** logic rather than duplicating it.
 
 ## Handlers
 
-| Route | Purpose |
-| --- | --- |
-| `POST /checkout` | Creates an Order + a single pending Payment atomically, then returns a signed PayFast handoff. Access Plans are one-time charges with no recurring mandate (see `docs/decisions.md`). |
-| `POST /payment-webhook` | PayFast ITN callback. Verifies signature, source IP, amount, and PayFast validation before transitioning pending payments. |
-| `POST /issue-download` | Mints a short-lived signed URL for an entitled file, after checking the order belongs to the customer and is paid. Bundle/access-plan files resolve from included resources. |
-| `POST /admin/upload-url` | Creates an admin-only signed upload URL and returns the provider-neutral storage key. |
+| Production route | Local route | Purpose |
+| --- | --- | --- |
+| `POST /api/checkout` | `POST /checkout` | Creates an Order + a single pending Payment atomically, then returns a signed PayFast handoff. Access Plans are one-time charges with no recurring mandate (see `docs/decisions.md`). |
+| `POST /api/payment-webhook` | `POST /payment-webhook` | PayFast ITN callback. Verifies signature, source IP, amount, and PayFast validation before transitioning pending payments. |
+| `POST /api/issue-download` | `POST /issue-download` | Mints a short-lived signed URL for an entitled file, after checking the order belongs to the customer and is paid. Bundle/access-plan files resolve from included resources. |
+| `POST /api/forms` | `POST /forms` | Validates and stores contact/newsletter submissions, then performs best-effort email and audience sync. |
+| `POST /api/unsubscribe` | `POST /unsubscribe` | Verifies a signed unsubscribe token and marks the Mailchimp contact unsubscribed. |
+| `POST /api/admin/upload-url` | `POST /admin/upload-url` | Creates an admin-only signed upload URL and returns the provider-neutral storage key. |
+| `POST /api/admin/rebuild-web` | `POST /admin/rebuild-web` | Verifies admin access and triggers the configured web Deploy Hook. |
 
 ## Local dev
 
