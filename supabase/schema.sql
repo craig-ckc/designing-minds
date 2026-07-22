@@ -509,7 +509,7 @@ create table if not exists public.slug_redirects (
 create index if not exists slug_redirects_to_path_idx on public.slug_redirects ("toPath");
 
 -- Records old -> new whenever a product slug changes, collapsing chains so
--- /product/a -> /product/b -> /product/c becomes a -> c and b -> c. Definer so
+-- /shop/a -> /shop/b -> /shop/c becomes a -> c and b -> c. Definer so
 -- it writes slug_redirects regardless of who updated the product.
 create or replace function public.handle_product_slug_change()
 returns trigger
@@ -518,8 +518,8 @@ security definer
 set search_path = public
 as $$
 declare
-  old_path text := '/product/' || old.slug;
-  new_path text := '/product/' || new.slug;
+  old_path text := '/shop/' || old.slug;
+  new_path text := '/shop/' || new.slug;
 begin
   if new.slug is distinct from old.slug then
     update public.slug_redirects
@@ -563,7 +563,7 @@ as $$
       select 1
       from public.products p
       where p.published = true
-        and ('/product/' || p.slug) = sr."toPath"
+        and ('/shop/' || p.slug) = sr."toPath"
     );
 $$;
 
