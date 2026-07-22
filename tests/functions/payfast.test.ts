@@ -1,9 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHash } from 'node:crypto'
+import { promises as dns } from 'node:dns'
 import {
   PAYFAST_FIELD_ORDER,
+  PAYFAST_VALID_HOSTS,
   SANDBOX_MERCHANT_ID,
   SANDBOX_MERCHANT_KEY,
+  SANDBOX_PASSPHRASE,
   payfastCredentials,
   signPayfastFields,
   signaturePayload,
@@ -47,11 +50,23 @@ describe('signaturePayload (redirect / documentation order)', () => {
 })
 
 describe('signPayfastFields', () => {
-  const original = process.env.PAYFAST_PASSPHRASE
+  const original = { ...process.env }
+
+  beforeEach(() => {
+    process.env.PAYFAST_MODE = 'sandbox'
+    process.env.PAYFAST_MERCHANT_ID = 'custom-sandbox-id'
+    process.env.PAYFAST_MERCHANT_KEY = 'custom-sandbox-key'
+  })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.PAYFAST_PASSPHRASE
-    else process.env.PAYFAST_PASSPHRASE = original
+    if (original.PAYFAST_MODE === undefined) delete process.env.PAYFAST_MODE
+    else process.env.PAYFAST_MODE = original.PAYFAST_MODE
+    if (original.PAYFAST_MERCHANT_ID === undefined) delete process.env.PAYFAST_MERCHANT_ID
+    else process.env.PAYFAST_MERCHANT_ID = original.PAYFAST_MERCHANT_ID
+    if (original.PAYFAST_MERCHANT_KEY === undefined) delete process.env.PAYFAST_MERCHANT_KEY
+    else process.env.PAYFAST_MERCHANT_KEY = original.PAYFAST_MERCHANT_KEY
+    if (original.PAYFAST_PASSPHRASE === undefined) delete process.env.PAYFAST_PASSPHRASE
+    else process.env.PAYFAST_PASSPHRASE = original.PAYFAST_PASSPHRASE
   })
 
   it('is the MD5 of the signature payload', () => {
@@ -94,6 +109,24 @@ describe('verifyPayfastSignature (ITN / received order)', () => {
     expect(verifyPayfastSignature({ ...fields, signature })).toBe(true)
   })
 
+  it('includes present-but-empty fields when verifying a PayFast ITN', () => {
+    const fields = {
+      m_payment_id: 'pay-123',
+      pf_payment_id: '987654',
+      payment_status: 'COMPLETE',
+      custom_str1: '',
+      custom_int1: '',
+      name_first: 'Test',
+      name_last: '',
+      amount_gross: '100.00',
+    }
+    const signedPayload =
+      'm_payment_id=pay-123&pf_payment_id=987654&payment_status=COMPLETE&custom_str1=&custom_int1=&name_first=Test&name_last=&amount_gross=100.00&passphrase=itn-secret'
+    const signature = createHash('md5').update(signedPayload).digest('hex')
+
+    expect(verifyPayfastSignature({ ...fields, signature })).toBe(true)
+  })
+
   it('rejects a tampered amount', () => {
     const fields = itnFields()
     const signature = signPayfastFields(fields, Object.keys(fields))
@@ -116,9 +149,10 @@ describe('payfastCredentials', () => {
   const original = { ...process.env }
 
   afterEach(() => {
-    process.env.PAYFAST_MODE = original.PAYFAST_MODE
-    process.env.PAYFAST_MERCHANT_ID = original.PAYFAST_MERCHANT_ID
-    process.env.PAYFAST_MERCHANT_KEY = original.PAYFAST_MERCHANT_KEY
+    for (const key of ['PAYFAST_MODE', 'PAYFAST_MERCHANT_ID', 'PAYFAST_MERCHANT_KEY', 'PAYFAST_PASSPHRASE'] as const) {
+      if (original[key] === undefined) delete process.env[key]
+      else process.env[key] = original[key]
+    }
   })
 
   it('returns the configured credentials when both are set', () => {
@@ -131,7 +165,20 @@ describe('payfastCredentials', () => {
     process.env.PAYFAST_MODE = 'sandbox'
     delete process.env.PAYFAST_MERCHANT_ID
     delete process.env.PAYFAST_MERCHANT_KEY
+    delete process.env.PAYFAST_PASSPHRASE
     expect(payfastCredentials()).toEqual({ merchantId: SANDBOX_MERCHANT_ID, merchantKey: SANDBOX_MERCHANT_KEY })
+    expect(signPayfastFields({ merchant_id: SANDBOX_MERCHANT_ID })).toBe(
+      createHash('md5')
+        .update(`merchant_id=${SANDBOX_MERCHANT_ID}&passphrase=${SANDBOX_PASSPHRASE}`)
+        .digest('hex'),
+    )
+  })
+
+  it('rejects partially configured merchant credentials instead of silently mixing accounts', () => {
+    process.env.PAYFAST_MODE = 'sandbox'
+    process.env.PAYFAST_MERCHANT_ID = 'merchant-only'
+    delete process.env.PAYFAST_MERCHANT_KEY
+    expect(() => payfastCredentials()).toThrow(/both be set or both be blank/)
   })
 
   it('throws in live mode when credentials are missing', () => {
@@ -143,11 +190,14 @@ describe('payfastCredentials', () => {
 })
 
 describe('verifyPayfastSourceIp', () => {
-  const original = process.env.PAYFAST_ALLOWED_IPS
+  const original = { ...process.env }
 
   afterEach(() => {
-    if (original === undefined) delete process.env.PAYFAST_ALLOWED_IPS
-    else process.env.PAYFAST_ALLOWED_IPS = original
+    for (const key of ['PAYFAST_ALLOWED_IPS', 'PAYFAST_MODE'] as const) {
+      if (original[key] === undefined) delete process.env[key]
+      else process.env[key] = original[key]
+    }
+    vi.restoreAllMocks()
   })
 
   it('rejects a request with no source IP header', async () => {
@@ -158,5 +208,16 @@ describe('verifyPayfastSourceIp', () => {
     process.env.PAYFAST_ALLOWED_IPS = '41.74.179.194, 197.97.145.144'
     expect(await verifyPayfastSourceIp({ 'x-forwarded-for': '197.97.145.144' })).toBe(true)
     expect(await verifyPayfastSourceIp({ 'x-real-ip': '41.74.179.194' })).toBe(true)
+  })
+
+  it('accepts a sandbox callback resolved from PayFast shared ITN infrastructure', async () => {
+    process.env.PAYFAST_MODE = 'sandbox'
+    delete process.env.PAYFAST_ALLOWED_IPS
+    expect(PAYFAST_VALID_HOSTS.sandbox).toContain('w1w.payfast.co.za')
+    vi.spyOn(dns, 'resolve4').mockImplementation(async (hostname) =>
+      hostname === 'w1w.payfast.co.za' ? ['144.126.193.139'] : [],
+    )
+
+    expect(await verifyPayfastSourceIp({ 'x-forwarded-for': '144.126.193.139' })).toBe(true)
   })
 })

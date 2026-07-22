@@ -14,19 +14,22 @@ export const PAYFAST_VALIDATE_URLS: Record<PayfastMode, string> = {
 }
 
 // PayFast's canonical ITN source hosts (see developers.payfast.co.za — "Step 4:
-// Confirm payment"). PayFast rotates the underlying IPs, so we resolve these
-// hostnames at verification time rather than pinning a static list. Sandbox uses
-// the same validation path as live so the sandbox behaves like production.
+// Confirm payment"). Sandbox callbacks can originate from the same infrastructure
+// as live callbacks, so both modes must resolve the complete documented host set.
+// PayFast rotates the underlying IPs, so do not pin the current addresses here.
+const PAYFAST_SOURCE_HOSTS = ['www.payfast.co.za', 'sandbox.payfast.co.za', 'w1w.payfast.co.za', 'w2w.payfast.co.za'] as const
+
 export const PAYFAST_VALID_HOSTS: Record<PayfastMode, readonly string[]> = {
-  sandbox: ['sandbox.payfast.co.za'],
-  live: ['www.payfast.co.za', 'w1w.payfast.co.za', 'w2w.payfast.co.za'],
+  sandbox: PAYFAST_SOURCE_HOSTS,
+  live: PAYFAST_SOURCE_HOSTS,
 }
 
-// Default PayFast sandbox test credentials, published in their docs. Used when
-// no merchant credentials are configured in sandbox mode so the checkout flow
-// works out of the box against sandbox.payfast.co.za (with no passphrase).
-export const SANDBOX_MERCHANT_ID = '10000100'
-export const SANDBOX_MERCHANT_KEY = '46f0cd694581a'
+// Public passphrase-enabled sandbox credentials published by PayFast. The older
+// 10000100 account accepts unsigned forms but currently rejects signed forms,
+// so it cannot exercise the production-style signed checkout and ITN flow.
+export const SANDBOX_MERCHANT_ID = '10004002'
+export const SANDBOX_MERCHANT_KEY = 'q1cd2rdny4a53'
+export const SANDBOX_PASSPHRASE = 'payfast'
 
 export const PAYFAST_FIELD_ORDER = [
   'merchant_id',
@@ -72,9 +75,19 @@ export const payfastMode = (): PayfastMode => (process.env.PAYFAST_MODE === 'liv
 export const payfastCredentials = (): { merchantId: string; merchantKey: string } => {
   const merchantId = process.env.PAYFAST_MERCHANT_ID
   const merchantKey = process.env.PAYFAST_MERCHANT_KEY
+  if (Boolean(merchantId) !== Boolean(merchantKey)) {
+    throw new Error('PAYFAST_MERCHANT_ID and PAYFAST_MERCHANT_KEY must both be set or both be blank.')
+  }
   if (merchantId && merchantKey) return { merchantId, merchantKey }
   if (payfastMode() === 'sandbox') return { merchantId: SANDBOX_MERCHANT_ID, merchantKey: SANDBOX_MERCHANT_KEY }
   throw new Error('PAYFAST_MERCHANT_ID and PAYFAST_MERCHANT_KEY must be set.')
+}
+
+const payfastPassphrase = (): string => {
+  const configured = process.env.PAYFAST_PASSPHRASE
+  const usesSandboxFallback =
+    payfastMode() === 'sandbox' && !process.env.PAYFAST_MERCHANT_ID && !process.env.PAYFAST_MERCHANT_KEY
+  return configured || (usesSandboxFallback ? SANDBOX_PASSPHRASE : '')
 }
 
 export const signaturePayload = (fields: PayfastFields, passphrase = '', order: readonly string[] = PAYFAST_FIELD_ORDER): string => {
@@ -89,7 +102,7 @@ export const signaturePayload = (fields: PayfastFields, passphrase = '', order: 
 }
 
 export const signPayfastFields = (fields: PayfastFields, order: readonly string[] = PAYFAST_FIELD_ORDER): string => {
-  const passphrase = process.env.PAYFAST_PASSPHRASE ?? ''
+  const passphrase = payfastPassphrase()
   return createHash('md5').update(signaturePayload(fields, passphrase, order)).digest('hex')
 }
 
@@ -97,7 +110,17 @@ export const verifyPayfastSignature = (fields: PayfastFields): boolean => {
   const received = typeof fields.signature === 'string' ? fields.signature : ''
   if (!received) return false
   const order = Object.keys(fields).filter((key) => key !== 'signature')
-  return signPayfastFields(fields, order) === received
+  const pairs: string[] = []
+  for (const key of order) {
+    const value = fields[key]
+    if (value === undefined || value === null) continue
+    // PayFast includes present-but-empty ITN fields in its signed payload. This
+    // intentionally differs from outbound form signing, which omits empties.
+    pairs.push(`${key}=${encode(String(value))}`)
+  }
+  const passphrase = payfastPassphrase()
+  if (passphrase) pairs.push(`passphrase=${encode(passphrase)}`)
+  return createHash('md5').update(pairs.join('&')).digest('hex') === received
 }
 
 export const buildPayfastProcess = (fields: PayfastFields) => {
@@ -147,9 +170,10 @@ const resolvePayfastSourceIps = async (mode: PayfastMode): Promise<Set<string>> 
   return ips
 }
 
-// Confirms the ITN came from PayFast. Sandbox and live run the same check, only
-// differing in which hosts are resolved. A manual PAYFAST_ALLOWED_IPS override
-// short-circuits DNS (useful for pinning IPs or offline tests). A total DNS
+// Confirms the ITN came from PayFast. Sandbox and live resolve the same canonical
+// source hosts because PayFast shares callback infrastructure. A manual
+// PAYFAST_ALLOWED_IPS override short-circuits DNS (useful for pinning IPs or
+// offline tests). A total DNS
 // failure throws so the webhook retries rather than permanently dropping a real
 // payment; a resolved-but-non-matching IP returns false (rejected as spoofed).
 export const verifyPayfastSourceIp = async (headers: Record<string, string | undefined>): Promise<boolean> => {
