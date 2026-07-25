@@ -46,6 +46,9 @@ const JPEG = { quality: 80, mozjpeg: true }
 // palette quantization shrinks UI/graphic PNGs a lot; safe here because we only
 // touch build output, never the source. Drop `palette` for photographic PNGs.
 const PNG = { compressionLevel: 9, effort: 8, palette: true, quality: 80 }
+/** Product-cover illustrations render at about 200 CSS pixels; 640px preserves
+ *  a crisp result on high-density displays without shipping 1366px sources. */
+const SUBJECT_AVIF_MAX_PX = 640
 
 /* --------------------------------- Walk -------------------------------- */
 
@@ -71,9 +74,32 @@ let originals = 0
 let avifs = 0
 let savedFallback = 0
 let savedTotal = 0 // original bytes minus (compressed fallback + avif)
+let subjectAvifs = 0
+let savedSubjects = 0
 
 for await (const file of walk(targetDir)) {
   const ext = path.extname(file).toLowerCase()
+  const rel = path.relative(targetDir, file)
+
+  if (ext === '.avif' && rel.split(path.sep)[0] === 'subjects') {
+    const input = await readFile(file)
+    const optimized = await sharp(input)
+      .resize({
+        width: SUBJECT_AVIF_MAX_PX,
+        height: SUBJECT_AVIF_MAX_PX,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .avif(AVIF)
+      .toBuffer()
+    const kept = optimized.length < input.length ? optimized : input
+    await writeFile(file, kept)
+    subjectAvifs += 1
+    savedSubjects += input.length - kept.length
+    console.log(`[optimize-images] ${rel}: ${fmtKb(input.length)} → cover ${fmtKb(kept.length)}`)
+    continue
+  }
+
   if (!RASTER_EXT.has(ext)) continue
   if (EXCLUDE_BASENAMES.has(path.basename(file))) continue
 
@@ -98,17 +124,17 @@ for await (const file of walk(targetDir)) {
   savedFallback += before - keptFallback.length
   savedTotal += before - Math.min(keptFallback.length, avifBuf.length)
 
-  const rel = path.relative(targetDir, file)
   console.log(
     `[optimize-images] ${rel}: ${fmtKb(before)} → fallback ${fmtKb(keptFallback.length)}, avif ${fmtKb(avifBuf.length)}`,
   )
 }
 
-if (originals === 0) {
+if (originals === 0 && subjectAvifs === 0) {
   console.log(`[optimize-images] No eligible raster images in ${path.relative(process.cwd(), targetDir)} (nothing to do).`)
 } else {
   console.log(
-    `[optimize-images] Optimized ${originals} image(s): +${avifs} AVIF, fallback saved ${fmtKb(savedFallback)}, ` +
-      `best-case payload saved ${fmtKb(savedTotal)}.`,
+    `[optimize-images] Optimized ${originals} image(s) (+${avifs} AVIF) and ${subjectAvifs} cover illustration(s): ` +
+      `fallback saved ${fmtKb(savedFallback)}, cover payload saved ${fmtKb(savedSubjects)}, ` +
+      `best-case raster payload saved ${fmtKb(savedTotal)}.`,
   )
 }

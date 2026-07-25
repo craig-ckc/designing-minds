@@ -50,7 +50,7 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
             <div>
               <div className="flex justify-center px-8 py-4 sm:px-12">
-                <ProductCover product={product} className="max-w-[22rem]" />
+                <ProductCover product={product} className="max-w-[22rem]" priority />
               </div>
 
               {/* Description — CMS rich text stored as Markdown */}
