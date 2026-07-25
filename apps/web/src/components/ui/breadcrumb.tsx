@@ -8,12 +8,15 @@ export function Breadcrumb({ trail, current }: { trail: { to: string; label: str
           <Link to={crumb.to} className="inline-flex min-h-6 items-center py-0.5 hover:text-ink">
             {crumb.label}
           </Link>
-          <span aria-hidden className="text-line-strong">
-            /
-          </span>
+          {/* The separator used the hairline-border token as a text colour, which
+              measured 1.43:1. Hierarchy now comes from the current crumb being
+              darker than its ancestors, not from the slash being near-invisible. */}
+          <span aria-hidden>/</span>
         </span>
       ))}
-      <span aria-current="page">{current}</span>
+      <span aria-current="page" className="font-semibold text-ink">
+        {current}
+      </span>
     </nav>
   )
 }
