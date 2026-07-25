@@ -68,12 +68,18 @@
   --color-periwinkle: #cdd6f8;
   --color-lagoon: #bff0e6;
 
-  /* ---- Deep supporting shades (paired with the pastels above) --------- */
+  /* ---- Deep supporting shades (paired with the pastels above) ---------
+     Each shade is the readable text colour for exactly one pastel band, so the
+     five pairings must stay visually distinct — a grade is identified by its
+     colour. forest (on meadow) and teal (on lagoon) were #0e4a39 / #0e3f3c:
+     indistinguishable in use, which collapsed two grades onto one colour. teal
+     now leans cyan to match the aqua lagoon band it always sits on, the same
+     way forest leans green to match meadow. */
   --color-amber: #934b06;
   --color-magenta: #a81475;
   --color-forest: #0e4a39;
   --color-navy: #17376b;
-  --color-teal: #0e3f3c;
+  --color-teal: #0b4f57;
 
   /* ---- Type ----------------------------------------------------------- */
   --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
