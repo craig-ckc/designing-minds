@@ -47,8 +47,22 @@ export function AboutStorySection() {
 
       {/* Scattered photo cluster with a playful accent. */}
       <div className="relative mx-auto aspect-[5/4] w-full max-w-md lg:mx-0">
-        <Polaroid caption="Est. 2019" rotate="-5deg" ratio="4 / 5" className="absolute left-0 top-0 w-3/5" />
-        <Polaroid caption="Loved in SA" rotate="6deg" ratio="1 / 1" className="absolute bottom-0 right-1 w-[58%]" />
+        <Polaroid
+          src="/images/image-07.png"
+          alt="An adult helping a child draw"
+          caption="Loved in SA"
+          rotate="6deg"
+          ratio="1 / 1"
+          className="absolute bottom-0 right-1 w-[58%]"
+        />
+        <Polaroid
+          src="/images/image-06.png"
+          alt="Amy, founder of Designing Minds"
+          caption="Est. 2019"
+          rotate="-5deg"
+          ratio="4 / 5"
+          className="absolute left-0 top-0 w-3/5"
+        />
         <span aria-hidden className="absolute -top-3 right-6 text-butter">
           <Icon name="spark" size={56} weight="fill" />
         </span>
