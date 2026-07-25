@@ -58,7 +58,7 @@ export function AboutStorySection() {
         <Polaroid
           src="/images/image-06.png"
           alt="Amy, founder of Designing Minds"
-          caption="Est. 2019"
+          caption="Amy"
           rotate="-5deg"
           ratio="4 / 5"
           className="absolute left-0 top-0 w-3/5"
