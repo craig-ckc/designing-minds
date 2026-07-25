@@ -126,6 +126,57 @@ export const accessPlanTiers = (snapshot: CmsSnapshot): AccessPlanTier[] => {
 export const productsForGrade = (snapshot: CmsSnapshot, grade: string) =>
   publishedProducts(snapshot).filter((p) => p.grade === grade)
 
+/** The published Bundles and Access Plans that cover one grade, cheapest first. */
+export const packagesForGrade = (snapshot: CmsSnapshot, grade: string) =>
+  productsForGrade(snapshot, grade)
+    .filter((p) => p.productKind === 'Bundle' || p.productKind === 'Access Plan')
+    .sort((a, b) => a.priceZar - b.priceZar)
+
+/** The published Bundles / Access Plans that include a given Single, cheapest first. */
+export const packagesContaining = (snapshot: CmsSnapshot, product: Product) =>
+  publishedProducts(snapshot)
+    .filter((p) => (p.includedProductSlugs ?? []).includes(product.slug))
+    .sort((a, b) => a.priceZar - b.priceZar)
+
+export interface PackageValue {
+  /** Included Single products that are published and priced. */
+  itemCount: number
+  /** What the same resources cost bought one at a time. */
+  singlesTotalZar: number
+  /** singlesTotalZar - priceZar, floored at 0. */
+  savingZar: number
+  /** Whole-percent discount against buying singly. */
+  savingPercent: number
+  /** Distinct subjects the package covers. */
+  subjects: string[]
+  /** Distinct terms the package covers. */
+  terms: string[]
+  /** Downloadable files across the included resources, when the CMS lists them. */
+  fileCount: number
+}
+
+/**
+ * What a Bundle or Access Plan is actually worth, derived from the products it
+ * includes — no new CMS fields. Returns null when the package lists nothing (or
+ * nothing published), so callers render the real "still being finalised" state
+ * instead of a fabricated R0 saving.
+ */
+export const packageValue = (snapshot: CmsSnapshot, product: Product): PackageValue | null => {
+  const included = getProductsBySlugs(snapshot, product.includedProductSlugs ?? []).filter((p) => p.published)
+  if (included.length === 0) return null
+  const singlesTotalZar = included.reduce((total, entry) => total + entry.priceZar, 0)
+  const savingZar = Math.max(0, singlesTotalZar - product.priceZar)
+  return {
+    itemCount: included.length,
+    singlesTotalZar,
+    savingZar,
+    savingPercent: singlesTotalZar > 0 ? Math.round((savingZar / singlesTotalZar) * 100) : 0,
+    subjects: [...new Set(included.flatMap((entry) => entry.subjects))].sort(),
+    terms: [...new Set(included.map((entry) => entry.term))].sort(),
+    fileCount: included.reduce((total, entry) => total + entry.purchasedFiles.length, 0),
+  }
+}
+
 export const relatedProducts = (snapshot: CmsSnapshot, product: Product, limit = 3) =>
   publishedProducts(snapshot)
     .filter((p) => p.slug !== product.slug && p.subjects.some((s) => product.subjects.includes(s)))
