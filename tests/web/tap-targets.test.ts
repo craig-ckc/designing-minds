@@ -14,6 +14,17 @@ test('shared small links meet the mobile tap-target minimum', () => {
   assert.match(hero, /className="group mt-5 inline-flex min-h-8 items-center/)
 })
 
+test('footer and help navigation links carry the 24px minimum', () => {
+  const footer = read('components/layout/footer.tsx')
+  const help = read('pages/help-page.tsx')
+
+  // Every footer link routes through one class constant, so the grade column
+  // cannot drift back to a bare text link the way it had.
+  assert.match(footer, /const footerLinkCls = 'inline-flex min-h-6 items-center/)
+  assert.doesNotMatch(footer, /className="text-body text-ink-soft hover:text-ink"/)
+  assert.match(help, /className="inline-flex min-h-6 items-center hover:text-ink"/)
+})
+
 test('form controls expose only touch-sized interactive targets', () => {
   const contact = read('pages/contact-page.tsx')
   const select = read('components/ui/select.tsx')

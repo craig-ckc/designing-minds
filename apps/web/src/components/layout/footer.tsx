@@ -26,11 +26,9 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
           <FooterColumn title="Shop by grade">
             {grades.map((grade) => (
-              <li key={grade}>
-                <Link className="text-body text-ink-soft hover:text-ink" to={`/grades/${gradeToSlug(grade)}`}>
-                  {grade}
-                </Link>
-              </li>
+              <FooterLink key={grade} to={`/grades/${gradeToSlug(grade)}`}>
+                {grade}
+              </FooterLink>
             ))}
             <FooterLink to="/packages">Bundles & plans</FooterLink>
           </FooterColumn>
@@ -47,12 +45,12 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
           <FooterColumn title="Get in touch">
             <li>
-              <a className="text-body text-ink-soft hover:text-ink" href={`tel:${CONTACT.phone.replace(/\s/g, '')}`}>
+              <a className={footerLinkCls} href={`tel:${CONTACT.phone.replace(/\s/g, '')}`}>
                 {CONTACT.phone}
               </a>
             </li>
             <li>
-              <a className="text-body text-ink-soft hover:text-ink" href={`mailto:${CONTACT.email}`}>
+              <a className={footerLinkCls} href={`mailto:${CONTACT.email}`}>
                 {CONTACT.email}
               </a>
             </li>
@@ -84,10 +82,15 @@ function FooterColumn({ title, children }: { title: string; children: ReactNode 
   )
 }
 
+/* Footer links sit in a list, not a sentence, so WCAG 2.2 target size applies:
+   inline-flex + min-h-6 pads the 21px line box out to the 24px minimum without
+   changing the visual rhythm (the column gap absorbs it). */
+const footerLinkCls = 'inline-flex min-h-6 items-center text-body text-ink-soft hover:text-ink'
+
 function FooterLink({ to, children }: { to: string; children: ReactNode }) {
   return (
     <li>
-      <Link className="text-body text-ink-soft hover:text-ink" to={to}>
+      <Link className={footerLinkCls} to={to}>
         {children}
       </Link>
     </li>

@@ -41,7 +41,10 @@ export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <ul className="grid gap-2 text-ink-soft">
               {byCategory.map(([category]) => (
                 <li key={category}>
-                  <a href={`#${categorySlug(category)}`} className="hover:text-ink">
+                  {/* inline-flex + min-h-6: topic jump links are a nav list, so they
+                      carry the WCAG 2.2 24px minimum target rather than the 22px
+                      line box they'd otherwise collapse to. */}
+                  <a href={`#${categorySlug(category)}`} className="inline-flex min-h-6 items-center hover:text-ink">
                     {category}
                   </a>
                 </li>
