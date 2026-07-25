@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { cn } from '@designing-minds/utils'
 import { type CmsSnapshot, publishedProducts } from '@designing-minds/cms'
 import { Button } from '../ui/button'
-import { Icon } from '../ui/icon'
+import { ArrowAffordance, Icon } from '../ui/icon'
 import { Placeholder } from '../ui/placeholder'
 import { ProductCover } from '../ui/product-cover'
 import { Section } from '../ui/section'
@@ -204,9 +204,7 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
         className="inline-flex items-center gap-4 rounded-pill border border-primary/20 bg-primary-tint px-4 py-1.5 text-label font-bold text-primary-ink transition-colors hover:bg-primary/10"
       >
         New · Resources for Grades 3–7
-        <span className="h-3.5 w-3.5">
-          <Icon name="arrow" />
-        </span>
+        <ArrowAffordance />
       </Link>
       <h1 className="mx-auto mt-6 max-w-[15ch]">Practice resources that build confidence at home</h1>
       <p className="mx-auto mt-5 max-w-narrow text-body-lg leading-[1.55] text-ink-soft">
@@ -216,9 +214,7 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
       <div className="mt-7 flex justify-center">
         <Button to="/shop" variant="solid">
           Browse resources
-          <span className="h-4 w-4">
-            <Icon name="arrow" />
-          </span>
+          <ArrowAffordance size="md" />
         </Button>
       </div>
       <p className="mt-4 text-body-sm font-semibold text-ink-soft">

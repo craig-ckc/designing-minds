@@ -1,6 +1,6 @@
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { Button } from '../ui/button'
-import { Icon } from '../ui/icon'
+import { ArrowAffordance } from '../ui/icon'
 import { FaqAccordion } from '../ui/faq-accordion'
 import { Section, SectionNotice } from '../ui/section'
 
@@ -23,9 +23,7 @@ export function HomeFaqSection({ snapshot, loadError }: { snapshot: CmsSnapshot 
         <div className="mt-10 text-center">
           <Button to="/help" variant="solid">
             See all help topics
-            <span className="h-4 w-4">
-              <Icon name="arrow" />
-            </span>
+            <ArrowAffordance size="md" />
           </Button>
         </div>
       </div>

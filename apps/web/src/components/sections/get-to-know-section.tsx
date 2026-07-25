@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Accordion } from '@base-ui/react/accordion'
 import { Button } from '../ui/button'
-import { Icon, type IconName } from '../ui/icon'
+import { ArrowAffordance, Icon, type IconName } from '../ui/icon'
 import { Section } from '../ui/section'
 const items: { icon: IconName; title: string; body: string }[] = [
   { icon: 'doc', title: 'Practice tests', body: 'Two CAPS-aligned tests per subject, each with a full memorandum for stress-free marking.' },
@@ -66,9 +66,7 @@ export function GetToKnowSection() {
           </p>
           <Button to="/about" variant="text" className="mt-3">
             See how it works
-            <span className="h-4 w-4">
-              <Icon name="arrow" />
-            </span>
+            <ArrowAffordance size="md" />
           </Button>
         </div>
       </div>

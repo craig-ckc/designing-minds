@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { bundleTiers, priceLabel, type BundleTier, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../ui/container'
-import { Icon, type IconName } from '../ui/icon'
+import { ArrowAffordance, Icon, type IconName } from '../ui/icon'
 import { Wordmark } from '../ui/wordmark'
 import { initials, useAuth } from '../../lib/auth'
 import { useCartSlugs } from '../../lib/use-cart'
@@ -123,9 +123,7 @@ function BundleTierCard({ tier, onClose, compact }: { tier: BundleTier; onClose:
           </span>
           <span className="inline-flex items-center gap-1 text-label font-bold">
             Choose
-            <span className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5">
-              <Icon name="arrow" />
-            </span>
+            <ArrowAffordance />
           </span>
         </div>
       </Link>
@@ -162,9 +160,7 @@ function BundleTierCard({ tier, onClose, compact }: { tier: BundleTier; onClose:
         </span>
         <span className="inline-flex items-center gap-1 text-label font-bold text-primary-ink">
           Choose
-          <span className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5">
-            <Icon name="arrow" />
-          </span>
+          <ArrowAffordance />
         </span>
       </div>
     </Link>

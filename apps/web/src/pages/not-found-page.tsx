@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Section } from '../components/ui/section'
-import { Icon } from '../components/ui/icon'
+import { ArrowAffordance } from '../components/ui/icon'
 import { Button } from '../components/ui/button'
 
 // Shown for any route React Router can't match. On Vercel this only renders
@@ -40,9 +40,7 @@ export function NotFoundPage() {
                 <span className="block font-medium text-ink">{item.label}</span>
                 <span className="block text-label text-muted">{item.sub}</span>
               </span>
-              <span className="h-4 w-4 flex-none text-muted transition group-hover:text-ink">
-                <Icon name="arrow" />
-              </span>
+              <ArrowAffordance size="md" className="flex-none text-muted group-hover:text-ink" />
             </Link>
           ))}
         </div>

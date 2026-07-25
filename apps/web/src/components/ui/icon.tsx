@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { cn } from '@designing-minds/utils'
 import type { IconProps, IconWeight } from '@phosphor-icons/react'
 // Duotone icons, sourced per-glyph from Phosphor's SSR (context-free) build so
 // the prerender step stays pure and Vite only bundles the icons we use. These
@@ -111,4 +112,25 @@ export function Icon({
   const Glyph = icons[name]
   const resolved = weight ?? (LINE_ICONS.has(name) ? 'regular' : 'duotone')
   return <Glyph weight={resolved} size={size} className={className} aria-hidden />
+}
+
+/**
+ * The trailing "go" arrow on a CTA, nudging right when its `group` is hovered.
+ * The wrapper span existed verbatim in the grade card, both mega-menu bundle
+ * tiers and several section CTAs, each re-declaring the same box + transition —
+ * the kind of near-identical repetition that reads as drift. One component, two
+ * sizes: `sm` (3.5) inside compact card footers, `md` (4) beside body-size CTAs.
+ */
+export function ArrowAffordance({ size = 'sm', className }: { size?: 'sm' | 'md'; className?: string }) {
+  return (
+    <span
+      className={cn(
+        size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4',
+        'transition-transform group-hover:translate-x-0.5',
+        className,
+      )}
+    >
+      <Icon name="arrow" />
+    </span>
+  )
 }

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { GRADE_BLURB, gradeToSlug } from '../../content/site'
 import { gradeColorway } from '../../lib/grade-colors'
-import { Icon } from './icon'
+import { ArrowAffordance } from './icon'
 
 const GRADE_BACKGROUNDS: Record<string, string> = {
   'Grade 3': '/images/grade-background-3.svg',
@@ -40,9 +40,7 @@ export function GradeCard({ grade, count, className = '' }: { grade: string; cou
             <span className={fg}>{count} resources</span>
             <span className={`inline-flex items-center gap-1.5 font-bold ${fg}`}>
               Browse
-              <span className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5">
-                <Icon name="arrow" />
-              </span>
+              <ArrowAffordance />
             </span>
           </div>
         ) : null}
