@@ -92,7 +92,7 @@ export function GetToKnowSection() {
                     <span className={`h-6 w-6 flex-none transition-colors duration-300 ${isOpen ? 'text-primary' : 'text-muted'}`}>
                       <Icon name={item.icon} />
                     </span>
-                    <span className="flex-1 text-body-lg font-bold text-ink transition-colors group-hover:text-primary">
+                    <span className="flex-1 text-body-lg font-bold text-ink transition-colors group-hover:text-primary-ink">
                       {item.title}
                     </span>
                   </Accordion.Trigger>

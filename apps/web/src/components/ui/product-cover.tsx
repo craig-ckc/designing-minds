@@ -46,7 +46,17 @@ function illustrationLabel(illustration: SubjectIllustration): string {
 }
 
 /** One cover face — its own container context so everything scales to its width. */
-function CoverFace({ product, illustration, className = '' }: { product: Product; illustration: SubjectIllustration; className?: string }) {
+function CoverFace({
+  product,
+  illustration,
+  className = '',
+  priority = false,
+}: {
+  product: Product
+  illustration: SubjectIllustration
+  className?: string
+  priority?: boolean
+}) {
   const { band, fg, solid } = termColorway(product.term)
   // The whole face is decorative: its text and glyphs are announced once, via the
   // aria-label on the ProductCover wrapper. Hiding it here keeps that label from
@@ -64,19 +74,19 @@ function CoverFace({ product, illustration, className = '' }: { product: Product
         </div>
 
         <div className={`absolute left-[7.56%] top-0 h-full w-[0.34cqw] opacity-30 ${solid}`} />
-        <span className={`absolute left-[13.78%] top-[4.16%] text-[2.5cqw] font-extrabold uppercase tracking-[0.08em] ${fg}`}>
+        <span className={`product-cover-copy product-cover-brand absolute left-[13.78%] top-[4.16%] font-extrabold uppercase tracking-[0.08em] ${fg}`}>
           Designing Minds
         </span>
-        <p className={`absolute left-[13.78%] top-[11.64%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.034cqw] opacity-80 ${fg} text-[4.36cqw]`}>
+        <p className={`product-cover-copy product-cover-meta absolute left-[13.78%] top-[11.64%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.034cqw] ${fg}`}>
           {product.grade}
         </p>
         <div className={`absolute left-[13.78%] top-[16.87%] h-px w-[74.29%] opacity-30 ${solid}`} />
-        <p className={`absolute left-[13.78%] top-[19.36%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.069cqw] ${fg} text-[6.89cqw] line-clamp-3`}>
+        <p className={`product-cover-copy product-cover-title absolute left-[13.78%] top-[19.36%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.069cqw] ${fg} line-clamp-3`}>
           {coverTitle(product)}
         </p>
         <div className="absolute left-[76.97%] top-[-5.23%] grid aspect-square w-[31.13%] place-items-center">
           <div className={`w-[117.7%] h-[30.7%] rotate-45 text-center ${solid} flex items-center justify-center`}>
-            <span className="w-full font-extrabold leading-[1.2] tracking-[0.034cqw] text-on-primary text-[4.36cqw]">
+            <span className="product-cover-copy product-cover-meta w-full font-extrabold leading-[1.2] tracking-[0.034cqw] text-on-primary">
               {product.term}
             </span>
           </div>
@@ -84,7 +94,8 @@ function CoverFace({ product, illustration, className = '' }: { product: Product
         <img
           src={`/${illustration}`}
           alt={`${illustrationLabel(illustration)} illustration`}
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
           decoding="async"
           className="absolute left-1/2 top-[46.2%] aspect-square w-[71.43%] -translate-x-1/2 object-contain"
         />
@@ -93,14 +104,22 @@ function CoverFace({ product, illustration, className = '' }: { product: Product
   )
 }
 
-export function ProductCover({ product, className = '' }: { product: Product; className?: string }) {
+export function ProductCover({
+  product,
+  className = '',
+  priority = false,
+}: {
+  product: Product
+  className?: string
+  priority?: boolean
+}) {
   const isStacked = product.productKind === 'Bundle' || product.productKind === 'Access Plan'
 
   if (!isStacked) {
     return (
       <div role="img" aria-label={product.title} className="relative aspect-[595/842] w-full flex items-center justify-center">
         <div className="w-[80%]">
-          <CoverFace product={product} illustration={subjectKey(product)} className={`w-full ${className}`} />
+          <CoverFace product={product} illustration={subjectKey(product)} className={`w-full ${className}`} priority={priority} />
         </div>
       </div>
     )
@@ -122,7 +141,12 @@ export function ProductCover({ product, className = '' }: { product: Product; cl
         {layers.map((layer, i) => (
           <div key={i} className="absolute inset-0 flex items-center justify-center">
             <div className="w-[80%]" style={{ transform: `rotate(${layer.deg}deg)` }}>
-              <CoverFace product={product} illustration={layer.illustration} className="w-full" />
+              <CoverFace
+                product={product}
+                illustration={layer.illustration}
+                className="w-full"
+                priority={priority && i === layers.length - 1}
+              />
             </div>
           </div>
         ))}

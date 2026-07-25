@@ -17,21 +17,23 @@
   --color-surface-sunk: #efeae1; /* sunk surface, secondary buttons, hover */
   --color-ink: #1c1917; /* warm near-black — headings & primary text */
   --color-ink-soft: #57534e; /* secondary text */
-  --color-muted: #79716b; /* tertiary text / captions */
+  --color-muted: #6d655f; /* tertiary text / captions — AA on light surfaces */
   --color-line: #ece8e1; /* hairline borders */
   --color-line-strong: #ddd7cc; /* stronger borders / inputs */
   --color-ph: #efeae1; /* placeholder fill */
   --color-ph-glyph: #b9b0a4; /* placeholder glyph */
 
-  /* ---- Brand primary (Designing Mind blue) ---------------------------- */
-  --color-primary: #F15699;
-  --color-primary-strong: #E55391; /* hover / pressed */
-  --color-primary-tint: #FEEEF3; /* soft blue backgrounds & chips */
+  /* ---- Brand primary (Designing Minds pink) --------------------------- */
+  --color-primary: #f15699;
+  --color-primary-strong: #e55391; /* hover / pressed */
+  --color-primary-ink: #c12c6c; /* accessible brand text on light surfaces */
+  --color-primary-ink-strong: #a9235a; /* accessible text hover / pressed */
+  --color-primary-tint: #feeef3; /* soft pink backgrounds & chips */
   --color-primary-edge: color-mix(in oklab, var(--color-primary-strong), black 22%); /* hairline edge on the solid button */
 
-  /* Primary-button surface — subtle vertical brand-blue gradient (lighter
+  /* Primary-button surface — subtle vertical brand-pink gradient (lighter
      top → deeper bottom), adopted from the Paper spec. Derived from the two
-     tokens above, so editing the brand blue recolours the button too. */
+     tokens above, so editing the brand pink recolours the button too. */
   --gradient-primary: linear-gradient(
     180deg,
     color-mix(in oklab, var(--color-primary), white 10%) 0%,
@@ -57,8 +59,8 @@
   --color-lagoon: #bff0e6;
 
   /* ---- Deep supporting shades (paired with the pastels above) --------- */
-  --color-amber: #b0600d;
-  --color-magenta: #c21b8e;
+  --color-amber: #934b06;
+  --color-magenta: #a81475;
   --color-forest: #0e4a39;
   --color-navy: #17376b;
   --color-teal: #0e3f3c;
@@ -213,6 +215,17 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up { animation: none; }
 }
+
+/* Product-cover lettering scales with the cover rather than the viewport.
+   Compact thumbnails omit this decorative copy before it becomes unreadable;
+   the ProductCover wrapper still exposes the full product title to AT. */
+.product-cover-brand { font-size: max(0.75rem, 2.5cqw); }
+.product-cover-meta { font-size: max(0.75rem, 4.36cqw); }
+.product-cover-title { font-size: max(0.75rem, 6.89cqw); }
+@container (max-width: 11.25rem) {
+  .product-cover-copy { display: none; }
+}
+
 /* Edge-to-edge testimonial marquee with a seamless duplicated track. */
 @keyframes testimonial-scroll {
   to { transform: translateX(-50%); }
@@ -254,7 +267,6 @@
   .testimonial-carousel-track { animation: none; }
   .testimonial-carousel-copy { display: none; }
 }
-
 
 /* =========================================================================
    Rich text rendered from CMS Markdown (product full descriptions) —

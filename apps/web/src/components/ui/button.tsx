@@ -29,8 +29,8 @@ const buttonStyles = cv({
       soft: ['bg-surface-sunk text-ink hover:bg-line-strong'],
       outline: ['border-[1.5px] border-line-strong text-ink hover:border-primary hover:bg-surface-alt'],
       'outline-light': ['border-[1.5px] border-on-primary/55 text-on-primary hover:bg-on-primary/10'],
-      text: ['font-semibold text-primary hover:opacity-70'],
-      'text-light': ['font-semibold text-on-primary hover:opacity-70'],
+      text: ['font-semibold text-primary-ink hover:text-primary-ink-strong'],
+      'text-light': ['font-semibold text-on-primary hover:underline hover:underline-offset-4'],
     },
     size: {
       md: ['min-h-[var(--control-h)] px-5 text-body-sm'],

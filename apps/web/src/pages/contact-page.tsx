@@ -22,7 +22,7 @@ const TOPICS = [
   'Schools & bulk orders',
 ]
 
-const Required = () => <span className="text-primary"> *</span>
+const Required = () => <span className="text-primary-ink"> *</span>
 
 export function ContactPage() {
   const [firstName, setFirstName] = useState('')
@@ -77,7 +77,7 @@ export function ContactPage() {
           </div>
           <p className="mt-6 text-body-sm text-muted">
             Looking for download or printing help? Visit the{' '}
-            <Link to="/help" className="font-semibold text-primary underline underline-offset-4">
+            <Link to="/help" className="font-semibold text-primary-ink underline underline-offset-4">
               Help centre
             </Link>
             .
@@ -144,7 +144,7 @@ export function ContactPage() {
             <label className="flex items-start gap-2.5 text-body-sm text-ink-soft">
               <input
                 type="checkbox"
-                className="mt-0.5 h-4 w-4 flex-none accent-primary"
+                className="h-6 w-6 flex-none accent-primary"
                 checked={marketing}
                 onChange={(e) => setMarketing(e.target.checked)}
               />

@@ -5,7 +5,7 @@ export function Breadcrumb({ trail, current }: { trail: { to: string; label: str
     <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-label text-muted">
       {trail.map((crumb) => (
         <span key={crumb.to} className="flex items-center gap-2">
-          <Link to={crumb.to} className="hover:text-ink">
+          <Link to={crumb.to} className="inline-flex min-h-6 items-center py-0.5 hover:text-ink">
             {crumb.label}
           </Link>
           <span aria-hidden className="text-line-strong">

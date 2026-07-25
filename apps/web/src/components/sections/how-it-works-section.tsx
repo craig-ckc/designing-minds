@@ -42,7 +42,7 @@ export function HowItWorksSection() {
                 aria-current={isActive ? 'step' : undefined}
                 className={`rounded-control p-5 text-left transition-colors ${isActive ? 'bg-primary-tint' : 'hover:bg-surface-alt'}`}
               >
-                <p className={`text-caption font-bold uppercase tracking-[0.08em] ${isActive ? 'text-primary' : 'text-muted'}`}>
+                <p className={`text-caption font-bold uppercase tracking-[0.08em] ${isActive ? 'text-primary-ink' : 'text-muted'}`}>
                   {s.when}
                 </p>
                 <h3 className="mt-1">{s.title}</h3>

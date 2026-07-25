@@ -17,7 +17,7 @@ export function OrderList({ orders }: { orders: Order[] }) {
               className="group flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4 transition-colors hover:bg-surface-alt sm:px-6"
             >
               <span className="min-w-0">
-                <strong className="block transition-colors group-hover:text-primary">{order.reference}</strong>
+                <strong className="block transition-colors group-hover:text-primary-ink">{order.reference}</strong>
                 <span className="text-label text-muted">
                   {order.placedAt.slice(0, 10)} · {order.items.length} item{order.items.length === 1 ? '' : 's'}
                 </span>
@@ -25,7 +25,7 @@ export function OrderList({ orders }: { orders: Order[] }) {
               <span className="flex items-center gap-4">
                 <OrderStatusBadge status={order.status} />
                 <strong className="tabular-nums">{priceLabel(order.totalZar)}</strong>
-                <span className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary">
+                <span className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary-ink">
                   <Icon name="arrow" size={16} />
                 </span>
               </span>

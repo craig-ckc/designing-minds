@@ -55,7 +55,7 @@ export function AuthLayout({
 
           <div className="border-t border-line pt-4 text-body-sm text-muted">{footer}</div>
           <p className="text-label text-muted">
-            Need help? <Link to="/help" className="font-semibold text-primary underline underline-offset-4">Visit support</Link>
+            Need help? <Link to="/help" className="font-semibold text-primary-ink underline underline-offset-4">Visit support</Link>
           </p>
         </div>
     </Section>

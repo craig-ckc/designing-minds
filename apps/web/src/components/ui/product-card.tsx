@@ -24,8 +24,8 @@ export function ProductCard({ product }: { product: Product }) {
 
       {/* Title + price */}
       <div className="flex flex-1 flex-col p-3 pt-0">
-        <Link to={href}>
-          <h3 className="text-body-lg font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary">
+        <Link to={href} className="inline-flex min-h-6 items-center py-0.5">
+          <h3 className="text-body-lg font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary-ink">
             {product.title}
           </h3>
         </Link>

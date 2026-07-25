@@ -48,11 +48,11 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   <div className="flex flex-1 flex-col gap-1">
                     <Link
                       to={`/shop/${item.slug}`}
-                      className="font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 hover:text-primary"
+                      className="font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 hover:text-primary-ink"
                     >
                       {item.title}
                     </Link>
-                    <strong className="mt-0.5 text-[1.15rem] font-extrabold text-primary">
+                    <strong className="mt-0.5 text-[1.15rem] font-extrabold text-primary-ink">
                       {priceLabel(item.priceZar)}
                     </strong>
                   </div>

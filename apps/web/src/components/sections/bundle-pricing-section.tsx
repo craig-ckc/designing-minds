@@ -80,9 +80,11 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
                 featured && 'order-first md:order-none',
               )}
             >
-              <div className='absolute inset-0 -z-1 mix-blend-soft-light' >
-                <img src="/images/card-background-02.svg" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-              </div>
+              <div
+                className="absolute inset-0 -z-1 bg-cover bg-center opacity-50 mix-blend-soft-light"
+                style={{ backgroundImage: "url('/images/card-background-02.svg')" }}
+                aria-hidden
+              />
 
               {/* White island — the nested offer/price/CTA card. */}
               <div className="p-3">
@@ -122,7 +124,7 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
               {/* Features sit on the outer surface, below the island. */}
               <div className="grid gap-x-6 gap-y-3.5 px-6 pb-7 sm:grid-cols-2 lg:px-7">
                 {content.includes.map((feature) => (
-                  <div key={feature} className={cn('flex gap-2.5 text-body-sm', featured ? 'text-on-primary/90' : 'text-ink-soft')} >
+                  <div key={feature} className={cn('flex gap-2.5 text-body-sm', featured ? 'text-on-primary' : 'text-ink-soft')} >
                     <span
                       className={cn(
                         'mt-px grid h-[20px] w-[20px] flex-none place-items-center rounded-pill',
@@ -139,7 +141,7 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
                 {content.excludes.map((feature) => (
                   <div
                     key={feature}
-                    className={cn('flex gap-2.5 text-body-sm', featured ? 'text-on-primary/60' : 'text-muted')}
+                    className={cn('flex gap-2.5 text-body-sm', featured ? 'text-on-primary' : 'text-muted')}
                   >
                     <span className="mt-px grid h-[20px] w-[20px] flex-none place-items-center">
                       <Icon name="close" />

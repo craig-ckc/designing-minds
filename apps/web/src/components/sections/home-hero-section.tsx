@@ -105,7 +105,7 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      <div className="mb-6 flex items-center justify-center gap-2 sm:gap-2.5">
+      <div className="mb-6 flex items-center justify-center gap-1 sm:gap-2.5">
         <ArrowButton direction="prev" label="Previous grade" onClick={() => step(-1)} />
 
         <div
@@ -132,8 +132,8 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
                 aria-label={g}
                 onClick={() => select(i)}
                 className={cn(
-                  'relative z-10 w-10 rounded-pill py-1 px-6 text-center text-body-sm font-semibold transition-colors w-fit',
-                  i === active ? 'text-primary' : 'text-ink-soft hover:text-ink',
+                  'relative z-10 w-10 rounded-pill px-0 py-1 text-center text-body-sm font-semibold transition-colors sm:w-fit sm:px-6',
+                  i === active ? 'text-primary-ink' : 'text-ink-soft hover:text-ink',
                 )}
               >
                 <span>
@@ -201,7 +201,7 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
     <Section containerClassName="py-16 text-center lg:py-24" spacing="none">
       <Link
         to="/shop"
-        className="inline-flex items-center gap-4 rounded-pill border border-primary/20 bg-primary-tint px-4 py-1.5 text-label font-bold text-primary transition-colors hover:bg-primary/10"
+        className="inline-flex items-center gap-4 rounded-pill border border-primary/20 bg-primary-tint px-4 py-1.5 text-label font-bold text-primary-ink transition-colors hover:bg-primary/10"
       >
         New · Resources for Grades 3–7
         <span className="h-3.5 w-3.5">
@@ -227,7 +227,7 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
       {hasPublishedTestimonials ? (
         <a
           href="#parent-stories"
-          className="group mt-5 inline-flex items-center gap-2 text-body-sm font-semibold text-ink-soft transition-colors hover:text-ink"
+          className="group mt-5 inline-flex min-h-8 items-center gap-2 py-1 text-body-sm font-semibold text-ink-soft transition-colors hover:text-ink"
         >
           <StarRating value={4.9} size="sm" />
           <span className="underline underline-offset-4 decoration-1">4.9 stars from 500+ families</span>

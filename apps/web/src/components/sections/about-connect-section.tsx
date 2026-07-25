@@ -4,12 +4,12 @@ import { Card } from '../ui/card'
 import { Icon } from '../ui/icon'
 import { Section } from '../ui/section'
 
-function ConnectCard({ title, body, children, image, imageAlt }: { title: string, body: string, children: ReactNode, image?: string, imageAlt?: string }) {
+function ConnectCard({ title, body, children, image, imageAlt }: { title: string, body: string, children: ReactNode, image: string, imageAlt: string }) {
   return (
     <Card as="article" pad="none" className="flex flex-col overflow-hidden min-h-[36rem] relative">
       {/* <Placeholder ratio="16 / 10" flush className="mt-auto" /> */}
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden">
-        <img src={image} alt={imageAlt ?? ''} className="w-full h-full object-contain" />
+        <img src={image} alt={imageAlt} className="w-full h-full object-contain" />
       </div>
       <div className="p-7 sm:p-8 relative">
         <h3 className="max-w-[18ch]">{title}</h3>

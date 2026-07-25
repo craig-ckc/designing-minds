@@ -11,7 +11,7 @@ const pillStyles = cv({
   variants: {
     tone: {
       neutral: ['bg-surface-sunk text-ink-soft'],
-      primary: ['bg-primary-tint text-primary'],
+      primary: ['bg-primary-tint text-primary-ink'],
       solid: ['bg-primary text-on-primary'],
       outline: ['border border-line-strong text-ink-soft'],
       surface: ['border border-line-strong bg-surface text-ink-soft shadow-soft'],

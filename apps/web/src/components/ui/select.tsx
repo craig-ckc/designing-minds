@@ -2,6 +2,12 @@ import { Select as BaseSelect } from '@base-ui/react/select'
 import { Icon } from './icon'
 import { Field } from './field'
 
+function disableHiddenInputHitTarget(input: HTMLInputElement | null) {
+  if (!input) return
+  input.inert = true
+  input.style.pointerEvents = 'none'
+}
+
 /** Accessible single-select built on Base UI. Used for browse-page filters.
  *  Composes <Field> for the label and the shared `.field` control base so it
  *  stays visually identical to text inputs. */
@@ -18,7 +24,11 @@ export function Select({
 }) {
   return (
     <Field label={label}>
-      <BaseSelect.Root value={value} onValueChange={(next) => onChange(next as string)}>
+      <BaseSelect.Root
+        value={value}
+        onValueChange={(next) => onChange(next as string)}
+        inputRef={disableHiddenInputHitTarget}
+      >
         <BaseSelect.Trigger className="field flex items-center justify-between gap-2 text-left font-normal hover:border-primary">
           <BaseSelect.Value />
           <BaseSelect.Icon className="h-4 w-4 text-muted">
@@ -32,7 +42,7 @@ export function Select({
                 <BaseSelect.Item
                   key={option}
                   value={option}
-                  className="flex cursor-default items-center justify-between gap-3 rounded-lg px-3 py-2 text-body-sm data-[highlighted]:bg-surface-sunk data-[selected]:font-bold data-[selected]:text-primary"
+                  className="flex cursor-default items-center justify-between gap-3 rounded-lg px-3 py-2 text-body-sm data-[highlighted]:bg-surface-sunk data-[selected]:font-bold data-[selected]:text-primary-ink"
                 >
                   <BaseSelect.ItemText>{option}</BaseSelect.ItemText>
                   <BaseSelect.ItemIndicator className="h-4 w-4">

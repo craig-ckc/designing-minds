@@ -9,7 +9,7 @@ import { useCartSlugs } from '../../lib/use-cart'
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 text-body font-semibold transition-colors ${
-    isActive ? 'text-primary' : 'text-ink-soft hover:text-ink'
+    isActive ? 'text-primary-ink' : 'text-ink-soft hover:text-ink'
   }`
 
 /** Full-width promo bar above the nav; scrolls away as the sticky header pins. */
@@ -91,15 +91,17 @@ function BundleTierCard({ tier, onClose, compact }: { tier: BundleTier; onClose:
           compact ? '' : 'h-full'
         }`}
       >
-        <div className="absolute inset-0 -z-1 mix-blend-soft-light" aria-hidden>
-          <img src="/images/card-background-02.svg" alt="" className="h-full w-full object-cover opacity-50" />
-        </div>
+        <div
+          className="absolute inset-0 -z-1 bg-cover bg-center opacity-50 mix-blend-soft-light"
+          style={{ backgroundImage: "url('/images/card-background-02.svg')" }}
+          aria-hidden
+        />
 
         {/* White island holding the offer. */}
         <div className="flex flex-col gap-2 rounded-[0.55rem] bg-canvas p-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-caption font-bold uppercase tracking-[0.12em] text-muted">Full year</span>
-            <span className="rounded-pill bg-primary-tint px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.06em] text-primary">
+            <span className="rounded-pill bg-primary-tint px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.06em] text-primary-ink">
               Best value
             </span>
           </div>
@@ -114,7 +116,7 @@ function BundleTierCard({ tier, onClose, compact }: { tier: BundleTier; onClose:
         {/* Price and CTA on the gradient. */}
         <div className="mt-auto flex items-end justify-between gap-2 px-4 pb-2 pt-3 text-on-primary">
           <span className="flex items-baseline gap-1">
-            <span className="text-label font-semibold text-on-primary/80">from</span>
+            <span className="text-label font-semibold text-on-primary">from</span>
             <span className="text-[1.5rem] font-extrabold leading-none tracking-[-0.02em]">
               {priceLabel(tier.fromPriceZar)}
             </span>
@@ -158,7 +160,7 @@ function BundleTierCard({ tier, onClose, compact }: { tier: BundleTier; onClose:
             {priceLabel(tier.fromPriceZar)}
           </span>
         </span>
-        <span className="inline-flex items-center gap-1 text-label font-bold text-primary">
+        <span className="inline-flex items-center gap-1 text-label font-bold text-primary-ink">
           Choose
           <span className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5">
             <Icon name="arrow" />
@@ -213,7 +215,7 @@ function MegaLink({ to, label, sub, icon, onClose }: { to: string; label: string
           <Icon name={icon} />
         </span>
         <span>
-          <span className="block font-semibold text-ink transition-colors group-hover:text-primary">{label}</span>
+          <span className="block font-semibold text-ink transition-colors group-hover:text-primary-ink">{label}</span>
           <span className="block text-label text-muted">{sub}</span>
         </span>
       </Link>
@@ -291,7 +293,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
             onClick={() => setMegaOpen((open) => !open)}
             aria-expanded={megaOpen}
             className={`flex items-center gap-1.5 px-3 py-2 text-body font-semibold transition-colors ${
-              megaOpen ? 'text-primary' : 'text-ink-soft hover:text-ink'
+              megaOpen ? 'text-primary-ink' : 'text-ink-soft hover:text-ink'
             }`}
           >
             Shop
@@ -341,7 +343,7 @@ function MobileMenu({ open, onClose, tiers }: { open: boolean; onClose: () => vo
   // NavLink takes a className function; `divider` adds the row's bottom hairline.
   const linkCls = (divider: boolean) => ({ isActive }: { isActive: boolean }) =>
     `${divider ? 'border-b border-line ' : ''}py-4 text-body-lg font-semibold transition-colors ${
-      isActive ? 'text-primary' : 'text-ink'
+      isActive ? 'text-primary-ink' : 'text-ink'
     }`
 
   return (
@@ -370,7 +372,7 @@ function MobileMenu({ open, onClose, tiers }: { open: boolean; onClose: () => vo
               aria-expanded={shopOpen}
               aria-controls="mobile-shop-panel"
               className={`flex w-full items-center justify-between py-4 text-body-lg font-semibold transition-colors ${
-                shopOpen ? 'text-primary' : 'text-ink'
+                shopOpen ? 'text-primary-ink' : 'text-ink'
               }`}
             >
               Shop
