@@ -3,13 +3,16 @@ import {
   getFaqsByIds,
   getProductBySlug,
   getProductsBySlugs,
+  packageValue,
+  packagesContaining,
   priceLabel,
   relatedProducts,
   type CmsSnapshot,
 } from '@designing-minds/cms'
+import { subjectAcronymsIn } from '../lib/subject-acronyms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
-import { Icon } from '../components/ui/icon'
+import { ArrowAffordance, Icon } from '../components/ui/icon'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { FaqAccordion } from '../components/ui/faq-accordion'
@@ -33,6 +36,11 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const included = getProductsBySlugs(snapshot, product.includedProductSlugs ?? [])
   const related = relatedProducts(snapshot, product, 4)
   const isComposite = product.productKind === 'Bundle' || product.productKind === 'Access Plan'
+  const value = isComposite ? packageValue(snapshot, product) : null
+  // CMS bodies arrive empty or as a "." / ".." placeholder on several products.
+  const hasDescription = product.fullDescription.replace(/[.\s]/g, '').length > 0
+  const acronyms = subjectAcronymsIn(`${product.title} ${product.subjects.join(' ')}`)
+  const inPackages = isComposite ? [] : packagesContaining(snapshot, product)
 
   return (
     <>
@@ -53,16 +61,40 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <ProductCover product={product} className="max-w-[22rem]" priority />
               </div>
 
-              {/* Description — CMS rich text stored as Markdown */}
-              <div className="mt-8 text-ink-soft">
-                <h2 className="mb-4">About this {isComposite ? 'offer' : 'resource'}</h2>
-                <Markdown source={product.fullDescription} className="text-body-lg" />
-              </div>
+              {/* Description — CMS rich text stored as Markdown. Several products
+                  carry an empty or placeholder body; an "About this resource"
+                  heading over nothing reads worse than no section at all, so the
+                  whole block is withheld until there is real copy. */}
+              {hasDescription ? (
+                <div className="mt-8 text-ink-soft">
+                  <h2 className="mb-4">About this {isComposite ? 'offer' : 'resource'}</h2>
+                  <Markdown source={product.fullDescription} className="text-body-lg" />
+                </div>
+              ) : null}
 
               {/* Included content for bundles / access plans */}
               {isComposite ? (
                 <div className="mt-8">
                   <h2 className="mb-4">What’s included</h2>
+                  {/* Derived from the included products themselves, so a bundle
+                      states what you get and what it saves without waiting on new
+                      CMS fields. Omitted entirely when nothing is listed yet. */}
+                  {value ? (
+                    <ul className="mb-4 grid gap-3">
+                      <SpecRow label="Resources" value={`${value.itemCount} downloadable ${value.itemCount === 1 ? 'item' : 'items'}`} />
+                      {value.subjects.length > 0 ? <SpecRow label="Subjects" value={value.subjects.join(', ')} /> : null}
+                      {value.terms.length > 0 ? <SpecRow label="Covers" value={value.terms.join(', ')} /> : null}
+                      <SpecRow
+                        label="Bought singly"
+                        value={
+                          value.savingZar > 0
+                            ? `${priceLabel(value.singlesTotalZar)} — this offer saves ${priceLabel(value.savingZar)} (${value.savingPercent}%)`
+                            : priceLabel(value.singlesTotalZar)
+                        }
+                        last
+                      />
+                    </ul>
+                  ) : null}
                   {product.accessPeriod ? (
                     <p className="mb-4 text-ink-soft">
                       Access period: <strong>{product.accessPeriod === 'Year' ? 'Full year' : 'One term'}</strong>.{' '}
@@ -83,6 +115,21 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   ) : null}
                 </div>
               ) : null}
+
+              {/* Buying for a class is a stated audience but was only discoverable
+                  by guessing that Contact handles it. Say so where the decision
+                  is made. */}
+              <div className="mt-8 rounded-card border border-line p-5">
+                <h2 className="text-[1.15rem]">Buying for a class?</h2>
+                <p className="mt-1.5 text-body-sm text-ink-soft">
+                  Classroom and multi-learner licensing is available for every resource and bundle — tell us the grade and
+                  learner count and we’ll quote you.
+                </p>
+                <Button to="/contact" variant="text" className="mt-2">
+                  Ask about classroom licensing
+                  <ArrowAffordance size="md" />
+                </Button>
+              </div>
 
               {/* FAQ */}
               {faqs.length > 0 ? (
@@ -115,10 +162,39 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 <SpecRow label="Marks" value={product.marks ? `${product.marks} marks` : 'Not applicable'} />
                 <SpecRow label="Delivery" value="Instant download on Order Detail" last />
               </ul>
+              {/* "English HL" / "Afrikaans FAL" appear in dozens of titles and were
+                  never expanded anywhere on the site. Spelled out where the buyer
+                  is deciding, and only for the codes this product actually uses. */}
+              {acronyms.length > 0 ? (
+                <p className="text-label text-muted">
+                  {acronyms.map(({ code, meaning }) => `${code} = ${meaning}`).join(' · ')}
+                </p>
+              ) : null}
               <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(product.slug)}>
                 <Icon name="cart" size={16} />
                 Add to cart
               </Button>
+              {/* Cross-sell at the moment of purchase: this resource is already
+                  paid for inside a cheaper-per-item package. Only shown when a
+                  published package actually contains it. */}
+              {inPackages.length > 0 ? (
+                <div className="rounded-card bg-surface-alt p-4">
+                  <span className="block text-label font-semibold text-ink">Also included in</span>
+                  <ul className="mt-2 grid gap-2">
+                    {inPackages.slice(0, 2).map((entry) => (
+                      <li key={entry.id}>
+                        <Link
+                          to={`/shop/${entry.slug}`}
+                          className="group flex items-baseline justify-between gap-3 text-body-sm hover:text-primary-ink"
+                        >
+                          <span className="font-semibold">{entry.title}</span>
+                          <span className="whitespace-nowrap text-muted">{priceLabel(entry.priceZar)}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               <p className="text-label text-muted">CAPS-aligned · Download after payment · Print at home</p>
             </aside>
           </div>
@@ -130,13 +206,12 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <Container>
             <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
               <h2>Related resources</h2>
-              <Link
-                to={`/shop?grade=${encodeURIComponent(product.grade)}`}
-                className="inline-flex items-center gap-1.5 border-b-[1.5px] border-current pb-0.5 font-medium hover:opacity-70"
-              >
+              {/* Was a one-off underlined link; the text Button is the site's
+                  inline CTA and already carries focus, hover and colour. */}
+              <Button to={`/shop?grade=${encodeURIComponent(product.grade)}`} variant="text">
                 See all
-                <Icon name="arrow" size={16} />
-              </Link>
+                <ArrowAffordance size="md" />
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
               {related.map((entry) => (
