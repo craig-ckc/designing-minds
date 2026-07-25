@@ -213,6 +213,48 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up { animation: none; }
 }
+/* Edge-to-edge testimonial marquee with a seamless duplicated track. */
+@keyframes testimonial-scroll {
+  to { transform: translateX(-50%); }
+}
+.testimonial-carousel-shell {
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+}
+.testimonial-carousel {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, black min(6vw, 5rem), black calc(100% - min(6vw, 5rem)), transparent);
+  mask-image: linear-gradient(to right, transparent, black min(6vw, 5rem), black calc(100% - min(6vw, 5rem)), transparent);
+}
+.testimonial-carousel-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: testimonial-scroll linear infinite;
+}
+.testimonial-carousel-group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-right: 1rem;
+}
+.testimonial-carousel:hover .testimonial-carousel-track,
+.testimonial-carousel:focus-within .testimonial-carousel-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-carousel {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .testimonial-carousel::-webkit-scrollbar { display: none; }
+  .testimonial-carousel-track { animation: none; }
+  .testimonial-carousel-copy { display: none; }
+}
+
 
 /* =========================================================================
    Rich text rendered from CMS Markdown (product full descriptions) —

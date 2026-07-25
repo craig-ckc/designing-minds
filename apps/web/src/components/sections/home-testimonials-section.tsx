@@ -1,24 +1,29 @@
 import { type CmsSnapshot } from '@designing-minds/cms'
-import { Card } from '../ui/card'
-import { Placeholder } from '../ui/placeholder'
 import { Section } from '../ui/section'
 import { StarRating } from '../ui/star-rating'
+import { TestimonialCarousel } from './testimonial-carousel'
 
 export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const items = snapshot?.testimonials.filter((t) => t.published) ?? []
   if (items.length === 0) return null
 
   const lead = items[0]
-  const cards = items.slice(1, 4)
+  const cards = items.slice(1)
 
   return (
-    <Section id="parent-stories">
+    <Section id="parent-stories" className="overflow-x-clip">
       <h2 className="max-w-[20ch]">Real stories from families across South Africa</h2>
       <p className="mt-3 text-body-sm text-muted">Based on verified customer orders to date.</p>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
         <div className="order-2 lg:order-1">
-          <Placeholder ratio="1 / 1" className="mx-auto max-w-form bg-surface" label="Illustration" />
+          <img
+            src="/images/image-05.png"
+            alt="Illustration of a smiling parent in a wooden picture frame"
+            className="mx-auto aspect-square w-full max-w-form object-contain"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
         <div className="order-1 lg:order-2">
           <StarRating value={5} />
@@ -32,20 +37,7 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
         </div>
       </div>
 
-      {cards.length > 0 ? (
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
-          {cards.map((t) => (
-            <Card as="figure" key={t.id} pad="md" className="flex flex-col gap-3">
-              <StarRating value={5} size="sm" />
-              <blockquote className="text-body leading-[1.5]">“{t.quote}”</blockquote>
-              <figcaption className="mt-auto text-body-sm">
-                <strong className="font-bold">{t.customerName}</strong>
-                {t.context ? <span className="text-muted"> · {t.context}</span> : null}
-              </figcaption>
-            </Card>
-          ))}
-        </div>
-      ) : null}
+      {cards.length > 0 ? <TestimonialCarousel testimonials={cards} /> : null}
     </Section>
   )
 }

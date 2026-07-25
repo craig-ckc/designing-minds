@@ -14,18 +14,36 @@ test('homepage star-rating trust claim links down to the named parent stories', 
   // The rating is only rendered when real, named stories exist to link to.
   assert.match(hero, /snapshot\?\.testimonials\.some\(\(testimonial\) => testimonial\.published\)/)
   // The named stories exist on the section the claim points to.
-  assert.match(testimonials, /<Section id="parent-stories">/)
+  assert.match(testimonials, /<Section id="parent-stories"/)
   assert.match(testimonials, /lead\.customerName/)
-  assert.match(testimonials, /t\.customerName/)
+  assert.match(testimonials, /<TestimonialCarousel testimonials=\{cards\} \/>/)
+  assert.match(read('components/sections/testimonial-carousel.tsx'), /item\.customerName/)
+  assert.match(testimonials, /src="\/images\/image-05\.png"/)
+  assert.doesNotMatch(testimonials, /Placeholder/)
 })
 
 test('testimonial cards show a star rating alongside the named customer, without fake avatars', () => {
   const about = read('components/sections/testimonials-section.tsx')
+  const carousel = read('components/sections/testimonial-carousel.tsx')
+  const styles = read('index.css')
 
-  assert.match(about, /<StarRating/)
-  assert.match(about, /item\.customerName/)
+  assert.match(about, /<TestimonialCarousel testimonials=\{testimonials\} \/>/)
+  assert.match(carousel, /<StarRating/)
+  assert.match(carousel, /item\.customerName/)
+  assert.match(carousel, /testimonial-carousel-track/)
+  assert.match(carousel, /aria-hidden="true"/)
+  assert.match(carousel, /testimonials\.length \* 12/)
+  assert.doesNotMatch(carousel, /scrollBy|carousel controls|Show previous|Show next/)
+  assert.match(carousel, /Read full story/)
+  assert.match(carousel, /line-clamp-7/)
+  assert.match(styles, /@keyframes testimonial-scroll/)
+  assert.match(styles, /animation: testimonial-scroll linear infinite/)
+  assert.match(styles, /width: 100vw/)
+  assert.match(styles, /animation-play-state: paused/)
+  assert.match(styles, /prefers-reduced-motion: reduce/)
+  assert.match(styles, /mask-image: linear-gradient/)
   // The placeholder avatar image is gone — we do not have real customer photos.
-  assert.doesNotMatch(about, /Placeholder/)
+  assert.doesNotMatch(carousel, /Placeholder/)
   assert.doesNotMatch(read('pages/about-page.tsx'), /500\+/)
 })
 
