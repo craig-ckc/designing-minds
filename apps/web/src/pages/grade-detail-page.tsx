@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { ALL, type CmsSnapshot, productsForGrade } from '@designing-minds/cms'
+import { GradePackageSection } from '../components/sections/grade-package-section'
 import { GRADE_BLURB, slugToGrade } from '../content/site'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
@@ -49,10 +50,14 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </Container>
       </div>
 
+      {/* Bundles lead, singles follow — a visitor picking a grade sees the
+          cheaper way to buy the same resources before the R50 test wall. */}
+      <GradePackageSection snapshot={snapshot} grade={grade} />
+
       <section className="section">
         <Container>
           <div className="mb-6 flex items-center justify-between gap-4">
-            <h2>{visible.length} resources</h2>
+            <h2>{visible.length} single resources</h2>
           </div>
           {visible.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -69,17 +74,6 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </Container>
       </section>
 
-      <section className="section-tight bg-surface-alt">
-        <Container className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2>Cover {grade} in one purchase</h2>
-            <p className="mt-1.5 text-muted">See term bundles, full-year bundles, and plans.</p>
-          </div>
-          <Link to="/packages" className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4">
-            Browse bundles &amp; plans
-          </Link>
-        </Container>
-      </section>
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { publishedProducts, type CmsSnapshot } from '@designing-minds/cms'
+import { publishedProducts, type CmsSnapshot, type Product } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Card } from '../components/ui/card'
@@ -11,6 +11,9 @@ import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from
 import { useDeferredCatalog } from '../lib/deferred-catalog'
 
 const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format', 'kind'] as const
+
+/** Sort weight: Bundles and Access Plans lead the catalogue, Singles follow. */
+const packagesFirst = (product: Product) => (product.productKind === 'Single' ? 1 : 0)
 
 export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -28,15 +31,20 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const q = deferredQuery.trim().toLowerCase()
   const products = publishedProducts(snapshot)
 
-  const visible = products.filter((product) => {
-    if (grades.length && !grades.includes(product.grade)) return false
-    if (terms.length && !terms.includes(product.term)) return false
-    if (subjects.length && !subjects.some((name) => product.subjects.includes(name))) return false
-    if (formats.length && !formats.includes(product.resourceFormat)) return false
-    if (kinds.length && !kinds.includes(product.productKind)) return false
-    if (!q) return true
-    return `${product.title} ${product.shortDescription} ${product.subjects.join(' ')}`.toLowerCase().includes(q)
-  })
+  const visible = products
+    .filter((product) => {
+      if (grades.length && !grades.includes(product.grade)) return false
+      if (terms.length && !terms.includes(product.term)) return false
+      if (subjects.length && !subjects.some((name) => product.subjects.includes(name))) return false
+      if (formats.length && !formats.includes(product.resourceFormat)) return false
+      if (kinds.length && !kinds.includes(product.productKind)) return false
+      if (!q) return true
+      return `${product.title} ${product.shortDescription} ${product.subjects.join(' ')}`.toLowerCase().includes(q)
+    })
+    // Packages ahead of singles. The catalogue previously ran dozens of R50–R60
+    // single tests before the first bundle, so the default reading order sold the
+    // more expensive way to buy the same material. Ties keep catalogue order.
+    .sort((a, b) => packagesFirst(a) - packagesFirst(b))
   const renderedProducts = useDeferredCatalog(visible)
 
   const activeCount = grades.length + terms.length + subjects.length + formats.length + kinds.length
@@ -79,7 +87,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <Container>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h2>{visible.length} results</h2>
-            <span className="text-muted">Sorted by catalogue order</span>
+            <span className="text-muted">Bundles and plans first</span>
           </div>
           {visible.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
