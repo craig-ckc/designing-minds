@@ -1,28 +1,27 @@
-import { useState, type DragEvent, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { cn } from '@designing-minds/utils'
 import type { ProductFile } from '@designing-minds/cms'
 import type { AdminField, AdminRecord, FieldContext, ReferenceField, SelectField } from '../../cms/types'
 import { getPath } from '../../cms/record'
 import { FIELD } from '../tokens'
 import { Icon } from '../ui'
-import { Button, Input, ReferencePicker, Select, Switch, Textarea, type SelectOption } from '../primitives'
+import { Input, ReferencePicker, Select, Switch, Textarea, type SelectOption } from '../primitives'
+import { FileListField } from './FileListField'
 import { RichTextEditor } from './RichTextEditor'
 
 type Props = {
   field: AdminField
   record: AdminRecord
+  /** Owning collection — file uploads are addressed by collection + record. */
+  collectionId: string
   ctx: FieldContext
   onUpdate: (key: string, value: unknown) => void
-  onUpload?: (file: File) => void
-  uploading?: boolean
-  uploadError?: string | null
   disabled?: boolean
 }
 
-export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading, uploadError, disabled }: Props) {
+export function FieldControl({ field, record, collectionId, ctx, onUpdate, disabled }: Props) {
   const value = getPath(record, field.key)
   const inputId = `${record.id}:${field.key}`
-  const [dragActive, setDragActive] = useState(false)
 
   return <FieldShell field={field} inputId={inputId}>{renderControl()}</FieldShell>
 
@@ -42,7 +41,7 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
           return <div className={cn(FIELD, 'text-ink-soft')}>No additional fields.</div>
         }
         return (
-          <dl className="grid gap-2.5 rounded-md border border-line bg-surface-alt p-3">
+          <dl className="grid gap-2.5 rounded-control border border-line bg-surface-alt p-3">
             {entries.map(([key, entryValue]) => (
               <div key={key} className="grid gap-0.5">
                 <dt className="text-[0.75rem] uppercase tracking-[0.06em] text-muted">{key}</dt>
@@ -112,7 +111,7 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
           <>
             <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
             {field.urlPrefix ? (
-              <div className="mt-2 flex items-center gap-2 rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.82rem] text-muted">
+              <div className="mt-2 flex items-center gap-2 rounded-control border border-line bg-surface-alt px-3 py-2 text-[0.82rem] text-muted">
                 <span className="h-3.5 w-3.5 flex-none">
                   <Icon name="external" />
                 </span>
@@ -190,94 +189,36 @@ export function FieldControl({ field, record, ctx, onUpdate, onUpload, uploading
 
   function renderFileList(): ReactNode {
     const files = Array.isArray(value) ? (value as ProductFile[]) : []
-
-    const onDrop = (e: DragEvent<HTMLLabelElement>) => {
-      e.preventDefault()
-      setDragActive(false)
-      if (uploading) return
-      const file = e.dataTransfer.files?.[0]
-      if (file) onUpload?.(file)
-    }
-
     return (
-      <div className="grid gap-2">
-        {!disabled ? (
-          <label
-            onDragOver={(e) => {
-              e.preventDefault()
-              if (!dragActive) setDragActive(true)
-            }}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={onDrop}
-            className={cn(
-              'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-control border-2 border-dashed px-4 py-5 text-center transition',
-              dragActive ? 'border-primary bg-primary-tint' : 'border-line-strong bg-surface-alt hover:border-primary',
-              uploading && 'pointer-events-none opacity-70',
-            )}
-          >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-surface text-ink-soft">
-              <span className="h-4 w-4">
-                <Icon name="download" />
-              </span>
-            </span>
-            <span className="text-[0.85rem] font-medium text-ink">
-              {uploading ? 'Uploading…' : dragActive ? 'Drop to upload' : 'Drag & drop a file here'}
-            </span>
-            {!uploading ? (
-              <span className="text-[0.8rem] text-muted">
-                or <span className="font-medium text-primary">click to browse</span>
-              </span>
-            ) : null}
-            <input
-              className="sr-only"
-              type="file"
-              disabled={uploading}
-              onChange={(e) => e.target.files?.[0] && onUpload?.(e.target.files[0])}
-            />
-          </label>
-        ) : null}
-        {uploadError ? <p className="text-[0.82rem] text-danger">{uploadError}</p> : null}
-        {files.length > 0 ? (
-          <span className="text-[0.82rem] text-muted">
-            {files.length} file{files.length === 1 ? '' : 's'} attached
-          </span>
-        ) : null}
-        {files.length === 0 ? (
-          disabled ? <p className="text-[0.85rem] text-muted">No files attached.</p> : null
-        ) : (
-          <ul className="grid gap-1.5">
-            {files.map((file) => (
-              <li key={file.id} className="flex items-center justify-between gap-3 rounded-md border border-line px-3 py-2 text-[0.9rem]">
-                <span className="grid min-w-0 gap-0.5">
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 text-muted">
-                      <Icon name="doc" />
-                    </span>
-                    {file.label} · {file.filename}
-                  </span>
-                  <span className="truncate pl-6 text-[0.78rem] text-muted">{file.storageKey ?? 'No storage key yet'}</span>
-                </span>
-                {!disabled ? (
-                  <Button variant="ghost" size="sm" onClick={() => onUpdate(field.key, files.filter((f) => f.id !== file.id))}>
-                    Remove
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <FileListField
+        collectionId={collectionId}
+        recordId={record.id}
+        fieldKey={field.key}
+        label={field.label}
+        files={files}
+        onChange={(update) => onUpdate(field.key, update)}
+        disabled={disabled}
+        labelId={`${inputId}:label`}
+      />
     )
   }
 }
 
 function FieldShell({ field, inputId, children }: { field: AdminField; inputId: string; children: ReactNode }) {
+  // A file list is a group of controls, not one input, so its caption is a
+  // plain label referenced by aria-labelledby rather than a <label htmlFor>
+  // pointing at something that can't take focus.
+  const Caption = field.type === 'fileList' ? 'span' : 'label'
   return (
     <div className="grid gap-2">
-      <label htmlFor={inputId} className="text-[0.92rem] font-medium">
+      <Caption
+        id={`${inputId}:label`}
+        htmlFor={field.type === 'fileList' ? undefined : inputId}
+        className="text-[0.92rem] font-medium"
+      >
         {field.label}
         {field.required ? <span className="text-muted"> *</span> : null}
-      </label>
+      </Caption>
       {children}
       {field.helpText ? <p className="text-[0.82rem] text-muted">{field.helpText}</p> : null}
     </div>

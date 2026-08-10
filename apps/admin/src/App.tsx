@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { type CmsSnapshot, type ProductFile } from '@designing-minds/cms'
 import { repository } from './repository'
-import { collectionRegistry } from './cms/registry'
-import { createAdminAdapter } from './cms/adapter'
-import { getRecordTitle } from './cms/record'
+import { collectionRegistry, getCollection } from './cms/registry'
+import { createAdminAdapter, selectRecord } from './cms/adapter'
+import { getPath, getRecordTitle, setPath } from './cms/record'
 import type { AdminCollection, AdminRecord } from './cms/types'
+import { UploadsProvider, type UploadJob } from './lib/uploads'
 import { Shell } from './components/Shell'
 import { StatePanel } from './components/ui'
 import { ScrollArea } from './components/primitives'
@@ -64,10 +65,62 @@ function App() {
     [adapter],
   )
 
+  // The upload queue outlives any one editor, so it reads the current snapshot
+  // through a ref rather than closing over a stale one.
+  const snapshotRef = useRef<CmsSnapshot | null>(null)
+  useEffect(() => {
+    snapshotRef.current = snapshot
+  }, [snapshot])
+
   const uploadFile = useCallback(
-    (record: AdminRecord, file: File): Promise<ProductFile> => adapter.uploadFile(record, file),
+    (
+      recordId: string,
+      file: File,
+      onProgress: (fraction: number) => void,
+      onAbortHandle: (abort: () => void) => void,
+    ): Promise<ProductFile> => adapter.uploadFile({ id: recordId }, file, onProgress, onAbortHandle),
     [adapter],
   )
+
+  /**
+   * A file that finished while its editor was closed.
+   *
+   * It is attached to the STORED record, not to a draft — by the time nobody is
+   * listening the draft has either been saved or discarded (the unsaved-changes
+   * guard makes sure of that), so writing through is the only way the upload
+   * isn't quietly thrown away.
+   */
+  const attachOrphanedFile = useCallback(
+    async (job: UploadJob, file: ProductFile) => {
+      const collection = getCollection(job.collectionId)
+      const current = snapshotRef.current
+      if (!collection || !current) return
+      const record = selectRecord(current, job.collectionId, job.recordId)
+      if (!record) return
+
+      const existing = (getPath(record, job.fieldKey) as ProductFile[] | undefined) ?? []
+      const next = job.replacesFileId
+        ? existing.map((entry) => (entry.id === job.replacesFileId ? { ...file, label: entry.label } : entry))
+        : [...existing, file]
+      await saveRecord(collection, setPath(record, job.fieldKey, next))
+    },
+    [saveRecord],
+  )
+
+  const notifyUpload = useCallback((text: string, tone: 'info' | 'error') => {
+    if (tone === 'error') setError(text)
+    else setMessage(text)
+  }, [])
+
+  // Confirmations are transient. Without this the "Saved …" note stayed pinned
+  // to the corner for the rest of the session, so it stopped meaning "just
+  // now" — part of why saving felt like it gave no feedback. Errors persist:
+  // they describe a state the user still needs to deal with.
+  useEffect(() => {
+    if (!message) return
+    const timer = window.setTimeout(() => setMessage(null), 4000)
+    return () => window.clearTimeout(timer)
+  }, [message])
 
   const shellProps = { message, error }
 
@@ -102,37 +155,40 @@ function App() {
   }
 
   return (
-    <Shell {...shellProps} snapshot={snapshot}>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <ScrollArea className="min-h-0 flex-1">
-              <DashboardPage snapshot={snapshot} />
-            </ScrollArea>
-          }
-        />
+    // Inside the router but outside the routes: an upload started on one record
+    // keeps running while the admin navigates to another.
+    <UploadsProvider upload={uploadFile} onOrphaned={attachOrphanedFile} onNotify={notifyUpload}>
+      <Shell {...shellProps} snapshot={snapshot}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <ScrollArea className="min-h-0 flex-1">
+                <DashboardPage snapshot={snapshot} />
+              </ScrollArea>
+            }
+          />
 
-        {collectionRegistry.flatMap((collection) => {
-          const element = (
-            <AdminWorkspace
-              key={collection.id}
-              collection={collection}
-              snapshot={snapshot}
-              saving={saving}
-              onSave={saveRecord}
-              onUpload={uploadFile}
-            />
-          )
-          return [
-            <Route key={collection.id} path={`/${collection.id}`} element={element} />,
-            <Route key={`${collection.id}/record`} path={`/${collection.id}/:recordId`} element={element} />,
-          ]
-        })}
+          {collectionRegistry.flatMap((collection) => {
+            const element = (
+              <AdminWorkspace
+                key={collection.id}
+                collection={collection}
+                snapshot={snapshot}
+                saving={saving}
+                onSave={saveRecord}
+              />
+            )
+            return [
+              <Route key={collection.id} path={`/${collection.id}`} element={element} />,
+              <Route key={`${collection.id}/record`} path={`/${collection.id}/:recordId`} element={element} />,
+            ]
+          })}
 
-        <Route path="*" element={<StatePanel eyebrow="404" title="Not found" body="This admin route doesn’t exist." />} />
-      </Routes>
-    </Shell>
+          <Route path="*" element={<StatePanel eyebrow="404" title="Not found" body="This admin route doesn’t exist." />} />
+        </Routes>
+      </Shell>
+    </UploadsProvider>
   )
 }
 

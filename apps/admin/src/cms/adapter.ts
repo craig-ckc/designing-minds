@@ -26,6 +26,7 @@ import {
 } from '@designing-minds/cms'
 import { supabase } from '../lib/supabase'
 import { apiUrl } from '../lib/api'
+import { putWithProgress } from '../lib/upload-transport'
 import type { AdminCollection, AdminRecord, FieldContext, FieldOption, ReferenceField, SelectField } from './types'
 import { getPath } from './record'
 
@@ -256,7 +257,13 @@ export type SaveResult = { saved: AdminRecord; apply: (snapshot: CmsSnapshot) =>
 export type AdminAdapter = {
   canWrite: boolean
   save: (collectionId: string, record: AdminRecord) => Promise<SaveResult>
-  uploadFile: (record: AdminRecord, file: File) => Promise<ProductFile>
+  uploadFile: (
+    record: AdminRecord,
+    file: File,
+    onProgress?: (fraction: number) => void,
+    /** Receives a cancel function once the request is actually in flight. */
+    onAbortHandle?: (abort: () => void) => void,
+  ) => Promise<ProductFile>
 }
 
 export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
@@ -282,8 +289,15 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
       }
     },
 
-    async uploadFile(record, file) {
-      const fileId = `f-${Date.now()}`
+    /**
+     * Reserve a storage key, then PUT the bytes with progress reporting.
+     *
+     * The id is a UUID rather than a timestamp: two files picked in the same
+     * millisecond would otherwise collide on both the record and the storage
+     * key, and multi-file selection makes that easy to hit.
+     */
+    async uploadFile(record, file, onProgress, onAbortHandle) {
+      const fileId = crypto.randomUUID()
       const { data } = await supabase.auth.getSession()
       const token = data.session?.access_token
       if (!token) throw new Error('Admin session required.')
@@ -294,9 +308,18 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
       })
       const body = (await response.json()) as { uploadUrl?: string; storageKey?: string; error?: string }
       if (!response.ok || !body.uploadUrl || !body.storageKey) throw new Error(body.error ?? 'Unable to create upload URL.')
-      const upload = await fetch(body.uploadUrl, { method: 'PUT', body: file })
-      if (!upload.ok) throw new Error('Unable to upload file.')
-      return { id: fileId, label: file.name, filename: file.name, storageKey: body.storageKey }
+      const handle = putWithProgress(body.uploadUrl, file, onProgress ?? (() => {}))
+      onAbortHandle?.(handle.abort)
+      await handle.done
+
+      return {
+        id: fileId,
+        label: file.name,
+        filename: file.name,
+        storageKey: body.storageKey,
+        sizeBytes: file.size,
+        contentType: file.type || undefined,
+      }
     },
   }
 }
