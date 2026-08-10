@@ -188,6 +188,42 @@ export function Td({ children, className = '', colSpan }: { children?: ReactNode
   )
 }
 
+/**
+ * The admin's one loading screen.
+ *
+ * Booting used to be told as two headlines — "Checking access…" then
+ * "Preparing the workspace…" — which read as two separate waits for what is
+ * really one, and at display size for a step nobody needs announced. This is a
+ * single screen for the whole boot: a moving mark that says work is happening,
+ * and a small label instead of a paragraph.
+ */
+export function LoadingScreen({ label = 'Loading the workspace' }: { label?: string }) {
+  return (
+    <div role="status" aria-live="polite" className="grid min-h-screen place-items-center px-5">
+      <div className="grid justify-items-center gap-3.5">
+        <Spinner />
+        <p className="text-[1.02rem] font-semibold tracking-[-0.015em] text-ink-soft">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+/** Indeterminate progress ring. Static for anyone who asked for less motion. */
+export function Spinner({ className = 'h-7 w-7' }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className={`animate-spin text-primary motion-reduce:animate-none ${className}`}>
+      <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2.5" />
+      <path
+        d="M21.5 12A9.5 9.5 0 0 0 12 2.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export function StatePanel({
   eyebrow,
   title,

@@ -8,7 +8,7 @@ import { getPath, getRecordTitle, setPath } from './cms/record'
 import type { AdminCollection, AdminRecord } from './cms/types'
 import { UploadsProvider, type UploadJob } from './lib/uploads'
 import { Shell } from './components/Shell'
-import { StatePanel } from './components/ui'
+import { LoadingScreen, StatePanel } from './components/ui'
 import { ScrollArea } from './components/primitives'
 import { AdminWorkspace } from './screens/AdminWorkspace'
 import { DashboardPage } from './pages/DashboardPage'
@@ -124,8 +124,10 @@ function App() {
 
   const shellProps = { message, error }
 
+  // Checking the session and loading the content are two requests but one wait,
+  // so they share one screen — see the `!snapshot` branch below.
   if (authLoading) {
-    return <StatePanel eyebrow="Admin" title="Checking access…" />
+    return <LoadingScreen />
   }
 
   // A password-reset link establishes a temporary session, so this must take
@@ -142,14 +144,14 @@ function App() {
     return <StatePanel eyebrow="Admin" title="Not authorized" body="This account does not have administrator access." />
   }
 
+  // A failed load is a state to deal with, so it gets the chrome and an
+  // explanation; still loading is the same wait as the auth check above, so it
+  // gets the same screen rather than a second one with different words.
   if (!snapshot) {
+    if (!error) return <LoadingScreen />
     return (
       <Shell {...shellProps} snapshot={null}>
-        {error ? (
-          <StatePanel eyebrow="Something went wrong" title="Content unavailable" body={error} />
-        ) : (
-          <StatePanel eyebrow="Loading" title="Preparing the workspace…" />
-        )}
+        <StatePanel eyebrow="Something went wrong" title="Content unavailable" body={error} />
       </Shell>
     )
   }
