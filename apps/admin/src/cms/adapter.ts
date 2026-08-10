@@ -14,9 +14,11 @@
 import {
   formatCurrency,
   ordersForCustomer,
+  updateBundleInSnapshot,
   updateFaqInSnapshot,
   updateProductInSnapshot,
   updateTestimonialInSnapshot,
+  type Bundle,
   type CmsRepository,
   type CmsSnapshot,
   type Faq,
@@ -108,6 +110,8 @@ export function selectRecords(snapshot: CmsSnapshot, collectionId: string): Admi
   switch (collectionId) {
     case 'products':
       return snapshot.products as unknown as AdminRecord[]
+    case 'bundles':
+      return snapshot.bundles as unknown as AdminRecord[]
     case 'faqs':
       return snapshot.faqs as unknown as AdminRecord[]
     case 'testimonials':
@@ -152,7 +156,6 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         grade: vl.grades[0],
         term: vl.terms[0],
         year: vl.years[0] ?? '2026',
-        productKind: 'Single',
         resourceFormat: vl.resourceFormats[0],
         subjects: [],
         marks: null,
@@ -166,6 +169,29 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
       }
       return product as unknown as AdminRecord
     }
+    case 'bundles': {
+      const bundle: Bundle = {
+        id,
+        slug: '',
+        title: 'New bundle',
+        shortDescription: '',
+        fullDescription: '',
+        priceZar: 0,
+        grade: vl.grades[0],
+        term: vl.terms[0],
+        year: vl.years[0] ?? '2026',
+        bundleScope: 'Term',
+        featured: false,
+        published: false,
+        sortOrder: snapshot.bundles.length + 1,
+        seo: { title: '', description: '' },
+        faqs: [],
+        updatedAt: '',
+        includedProductIds: [],
+        includedProductSlugs: [],
+      }
+      return bundle as unknown as AdminRecord
+    }
     case 'faqs': {
       const faq: Faq = {
         id,
@@ -174,6 +200,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         category: 'General',
         sortOrder: snapshot.faqs.length + 1,
         published: true,
+        updatedAt: '',
       }
       return faq as unknown as AdminRecord
     }
@@ -188,6 +215,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         featured: false,
         sortOrder: snapshot.testimonials.length + 1,
         published: true,
+        updatedAt: '',
       }
       return testimonial as unknown as AdminRecord
     }
@@ -242,7 +270,9 @@ export function buildFieldContext(snapshot: CmsSnapshot): FieldContext {
         case 'products':
           return snapshot.products
             .filter((p) => (field.filter ? field.filter(p as unknown as AdminRecord) : true))
-            .map((p) => ({ label: p.title, value: p.slug }))
+            // Bundle membership is by id (a real foreign key); older
+            // references keyed on slug still resolve through valueKey.
+            .map((p) => ({ label: p.title, value: field.valueKey === 'id' ? p.id : p.slug }))
         default:
           return []
       }
@@ -276,6 +306,10 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
           const saved = await repository.saveProduct(record as unknown as Product)
           return { saved: saved as unknown as AdminRecord, apply: (s) => updateProductInSnapshot(s, saved) }
         }
+        case 'bundles': {
+          const saved = await repository.saveBundle(record as unknown as Bundle)
+          return { saved: saved as unknown as AdminRecord, apply: (s) => updateBundleInSnapshot(s, saved) }
+        }
         case 'faqs': {
           const saved = await repository.saveFaq(record as unknown as Faq)
           return { saved: saved as unknown as AdminRecord, apply: (s) => updateFaqInSnapshot(s, saved) }
@@ -308,6 +342,7 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
       })
       const body = (await response.json()) as { uploadUrl?: string; storageKey?: string; error?: string }
       if (!response.ok || !body.uploadUrl || !body.storageKey) throw new Error(body.error ?? 'Unable to create upload URL.')
+
       const handle = putWithProgress(body.uploadUrl, file, onProgress ?? (() => {}))
       onAbortHandle?.(handle.abort)
       await handle.done

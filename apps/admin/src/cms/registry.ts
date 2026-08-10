@@ -8,19 +8,22 @@
    Reference Field, Value List.
    ------------------------------------------------------------------------- */
 
-import type { AdminCollection, AdminRecord, FieldOption } from './types'
+import type { AdminCollection, FieldOption } from './types'
 
-const PUBLISH_LABELS = { on: 'Published', off: 'Draft', verbOn: 'Publish', verbOff: 'Unpublish' }
+/**
+ * Status vocabulary for the header control.
+ *
+ * `off` is "Unpublished", NOT "Draft": Draft is the derived state of a
+ * published record whose saved changes the site hasn't picked up yet, so using
+ * it for the off-state would make two different things share one word.
+ */
+const PUBLISH_LABELS = { on: 'Published', off: 'Unpublished', verbOn: 'Publish', verbOff: 'Unpublish' }
 
 const boolOptions = (on: string, off: string): FieldOption[] => [
   { label: on, value: 'true' },
   { label: off, value: 'false' },
 ]
 const literalOptions = (values: string[]): FieldOption[] => values.map((value) => ({ label: value, value }))
-
-const isKind = (kind: string) => (record: AdminRecord) => record.productKind === kind
-const isIndividualResource = (option: AdminRecord) =>
-  (option as { productKind?: string }).productKind === 'Single'
 
 /* --------------------------------- Products ---------------------------- */
 
@@ -30,16 +33,15 @@ const products: AdminCollection = {
   singular: 'Product',
   group: 'Catalogue',
   titleField: 'title',
-  subtitleField: 'productKind',
+  subtitleField: 'resourceFormat',
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
   searchFields: ['title', 'slug', 'grade', 'term', 'resourceFormat'],
   filters: [
-    { key: 'productKind', label: 'Kind', valueList: 'productKinds' },
     { key: 'grade', label: 'Grade', valueList: 'grades' },
     { key: 'term', label: 'Term', valueList: 'terms' },
     { key: 'resourceFormat', label: 'Format', valueList: 'resourceFormats' },
-    { key: 'published', label: 'Status', options: boolOptions('Published', 'Draft') },
+    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
   ],
   fields: [
     { key: 'title', label: 'Name', type: 'text', required: true },
@@ -52,37 +54,12 @@ const products: AdminCollection = {
     { key: 'published', label: 'Published', type: 'boolean' },
     { key: 'featured', label: 'Featured', type: 'boolean' },
 
-    { key: 'productKind', label: 'Product kind', type: 'select', valueList: 'productKinds', required: true },
     { key: 'resourceFormat', label: 'Resource format', type: 'select', valueList: 'resourceFormats', required: true },
     { key: 'grade', label: 'Grade', type: 'select', valueList: 'grades', required: true },
     { key: 'term', label: 'Term', type: 'select', valueList: 'terms', required: true },
     { key: 'year', label: 'Year', type: 'select', valueList: 'years', required: true },
     { key: 'marks', label: 'Marks', type: 'number', nullable: true },
     { key: 'subjects', label: 'Subjects (at least one)', type: 'multiReference', valueList: 'subjects', required: true },
-
-    { key: 'bundleScope', label: 'Bundle scope', type: 'select', options: [
-      { label: 'Term', value: 'Term' },
-      { label: 'Full Year', value: 'Full Year' },
-    ] },
-
-    { key: 'accessPeriod', label: 'Access period', type: 'select', options: [
-      { label: 'Term', value: 'Term' },
-      { label: 'Year', value: 'Year' },
-    ] },
-    { key: 'includedGrades', label: 'Included grades', type: 'multiReference', valueList: 'grades' },
-    { key: 'deliveryRules', label: 'Delivery rules', type: 'textarea' },
-    { key: 'renewalNotes', label: 'Renewal / expiry notes', type: 'textarea' },
-
-    {
-      key: 'includedProductSlugs',
-      label: 'Included products (Single)',
-      type: 'multiReference',
-      collection: 'products',
-      valueKey: 'slug',
-      filter: isIndividualResource,
-    },
-    { key: 'includedSubjects', label: 'Included subjects', type: 'multiReference', valueList: 'subjects' },
-    { key: 'includedTerms', label: 'Included terms', type: 'multiReference', valueList: 'terms' },
 
     { key: 'purchasedFiles', label: 'Purchased files', type: 'fileList' },
 
@@ -93,23 +70,13 @@ const products: AdminCollection = {
   ],
   sections: [
     { title: 'Basic info', fields: ['title', 'slug', 'shortDescription', 'fullDescription'] },
-    { title: 'Pricing & visibility', fields: ['priceZar', 'sortOrder', 'published', 'featured'] },
-    { title: 'Classification', fields: ['productKind', 'resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects'] },
-    {
-      title: 'Bundle details',
-      visibleWhen: isKind('Bundle'),
-      hint: 'Shown because the product kind is Bundle.',
-      fields: ['bundleScope', 'includedProductSlugs', 'includedSubjects', 'includedTerms'],
-    },
-    {
-      title: 'Access plan details',
-      visibleWhen: isKind('Access Plan'),
-      hint: 'Shown because the product kind is Access Plan.',
-      fields: ['accessPeriod', 'includedGrades', 'includedSubjects', 'includedTerms', 'includedProductSlugs', 'deliveryRules', 'renewalNotes'],
-    },
+    /* `published` is deliberately absent from every section below: the editor
+       header owns it via the status menu. It stays in `fields` because filters
+       and CSV import/export still address it by key. */
+    { title: 'Pricing & visibility', fields: ['priceZar', 'sortOrder', 'featured'] },
+    { title: 'Classification', fields: ['resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects'] },
     {
       title: 'Files',
-      visibleWhen: isKind('Single'),
       hint: 'Files buyers receive after purchasing this resource.',
       fields: ['purchasedFiles'],
     },
@@ -118,11 +85,99 @@ const products: AdminCollection = {
   ],
   listColumns: [
     { key: 'title', label: 'Title', width: 'minmax(220px, 1.6fr)' },
-    { key: 'productKind', label: 'Kind', width: '150px', valueType: 'kind' },
     { key: 'grade', label: 'Grade', width: '110px' },
     { key: 'term', label: 'Term', width: '110px' },
     { key: 'resourceFormat', label: 'Format', width: '160px' },
     { key: 'priceZar', label: 'Price', width: '120px', align: 'right', valueType: 'currency' },
+    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
+    { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
+  ],
+}
+
+/* --------------------------------- Bundles ------------------------------
+   A bundle is a priced package of individual resources. Its contents are the
+   `includedProductIds` multi-reference and nothing else — there are no
+   subject/term rules any more, so what an editor picks here is exactly what a
+   buyer gets. Subjects, terms and monetary value are derived from the members
+   by the website (see bundleValue), so they are not fields. */
+
+const bundles: AdminCollection = {
+  id: 'bundles',
+  label: 'Bundles',
+  singular: 'Bundle',
+  group: 'Catalogue',
+  titleField: 'title',
+  subtitleField: 'bundleScope',
+  statusField: 'published',
+  statusLabels: PUBLISH_LABELS,
+  searchFields: ['title', 'slug', 'grade', 'term'],
+  filters: [
+    { key: 'grade', label: 'Grade', valueList: 'grades' },
+    { key: 'term', label: 'Term', valueList: 'terms' },
+    {
+      key: 'bundleScope',
+      label: 'Scope',
+      options: [
+        { label: 'Term', value: 'Term' },
+        { label: 'Full Year', value: 'Full Year' },
+      ],
+    },
+    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
+  ],
+  fields: [
+    { key: 'title', label: 'Name', type: 'text', required: true },
+    { key: 'slug', label: 'Slug', type: 'slug', required: true, urlPrefix: 'www.designingminds.co.za/shop/' },
+    { key: 'shortDescription', label: 'Short description', type: 'textarea' },
+    { key: 'fullDescription', label: 'Full description', type: 'richText', helpText: 'Rich text, stored as Markdown and rendered on the bundle page.' },
+
+    { key: 'priceZar', label: 'Price (ZAR)', type: 'number' },
+    { key: 'sortOrder', label: 'Sort order', type: 'number' },
+    { key: 'featured', label: 'Featured', type: 'boolean' },
+
+    {
+      key: 'bundleScope',
+      label: 'Scope',
+      type: 'select',
+      options: [
+        { label: 'Term', value: 'Term' },
+        { label: 'Full Year', value: 'Full Year' },
+      ],
+    },
+    { key: 'grade', label: 'Grade', type: 'select', valueList: 'grades', required: true },
+    { key: 'term', label: 'Term', type: 'select', valueList: 'terms', required: true },
+    { key: 'year', label: 'Year', type: 'select', valueList: 'years', required: true },
+
+    {
+      key: 'includedProductIds',
+      label: 'Included resources',
+      type: 'multiReference',
+      collection: 'products',
+      valueKey: 'id',
+      required: true,
+      helpText: 'Exactly what a buyer receives. Price saving, subjects and terms are worked out from these.',
+    },
+
+    { key: 'faqs', label: 'FAQs referenced by this bundle', type: 'multiReference', collection: 'faqs', valueKey: 'id' },
+
+    { key: 'seo.title', label: 'Meta title', type: 'text' },
+    { key: 'seo.description', label: 'Meta description', type: 'textarea' },
+  ],
+  sections: [
+    { title: 'Basic info', fields: ['title', 'slug', 'shortDescription', 'fullDescription'] },
+    { title: 'Pricing & visibility', fields: ['priceZar', 'sortOrder', 'featured'] },
+    { title: 'Classification', fields: ['bundleScope', 'grade', 'term', 'year'] },
+    { title: 'Contents', hint: 'The resources this bundle unlocks.', fields: ['includedProductIds'] },
+    { title: 'Related FAQs', fields: ['faqs'] },
+    { title: 'SEO', fields: ['seo.title', 'seo.description'] },
+  ],
+  listColumns: [
+    { key: 'title', label: 'Title', width: 'minmax(220px, 1.6fr)' },
+    { key: 'bundleScope', label: 'Scope', width: '130px' },
+    { key: 'grade', label: 'Grade', width: '110px' },
+    { key: 'term', label: 'Term', width: '110px' },
+    { key: 'includedProductIds', label: 'Items', width: '90px', valueType: 'count' },
+    { key: 'priceZar', label: 'Price', width: '120px', align: 'right', valueType: 'currency' },
+    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
     { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
   ],
 }
@@ -147,7 +202,7 @@ const faqs: AdminCollection = {
   searchFields: ['question', 'category'],
   filters: [
     { key: 'category', label: 'Category' },
-    { key: 'published', label: 'Status', options: boolOptions('Published', 'Draft') },
+    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
   ],
   fields: [
     { key: 'question', label: 'Question', type: 'text', required: true },
@@ -156,12 +211,13 @@ const faqs: AdminCollection = {
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
     { key: 'published', label: 'Published', type: 'boolean' },
   ],
-  sections: [{ title: 'Details', fields: ['question', 'answer', 'category', 'sortOrder', 'published'] }],
+  sections: [{ title: 'Details', fields: ['question', 'answer', 'category', 'sortOrder'] }],
   listColumns: [
     { key: 'question', label: 'Question', width: 'minmax(280px, 2fr)' },
     { key: 'category', label: 'Category', width: '160px' },
     { key: 'sortOrder', label: 'Order', width: '90px' },
-    { key: 'published', label: 'Status', width: '140px', valueType: 'publish' },
+    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
+    { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
   ],
 }
 
@@ -178,7 +234,7 @@ const testimonials: AdminCollection = {
   statusLabels: PUBLISH_LABELS,
   searchFields: ['customerName', 'quote', 'context'],
   filters: [
-    { key: 'published', label: 'Status', options: boolOptions('Published', 'Draft') },
+    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
     { key: 'featured', label: 'Featured', options: boolOptions('Featured', 'Not featured') },
     { key: 'learnerGrade', label: 'Grade', valueList: 'grades' },
   ],
@@ -193,12 +249,13 @@ const testimonials: AdminCollection = {
     { key: 'featured', label: 'Featured', type: 'boolean' },
   ],
   sections: [
-    { title: 'Details', fields: ['customerName', 'quote', 'context', 'learnerGrade', 'sourceDate', 'sortOrder', 'published', 'featured'] },
+    { title: 'Details', fields: ['customerName', 'quote', 'context', 'learnerGrade', 'sourceDate', 'sortOrder', 'featured'] },
   ],
   listColumns: [
     { key: 'customerName', label: 'Customer', width: 'minmax(180px, 1fr)' },
     { key: 'quote', label: 'Quote', width: 'minmax(240px, 2fr)' },
     { key: 'learnerGrade', label: 'Grade', width: '110px' },
+    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
     { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
   ],
 }
@@ -359,6 +416,7 @@ const formNewsletter: AdminCollection = {
 
 export const collectionRegistry: AdminCollection[] = [
   products,
+  bundles,
   faqs,
   testimonials,
   orders,
