@@ -96,7 +96,14 @@ export function ImportDialog({
               accept=".csv,text/csv"
               onFile={(file) => void handleFile(file)}
               render={(labelProps) => (
-                <label {...labelProps} className={cn(buttonStyles({ variant: 'solid', size: 'sm' }), 'cursor-pointer')}>
+                <label
+                  {...labelProps}
+                  className={cn(
+                    buttonStyles({ variant: 'solid', size: 'sm' }),
+                    'cursor-pointer',
+                    'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-focus-visible:outline-offset-1',
+                  )}
+                >
                   Choose CSV file
                 </label>
               )}

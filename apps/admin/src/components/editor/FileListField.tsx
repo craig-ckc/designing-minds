@@ -128,7 +128,8 @@ export function FileListField({
               onDrop={onDrop}
               className={cn(
                 'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-control border-2 border-dashed px-4 py-5 text-center transition',
-                'focus-within:outline focus-within:outline-2 focus-within:outline-primary focus-within:outline-offset-1',
+                // The input is a sibling, so `focus-within` never sees it.
+                'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-focus-visible:outline-offset-1',
                 dragActive ? 'border-primary bg-primary-tint' : 'border-line-strong bg-surface-alt hover:border-primary',
               )}
             >
@@ -200,7 +201,14 @@ function FileCard({
             label={`Replace ${file.filename}`}
             onFiles={onReplace}
             render={(labelProps) => (
-              <label {...labelProps} className={cn(buttonStyles({ variant: 'outline', size: 'sm' }), 'cursor-pointer')}>
+              <label
+                {...labelProps}
+                className={cn(
+                  buttonStyles({ variant: 'outline', size: 'sm' }),
+                  'cursor-pointer',
+                  'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-focus-visible:outline-offset-1',
+                )}
+              >
                 <span className="h-3.5 w-3.5">
                   <Icon name="upload" />
                 </span>
