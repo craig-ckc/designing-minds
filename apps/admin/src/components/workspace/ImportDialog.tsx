@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { cn } from '@designing-minds/utils'
 import type { AdminCollection, AdminRecord, FieldContext } from '../../cms/types'
 import { buildCsv, buildImportPlan, type ImportPlan } from '../../cms/csv-io'
 import { downloadCsv } from '../../lib/csv'
 import { Pill } from '../Badge'
-import { Button, Dialog, ScrollArea } from '../primitives'
+import { Button, buttonStyles, Dialog, FileInput, ScrollArea } from '../primitives'
 
 type Step =
   | { name: 'pick' }
@@ -36,7 +36,6 @@ export function ImportDialog({
 }) {
   const [step, setStep] = useState<Step>({ name: 'pick' })
   const [fileError, setFileError] = useState<string | null>(null)
-  const fileInput = useRef<HTMLInputElement>(null)
 
   const reset = () => {
     setStep({ name: 'pick' })
@@ -57,8 +56,6 @@ export function ImportDialog({
       setStep({ name: 'preview', plan, filename: file.name })
     } catch {
       setFileError('Unable to read that file.')
-    } finally {
-      if (fileInput.current) fileInput.current.value = ''
     }
   }
 
@@ -88,15 +85,22 @@ export function ImportDialog({
         <div className="mt-3 grid gap-4">
           <p className="text-[0.9rem] leading-relaxed text-ink-soft">
             Upload a CSV whose header row uses the field keys of this collection. Rows with an existing{' '}
-            <code className="rounded bg-surface-alt px-1">id</code> update that record; rows without an id create new{' '}
+            <code className="rounded-tight bg-surface-alt px-1">id</code> update that record; rows without an id create new{' '}
             {collection.label.toLowerCase()}. Blank cells keep the current value. Nothing is saved until you confirm the
             preview.
           </p>
           {fileError ? <p className="text-[0.85rem] text-danger">{fileError}</p> : null}
           <div className="flex flex-wrap items-center gap-2.5">
-            <Button variant="solid" size="sm" onClick={() => fileInput.current?.click()}>
-              Choose CSV file
-            </Button>
+            <FileInput
+              label="CSV file"
+              accept=".csv,text/csv"
+              onFile={(file) => void handleFile(file)}
+              render={(labelProps) => (
+                <label {...labelProps} className={cn(buttonStyles({ variant: 'solid', size: 'sm' }), 'cursor-pointer')}>
+                  Choose CSV file
+                </label>
+              )}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -105,14 +109,6 @@ export function ImportDialog({
               Download template
             </Button>
           </div>
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".csv,text/csv"
-            className="sr-only"
-            aria-label="CSV file"
-            onChange={(e) => e.target.files?.[0] && void handleFile(e.target.files[0])}
-          />
         </div>
       ) : null}
 
@@ -183,7 +179,7 @@ function PreviewStep({
       ) : null}
 
       {plan.rows.length > 0 ? (
-        <div className="flex max-h-[320px] min-h-0 flex-col overflow-hidden rounded-md border border-line">
+        <div className="flex max-h-[320px] min-h-0 flex-col overflow-hidden rounded-control border border-line">
           <ScrollArea className="min-h-0 flex-1">
             <table className="w-full border-collapse text-[0.85rem]">
               <thead className="sticky top-0 z-10 bg-surface-alt">

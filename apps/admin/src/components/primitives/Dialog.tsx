@@ -26,7 +26,7 @@ export function Dialog({
         <BaseDialog.Popup
           className={cn(
             'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100vh-4rem)] w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col',
-            'rounded-[10px] border border-line bg-surface p-6 shadow-xl',
+            'rounded-card border border-line bg-surface p-6 shadow-xl',
             className,
           )}
         >

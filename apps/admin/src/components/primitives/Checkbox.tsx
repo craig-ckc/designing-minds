@@ -26,7 +26,7 @@ export function Checkbox({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        'grid h-4 w-4 flex-none place-items-center rounded border border-line-strong bg-surface text-on-primary transition',
+        'grid h-4 w-4 flex-none place-items-center rounded-tight border border-line-strong bg-surface text-on-primary transition',
         'data-[checked]:border-primary-edge data-[checked]:bg-primary',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
         'disabled:cursor-not-allowed disabled:opacity-50',

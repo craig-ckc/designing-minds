@@ -17,7 +17,7 @@ export function Menu({
       <BaseMenu.Trigger render={trigger} />
       <BaseMenu.Portal>
         <BaseMenu.Positioner align={align} sideOffset={6} className="z-50">
-          <BaseMenu.Popup className="min-w-[220px] rounded-md border border-line bg-surface py-1 text-[0.88rem] shadow-lg">
+          <BaseMenu.Popup className="min-w-[220px] rounded-control border border-line bg-surface py-1 text-[0.88rem] shadow-lg">
             {children}
           </BaseMenu.Popup>
         </BaseMenu.Positioner>

@@ -6,8 +6,12 @@ import { repository } from '../../repository'
 import { Icon } from '../ui'
 import { ScrollArea } from '../primitives'
 
+/* Gutter rule for the side panels: the scroll container insets rows by 8px and
+   each row pads another 8px, so row text lands at 16px — the same x as the
+   `px-4` header and footer labels. Previously the header sat at 16px and rows
+   at 18px, which is the kind of 2px drift that reads as "not quite lining up". */
 const rowCls = ({ isActive }: { isActive: boolean }) =>
-  `group flex items-center gap-2 rounded-md px-2.5 py-1 text-[0.88rem] transition ${
+  `group flex items-center gap-2 rounded-control px-2 py-1 text-[0.88rem] transition ${
     isActive ? 'bg-surface-alt font-medium text-ink' : 'text-ink-soft hover:bg-surface-alt hover:text-ink'
   }`
 
@@ -31,7 +35,7 @@ export function CollectionSidebar({ snapshot }: { snapshot: CmsSnapshot }) {
       <ScrollArea className="min-h-0 flex-1" viewportClassName="py-2">
         {collectionGroups.map((group) => (
           <div key={group.group} className="flex flex-col gap-0.5 px-2 pb-2">
-            <div className="px-2.5 py-1.5">
+            <div className="px-2 py-1.5">
               <span className="text-[0.78rem] font-medium text-ink">{group.group}</span>
             </div>
             {group.collections.map((collection) => (

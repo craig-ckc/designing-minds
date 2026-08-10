@@ -21,7 +21,7 @@ export function Popover({
         <BasePopover.Positioner align={align} sideOffset={6} className="z-50">
           <BasePopover.Popup
             className={cn(
-              'flex max-h-[min(420px,var(--available-height))] flex-col overflow-hidden rounded-md border border-line bg-surface text-[0.88rem] shadow-lg',
+              'flex max-h-[min(420px,var(--available-height))] flex-col overflow-hidden rounded-control border border-line bg-surface text-[0.88rem] shadow-lg',
               className,
             )}
           >

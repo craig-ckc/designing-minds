@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { cn } from '@designing-minds/utils'
-import type { CmsSnapshot, ProductFile } from '@designing-minds/cms'
+import type { CmsSnapshot } from '@designing-minds/cms'
 import type { AdminCollection, AdminRecord } from '../cms/types'
 import { buildFieldContext, createBlank, resolveFilterFacets, selectRecord, selectRecords } from '../cms/adapter'
 import { fieldIsVisible, getPath, matchesFilters, setPath, uniqueSlug } from '../cms/record'
@@ -13,26 +13,23 @@ import { Button, ConfirmDialog } from '../components/primitives'
 import { RecordsToolbar } from '../components/workspace/RecordsToolbar'
 import { type FilterState } from '../components/workspace/FilterPopover'
 import { RecordTable } from '../components/workspace/RecordTable'
-import { RecordListPane } from '../components/workspace/RecordListPane'
 import { ImportDialog } from '../components/workspace/ImportDialog'
 import { RecordEditor } from '../components/editor/RecordEditor'
 
 type SaveFn = (collection: AdminCollection, record: AdminRecord) => Promise<AdminRecord | null>
-type UploadFn = (record: AdminRecord, file: File) => Promise<ProductFile>
 
 type Props = {
   collection: AdminCollection
   snapshot: CmsSnapshot
   saving: boolean
   onSave: SaveFn
-  onUpload: UploadFn
 }
 
 /**
  * The Editorial Workspace for one Collection: the record table (full width) or,
  * once a record is selected via the URL, the record-list pane + Record Editor.
  */
-export function AdminWorkspace({ collection, snapshot, saving, onSave, onUpload }: Props) {
+export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) {
   const navigate = useNavigate()
   const { recordId } = useParams()
   const [search, setSearch] = useState('')
@@ -118,103 +115,107 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onUpload 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId, collection.id])
 
+  // Opening a record narrows the same table rather than swapping in a
+  // different view: the list-wide columns are hidden and only the first one —
+  // the record's name — is kept. Its registry width is dropped because the
+  // pane sizes the column now.
+  const listColumns = useMemo(
+    () => (editing ? [{ ...collection.listColumns[0], width: undefined }] : undefined),
+    [editing, collection.listColumns],
+  )
+
   return (
     <div className="flex min-h-0 flex-1">
       <section
         className={cn('flex min-h-0 flex-col border-r border-line', editing ? 'w-[280px] flex-none' : 'min-w-0 flex-1')}
         aria-label={`${collection.label} records`}
       >
-        {editing ? (
-          <RecordListPane
+        <RecordsToolbar
+          title={collection.label}
+          query={search}
+          onQueryChange={setSearch}
+          facets={facets}
+          filters={filters}
+          onFiltersChange={setFilters}
+          selecting={selecting}
+          onToggleSelecting={toggleSelecting}
+          onExport={exportCsv}
+          onImport={editable ? () => setImportOpen(true) : undefined}
+          onNew={editable ? createNew : undefined}
+          newLabel={`New ${collection.singular.toLowerCase()}`}
+          compact={editing}
+        />
+
+        {!editing && selecting ? (
+          <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line bg-surface-alt px-4 py-2 text-[0.85rem]">
+            <span className="font-medium">{selected.size} selected</span>
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(filtered.map((record) => record.id)))}>
+              Select all {filtered.length}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
+              Clear
+            </Button>
+            <span className="ml-auto flex flex-wrap items-center gap-2">
+              {editable && collection.statusField && collection.statusLabels ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void bulkSetStatus(true)}
+                    disabled={bulkBusy || selected.size === 0}
+                  >
+                    {collection.statusLabels.verbOn} selected
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void bulkSetStatus(false)}
+                    disabled={bulkBusy || selected.size === 0}
+                  >
+                    {collection.statusLabels.verbOff} selected
+                  </Button>
+                </>
+              ) : null}
+              <Button variant="outline" size="sm" onClick={exportCsv} disabled={selected.size === 0}>
+                Export selected
+              </Button>
+            </span>
+          </div>
+        ) : null}
+
+        {/* One table in both states — narrowed to its first column while a
+            record is open, so the list never becomes a different component. */}
+        <RecordTable
+          collection={collection}
+          records={filtered}
+          columns={listColumns}
+          fixedLayout={editing}
+          emptyMessage={filtered.length === records.length ? 'No records yet.' : 'No matches.'}
+          selectedId={selectedId}
+          onSelect={goToRecord}
+          selection={
+            !editing && selecting
+              ? { selectedIds: selected, onToggle: toggleSelected, onToggleAll: toggleAllVisible }
+              : undefined
+          }
+        />
+
+        <footer className="flex h-8 flex-none items-center gap-3 border-t border-line px-4 text-[0.8rem] text-muted">
+          Showing {filtered.length} of {records.length}
+          {!editing && selecting && selected.size > 0 ? <span>· {selected.size} selected</span> : null}
+        </footer>
+
+        {editable && !editing ? (
+          <ImportDialog
+            open={importOpen}
+            onClose={() => setImportOpen(false)}
             collection={collection}
             records={records}
-            selectedId={selectedId}
-            onSelect={goToRecord}
-            onNew={editable ? createNew : undefined}
+            ctx={ctx}
+            createBlank={() => createBlank(snapshot, collection.id)}
+            onSave={(record) => onSave(collection, record)}
           />
-        ) : (
-          <>
-            <RecordsToolbar
-              title={collection.label}
-              query={search}
-              onQueryChange={setSearch}
-              facets={facets}
-              filters={filters}
-              onFiltersChange={setFilters}
-              selecting={selecting}
-              onToggleSelecting={toggleSelecting}
-              onExport={exportCsv}
-              onImport={editable ? () => setImportOpen(true) : undefined}
-              onNew={editable ? createNew : undefined}
-              newLabel={`New ${collection.singular.toLowerCase()}`}
-            />
-
-            {selecting ? (
-              <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line bg-surface-alt px-6 py-2 text-[0.85rem]">
-                <span className="font-medium">{selected.size} selected</span>
-                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(filtered.map((record) => record.id)))}>
-                  Select all {filtered.length}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
-                  Clear
-                </Button>
-                <span className="ml-auto flex flex-wrap items-center gap-2">
-                  {editable && collection.statusField && collection.statusLabels ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void bulkSetStatus(true)}
-                        disabled={bulkBusy || selected.size === 0}
-                      >
-                        {collection.statusLabels.verbOn} selected
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void bulkSetStatus(false)}
-                        disabled={bulkBusy || selected.size === 0}
-                      >
-                        {collection.statusLabels.verbOff} selected
-                      </Button>
-                    </>
-                  ) : null}
-                  <Button variant="outline" size="sm" onClick={exportCsv} disabled={selected.size === 0}>
-                    Export selected
-                  </Button>
-                </span>
-              </div>
-            ) : null}
-
-            <RecordTable
-              collection={collection}
-              records={filtered}
-              selectedId={selectedId}
-              onSelect={goToRecord}
-              selection={
-                selecting
-                  ? { selectedIds: selected, onToggle: toggleSelected, onToggleAll: toggleAllVisible }
-                  : undefined
-              }
-            />
-            <footer className="flex h-8 flex-none items-center gap-3 border-t border-line px-4 text-[0.8rem] text-muted">
-              Showing {filtered.length} of {records.length}
-              {selecting && selected.size > 0 ? <span>· {selected.size} selected</span> : null}
-            </footer>
-
-            {editable ? (
-              <ImportDialog
-                open={importOpen}
-                onClose={() => setImportOpen(false)}
-                collection={collection}
-                records={records}
-                ctx={ctx}
-                createBlank={() => createBlank(snapshot, collection.id)}
-                onSave={(record) => onSave(collection, record)}
-              />
-            ) : null}
-          </>
-        )}
+        ) : null}
       </section>
 
       {editing ? (
@@ -228,7 +229,6 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onUpload 
             ctx={ctx}
             saving={saving}
             onSave={onSave}
-            onUpload={onUpload}
             onBack={goToList}
             onNavigateToRecord={goToRecord}
           />
@@ -249,7 +249,6 @@ function RecordEditorPane({
   ctx,
   saving,
   onSave,
-  onUpload,
   onBack,
   onNavigateToRecord,
 }: {
@@ -259,7 +258,6 @@ function RecordEditorPane({
   ctx: ReturnType<typeof buildFieldContext>
   saving: boolean
   onSave: SaveFn
-  onUpload: UploadFn
   onBack: () => void
   onNavigateToRecord: (id: string) => void
 }) {
@@ -267,8 +265,8 @@ function RecordEditorPane({
   // The last saved shape of the record; the draft is dirty when it differs.
   const [baseline, setBaseline] = useState<AdminRecord>(initial)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  // Drives the transient "Saved" confirmation in the editor header.
+  const [justSaved, setJustSaved] = useState(false)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(baseline)
   // Ref mirror so the navigation blocker sees post-save state immediately,
@@ -302,7 +300,6 @@ function RecordEditorPane({
     return () => unsaved.setDirty(false)
   }, [dirty, unsaved])
 
-  const fileListKey = collection.fields.find((field) => field.type === 'fileList')?.key
   const slugKey = collection.fields.find((field) => field.type === 'slug')?.key
 
   // Mirror the title into the slug until the user edits the slug themselves.
@@ -312,12 +309,20 @@ function RecordEditorPane({
     () => Boolean(slugKey) && String(getPath(initial, slugKey ?? '') ?? '').trim() === '',
   )
 
+  /**
+   * Update one field. `value` may be an updater function, which matters for
+   * anything written from outside the render that produced it — a background
+   * upload landing while another is still in flight would otherwise compute
+   * its new array from a stale snapshot of the old one and drop a file.
+   */
   const updateValue = (key: string, value: unknown) => {
-    if (slugKey && key === slugKey) setSlugFollowsTitle(String(value ?? '').trim() === '')
+    const isUpdater = typeof value === 'function'
+    if (slugKey && key === slugKey && !isUpdater) setSlugFollowsTitle(String(value ?? '').trim() === '')
     setDraft((current) => {
-      let next = setPath(current, key, value)
+      const resolved = isUpdater ? (value as (previous: unknown) => unknown)(getPath(current, key)) : value
+      let next = setPath(current, key, resolved)
       if (slugKey && slugFollowsTitle && key === collection.titleField) {
-        next = setPath(next, slugKey, uniqueSlug(String(value ?? ''), slugKey, records, current.id))
+        next = setPath(next, slugKey, uniqueSlug(String(resolved ?? ''), slugKey, records, current.id))
       }
       return next
     })
@@ -356,32 +361,29 @@ function RecordEditorPane({
       setDraft({ ...saved })
       setBaseline({ ...saved })
       dirtyRef.current = false
+      setJustSaved(true)
       if (saved.id !== initial.id) onNavigateToRecord(saved.id)
     }
   }
 
-  const handleToggleStatus = () => {
-    if (!collection.statusField) return
-    const next = setPath(draft, collection.statusField, !getPath(draft, collection.statusField))
-    setDraft(next)
-    void persist(next)
-  }
+  // The "Saved" confirmation is a moment, not a state — clear it once the user
+  // has had time to see it, or as soon as they start editing again.
+  useEffect(() => {
+    if (!justSaved) return
+    const timer = window.setTimeout(() => setJustSaved(false), 4000)
+    return () => window.clearTimeout(timer)
+  }, [justSaved])
 
-  const handleUpload = async (file: File) => {
-    if (!fileListKey) return
-    setUploading(true)
-    setUploadError(null)
-    try {
-      const uploaded = await onUpload(draft, file)
-      setDraft((current) => {
-        const existing = Array.isArray(current[fileListKey]) ? (current[fileListKey] as ProductFile[]) : []
-        return setPath(current, fileListKey, [...existing, uploaded])
-      })
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : 'Unable to upload file.')
-    } finally {
-      setUploading(false)
-    }
+  /**
+   * Status changes edit the draft like any other field instead of writing
+   * immediately. The old behaviour saved the *entire* draft on toggle, quietly
+   * committing unrelated edits the user hadn't chosen to save yet.
+   */
+  const handleSetStatus = (next: boolean) => {
+    if (!collection.statusField) return
+    if (Boolean(getPath(draft, collection.statusField)) === next) return
+    setJustSaved(false)
+    setDraft((current) => setPath(current, collection.statusField as string, next))
   }
 
   return (
@@ -391,14 +393,12 @@ function RecordEditorPane({
         record={draft}
         ctx={ctx}
         onUpdate={updateValue}
-        onUpload={handleUpload}
-        uploading={uploading}
-        uploadError={uploadError}
         onSave={() => void persist(draft)}
-        onToggleStatus={handleToggleStatus}
+        onSetStatus={handleSetStatus}
         onBack={onBack}
         saving={saving}
         dirty={dirty}
+        justSaved={justSaved && !dirty}
         error={validationError}
         canWrite={repository.canWrite}
       />

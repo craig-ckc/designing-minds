@@ -38,7 +38,7 @@ export function FilterPopover({
           </span>
           Filter
           {active > 0 ? (
-            <span className="grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[0.68rem] font-semibold text-on-primary">
+            <span className="grid h-4 min-w-4 place-items-center rounded-pill bg-primary px-1 text-[0.68rem] font-semibold text-on-primary">
               {active}
             </span>
           ) : null}

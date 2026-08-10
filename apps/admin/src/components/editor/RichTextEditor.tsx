@@ -2,6 +2,7 @@ import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
 import { cn } from '@designing-minds/utils'
+import { Toolbar, ToolbarSeparator, ToolbarToggle } from '../primitives'
 
 /**
  * Webflow-style rich text field backed by Markdown: the editing surface is
@@ -44,7 +45,7 @@ export function RichTextEditor({
         disabled && 'opacity-70',
       )}
     >
-      {!disabled ? <Toolbar editor={editor} /> : null}
+      {!disabled ? <EditorToolbar editor={editor} /> : null}
       <EditorContent editor={editor} />
     </div>
   )
@@ -52,85 +53,61 @@ export function RichTextEditor({
 
 /* ------------------------------- Toolbar ------------------------------- */
 
-function ToolButton({
-  label,
-  title,
-  active,
-  onClick,
-  className,
-}: {
-  label: string
-  title: string
-  active?: boolean
-  onClick: () => void
-  className?: string
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      aria-label={title}
-      aria-pressed={active}
-      // Keep focus in the editor so marks apply to the current selection.
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className={cn(
-        'grid h-7 min-w-7 place-items-center rounded px-1.5 text-[0.8rem] font-medium text-ink-soft transition',
-        'hover:bg-surface-alt hover:text-ink',
-        active && 'bg-primary text-on-primary hover:bg-primary hover:text-on-primary',
-        className,
-      )}
-    >
-      {label}
-    </button>
-  )
-}
-
-function Toolbar({ editor }: { editor: Editor | null }) {
+function EditorToolbar({ editor }: { editor: Editor | null }) {
   if (!editor) return null
   const chain = () => editor.chain().focus()
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-line bg-surface-alt/60 px-2 py-1.5">
+    <Toolbar label="Text formatting">
       {([1, 2, 3] as const).map((level) => (
-        <ToolButton
+        <ToolbarToggle
           key={level}
-          label={`H${level}`}
-          title={`Heading ${level}`}
-          active={editor.isActive('heading', { level })}
-          onClick={() => chain().toggleHeading({ level }).run()}
-        />
+          label={`Heading ${level}`}
+          pressed={editor.isActive('heading', { level })}
+          onPressed={() => chain().toggleHeading({ level }).run()}
+        >
+          H{level}
+        </ToolbarToggle>
       ))}
-      <span className="mx-1 h-4 w-px bg-line" />
-      <ToolButton label="B" title="Bold" active={editor.isActive('bold')} onClick={() => chain().toggleBold().run()} />
-      <ToolButton
-        label="I"
-        title="Italic"
-        active={editor.isActive('italic')}
-        onClick={() => chain().toggleItalic().run()}
+      <ToolbarSeparator />
+      <ToolbarToggle label="Bold" pressed={editor.isActive('bold')} onPressed={() => chain().toggleBold().run()}>
+        B
+      </ToolbarToggle>
+      <ToolbarToggle
+        label="Italic"
+        pressed={editor.isActive('italic')}
+        onPressed={() => chain().toggleItalic().run()}
         className="italic"
-      />
-      <span className="mx-1 h-4 w-px bg-line" />
-      <ToolButton
-        label="• List"
-        title="Bullet list"
-        active={editor.isActive('bulletList')}
-        onClick={() => chain().toggleBulletList().run()}
-      />
-      <ToolButton
-        label="1. List"
-        title="Numbered list"
-        active={editor.isActive('orderedList')}
-        onClick={() => chain().toggleOrderedList().run()}
-      />
-      <span className="mx-1 h-4 w-px bg-line" />
-      <ToolButton
-        label="❝"
-        title="Quote"
-        active={editor.isActive('blockquote')}
-        onClick={() => chain().toggleBlockquote().run()}
-      />
-      <ToolButton label="—" title="Divider" onClick={() => chain().setHorizontalRule().run()} />
-    </div>
+      >
+        I
+      </ToolbarToggle>
+      <ToolbarSeparator />
+      <ToolbarToggle
+        label="Bullet list"
+        pressed={editor.isActive('bulletList')}
+        onPressed={() => chain().toggleBulletList().run()}
+      >
+        • List
+      </ToolbarToggle>
+      <ToolbarToggle
+        label="Numbered list"
+        pressed={editor.isActive('orderedList')}
+        onPressed={() => chain().toggleOrderedList().run()}
+      >
+        1. List
+      </ToolbarToggle>
+      <ToolbarSeparator />
+      <ToolbarToggle
+        label="Quote"
+        pressed={editor.isActive('blockquote')}
+        onPressed={() => chain().toggleBlockquote().run()}
+      >
+        ❝
+      </ToolbarToggle>
+      {/* Not a state, just an action — never renders as pressed. */}
+      <ToolbarToggle label="Divider" onPressed={() => chain().setHorizontalRule().run()}>
+        —
+      </ToolbarToggle>
+    </Toolbar>
   )
 }

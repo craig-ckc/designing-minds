@@ -38,16 +38,21 @@ export function LoginPage() {
   const forgot = mode === 'forgot'
 
   return (
-    <main className="grid min-h-screen place-items-center bg-surface px-6">
-      <form onSubmit={(event) => void submit(event)} className="grid w-full max-w-sm gap-4 border border-line bg-white p-6">
+    <main className="grid min-h-screen place-items-center bg-canvas px-6">
+      <form
+        onSubmit={(event) => void submit(event)}
+        className="grid w-full max-w-sm gap-4 rounded-card border border-line bg-surface p-6"
+      >
         <div>
           <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-muted">Designing Minds Admin</p>
           <h1 className="mt-1 text-[1.6rem]">{forgot ? 'Reset password' : 'Log in'}</h1>
         </div>
-        {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+        {error ? (
+          <p className="rounded-control border border-danger bg-danger-tint px-3 py-2 text-[0.9rem] text-danger">{error}</p>
+        ) : null}
 
         {forgot && sent ? (
-          <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">
+          <p className="rounded-control border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">
             If an admin account exists for {email}, a reset link is on its way.
           </p>
         ) : (
@@ -68,13 +73,14 @@ export function LoginPage() {
           </>
         )}
 
-        <button
+        <Button
           type="button"
+          variant="text"
           onClick={() => switchMode(forgot ? 'login' : 'forgot')}
-          className="justify-self-start text-[0.85rem] text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+          className="justify-self-start text-[0.85rem]"
         >
           {forgot ? 'Back to log in' : 'Forgot password?'}
-        </button>
+        </Button>
       </form>
     </main>
   )

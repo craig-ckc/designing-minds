@@ -37,13 +37,18 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-surface px-6">
-      <form onSubmit={(event) => void submit(event)} className="grid w-full max-w-sm gap-4 border border-line bg-white p-6">
+    <main className="grid min-h-screen place-items-center bg-canvas px-6">
+      <form
+        onSubmit={(event) => void submit(event)}
+        className="grid w-full max-w-sm gap-4 rounded-card border border-line bg-surface p-6"
+      >
         <div>
           <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-muted">Designing Minds Admin</p>
           <h1 className="mt-1 text-[1.6rem]">Choose a new password</h1>
         </div>
-        {error ? <p className="rounded-md border border-line bg-surface-alt px-3 py-2 text-[0.9rem] text-ink-soft">{error}</p> : null}
+        {error ? (
+          <p className="rounded-control border border-danger bg-danger-tint px-3 py-2 text-[0.9rem] text-danger">{error}</p>
+        ) : null}
         <label className="grid gap-1.5 text-[0.9rem]">
           New password
           <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required />

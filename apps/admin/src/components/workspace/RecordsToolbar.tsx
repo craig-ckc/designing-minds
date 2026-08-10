@@ -7,6 +7,11 @@ import { FilterPopover, type FilterState, type ResolvedFacet } from './FilterPop
  * Toolbar above the record table: title + search, filter popover, selection
  * mode toggle, CSV export/import, and New. Import is only offered when the
  * caller passes `onImport` (editable collections with write access).
+ *
+ * `compact` is the same toolbar once a record is open and the list has narrowed
+ * to a single column: the title and New survive, the list-wide controls don't
+ * fit and are dropped. It stays one component so opening a record reads as the
+ * same table narrowing, not as a different screen appearing.
  */
 export function RecordsToolbar({
   title,
@@ -21,6 +26,7 @@ export function RecordsToolbar({
   onImport,
   onNew,
   newLabel,
+  compact,
 }: {
   title: string
   query: string
@@ -34,9 +40,25 @@ export function RecordsToolbar({
   onImport?: () => void
   onNew?: () => void
   newLabel?: string
+  compact?: boolean
 }) {
+  if (compact) {
+    return (
+      <div className="flex h-12 flex-none items-center justify-between gap-2 border-b border-line px-4 py-1.5">
+        <h2 className="min-w-0 truncate text-base font-semibold">{title}</h2>
+        {onNew ? (
+          <Button variant="ghost" size="icon" onClick={onNew} title={newLabel} aria-label={newLabel}>
+            <span className="h-4 w-4">
+              <Icon name="plus" />
+            </span>
+          </Button>
+        ) : null}
+      </div>
+    )
+  }
+
   return (
-    <div className="flex min-h-12 flex-none flex-wrap items-center gap-2.5 border-b border-line px-6 py-1.5">
+    <div className="flex min-h-12 flex-none flex-wrap items-center gap-2.5 border-b border-line px-4 py-1.5">
       <h2 className="mr-auto text-base font-semibold">{title}</h2>
 
       <div className="relative">
@@ -67,9 +89,12 @@ export function RecordsToolbar({
         Select
       </Button>
 
+      {/* Export leaves the app (arrow down), import comes into it (arrow up).
+          These two were the wrong way round, and Export used the
+          open-in-new-tab glyph. */}
       <Button variant="outline" size="sm" onClick={onExport} aria-label={`Export ${title.toLowerCase()} as CSV`}>
         <span className="h-3.5 w-3.5">
-          <Icon name="external" />
+          <Icon name="download" />
         </span>
         Export
       </Button>
@@ -77,7 +102,7 @@ export function RecordsToolbar({
       {onImport ? (
         <Button variant="outline" size="sm" onClick={onImport} aria-label={`Import ${title.toLowerCase()} from CSV`}>
           <span className="h-3.5 w-3.5">
-            <Icon name="download" />
+            <Icon name="upload" />
           </span>
           Import
         </Button>

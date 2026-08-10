@@ -7,7 +7,7 @@ import { CARD } from '../components/tokens'
 function StatCard({ icon, value, label, to }: { icon: IconName; value: string; label: string; to: string }) {
   return (
     <Link to={to} className={`flex flex-col gap-3 p-5 transition hover:border-primary ${CARD}`}>
-      <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-surface-sunk text-ink-soft">
+      <span className="grid h-10 w-10 place-items-center rounded-card bg-surface-sunk text-ink-soft">
         <span className="h-5 w-5">
           <Icon name={icon} />
         </span>

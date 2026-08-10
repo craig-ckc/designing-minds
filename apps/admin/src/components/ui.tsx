@@ -1,16 +1,15 @@
 import { type ReactNode } from 'react'
-import { CARD, FIELD } from './tokens'
+import { CARD } from './tokens'
+import { ScrollArea } from './primitives'
 
 /* -------------------------------------------------------------------------
-   Primitive components. Shared class strings (CARD, FIELD, SOLID_BTN, btn)
-   live in ./tokens so this file only exports components for Fast Refresh.
+   Shared page furniture. Interactive controls belong in ./primitives (Base UI
+   backed); this file holds the icon set and the few layout pieces the
+   dashboard and state screens share. Class strings (CARD, FIELD) live in
+   ./tokens so this file only exports components for Fast Refresh.
    ------------------------------------------------------------------------- */
 
-export function Container({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 ${className}`}>{children}</div>
-}
-
-export function Eyebrow({ children, className = '' }: { children: ReactNode; className?: string }) {
+function Eyebrow({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <p className={`mb-4 inline-block text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-muted ${className}`}>
       {children}
@@ -41,6 +40,7 @@ export type IconName =
   | 'filter'
   | 'settings'
   | 'close'
+  | 'upload'
 
 export function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -68,7 +68,10 @@ export function Icon({ name }: { name: IconName }) {
     ),
     star: <path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z" />,
     shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
+    /* Arrow down into a tray: leaving the app (export, save-to-disk). */
     download: <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />,
+    /* Arrow up out of a tray: coming into the app (import, file upload). */
+    upload: <path d="M12 21V9m0 0 4 4m-4-4-4 4M5 3h14" />,
     spark: <path d="M12 3v6m0 6v6m-9-9h6m6 0h6M6 6l3 3m6 6 3 3M6 18l3-3m6-6 3-3" />,
     plus: <path d="M12 5v14M5 12h14" />,
     chevron: <path d="m6 9 6 6 6-6" />,
@@ -123,81 +126,13 @@ export function Icon({ name }: { name: IconName }) {
   )
 }
 
-/* The signature Relume placeholder image block. */
-export function Placeholder({
-  ratio,
-  label,
-  circle,
-  className = '',
-}: {
-  ratio?: string
-  label?: string
-  circle?: boolean
-  className?: string
-}) {
-  return (
-    <div
-      className={`relative grid place-items-center overflow-hidden bg-ph text-ph-glyph ${
-        circle ? 'rounded-full' : 'rounded-[10px]'
-      } ${className}`}
-      style={ratio ? { aspectRatio: ratio } : undefined}
-      aria-hidden="true"
-    >
-      <svg className="h-11 w-11 opacity-90" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="6" y="9" width="36" height="30" rx="3" />
-        <circle cx="17" cy="19" r="3.5" />
-        <path d="M9 35l10-9 7 6 6-5 7 6" />
-      </svg>
-      {label ? (
-        <span className="absolute bottom-3 left-3 text-[0.72rem] uppercase tracking-[0.08em] text-muted">{label}</span>
-      ) : null}
-    </div>
-  )
-}
-
-export function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="grid gap-2 text-[0.92rem] font-medium">
-      {label}
-      {children}
-    </label>
-  )
-}
-
-export function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string
-  options: string[]
-  onChange: (value: string) => void
-}) {
-  return (
-    <Field label={label}>
-      <select className={FIELD} value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </Field>
-  )
-}
-
-export function Chip({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[0.85rem] text-ink-soft">
-      <span className="h-1.5 w-1.5 flex-none rounded-full bg-line-strong" aria-hidden />
-      {children}
-    </span>
-  )
-}
-
-/* Page-section heading used at the top of each route. */
+/**
+ * Page heading for a full-page route (the dashboard, state screens).
+ *
+ * Renders an <h1>: these pages had no level-one heading at all, and the global
+ * h1–h4 styles are the public site's display scale, which is far too large for
+ * a dense workspace — so the size is set here rather than inherited.
+ */
 export function PageHeader({
   eyebrow,
   title,
@@ -213,42 +148,11 @@ export function PageHeader({
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div className="max-w-[640px]">
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h2>{title}</h2>
-        {description ? <p className="mt-3 text-[1.02rem] text-muted">{description}</p> : null}
+        <h1 className="text-[1.5rem] font-bold tracking-[-0.025em]">{title}</h1>
+        {description ? <p className="mt-2 text-[0.95rem] text-muted">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
     </div>
-  )
-}
-
-/* Status shown as a text label with a leading tone dot (matches Badge.tsx). */
-export function StatusBadge({ status }: { status: 'Paid' | 'Pending' | 'Refunded' }) {
-  const dot: Record<string, string> = {
-    Paid: 'bg-primary',
-    Pending: 'bg-ink-soft',
-    Refunded: 'bg-line-strong',
-  }
-  const text: Record<string, string> = {
-    Paid: 'text-ink',
-    Pending: 'text-ink-soft',
-    Refunded: 'text-muted',
-  }
-  return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${text[status]}`}>
-      <span className={`h-1.5 w-1.5 flex-none rounded-full ${dot[status]}`} aria-hidden />
-      {status}
-    </span>
-  )
-}
-
-export function SampleNote({ className = '' }: { className?: string }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border border-dashed border-line-strong px-2.5 py-1 text-[0.72rem] uppercase tracking-[0.08em] text-muted ${className}`}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-muted" />
-      Sample data
-    </span>
   )
 }
 
@@ -256,10 +160,12 @@ export function SampleNote({ className = '' }: { className?: string }) {
    Table primitives
    ------------------------------------------------------------------------- */
 
+/** Card-framed table. Horizontal overflow goes through ScrollArea, like every
+ *  other scrollable region in the admin — never a bare overflow utility. */
 export function TableWrap({ children }: { children: ReactNode }) {
   return (
     <div className={`overflow-hidden ${CARD}`}>
-      <div className="overflow-x-auto">{children}</div>
+      <ScrollArea orientation="horizontal">{children}</ScrollArea>
     </div>
   )
 }
@@ -295,10 +201,10 @@ export function StatePanel({
 }) {
   return (
     <div className="grid min-h-[60vh] place-items-center px-5 text-center">
-      <div className="grid max-w-[460px] gap-4">
+      <div className="grid max-w-[460px] gap-3">
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h1>{title}</h1>
-        {body ? <p className="text-[1.05rem] text-ink-soft">{body}</p> : null}
+        <h1 className="text-[1.5rem] font-bold tracking-[-0.025em]">{title}</h1>
+        {body ? <p className="text-[0.95rem] text-ink-soft">{body}</p> : null}
         {children}
       </div>
     </div>

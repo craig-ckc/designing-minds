@@ -43,7 +43,7 @@ export function ReferencePicker({
           <Combobox.Input id={id} placeholder={placeholder} className={cn(FIELD, 'min-h-[42px] text-[0.92rem]')} />
           <Combobox.Portal>
             <Combobox.Positioner align="start" sideOffset={6} className="z-50">
-              <Combobox.Popup className="max-h-[16rem] w-[var(--anchor-width)] overflow-auto rounded-md border border-line bg-surface py-1 text-[0.9rem] shadow-lg">
+              <Combobox.Popup className="max-h-[16rem] w-[var(--anchor-width)] overflow-auto rounded-control border border-line bg-surface py-1 text-[0.9rem] shadow-lg">
                 <Combobox.Empty className="px-3 py-2 text-[0.85rem] text-muted">No matches.</Combobox.Empty>
                 <Combobox.List>
                   {(option: PickerOption) => (
@@ -70,7 +70,7 @@ export function ReferencePicker({
           {value.map((option) => (
             <li
               key={option.value}
-              className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface px-3 py-2 text-[0.9rem]"
+              className="flex items-center justify-between gap-3 rounded-control border border-line bg-surface px-3 py-2 text-[0.9rem]"
             >
               <span className="min-w-0 truncate">{option.label}</span>
               {!disabled ? (

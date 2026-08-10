@@ -47,6 +47,8 @@
   --color-on-primary: #ffffff; /* text / icons on primary & dark surfaces */
   --color-danger: #c0362c; /* validation / error text & borders */
   --color-danger-tint: #fbe9e7; /* error banner background */
+  --color-warn: #b45309; /* saved but not published yet ("Changes in draft") */
+  --color-info: #2563eb; /* work in flight ("Queued to publish") */
 
   --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
@@ -60,9 +62,12 @@
 
   /* ---- Radius (semantic surface scale) --------------------------------
      Tighter than the public site — this is a dense workspace, so controls
-     and cards read crisper with a smaller radius. */
-  --radius-control: 0.5rem; /* 8px — buttons, inputs, select, notices */
-  --radius-card: 0.625rem; /* 10px — canonical card / raised surface */
+     and cards read crisper with a smaller radius. Use these, never a raw
+     `rounded-md` / `rounded-[10px]`: the admin had all three in play for the
+     same job, which is why popovers, menus and dialogs didn't match. */
+  --radius-tight: 0.25rem; /* 4px — sub-control geometry: checkbox, inline code */
+  --radius-control: 0.5rem; /* 8px — buttons, inputs, select, notices, popovers */
+  --radius-card: 0.625rem; /* 10px — canonical card / raised surface / dialog */
   --radius-panel: 1.5rem; /* 24px — large panels */
   --radius-pill: 9999px; /* pills, badges, icon-buttons, avatars */
 }
