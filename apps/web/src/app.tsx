@@ -97,7 +97,9 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
         element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <GradeDetailPage snapshot={ready} />}</SnapshotGate>}
       />
       <Route path="/packages" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <PackagesPage snapshot={ready} />}</SnapshotGate>} />
-      {/* /bundles renamed to /packages (covers Bundles + Access Plans). Keep a redirect for any stray links. */}
+      {/* /bundles was renamed to /packages while it also covered access plans.
+          Access plans are retired and the page is bundles-only again, but the
+          redirect stays — the old path is still in the wild. */}
       <Route path="/bundles" element={<Navigate to="/packages" replace />} />
 
       {/* Product */}

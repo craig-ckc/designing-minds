@@ -17,23 +17,35 @@ test('product cover thumbnails do not repeat the full inline logo SVG', () => {
   assert.match(coverSource, />\s*Designing Minds\s*<\/span>/)
 })
 
-test('bundle and access-plan contents use the non-interactive included product component', () => {
+test('bundle contents use the non-interactive included product component', () => {
   assert.match(productPageSource, /import \{ IncludedProduct \} from '\.\.\/components\/ui\/included-product'/)
-  assert.match(productPageSource, /included\.map\(\(entry\) => \([\s\S]*<IncludedProduct key=\{entry\.id\} product=\{entry\} \/>/)
-  assert.doesNotMatch(productPageSource, /isAccessPlan \? null : included\.length/)
+  assert.match(productPageSource, /contents\.map\(\(entry\) => \([\s\S]*<IncludedProduct key=\{entry\.id\} product=\{entry\} \/>/)
 })
 
-test('a product page withholds the About section when the CMS body is a placeholder', () => {
-  assert.match(productPageSource, /const hasDescription = product\.fullDescription\.replace\(\/\[\.\\s\]\/g, ''\)\.length > 0/)
-  assert.match(productPageSource, /\{hasDescription \? \([\s\S]*About this \{isComposite \? 'offer' : 'resource'\}/)
+test('one /shop/<slug> route resolves either Collection', () => {
+  // Products and bundles share the URL space, so the slug is resolved once and
+  // dispatched — a shopper never has to know which one they are looking at.
+  assert.match(productPageSource, /getCatalogItemBySlug\(snapshot, slug\)/)
+  assert.match(productPageSource, /item\.kind === 'bundle'/)
+  assert.match(productPageSource, /<BundleDetail bundle=\{item\.bundle\}/)
+  assert.match(productPageSource, /<ResourceDetail product=\{item\.product\}/)
+  // An unpublished record of either kind is a 404, not a hidden page.
+  assert.match(productPageSource, /item\.bundle\.published \? [\s\S]*: <NotFoundPage \/>/)
+  assert.match(productPageSource, /item\.product\.published \? [\s\S]*: <NotFoundPage \/>/)
+})
+
+test('a detail page withholds the About section when the CMS body is a placeholder', () => {
+  assert.match(productPageSource, /const hasRealCopy = \(value: string\) => value\.replace\(\/\[\.\\s\]\/g, ''\)\.length > 0/)
+  assert.match(productPageSource, /\{hasRealCopy\(product\.fullDescription\) \? \([\s\S]*About this resource/)
+  assert.match(productPageSource, /\{hasRealCopy\(bundle\.fullDescription\) \? \([\s\S]*About this bundle/)
 })
 
 test('a product page surfaces classroom licensing and bundle cross-sell', () => {
   assert.match(productPageSource, /Ask about classroom licensing/)
-  assert.match(productPageSource, /packagesContaining\(snapshot, product\)/)
-  // Cross-sell is for singles; a bundle must not advertise itself.
-  assert.match(productPageSource, /const inPackages = isComposite \? \[\] : packagesContaining/)
-  assert.match(productPageSource, /inPackages\.length > 0/)
+  // Cross-sell lives on the resource view only — a bundle must not advertise
+  // itself, which the split now guarantees structurally.
+  assert.match(productPageSource, /const inBundles = bundlesContaining\(snapshot, product\)/)
+  assert.match(productPageSource, /inBundles\.length > 0/)
 })
 
 test('the product page CTA uses the shared text button, not a one-off underline', () => {

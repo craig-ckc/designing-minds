@@ -56,9 +56,8 @@ function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
   const activeGrade = grades[active]
 
   const covers = useMemo(() => {
-    const singles = products.filter((p) => p.productKind === 'Single')
-    const matches = singles.filter((p) => p.grade === activeGrade)
-    return (matches.length ? matches : singles).slice(0, 4)
+    const matches = products.filter((p) => p.grade === activeGrade)
+    return (matches.length ? matches : products).slice(0, 4)
   }, [products, activeGrade])
 
   const select = (i: number) => {

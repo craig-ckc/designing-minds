@@ -52,8 +52,9 @@ try {
     snapshot = {
       generatedAt: new Date().toISOString(),
       source: 'empty',
-      valueLists: { grades: [], terms: [], years: [], productKinds: [], resourceFormats: [] },
+      valueLists: { grades: [], terms: [], years: [], resourceFormats: [], subjects: [] },
       products: [],
+      bundles: [],
       subjects: [],
       faqs: [],
       testimonials: [],
@@ -62,7 +63,7 @@ try {
       payments: [],
       formContact: [],
       formNewsletter: [],
-      stats: { productCount: 0, subjectCount: 0, gradeCount: 0, bundleCount: 0, accessPlanCount: 0, orderCount: 0, customerCount: 0 },
+      stats: { productCount: 0, subjectCount: 0, gradeCount: 0, bundleCount: 0, orderCount: 0, customerCount: 0 },
     }
   } else {
     fail(`Failed to fetch the public CMS snapshot. Refusing to deploy stale/empty static pages.\n  ${message}\n  (Set ALLOW_EMPTY_PRERENDER=true for local builds without Supabase.)`)

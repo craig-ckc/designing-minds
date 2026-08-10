@@ -1,6 +1,15 @@
 import { Link, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { type CmsSnapshot, type OrderItem, getOrderById, getProductBySlug, paymentForOrder, priceLabel, resourceUnlockedByPlan } from '@designing-minds/cms'
+import {
+  bundleContents,
+  getBundleBySlug,
+  getOrderById,
+  getProductBySlug,
+  paymentForOrder,
+  priceLabel,
+  type CmsSnapshot,
+  type OrderItem,
+} from '@designing-minds/cms'
 import { Icon } from '../../components/ui/icon'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
@@ -12,11 +21,19 @@ import { supabase } from '../../lib/supabase'
 import { AccountShell, SignedOut } from './account-shell'
 import { OrderStatusBadge } from './order-status-badge'
 
+/**
+ * The resources an order line entitles you to download.
+ *
+ * A line is a slug in the shared /shop space, so it may name either
+ * Collection: a resource grants itself, a bundle grants its members. Bundle
+ * membership is explicit, so this agrees with the issue-download endpoint by
+ * construction — both mean "is it in includedProductSlugs".
+ */
 const downloadProductsForItem = (snapshot: CmsSnapshot, item: OrderItem) => {
   const product = getProductBySlug(snapshot, item.productSlug)
-  if (!product) return []
-  if (product.productKind === 'Single') return [product]
-  return snapshot.products.filter((candidate) => resourceUnlockedByPlan(product, candidate))
+  if (product) return [product]
+  const bundle = getBundleBySlug(snapshot, item.productSlug)
+  return bundle ? bundleContents(snapshot, bundle) : []
 }
 
 export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot; onRefresh: () => Promise<void> }) {

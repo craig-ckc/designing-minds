@@ -1,6 +1,7 @@
 import {
+  bundleContents,
+  getCatalogItemBySlug,
   getFaqsByIds,
-  getProductBySlug,
   productsForGrade,
   type CmsSnapshot,
   type Faq,
@@ -250,10 +251,12 @@ export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: 
   const image = `${siteUrl}${DEFAULT_OG_IMAGE}`
 
   if (route.kind === 'product' && route.productSlug) {
-    const product = getProductBySlug(snapshot, route.productSlug)
-    if (!product) throw new Error(`SEO: product not found for slug "${route.productSlug}"`)
-    const title = product.seo?.title?.trim() || `${product.title} | ${SITE_NAME}`
-    const description = product.seo?.description?.trim() || product.shortDescription || DEFAULT_DESCRIPTION
+    // A /shop slug names either Collection; both carry the same SEO fields.
+    const item = getCatalogItemBySlug(snapshot, route.productSlug)
+    if (!item) throw new Error(`SEO: no product or bundle found for slug "${route.productSlug}"`)
+    const record = item.kind === 'bundle' ? item.bundle : item.product
+    const title = record.seo?.title?.trim() || `${record.title} | ${SITE_NAME}`
+    const description = record.seo?.description?.trim() || record.shortDescription || DEFAULT_DESCRIPTION
     return { title, description, canonical, ogType: 'product', image }
   }
 
@@ -277,9 +280,14 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
   const jsonLd: unknown[] = []
 
   if (route.kind === 'product' && route.productSlug) {
-    // pageMetaFor already threw if the product is missing, so it exists here.
-    const product = getProductBySlug(snapshot, route.productSlug)!
-    const subjectNames = product.subjects
+    // pageMetaFor already threw if the slug resolves to nothing, so it exists.
+    const item = getCatalogItemBySlug(snapshot, route.productSlug)!
+    const product = item.kind === 'bundle' ? item.bundle : item.product
+    // A bundle has no subjects of its own — they come from its members.
+    const subjectNames =
+      item.kind === 'bundle'
+        ? [...new Set(bundleContents(snapshot, item.bundle).flatMap((entry) => entry.subjects))]
+        : item.product.subjects
     jsonLd.push({
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -287,7 +295,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
       description: meta.description,
       image: [image],
       sku: product.slug,
-      category: subjectNames.join(', ') || product.resourceFormat,
+      category: subjectNames.join(', ') || (item.kind === 'bundle' ? 'Bundle' : item.product.resourceFormat),
       brand: { '@type': 'Brand', name: SITE_NAME },
       offers: {
         '@type': 'Offer',
@@ -305,7 +313,8 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
         image,
         grade: product.grade,
         subjects: subjectNames,
-        resourceFormat: product.resourceFormat,
+        // A bundle has no single format: it collects several.
+        resourceFormat: item.kind === 'bundle' ? 'Collection' : item.product.resourceFormat,
       }),
     )
     jsonLd.push(

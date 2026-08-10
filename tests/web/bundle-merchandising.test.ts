@@ -21,17 +21,21 @@ test('a grade page leads with its packages and labels the grid as singles', () =
 test('the grade package section only claims value it can derive', () => {
   const section = read('components/sections/grade-package-section.tsx')
 
-  assert.match(section, /packageValue\(snapshot, product\)/)
+  assert.match(section, /bundleValue\(snapshot, product\)/)
   // A saving is only rendered behind a positive check, never as a bare R0.
   assert.match(section, /value && value\.savingPercent > 0/)
   assert.match(section, /value && value\.savingZar > 0/)
   assert.match(section, /Included resources are being finalised/)
 })
 
-test('the shop catalogue orders packages ahead of singles', () => {
+test('the shop catalogue lists bundles ahead of individual resources', () => {
   const shop = read('pages/shop-page.tsx')
 
-  assert.match(shop, /const packagesFirst = \(product: Product\) => \(product\.productKind === 'Single' \? 1 : 0\)/)
-  assert.match(shop, /\.sort\(\(a, b\) => packagesFirst\(a\) - packagesFirst\(b\)\)/)
+  // Bundles and resources are separate Collections but one grid: the combined
+  // list must be built bundles-first, not sorted after the fact.
+  assert.match(shop, /\.\.\.matchingBundles\.map[\s\S]*\.\.\.matchingProducts\.map/)
+  assert.match(shop, /Bundles first/)
+  // The catalogue stays lazily expanded so static HTML is bounded.
+  assert.match(shop, /useDeferredCatalog\(visible\)/)
   assert.doesNotMatch(shop, /Sorted by catalogue order/)
 })

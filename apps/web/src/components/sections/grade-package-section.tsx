@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { type CmsSnapshot, packageValue, packagesForGrade, priceLabel } from '@designing-minds/cms'
+import { bundleValue, bundlesForGrade, priceLabel, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../ui/container'
 import { Badge } from '../ui/badge'
 import { ArrowAffordance } from '../ui/icon'
@@ -9,13 +9,12 @@ import { ArrowAffordance } from '../ui/icon'
  *
  * A visitor choosing a grade previously met a wall of R50–R60 single tests and
  * found bundles only in a text link below the fold, so singles were the default
- * choice by layout. Every number here is derived from the packages' own included
- * products — no new CMS fields, and nothing is claimed when a package lists
- * nothing yet (packageValue returns null and the saving line is omitted rather
- * than showing R0).
+ * choice by layout. Every number here is derived from the bundle's own members,
+ * and nothing is claimed when a bundle lists nothing yet (bundleValue returns
+ * null and the saving line is omitted rather than showing R0).
  */
 export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot; grade: string }) {
-  const packages = packagesForGrade(snapshot, grade)
+  const packages = bundlesForGrade(snapshot, grade)
   if (packages.length === 0) return null
 
   return (
@@ -32,14 +31,14 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
             to={`/packages?grade=${encodeURIComponent(grade)}`}
             className="group inline-flex items-center gap-1.5 font-semibold text-primary-ink hover:text-primary-ink-strong"
           >
-            Compare all bundles &amp; plans
+            Compare all bundles
             <ArrowAffordance size="md" />
           </Link>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {packages.map((product) => {
-            const value = packageValue(snapshot, product)
+            const value = bundleValue(snapshot, product)
             return (
               <Link
                 key={product.id}
@@ -50,9 +49,7 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
                   {/* Deliberately not the `solid` tone: white on the brand pink
                       measures 3.22:1, and this section must not add a new
                       instance of the contrast debt it inherited. */}
-                  <Badge tone={product.productKind === 'Bundle' ? 'neutral' : 'outline'}>
-                    {product.productKind === 'Access Plan' ? 'Plan' : product.productKind}
-                  </Badge>
+                  <Badge tone="neutral">{product.bundleScope === 'Full Year' ? 'Full year' : 'Term'}</Badge>
                   {value && value.savingPercent > 0 ? (
                     <span className="text-caption font-bold uppercase tracking-[0.08em] text-primary-ink">
                       Save {value.savingPercent}%

@@ -1,19 +1,26 @@
-import { useDeferredValue, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { publishedProducts, type CmsSnapshot, type Product } from '@designing-minds/cms'
+import { publishedBundles, publishedProducts, type Bundle, type CmsSnapshot, type Product } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Card } from '../components/ui/card'
+import { BundleCard } from '../components/ui/bundle-card'
 import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
 import { useDeferredCatalog } from '../lib/deferred-catalog'
 
-const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format', 'kind'] as const
+const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format'] as const
 
-/** Sort weight: Bundles and Access Plans lead the catalogue, Singles follow. */
-const packagesFirst = (product: Product) => (product.productKind === 'Single' ? 1 : 0)
+/**
+ * One grid, bundles first.
+ *
+ * Bundles and resources are separate Collections now, but the shop is a single
+ * ordered list rather than two sections: a shopper scrolls one grid, and the
+ * cheaper-per-item way to buy leads it. Only the card component differs.
+ */
+type Entry = { kind: 'bundle'; bundle: Bundle } | { kind: 'product'; product: Product }
 
 export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -24,38 +31,57 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const terms = readQueryList(searchParams, 'term', snapshot.valueLists.terms)
   const subjects = readQueryList(searchParams, 'subject', subjectNames)
   const formats = readQueryList(searchParams, 'format', snapshot.valueLists.resourceFormats)
-  const kinds = readQueryList(searchParams, 'kind', snapshot.valueLists.productKinds)
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   const deferredQuery = useDeferredValue(query)
   const q = deferredQuery.trim().toLowerCase()
-  const products = publishedProducts(snapshot)
 
-  const visible = products
-    .filter((product) => {
+  const visible = useMemo<Entry[]>(() => {
+    const matchingProducts = publishedProducts(snapshot).filter((product) => {
       if (grades.length && !grades.includes(product.grade)) return false
       if (terms.length && !terms.includes(product.term)) return false
       if (subjects.length && !subjects.some((name) => product.subjects.includes(name))) return false
       if (formats.length && !formats.includes(product.resourceFormat)) return false
-      if (kinds.length && !kinds.includes(product.productKind)) return false
       if (!q) return true
       return `${product.title} ${product.shortDescription} ${product.subjects.join(' ')}`.toLowerCase().includes(q)
     })
-    // Packages ahead of singles. The catalogue previously ran dozens of R50–R60
-    // single tests before the first bundle, so the default reading order sold the
-    // more expensive way to buy the same material. Ties keep catalogue order.
-    .sort((a, b) => packagesFirst(a) - packagesFirst(b))
-  const renderedProducts = useDeferredCatalog(visible)
 
-  const activeCount = grades.length + terms.length + subjects.length + formats.length + kinds.length
+    // A bundle carries no subjects or format of its own, so those facets match
+    // against what it contains — filtering to "Mathematics" should surface the
+    // maths bundle, not hide it. Membership is resolved once, here.
+    const bySlug = new Map(publishedProducts(snapshot).map((product) => [product.slug, product]))
+    const matchingBundles = publishedBundles(snapshot).filter((bundle) => {
+      if (grades.length && !grades.includes(bundle.grade)) return false
+      const members = bundle.includedProductSlugs
+        .map((slug) => bySlug.get(slug))
+        .filter((product): product is Product => Boolean(product))
+      if (terms.length && !terms.includes(bundle.term) && !members.some((m) => terms.includes(m.term))) return false
+      if (subjects.length && !members.some((m) => subjects.some((name) => m.subjects.includes(name)))) return false
+      if (formats.length && !members.some((m) => formats.includes(m.resourceFormat))) return false
+      if (!q) return true
+      return `${bundle.title} ${bundle.shortDescription}`.toLowerCase().includes(q)
+    })
+
+    return [
+      ...matchingBundles.map((bundle): Entry => ({ kind: 'bundle', bundle })),
+      ...matchingProducts.map((product): Entry => ({ kind: 'product', product })),
+    ]
+  }, [snapshot, grades, terms, subjects, formats, q])
+
+  // Static HTML stays bounded; the rest of the grid arrives once React hydrates.
+  const rendered = useDeferredCatalog(visible)
+
+  const activeCount = grades.length + terms.length + subjects.length + formats.length
   const toggle = (key: string) => (value: string) => setSearchParams(toggleQueryValue(searchParams, key, value))
   const reset = () => setSearchParams(clearQueryValues(searchParams, SHOP_FILTER_KEYS))
+
+  const bundleCount = visible.filter((entry) => entry.kind === 'bundle').length
 
   return (
     <>
       <PageHeader
         title="All resources"
-        lead={`Browse ${snapshot.stats.productCount} CAPS-aligned resources across grades, terms, subjects, formats, and offer types.`}
+        lead={`Browse ${snapshot.stats.productCount} CAPS-aligned resources across grades, terms, subjects and formats — or start with a bundle.`}
       >
         <div className="mt-6">
           <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Shop" />
@@ -80,20 +106,23 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <ChipGroup label="Term" options={snapshot.valueLists.terms} selected={terms} onToggle={toggle('term')} />
         <ChipGroup label="Subject" options={subjectNames} selected={subjects} onToggle={toggle('subject')} />
         <ChipGroup label="Format" options={snapshot.valueLists.resourceFormats} selected={formats} onToggle={toggle('format')} />
-        <ChipGroup label="Type" options={snapshot.valueLists.productKinds} selected={kinds} onToggle={toggle('kind')} />
       </FilterDrawer>
 
       <section className="section">
         <Container>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h2>{visible.length} results</h2>
-            <span className="text-muted">Bundles and plans first</span>
+            {bundleCount > 0 ? <span className="text-muted">Bundles first</span> : null}
           </div>
           {visible.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {renderedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {rendered.map((entry) =>
+                entry.kind === 'bundle' ? (
+                  <BundleCard key={entry.bundle.id} bundle={entry.bundle} snapshot={snapshot} />
+                ) : (
+                  <ProductCard key={entry.product.id} product={entry.product} />
+                ),
+              )}
             </div>
           ) : (
             <Card variant="surface" pad="none" className="p-7 text-center">

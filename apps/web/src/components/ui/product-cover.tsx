@@ -1,25 +1,34 @@
-import { type Product } from '@designing-minds/cms'
 import { subjectIllustration, termColorway, type SubjectIllustration } from '../../lib/cover-mappings'
 
 /**
- * Product "book cover" thumbnail, rebuilt from the Figma A4 frame (595×842).
+ * Catalogue "book cover" thumbnail, rebuilt from the Figma A4 frame (595×842).
  *
- * A Single renders one cover. A Bundle / Access Plan holds many files, so it
- * renders a fanned STACK of covers (subject glyphs vary to hint at what's
- * inside). Each CoverFace is its own container-query context, so type, radius
- * and shadow scale proportionally at any width — no JS, SSR-safe.
+ * A single resource renders one cover. A bundle holds many, so it renders a
+ * fanned STACK (subject glyphs vary to hint at what's inside). Each CoverFace
+ * is its own container-query context, so type, radius and shadow scale
+ * proportionally at any width — no JS, SSR-safe.
  *
- * Colour ← TERM. Illustration ← SUBJECT. Term is
- * the corner ribbon. Seeded subjects map to assets in `/subjects`.
+ * Colour ← TERM. Illustration ← SUBJECT. Term is the corner ribbon. Seeded
+ * subjects map to assets in `/subjects`.
+ *
+ * Typed on the shape it draws rather than on Product, because bundles are a
+ * separate Collection with no subjects of their own — a bundle's caller passes
+ * the subjects of its members.
  */
+export interface CoverItem {
+  title: string
+  grade: string
+  term: string
+  subjects: string[]
+}
 
-function subjectKey(product: Product): SubjectIllustration {
+function subjectKey(product: CoverItem): SubjectIllustration {
   return subjectIllustration(product.subjects[0] ?? product.title)
 }
 
 /** Up to 3 distinct subject glyphs to fan for a multi-file cover — prefers the
- *  product's own subjects, then fills from a sensible default set. */
-function stackSubjects(product: Product): SubjectIllustration[] {
+ *  item's own subjects, then fills from a sensible default set. */
+function stackSubjects(product: CoverItem): SubjectIllustration[] {
   const distinct = [...new Set(product.subjects.map(subjectIllustration))]
   const defaults: SubjectIllustration[] = [
     'subjects/mathematics.avif',
@@ -29,14 +38,14 @@ function stackSubjects(product: Product): SubjectIllustration[] {
   return [...distinct, ...defaults.filter((d) => !distinct.includes(d))].slice(0, 3)
 }
 
-/** Big cover title: the product title with grade/term stripped (shown separately). */
-function coverTitle(product: Product): string {
+/** Big cover title: the title with grade/term stripped (shown separately). */
+function coverTitle(product: CoverItem): string {
   const t = product.title
     .replace(/^\s*grade\s+\w+\s*/i, '')
     .replace(/\bterm\s+\w+\b/i, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
-  return t || product.subjects[0] || product.productKind
+  return t || product.subjects[0] || product.title
 }
 
 /** Readable subject name from an illustration path ("subjects/mathematics.avif" → "Mathematics"). */
@@ -52,7 +61,7 @@ function CoverFace({
   className = '',
   priority = false,
 }: {
-  product: Product
+  product: CoverItem
   illustration: SubjectIllustration
   className?: string
   priority?: boolean
@@ -106,16 +115,17 @@ function CoverFace({
 
 export function ProductCover({
   product,
+  stacked = false,
   className = '',
   priority = false,
 }: {
-  product: Product
+  product: CoverItem
+  /** Draw a fanned deck instead of one cover — bundles contain many resources. */
+  stacked?: boolean
   className?: string
   priority?: boolean
 }) {
-  const isStacked = product.productKind === 'Bundle' || product.productKind === 'Access Plan'
-
-  if (!isStacked) {
+  if (!stacked) {
     return (
       <div role="img" aria-label={product.title} className="relative aspect-[595/842] w-full flex items-center justify-center">
         <div className="w-[80%]">

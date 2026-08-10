@@ -71,8 +71,13 @@ export const FUNCTIONAL_SPA_PREFIXES = [
 
 /**
  * The full set of routes to prerender for a given snapshot: fixed static pages,
- * one grade detail page per grade value list entry, and one product detail page
- * per published product.
+ * one grade detail page per grade value list entry, and one detail page per
+ * published catalogue record.
+ *
+ * Products and bundles are separate Collections that share the /shop/<slug>
+ * URL space, so both contribute `product` routes — the detail page resolves
+ * which one a slug names. A bundle that isn't prerendered here would 404 in
+ * the static build.
  */
 export function getPublicRoutes(snapshot: CmsSnapshot): PublicRoute[] {
   const routes: PublicRoute[] = STATIC_INDEXABLE_PATHS.map((path) => ({ path, kind: 'static' as const }))
@@ -84,6 +89,11 @@ export function getPublicRoutes(snapshot: CmsSnapshot): PublicRoute[] {
   for (const product of snapshot.products) {
     if (!product.published) continue
     routes.push({ path: `/shop/${product.slug}`, kind: 'product', productSlug: product.slug })
+  }
+
+  for (const bundle of snapshot.bundles) {
+    if (!bundle.published) continue
+    routes.push({ path: `/shop/${bundle.slug}`, kind: 'product', productSlug: bundle.slug })
   }
 
   return routes
@@ -112,7 +122,9 @@ export function matchPath(pathname: string, snapshot: CmsSnapshot): PublicRoute 
   const productMatch = path.match(/^\/shop\/([^/]+)$/)
   if (productMatch) {
     const slug = productMatch[1]
-    const exists = snapshot.products.some((product) => product.slug === slug && product.published)
+    const exists =
+      snapshot.products.some((product) => product.slug === slug && product.published) ||
+      snapshot.bundles.some((bundle) => bundle.slug === slug && bundle.published)
     return exists ? { path, kind: 'product', productSlug: slug } : null
   }
 
