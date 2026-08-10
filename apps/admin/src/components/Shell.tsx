@@ -8,8 +8,9 @@ import { getRecordTitle } from '../cms/record'
 import { useAdminAuth } from '../lib/auth'
 import { useUnsavedChanges } from '../lib/unsaved'
 import { CollectionSidebar } from './workspace/CollectionSidebar'
+import { ErrorBoundary } from './ErrorBoundary'
 import { Icon } from './ui'
-import { Button, ConfirmDialog, Menu, MenuItem, MenuLabel, MenuSeparator } from './primitives'
+import { Avatar, Button, ConfirmDialog, Menu, MenuItem, MenuLabel, MenuSeparator } from './primitives'
 import { PublishButton } from './PublishButton'
 
 /* ----------------------------- Top app bar ----------------------------- */
@@ -57,7 +58,6 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const [confirmLogout, setConfirmLogout] = useState(false)
 
   const email = session?.user.email ?? 'Administrator'
-  const initial = email.slice(0, 1).toUpperCase()
 
   const requestLogout = () => {
     if (unsaved.isDirty()) setConfirmLogout(true)
@@ -67,7 +67,7 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   return (
     <header className="sticky top-0 z-30 flex h-12 flex-none items-center gap-3 border-b border-line bg-surface px-3">
       <div className="flex min-w-0 items-center gap-2.5">
-        <span className="grid h-7 w-7 flex-none place-items-center rounded-md bg-primary text-[0.72rem] font-bold tracking-[-0.04em] text-on-primary">
+        <span className="grid h-7 w-7 flex-none place-items-center rounded-control bg-primary text-[0.72rem] font-bold tracking-[-0.04em] text-on-primary">
           DM
         </span>
         <span className="hidden truncate text-[0.9rem] font-semibold tracking-[-0.01em] sm:block">Designing Minds</span>
@@ -81,7 +81,7 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
       <div className="ml-auto flex flex-none items-center gap-2">
         {!repository.canWrite ? (
-          <span className="hidden rounded-full border border-dashed border-line-strong px-2.5 py-0.5 text-[0.72rem] font-medium uppercase tracking-[0.06em] text-muted sm:inline-flex">
+          <span className="hidden rounded-pill border border-dashed border-line-strong px-2.5 py-0.5 text-[0.72rem] font-medium uppercase tracking-[0.06em] text-muted sm:inline-flex">
             Read only
           </span>
         ) : null}
@@ -100,17 +100,13 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
           </span>
         </Button>
 
-        {repository.canWrite ? <PublishButton /> : null}
+        {repository.canWrite ? <PublishButton snapshot={snapshot} /> : null}
 
         <Menu
           trigger={
-            <button
-              type="button"
-              aria-label="Account"
-              className="grid h-7 w-7 flex-none place-items-center rounded-full bg-surface-sunk text-[0.72rem] font-semibold text-ink-soft transition hover:bg-surface-alt focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1"
-            >
-              {initial}
-            </button>
+            <Button variant="ghost" size="icon" aria-label="Account" className="rounded-pill p-0">
+              <Avatar label={email} />
+            </Button>
           }
         >
           <MenuLabel>
@@ -164,7 +160,9 @@ export function Shell({
         </aside>
 
         <main className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
-          {children}
+          {/* Scoped to the routed content: a crash here leaves the top bar and
+              sidebar navigable instead of blanking the app. */}
+          <ErrorBoundary>{children}</ErrorBoundary>
 
           {message || error ? (
             <div className="pointer-events-none absolute bottom-4 right-4 z-20 max-w-sm">

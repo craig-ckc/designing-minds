@@ -91,8 +91,10 @@ export type ListValueType =
   | 'text'
   | 'currency'
   | 'date'
-  | 'kind'
+  /** Publish state: the record's flag combined with whether the site is current. */
   | 'publish'
+  /** When the live site last carried this record's current content. */
+  | 'publishedAt'
   | 'visibility'
   | 'orderStatus'
   | 'paymentStatus'
@@ -101,7 +103,10 @@ export type ListValueType =
 export type ListColumn = {
   key: string
   label: string
-  /** CSS grid track, e.g. `minmax(220px, 1.4fr)` or `140px`. Defaults to `1fr`. */
+  /**
+   * Column sizing. `minmax(220px, 1.4fr)` sets a minimum and lets the column
+   * share out remaining space; a plain value (`140px`) is a fixed width.
+   */
   width?: string
   align?: 'left' | 'right'
   valueType?: ListValueType
