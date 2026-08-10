@@ -1,5 +1,5 @@
 import type { Grade, Product, ProductFile } from '@designing-minds/cms/types'
-import { resourceUnlockedByPlan } from '@designing-minds/cms/entitlements'
+import { resourceUnlockedByBundle } from '@designing-minds/cms/entitlements'
 import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { requireUser } from '../lib/auth.ts'
 import { createServiceClient } from '../lib/supabase.ts'
@@ -17,6 +17,13 @@ interface OrderRow {
   items: { productSlug: string; grade?: Grade }[]
 }
 
+/** A bundle plus its member resources, as embedded by PostgREST. */
+interface BundleRow {
+  id: string
+  slug: string
+  bundle_products: { products: Product | null }[] | null
+}
+
 function isDownloadInput(value: unknown): value is DownloadInput {
   const v = value as DownloadInput
   return typeof value === 'object' && value !== null && typeof v.orderId === 'string' && typeof v.fileId === 'string'
@@ -28,28 +35,6 @@ const findFile = (products: Product[], fileId: string): ProductFile | null => {
     if (file) return file
   }
   return null
-}
-
-const entitledProducts = (purchasedProducts: Product[], catalogue: Product[]): Product[] => {
-  const bySlug = new Map(catalogue.map((product) => [product.slug, product]))
-  const entitled = new Map<string, Product>()
-
-  for (const product of purchasedProducts) {
-    if (product.productKind === 'Single') entitled.set(product.slug, product)
-
-    for (const slug of product.includedProductSlugs ?? []) {
-      const included = bySlug.get(slug)
-      if (included) entitled.set(included.slug, included)
-    }
-
-    if (product.productKind === 'Bundle' || product.productKind === 'Access Plan') {
-      for (const candidate of catalogue) {
-        if (resourceUnlockedByPlan(product, candidate)) entitled.set(candidate.slug, candidate)
-      }
-    }
-  }
-
-  return [...entitled.values()]
 }
 
 export const issueDownload: Handler = async (req) => {
@@ -75,20 +60,40 @@ export const issueDownload: Handler = async (req) => {
     if (!order || order.customerId !== user.id) return unauthorized('This order is not available on your account.')
     if (!['paid', 'fulfilled'].includes(order.status)) return unauthorized('Downloads unlock once payment succeeds.')
 
-    const productSlugs = [...new Set(order.items.map((item) => item.productSlug))]
-    const { data: purchasedProducts, error: productsError } = await supabase.from('products').select('*').in('slug', productSlugs)
-    if (productsError) throw new Error(productsError.message)
+    // An order line is a slug in the shared /shop space; it may name either
+    // Collection, so both are resolved.
+    const slugs = [...new Set(order.items.map((item) => item.productSlug))]
 
-    const purchased = (purchasedProducts ?? []) as Product[]
-    const hasComposite = purchased.some((product) => product.productKind === 'Bundle' || product.productKind === 'Access Plan')
-    let catalogue = purchased
-    if (hasComposite) {
-      const { data: catalogueProducts, error: catalogueError } = await supabase.from('products').select('*')
-      if (catalogueError) throw new Error(catalogueError.message)
-      catalogue = (catalogueProducts ?? []) as Product[]
+    const [purchasedProducts, purchasedBundles] = await Promise.all([
+      supabase.from('products').select('*').in('slug', slugs),
+      // Membership is embedded, so a bundle's contents come back with it and
+      // no full-catalogue scan is needed. Unpublished bundles resolve too:
+      // retired Access Plans still owe their buyers downloads.
+      supabase.from('bundles').select('id,slug,bundle_products(products(*))').in('slug', slugs),
+    ])
+    if (purchasedProducts.error) throw new Error(purchasedProducts.error.message)
+    if (purchasedBundles.error) throw new Error(purchasedBundles.error.message)
+
+    const entitled = new Map<string, Product>()
+    for (const product of (purchasedProducts.data ?? []) as Product[]) {
+      entitled.set(product.slug, product)
     }
 
-    const file = findFile(entitledProducts(purchased, catalogue), req.body.fileId)
+    // PostgREST types a nested embed loosely, so the shape is asserted once here.
+    for (const row of (purchasedBundles.data ?? []) as unknown as BundleRow[]) {
+      const members = (row.bundle_products ?? [])
+        .map((member) => member.products)
+        .filter((product): product is Product => Boolean(product))
+
+      // Route through the shared rule rather than trusting the join directly,
+      // so the account UI and this endpoint can never drift apart.
+      const bundle = { includedProductSlugs: members.map((member) => member.slug) }
+      for (const member of members) {
+        if (resourceUnlockedByBundle(bundle, member)) entitled.set(member.slug, member)
+      }
+    }
+
+    const file = findFile([...entitled.values()], req.body.fileId)
     if (!file) return unauthorized('This file is not available on your order.')
     if (!file.storageKey) throw new Error('Product file is missing a storage key.')
 

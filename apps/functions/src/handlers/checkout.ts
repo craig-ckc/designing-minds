@@ -1,4 +1,4 @@
-import type { Product } from '@designing-minds/cms/types'
+import type { Bundle, Product } from '@designing-minds/cms/types'
 import { badRequest, created, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { createServiceClient } from '../lib/supabase.ts'
 import { requireUser } from '../lib/auth.ts'
@@ -55,13 +55,20 @@ export const checkout: Handler = async (req) => {
       .single<CustomerRow>()
     if (customerError) throw new Error(customerError.message)
 
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('*')
-      .in('slug', slugs)
-      .eq('published', true)
-    if (productsError) throw new Error(productsError.message)
-    if (!products || products.length !== slugs.length) return badRequest('One or more cart items are unavailable.')
+    // A cart line is a slug in the shared /shop space and may name either
+    // Collection, so both are resolved and the union must cover every line.
+    const [productRows, bundleRows] = await Promise.all([
+      supabase.from('products').select('*').in('slug', slugs).eq('published', true),
+      supabase.from('bundles').select('*').in('slug', slugs).eq('published', true),
+    ])
+    if (productRows.error) throw new Error(productRows.error.message)
+    if (bundleRows.error) throw new Error(bundleRows.error.message)
+
+    const products = (productRows.data ?? []) as Product[]
+    const bundles = (bundleRows.data ?? []) as Bundle[]
+    if (products.length + bundles.length !== slugs.length) {
+      return badRequest('One or more cart items are unavailable.')
+    }
 
     const { data: paidOrders, error: paidOrdersError } = await supabase
       .from('orders')
@@ -78,17 +85,27 @@ export const checkout: Handler = async (req) => {
     const repurchased = slugs.find((slug) => ownedSlugs.has(slug))
     if (repurchased) return badRequest('Your account already owns one or more cart items.')
 
-    const resolvedProducts = products as Product[]
-    // Every product, including Access Plans, carries its own fixed grade now.
-    // The order line records product.grade directly; see docs/decisions.md.
-    const items = resolvedProducts.map((product) => ({
-      id: crypto.randomUUID(),
-      productSlug: product.slug,
-      title: product.title,
-      productKind: product.productKind,
-      priceZar: Number(product.priceZar),
-      grade: product.grade,
-    }))
+    // Products and bundles both carry their own fixed grade, so the order line
+    // records it directly; see docs/decisions.md. `productKind` is a snapshot
+    // of what was bought, not a live reference.
+    const items = [
+      ...products.map((product) => ({
+        id: crypto.randomUUID(),
+        productSlug: product.slug,
+        title: product.title,
+        productKind: 'Single' as const,
+        priceZar: Number(product.priceZar),
+        grade: product.grade,
+      })),
+      ...bundles.map((bundle) => ({
+        id: crypto.randomUUID(),
+        productSlug: bundle.slug,
+        title: bundle.title,
+        productKind: 'Bundle' as const,
+        priceZar: Number(bundle.priceZar),
+        grade: bundle.grade,
+      })),
+    ]
     const totalCents = items.reduce((sum, item) => sum + toCents(item.priceZar), 0)
     if (totalCents <= 0) return badRequest('Order total must be greater than zero.')
 
