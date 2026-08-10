@@ -4,6 +4,7 @@ import type {
   CmsSnapshot,
   ContactSubmission,
   Customer,
+  Bundle,
   Faq,
   NewsletterSubmission,
   Order,
@@ -24,6 +25,9 @@ interface SupabaseRepositoryOptions {
 const TABLES = {
   products: 'products',
   catalogProducts: 'catalog_products',
+  bundles: 'bundles',
+  catalogBundles: 'catalog_bundles',
+  bundleProducts: 'bundle_products',
   faqs: 'faqs',
   testimonials: 'testimonials',
   // Account profiles live in the `users` table (see docs/decisions.md).
@@ -41,10 +45,22 @@ const DEFAULT_VALUE_LISTS: ValueLists = {
   grades: [],
   terms: [],
   years: [],
-  productKinds: [],
   resourceFormats: [],
   subjects: [],
 }
+
+/**
+ * Stamp a record's `updatedAt` at save time. The database has a
+ * `set_updated_at` trigger on every editable table, but that only fires on
+ * UPDATE — and a blank `updatedAt` on a freshly created record is not a valid
+ * timestamptz. Stamping here makes both paths explicit and gives the caller
+ * back a record it can immediately compare against the deployed site's content
+ * timestamp (see the admin's publish state).
+ */
+const stamped = <T extends { updatedAt: string }>(record: T): T => ({
+  ...record,
+  updatedAt: new Date().toISOString(),
+})
 
 interface ValueListRow {
   key: keyof ValueLists
@@ -61,12 +77,50 @@ const rowsToValueLists = (rows: ValueListRow[] | null): ValueLists =>
   ) as ValueLists
 
 const numberizeProduct = (product: Product): Product => ({ ...product, priceZar: Number(product.priceZar) })
+const numberizeBundle = (bundle: Bundle): Bundle => ({
+  ...bundle,
+  priceZar: Number(bundle.priceZar),
+  includedProductIds: bundle.includedProductIds ?? [],
+  includedProductSlugs: bundle.includedProductSlugs ?? [],
+})
 const numberizeOrder = (order: Order): Order => ({
   ...order,
   totalZar: Number(order.totalZar),
   items: order.items.map((item) => ({ ...item, priceZar: Number(item.priceZar) })),
 })
 const numberizePayment = (payment: Payment): Payment => ({ ...payment, amountZar: Number(payment.amountZar) })
+
+/**
+ * A bundle row as read from either source.
+ *
+ * `catalog_bundles` aggregates membership into arrays and hides unpublished
+ * members; the base table needs the embedded join rows. Normalising here means
+ * everything downstream sees one `Bundle` shape regardless of audience.
+ */
+type BundleRow = Omit<Bundle, 'includedProductIds' | 'includedProductSlugs'> & {
+  includedProductIds?: string[] | null
+  includedProductSlugs?: string[] | null
+  bundle_products?: { sortOrder: number; products: { id: string; slug: string } | null }[] | null
+}
+
+const toBundle = (row: BundleRow): Bundle => {
+  const { bundle_products: members, ...bundle } = row
+  if (!members) {
+    return {
+      ...bundle,
+      includedProductIds: row.includedProductIds ?? [],
+      includedProductSlugs: row.includedProductSlugs ?? [],
+    }
+  }
+  const ordered = members
+    .filter((member): member is { sortOrder: number; products: { id: string; slug: string } } => Boolean(member.products))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.products.slug.localeCompare(b.products.slug))
+  return {
+    ...bundle,
+    includedProductIds: ordered.map((member) => member.products.id),
+    includedProductSlugs: ordered.map((member) => member.products.slug),
+  }
+}
 
 /**
  * Extract rows, tolerating a not-yet-migrated table: a missing relation
@@ -92,8 +146,7 @@ const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] 
   productCount: snapshot.products.length,
   subjectCount: snapshot.valueLists.subjects.length,
   gradeCount: snapshot.valueLists.grades.length,
-  bundleCount: snapshot.products.filter((p) => p.productKind === 'Bundle').length,
-  accessPlanCount: snapshot.products.filter((p) => p.productKind === 'Access Plan').length,
+  bundleCount: snapshot.bundles.length,
   orderCount: snapshot.orders.length,
   customerCount: snapshot.customers.length,
 })
@@ -109,15 +162,23 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
   // session and storage lock. Build-time callers can still create an isolated
   // client from URL + publishable key.
   const client = providedClient ?? createClient(url, publishableKey)
-  const productReadTable = audience === 'public' ? TABLES.catalogProducts : TABLES.products
+  const isPublic = audience === 'public'
+  const productReadTable = isPublic ? TABLES.catalogProducts : TABLES.products
+
+  // The public view aggregates membership for us and hides unpublished
+  // members. The admin needs the real, complete membership, so it reads the
+  // base table and embeds the join rows.
+  const bundleReadTable = isPublic ? TABLES.catalogBundles : TABLES.bundles
+  const bundleSelect = isPublic ? '*' : `*, ${TABLES.bundleProducts}(sortOrder, products(id, slug))`
 
   return {
     mode: 'supabase',
     canWrite: audience === 'admin',
     async getSnapshot() {
-      const [products, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists] =
+      const [products, bundles, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists] =
         await Promise.all([
           client.from(productReadTable).select('*'),
+          client.from(bundleReadTable).select(bundleSelect),
           client.from(TABLES.faqs).select('*'),
           client.from(TABLES.testimonials).select('*'),
           client.from(TABLES.customers).select('*'),
@@ -130,7 +191,7 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
         ])
 
       // Core tables must exist; any error is fatal.
-      const firstError = [products, faqs, testimonials, customers, orders, payments, valueLists].find((r) => r.error)
+      const firstError = [products, bundles, faqs, testimonials, customers, orders, payments, valueLists].find((r) => r.error)
       if (firstError?.error) {
         throw new Error(firstError.error.message)
       }
@@ -140,6 +201,7 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
         source: 'supabase',
         valueLists: rowsToValueLists(valueLists.data as ValueListRow[] | null),
         products: ((products.data as Product[] | null) ?? []).map(numberizeProduct),
+        bundles: (bundles.data ?? []).map((row) => numberizeBundle(toBundle(row as unknown as BundleRow))),
         faqs: (faqs.data as Faq[] | null) ?? [],
         testimonials: (testimonials.data as Testimonial[] | null) ?? [],
         customers: (customers.data as Customer[] | null) ?? [],
@@ -170,17 +232,41 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
       }))
     },
     async saveProduct(product: Product) {
-      const res = await client.from(TABLES.products).upsert({ ...product, updatedAt: new Date().toISOString() }).select().single()
+      const res = await client.from(TABLES.products).upsert(stamped(product)).select().single()
       if (res.error) throw new Error(res.error.message)
       return res.data as Product
     },
+
+    /**
+     * Two writes, deliberately ordered: the bundle row first, then its
+     * membership through set_bundle_products (which replaces the whole set in
+     * one statement pair). The row must exist before members can reference it.
+     * Derived read-only fields never go back to the server.
+     */
+    async saveBundle(bundle: Bundle) {
+      const { includedProductIds, includedProductSlugs, ...row } = bundle
+      const res = await client.from(TABLES.bundles).upsert(stamped(row as Bundle)).select().single()
+      if (res.error) throw new Error(res.error.message)
+
+      const { error: membershipError } = await client.rpc('set_bundle_products', {
+        p_bundle_id: bundle.id,
+        p_product_ids: includedProductIds ?? [],
+      })
+      if (membershipError) throw new Error(membershipError.message)
+
+      return numberizeBundle({
+        ...(res.data as Bundle),
+        includedProductIds: includedProductIds ?? [],
+        includedProductSlugs: includedProductSlugs ?? [],
+      })
+    },
     async saveFaq(faq: Faq) {
-      const res = await client.from(TABLES.faqs).upsert(faq).select().single()
+      const res = await client.from(TABLES.faqs).upsert(stamped(faq)).select().single()
       if (res.error) throw new Error(res.error.message)
       return res.data as Faq
     },
     async saveTestimonial(testimonial: Testimonial) {
-      const res = await client.from(TABLES.testimonials).upsert(testimonial).select().single()
+      const res = await client.from(TABLES.testimonials).upsert(stamped(testimonial)).select().single()
       if (res.error) throw new Error(res.error.message)
       return res.data as Testimonial
     },

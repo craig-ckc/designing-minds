@@ -1,9 +1,9 @@
 import type {
+  Bundle,
   CmsSnapshot,
   Faq,
   Order,
   Product,
-  ProductKind,
   ResourceFormat,
   Testimonial,
 } from '../types'
@@ -28,6 +28,26 @@ export const toParagraphs = (value: string) =>
 export const getProductBySlug = (snapshot: CmsSnapshot, slug: string) =>
   snapshot.products.find((product) => product.slug === slug)
 
+export const getBundleBySlug = (snapshot: CmsSnapshot, slug: string) =>
+  snapshot.bundles.find((bundle) => bundle.slug === slug)
+
+/**
+ * Resolve a /shop/<slug> path, which both Collections share. Returns the kind
+ * alongside the record so callers branch on data rather than on which lookup
+ * happened to return something.
+ */
+export type CatalogItem =
+  | { kind: 'product'; product: Product }
+  | { kind: 'bundle'; bundle: Bundle }
+
+export const getCatalogItemBySlug = (snapshot: CmsSnapshot, slug: string): CatalogItem | undefined => {
+  const product = getProductBySlug(snapshot, slug)
+  if (product) return { kind: 'product', product }
+  const bundle = getBundleBySlug(snapshot, slug)
+  if (bundle) return { kind: 'bundle', bundle }
+  return undefined
+}
+
 export const getFaqsByIds = (snapshot: CmsSnapshot, ids: string[]): Faq[] =>
   ids
     .map((id) => snapshot.faqs.find((faq) => faq.id === id))
@@ -47,14 +67,17 @@ export const getFeaturedProducts = (snapshot: CmsSnapshot, limit = 6) =>
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .slice(0, limit)
 
-export const individualResources = (snapshot: CmsSnapshot) =>
-  publishedProducts(snapshot).filter((p) => p.productKind === 'Single')
+/** Every published resource. Products are individual resources now, so this is
+ *  just publishedProducts — kept as the name the site reads by. */
+export const individualResources = (snapshot: CmsSnapshot) => publishedProducts(snapshot)
 
-export const bundleProducts = (snapshot: CmsSnapshot) =>
-  publishedProducts(snapshot).filter((p) => p.productKind === 'Bundle')
+export const publishedBundles = (snapshot: CmsSnapshot) => snapshot.bundles.filter((bundle) => bundle.published)
 
-export const accessPlanProducts = (snapshot: CmsSnapshot) =>
-  publishedProducts(snapshot).filter((p) => p.productKind === 'Access Plan')
+export const getFeaturedBundles = (snapshot: CmsSnapshot, limit = 6) =>
+  publishedBundles(snapshot)
+    .filter((bundle) => bundle.featured)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, limit)
 
 export type BundleTierScope = 'Term' | 'Full Year'
 
@@ -68,16 +91,18 @@ export interface BundleTier {
 
 /** Summarise the published term and full-year bundles for catalogue entry points. */
 export const bundleTiers = (snapshot: CmsSnapshot): BundleTier[] => {
-  const bundles = bundleProducts(snapshot)
+  const bundles = publishedBundles(snapshot)
   const tiers: BundleTier[] = []
-  const add = (scope: BundleTierScope, title: string, fromPriceZar: number) => {
-    const subset = bundles.filter((product) => product.bundleScope === scope)
+  const add = (scope: BundleTierScope, title: string, fallbackPriceZar: number) => {
+    const subset = bundles.filter((bundle) => bundle.bundleScope === scope)
     if (subset.length === 0) return
     tiers.push({
       scope,
       title,
-      fromPriceZar,
-      gradeCount: new Set(subset.map((product) => product.grade)).size,
+      // The real cheapest, not a hardcoded marketing number — the fallback
+      // only covers a tier whose bundles are all unpriced.
+      fromPriceZar: Math.min(...subset.map((bundle) => bundle.priceZar)) || fallbackPriceZar,
+      gradeCount: new Set(subset.map((bundle) => bundle.grade)).size,
       featured: scope === 'Full Year',
     })
   }
@@ -86,60 +111,23 @@ export const bundleTiers = (snapshot: CmsSnapshot): BundleTier[] => {
   return tiers
 }
 
-export type AccessPlanTierKey = 'essential' | 'premium'
-
-export interface AccessPlanTier {
-  tier: AccessPlanTierKey
-  title: string
-  period: 'Term' | 'Year'
-  fromPriceZar: number
-  gradeCount: number
-  featured: boolean
-}
-
-/**
- * Collapse the per-grade (and per-term) Access Plan products into the two
- * marketed tiers for homepage/nav entry points. Each Access Plan is one grade
- * now (see docs/decisions.md), so a single "Essential" or "Premium" card can't be one
- * product — it summarises its tier and deep-links to /packages filtered by it.
- */
-export const accessPlanTiers = (snapshot: CmsSnapshot): AccessPlanTier[] => {
-  const plans = accessPlanProducts(snapshot)
-  const tiers: AccessPlanTier[] = []
-  const add = (tier: AccessPlanTierKey, period: 'Term' | 'Year', title: string) => {
-    const subset = plans.filter((p) => p.accessPeriod === period)
-    if (subset.length === 0) return
-    tiers.push({
-      tier,
-      title,
-      period,
-      fromPriceZar: Math.min(...subset.map((p) => p.priceZar)),
-      gradeCount: new Set(subset.map((p) => p.grade)).size,
-      featured: tier === 'premium',
-    })
-  }
-  add('essential', 'Term', 'Essential Access')
-  add('premium', 'Year', 'Premium Access')
-  return tiers
-}
-
 export const productsForGrade = (snapshot: CmsSnapshot, grade: string) =>
   publishedProducts(snapshot).filter((p) => p.grade === grade)
 
-/** The published Bundles and Access Plans that cover one grade, cheapest first. */
-export const packagesForGrade = (snapshot: CmsSnapshot, grade: string) =>
-  productsForGrade(snapshot, grade)
-    .filter((p) => p.productKind === 'Bundle' || p.productKind === 'Access Plan')
+/** The published bundles covering one grade, cheapest first. */
+export const bundlesForGrade = (snapshot: CmsSnapshot, grade: string) =>
+  publishedBundles(snapshot)
+    .filter((bundle) => bundle.grade === grade)
     .sort((a, b) => a.priceZar - b.priceZar)
 
-/** The published Bundles / Access Plans that include a given Single, cheapest first. */
-export const packagesContaining = (snapshot: CmsSnapshot, product: Product) =>
-  publishedProducts(snapshot)
-    .filter((p) => (p.includedProductSlugs ?? []).includes(product.slug))
+/** The published bundles that include a given resource, cheapest first. */
+export const bundlesContaining = (snapshot: CmsSnapshot, product: Product) =>
+  publishedBundles(snapshot)
+    .filter((bundle) => bundle.includedProductSlugs.includes(product.slug))
     .sort((a, b) => a.priceZar - b.priceZar)
 
-export interface PackageValue {
-  /** Included Single products that are published and priced. */
+export interface BundleValue {
+  /** Included resources that are published and priced. */
   itemCount: number
   /** What the same resources cost bought one at a time. */
   singlesTotalZar: number
@@ -147,25 +135,25 @@ export interface PackageValue {
   savingZar: number
   /** Whole-percent discount against buying singly. */
   savingPercent: number
-  /** Distinct subjects the package covers. */
+  /** Distinct subjects the bundle covers. */
   subjects: string[]
-  /** Distinct terms the package covers. */
+  /** Distinct terms the bundle covers. */
   terms: string[]
   /** Downloadable files across the included resources, when the CMS lists them. */
   fileCount: number
 }
 
 /**
- * What a Bundle or Access Plan is actually worth, derived from the products it
- * includes — no new CMS fields. Returns null when the package lists nothing (or
- * nothing published), so callers render the real "still being finalised" state
- * instead of a fabricated R0 saving.
+ * What a bundle is actually worth, derived from the resources it includes — no
+ * separate CMS fields to fall out of sync. Returns null when the bundle lists
+ * nothing (or nothing published), so callers render the real "still being
+ * finalised" state instead of a fabricated R0 saving.
  */
-export const packageValue = (snapshot: CmsSnapshot, product: Product): PackageValue | null => {
-  const included = getProductsBySlugs(snapshot, product.includedProductSlugs ?? []).filter((p) => p.published)
+export const bundleValue = (snapshot: CmsSnapshot, bundle: Bundle): BundleValue | null => {
+  const included = getProductsBySlugs(snapshot, bundle.includedProductSlugs).filter((p) => p.published)
   if (included.length === 0) return null
   const singlesTotalZar = included.reduce((total, entry) => total + entry.priceZar, 0)
-  const savingZar = Math.max(0, singlesTotalZar - product.priceZar)
+  const savingZar = Math.max(0, singlesTotalZar - bundle.priceZar)
   return {
     itemCount: included.length,
     singlesTotalZar,
@@ -176,6 +164,10 @@ export const packageValue = (snapshot: CmsSnapshot, product: Product): PackageVa
     fileCount: included.reduce((total, entry) => total + entry.purchasedFiles.length, 0),
   }
 }
+
+/** The resources inside a bundle, published only, in the bundle's own order. */
+export const bundleContents = (snapshot: CmsSnapshot, bundle: Bundle): Product[] =>
+  getProductsBySlugs(snapshot, bundle.includedProductSlugs).filter((p) => p.published)
 
 export const relatedProducts = (snapshot: CmsSnapshot, product: Product, limit = 3) =>
   publishedProducts(snapshot)
@@ -189,7 +181,6 @@ export interface ProductFilterState {
   term: string
   subject: string
   resourceFormat: string
-  kind: string
   query: string
 }
 
@@ -200,7 +191,6 @@ export const defaultProductFilters: ProductFilterState = {
   term: ALL,
   subject: ALL,
   resourceFormat: ALL,
-  kind: ALL,
   query: '',
 }
 
@@ -211,10 +201,35 @@ export const filterProducts = (products: Product[], filters: ProductFilterState)
     if (filters.term !== ALL && product.term !== filters.term) return false
     if (filters.subject !== ALL && !product.subjects.includes(filters.subject)) return false
     if (filters.resourceFormat !== ALL && product.resourceFormat !== filters.resourceFormat) return false
-    if (filters.kind !== ALL && product.productKind !== (filters.kind as ProductKind)) return false
     if (!query) return true
     const haystack = `${product.title} ${product.shortDescription} ${product.subjects.join(' ')}`.toLowerCase()
     return haystack.includes(query)
+  })
+}
+
+/**
+ * Bundles under the same filters the resource grid uses.
+ *
+ * A bundle has no subjects or format of its own — they come from its members
+ * — so those facets match when ANY included resource matches. Filtering by
+ * subject therefore keeps a bundle that contains that subject rather than
+ * hiding it, which is what a shopper filtering to "Mathematics" expects.
+ */
+export const filterBundles = (snapshot: CmsSnapshot, bundles: Bundle[], filters: ProductFilterState) => {
+  const query = filters.query.trim().toLowerCase()
+  return bundles.filter((bundle) => {
+    if (filters.grade !== ALL && bundle.grade !== filters.grade) return false
+
+    const needsMembers =
+      filters.subject !== ALL || filters.resourceFormat !== ALL || filters.term !== ALL
+    const members = needsMembers ? bundleContents(snapshot, bundle) : []
+
+    if (filters.term !== ALL && bundle.term !== filters.term && !members.some((m) => m.term === filters.term)) return false
+    if (filters.subject !== ALL && !members.some((m) => m.subjects.includes(filters.subject))) return false
+    if (filters.resourceFormat !== ALL && !members.some((m) => m.resourceFormat === filters.resourceFormat)) return false
+
+    if (!query) return true
+    return `${bundle.title} ${bundle.shortDescription}`.toLowerCase().includes(query)
   })
 }
 
@@ -246,6 +261,11 @@ const upsert = <T extends { id: string }>(items: T[], next: T): T[] => {
 export const updateProductInSnapshot = (snapshot: CmsSnapshot, product: Product): CmsSnapshot => ({
   ...snapshot,
   products: upsert(snapshot.products, product).sort((a, b) => a.sortOrder - b.sortOrder),
+})
+
+export const updateBundleInSnapshot = (snapshot: CmsSnapshot, bundle: Bundle): CmsSnapshot => ({
+  ...snapshot,
+  bundles: upsert(snapshot.bundles, bundle).sort((a, b) => a.sortOrder - b.sortOrder),
 })
 
 export const updateFaqInSnapshot = (snapshot: CmsSnapshot, faq: Faq): CmsSnapshot => ({

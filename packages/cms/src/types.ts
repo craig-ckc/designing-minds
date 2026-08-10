@@ -16,8 +16,18 @@ export type CmsProviderMode = 'seed' | 'local' | 'supabase'
 
 export type Grade = 'Grade 3' | 'Grade 4' | 'Grade 5' | 'Grade 6' | 'Grade 7'
 export type Term = 'Any Term' | 'Term 1' | 'Term 2' | 'Term 3' | 'Term 4'
-export type ProductKind = 'Single' | 'Bundle' | 'Access Plan'
 export type ResourceFormat = 'Test / Assessment' | 'Summary'
+
+/**
+ * What a catalogue line refers to. Products and Bundles are separate
+ * Collections but share the /shop/<slug> URL space and the cart, so anything
+ * generic over both carries this.
+ *
+ * Order history records it too: `orders.items[].productKind` is a snapshot of
+ * what was bought, so historical values ('Single', 'Bundle', and the retired
+ * 'Access Plan') stay readable even though only the first two can be created.
+ */
+export type CatalogItemKind = 'product' | 'bundle'
 
 /**
  * Database-sourced allowed-value lists that certain Product fields draw from.
@@ -32,7 +42,6 @@ export interface ValueLists {
   grades: Grade[]
   terms: Term[]
   years: string[]
-  productKinds: ProductKind[]
   resourceFormats: ResourceFormat[]
   subjects: string[]
 }
@@ -51,13 +60,17 @@ export interface ProductFile {
   filename: string
   /** Provider-neutral private storage key, never a public URL. */
   storageKey?: string
+  /** Size at upload time, so the admin can show it without fetching the object. */
+  sizeBytes?: number
+  /** MIME type reported by the browser at upload time. */
+  contentType?: string
 }
 
 /* ------------------------------- Collections --------------------------- */
 
 export type BundleScope = 'Term' | 'Full Year'
-export type AccessPeriod = 'Term' | 'Year'
 
+/** An individual resource. Bundles are a separate Collection — see `Bundle`. */
 export interface Product {
   id: string
   slug: string
@@ -68,7 +81,6 @@ export interface Product {
   grade: Grade
   term: Term
   year: string
-  productKind: ProductKind
   resourceFormat: ResourceFormat
   /** Subject display names, drawn from value_lists.subjects. Required: at least one. */
   subjects: string[]
@@ -81,20 +93,41 @@ export interface Product {
   /** FAQ ids referenced by this product. */
   faqs: string[]
   updatedAt: string
+}
 
-  /* Bundle-only fields (Product Kind = Bundle). */
+/**
+ * A priced package of individual resources.
+ *
+ * Membership is explicit: `includedProductSlugs` / `includedProductIds` are the
+ * whole of what a bundle contains. There is no rule-based inclusion — a bundle
+ * that "covers Grade 3 Maths" lists those resources, so what a buyer gets is
+ * always exactly what the page showed them.
+ *
+ * Subjects, terms, file count and monetary value are DERIVED from the members
+ * (see `bundleValue`), never stored, so a bundle can't disagree with itself.
+ */
+export interface Bundle {
+  id: string
+  slug: string
+  title: string
+  shortDescription: string
+  fullDescription: string
+  priceZar: number
+  grade: Grade
+  term: Term
+  year: string
   bundleScope?: BundleScope
-  /* Access Plan-only fields (Product Kind = Access Plan). */
-  accessPeriod?: AccessPeriod
-  includedGrades?: Grade[]
-  deliveryRules?: string
-  renewalNotes?: string
-
-  /* Shared by Bundle and Access Plan. Included products must have Product Kind `Single`. */
-  includedProductSlugs?: string[]
-  /** Subject display names (value_lists.subjects), matching Product.subjects. */
-  includedSubjects?: string[]
-  includedTerms?: Term[]
+  featured: boolean
+  published: boolean
+  sortOrder: number
+  seo: SeoMeta
+  /** FAQ ids referenced by this bundle. */
+  faqs: string[]
+  updatedAt: string
+  /** Member product ids, in display order. */
+  includedProductIds: string[]
+  /** Member product slugs, in the same order — the public snapshot keys on slug. */
+  includedProductSlugs: string[]
 }
 
 export interface Faq {
@@ -104,6 +137,7 @@ export interface Faq {
   category: string
   sortOrder: number
   published: boolean
+  updatedAt: string
 }
 
 export interface Testimonial {
@@ -116,6 +150,7 @@ export interface Testimonial {
   featured: boolean
   sortOrder: number
   published: boolean
+  updatedAt: string
 }
 
 /* ----------------------------- Operational records --------------------- */
@@ -132,14 +167,19 @@ export interface Customer {
 
 export interface OrderItem {
   id: string
+  /** Slug of the product or bundle. Both live in the /shop/<slug> space. */
   productSlug: string
   title: string
-  productKind: ProductKind
+  /**
+   * What was bought, as recorded at the time. A historical snapshot, not a
+   * live reference — old orders still read 'Single' and 'Access Plan' even
+   * though neither can be created any more.
+   */
+  productKind: 'Single' | 'Bundle' | 'Access Plan'
   priceZar: number
   /**
-   * The grade this line item grants. For an Access Plan it is the grade chosen
-   * at checkout; for other products it is the product's own grade. Optional for
-   * orders placed before grade capture existed.
+   * The grade this line item grants — the product's or bundle's own grade.
+   * Optional for orders placed before grade capture existed.
    */
   grade?: Grade
 }
@@ -221,7 +261,6 @@ export interface CmsStats {
   subjectCount: number
   gradeCount: number
   bundleCount: number
-  accessPlanCount: number
   orderCount: number
   customerCount: number
 }
@@ -231,6 +270,7 @@ export interface CmsSnapshot {
   source: string
   valueLists: ValueLists
   products: Product[]
+  bundles: Bundle[]
   faqs: Faq[]
   testimonials: Testimonial[]
   customers: Customer[]
@@ -249,9 +289,15 @@ export interface CmsRepository {
   mode: CmsProviderMode
   canWrite: boolean
   getSnapshot: () => Promise<CmsSnapshot>
-  /** System-managed redirects whose target is a currently-published product. */
+  /** System-managed redirects whose target is a currently-published product or bundle. */
   getSlugRedirects: () => Promise<SlugRedirect[]>
   saveProduct: (product: Product) => Promise<Product>
+  /**
+   * Saves the bundle and replaces its membership. Membership goes through the
+   * set_bundle_products RPC so the row and its members can't end up disagreeing
+   * — the browser admin has no transaction of its own.
+   */
+  saveBundle: (bundle: Bundle) => Promise<Bundle>
   saveFaq: (faq: Faq) => Promise<Faq>
   saveTestimonial: (testimonial: Testimonial) => Promise<Testimonial>
 }

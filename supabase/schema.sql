@@ -59,6 +59,8 @@ grant execute on function public.is_admin() to authenticated;
 -- Collections
 -- =========================================================================
 
+-- Individual resources only. Bundles are their own Collection below; there is
+-- no "product kind" discriminator any more (see the 2026-08-09 bundles patch).
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -69,7 +71,6 @@ create table if not exists public.products (
   grade text not null,
   term text not null,
   year text not null,
-  "productKind" text not null check ("productKind" in ('Single', 'Bundle', 'Access Plan')),
   "resourceFormat" text not null,
   subjects text[] not null default '{}',
   marks integer,
@@ -79,19 +80,102 @@ create table if not exists public.products (
   "sortOrder" integer not null default 0,
   seo jsonb not null default '{}',
   faqs text[] not null default '{}',
-  "updatedAt" timestamptz not null default now(),
-  -- Bundle-only
-  "bundleScope" text check ("bundleScope" in ('Term', 'Full Year')),
-  -- Access Plan-only
-  "accessPeriod" text check ("accessPeriod" in ('Term', 'Year')),
-  "includedGrades" text[],
-  "deliveryRules" text,
-  "renewalNotes" text,
-  -- Shared by Bundle + Access Plan
-  "includedProductSlugs" text[],
-  "includedSubjects" text[],
-  "includedTerms" text[]
+  "updatedAt" timestamptz not null default now()
 );
+
+-- A priced package of individual resources. Subjects, terms, file count and
+-- value are DERIVED from bundle_products — never stored here, so a bundle can
+-- never disagree with what it contains.
+create table if not exists public.bundles (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  title text not null,
+  "shortDescription" text not null default '',
+  "fullDescription" text not null default '',
+  "priceZar" numeric(10,2) not null default 0,
+  grade text not null,
+  term text not null,
+  year text not null,
+  "bundleScope" text check ("bundleScope" in ('Term', 'Full Year')),
+  featured boolean not null default false,
+  published boolean not null default false,
+  "sortOrder" integer not null default 0,
+  seo jsonb not null default '{}',
+  faqs text[] not null default '{}',
+  "updatedAt" timestamptz not null default now()
+);
+
+-- Membership as real foreign keys: deleting a resource removes it from every
+-- bundle, instead of leaving a dangling slug inside a text[].
+create table if not exists public.bundle_products (
+  "bundleId" uuid not null references public.bundles (id) on delete cascade,
+  "productId" uuid not null references public.products (id) on delete cascade,
+  "sortOrder" integer not null default 0,
+  primary key ("bundleId", "productId")
+);
+
+create index if not exists bundle_products_product_idx on public.bundle_products ("productId");
+create index if not exists bundles_published_idx on public.bundles (published);
+
+-- Products and bundles share the /shop/<slug> URL space, so a slug has to be
+-- unique across BOTH tables. A check constraint can't span tables; this can.
+create or replace function public.assert_catalog_slug_unique()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_table_name = 'products' then
+    if exists (select 1 from public.bundles b where b.slug = new.slug) then
+      raise exception 'Slug "%" is already used by a bundle.', new.slug
+        using errcode = 'unique_violation';
+    end if;
+  else
+    if exists (select 1 from public.products p where p.slug = new.slug) then
+      raise exception 'Slug "%" is already used by a product.', new.slug
+        using errcode = 'unique_violation';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists products_slug_unique_across_catalog on public.products;
+create trigger products_slug_unique_across_catalog
+before insert or update of slug on public.products
+for each row execute procedure public.assert_catalog_slug_unique();
+
+drop trigger if exists bundles_slug_unique_across_catalog on public.bundles;
+create trigger bundles_slug_unique_across_catalog
+before insert or update of slug on public.bundles
+for each row execute procedure public.assert_catalog_slug_unique();
+
+-- Replacing a bundle's membership from the browser admin, which has no
+-- transaction of its own, in one call rather than row by row.
+create or replace function public.set_bundle_products(p_bundle_id uuid, p_product_ids uuid[])
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Administrator access is required.' using errcode = 'insufficient_privilege';
+  end if;
+
+  delete from public.bundle_products
+  where "bundleId" = p_bundle_id
+    and "productId" <> all (coalesce(p_product_ids, '{}'::uuid[]));
+
+  insert into public.bundle_products ("bundleId", "productId", "sortOrder")
+  select p_bundle_id, ids.id, ids.ord::int
+  from unnest(coalesce(p_product_ids, '{}'::uuid[])) with ordinality as ids(id, ord)
+  on conflict ("bundleId", "productId") do update set "sortOrder" = excluded."sortOrder";
+end;
+$$;
+
+revoke execute on function public.set_bundle_products(uuid, uuid[]) from public, anon;
+grant execute on function public.set_bundle_products(uuid, uuid[]) to authenticated;
 
 -- Public catalogue. The view is security_invoker, so the row filtering and
 -- storage-key stripping live in this SECURITY DEFINER function. It sits in the
@@ -115,7 +199,6 @@ as $$
     p.grade,
     p.term,
     p.year,
-    p."productKind",
     p."resourceFormat",
     p.subjects,
     p.marks,
@@ -138,15 +221,7 @@ as $$
     p."sortOrder",
     p.seo,
     p.faqs,
-    p."updatedAt",
-    p."bundleScope",
-    p."accessPeriod",
-    p."includedGrades",
-    p."deliveryRules",
-    p."renewalNotes",
-    p."includedProductSlugs",
-    p."includedSubjects",
-    p."includedTerms"
+    p."updatedAt"
   from public.products p
   where p.published = true;
 $$;
@@ -159,6 +234,75 @@ create or replace view public.catalog_products
 with (security_invoker = on) as
   select * from private.published_products();
 
+-- Public bundle catalogue, same pattern. Only PUBLISHED members are listed: an
+-- unpublished resource isn't purchasable or downloadable, so counting it as
+-- bundle contents would overstate the value. Server-side entitlement checks
+-- read bundle_products directly.
+create or replace function private.published_bundles()
+returns table (
+  id uuid,
+  slug text,
+  title text,
+  "shortDescription" text,
+  "fullDescription" text,
+  "priceZar" numeric(10,2),
+  grade text,
+  term text,
+  year text,
+  "bundleScope" text,
+  featured boolean,
+  published boolean,
+  "sortOrder" integer,
+  seo jsonb,
+  faqs text[],
+  "updatedAt" timestamptz,
+  "includedProductIds" uuid[],
+  "includedProductSlugs" text[]
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    b.id,
+    b.slug,
+    b.title,
+    b."shortDescription",
+    b."fullDescription",
+    b."priceZar",
+    b.grade,
+    b.term,
+    b.year,
+    b."bundleScope",
+    b.featured,
+    b.published,
+    b."sortOrder",
+    b.seo,
+    b.faqs,
+    b."updatedAt",
+    coalesce(members.ids, '{}'::uuid[])   as "includedProductIds",
+    coalesce(members.slugs, '{}'::text[]) as "includedProductSlugs"
+  from public.bundles b
+  left join lateral (
+    select
+      array_agg(p.id order by bp."sortOrder", p."sortOrder", p.title)   as ids,
+      array_agg(p.slug order by bp."sortOrder", p."sortOrder", p.title) as slugs
+    from public.bundle_products bp
+    join public.products p on p.id = bp."productId"
+    where bp."bundleId" = b.id
+      and p.published = true
+  ) members on true
+  where b.published = true;
+$$;
+
+revoke execute on function private.published_bundles() from public;
+grant execute on function private.published_bundles() to anon, authenticated;
+
+create or replace view public.catalog_bundles
+with (security_invoker = on) as
+  select * from private.published_bundles();
+
 -- Subjects are a controlled value list (value_lists.subjects), not a table.
 -- products.subjects / includedSubjects store subject display names directly,
 -- self-describing like grade/term. See the value_lists seed below.
@@ -169,7 +313,8 @@ create table if not exists public.faqs (
   answer text not null default '',
   category text not null default 'General',
   "sortOrder" integer not null default 0,
-  published boolean not null default true
+  published boolean not null default true,
+  "updatedAt" timestamptz not null default now()
 );
 
 create table if not exists public.testimonials (
@@ -181,7 +326,8 @@ create table if not exists public.testimonials (
   "sourceDate" date,
   featured boolean not null default false,
   "sortOrder" integer not null default 0,
-  published boolean not null default true
+  published boolean not null default true,
+  "updatedAt" timestamptz not null default now()
 );
 
 create table if not exists public.value_lists (
@@ -195,7 +341,6 @@ values
   ('grades', array['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7']),
   ('terms', array['Any Term', 'Term 1', 'Term 2', 'Term 3', 'Term 4']),
   ('years', array['2024', '2025', '2026']),
-  ('productKinds', array['Single', 'Bundle', 'Access Plan']),
   ('resourceFormats', array['Summary', 'Test / Assessment']),
   ('subjects', array[
     'Afrikaans First Additional Language', 'Economic Management Sciences (EMS)',
@@ -252,13 +397,22 @@ create table if not exists public.carts (
   "updatedAt" timestamptz not null default now()
 );
 
+-- A cart line holds exactly one of a resource or a bundle.
 create table if not exists public.cart_items (
   id uuid primary key default gen_random_uuid(),
   "cartId" uuid not null references public.carts (id) on delete cascade,
-  "productId" uuid not null references public.products (id) on delete cascade,
+  "productId" uuid references public.products (id) on delete cascade,
+  "bundleId" uuid references public.bundles (id) on delete cascade,
   "createdAt" timestamptz not null default now(),
-  unique ("cartId", "productId")
+  unique ("cartId", "productId"),
+  constraint cart_items_one_target check (num_nonnulls("productId", "bundleId") = 1)
 );
+
+-- The unique above still guards resources (NULLs never collide); bundles need
+-- their own partial unique index.
+create unique index if not exists cart_items_cart_bundle_key
+  on public.cart_items ("cartId", "bundleId")
+  where "bundleId" is not null;
 
 create index if not exists orders_customer_id_idx on public.orders ("customerId");
 create index if not exists payments_order_id_idx on public.payments ("orderId");
@@ -292,6 +446,23 @@ for each row execute procedure public.set_updated_at();
 drop trigger if exists carts_set_updated_at on public.carts;
 create trigger carts_set_updated_at
 before update on public.carts
+for each row execute procedure public.set_updated_at();
+
+-- Editable CMS collections stamp "updatedAt" so the admin can compare each
+-- record against the deployed site's content timestamp (see build-info.json).
+drop trigger if exists bundles_set_updated_at on public.bundles;
+create trigger bundles_set_updated_at
+before update on public.bundles
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists faqs_set_updated_at on public.faqs;
+create trigger faqs_set_updated_at
+before update on public.faqs
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists testimonials_set_updated_at on public.testimonials;
+create trigger testimonials_set_updated_at
+before update on public.testimonials
 for each row execute procedure public.set_updated_at();
 
 create or replace function public.handle_new_user()
@@ -403,6 +574,8 @@ grant execute on function public.create_pending_order(uuid, uuid, text, uuid, te
 
 alter table public.user_roles enable row level security;
 alter table public.products enable row level security;
+alter table public.bundles enable row level security;
+alter table public.bundle_products enable row level security;
 alter table public.faqs enable row level security;
 alter table public.testimonials enable row level security;
 alter table public.value_lists enable row level security;
@@ -422,6 +595,8 @@ drop policy if exists "Public read testimonials" on public.testimonials;
 drop policy if exists "Customer reads self" on public.users;
 drop policy if exists "Customer reads own orders" on public.orders;
 drop policy if exists "Customer reads own payments" on public.payments;
+drop policy if exists "Admin write bundles" on public.bundles;
+drop policy if exists "Admin write bundle products" on public.bundle_products;
 
 -- Role table: users may see their own role, but clients cannot write roles.
 drop policy if exists "User reads own role" on public.user_roles;
@@ -434,8 +609,11 @@ create policy "Public read testimonials" on public.testimonials for select to an
 create policy "Public read value lists" on public.value_lists for select to anon, authenticated using (true);
 
 grant select on public.catalog_products to anon, authenticated;
+grant select on public.catalog_bundles to anon, authenticated;
 
 create policy "Admin write products" on public.products for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "Admin write bundles" on public.bundles for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "Admin write bundle products" on public.bundle_products for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "Admin write faqs" on public.faqs for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "Admin write testimonials" on public.testimonials for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
@@ -496,7 +674,7 @@ create policy "Customer deletes own cart items" on public.cart_items
 
 create table if not exists public.slug_redirects (
   id uuid primary key default gen_random_uuid(),
-  "entityType" text not null default 'product' check ("entityType" in ('product')),
+  "entityType" text not null default 'product' check ("entityType" in ('product', 'bundle')),
   "entityId" uuid,
   "fromPath" text not null unique,
   "toPath" text not null,
@@ -508,9 +686,11 @@ create table if not exists public.slug_redirects (
 
 create index if not exists slug_redirects_to_path_idx on public.slug_redirects ("toPath");
 
--- Records old -> new whenever a product slug changes, collapsing chains so
--- /shop/a -> /shop/b -> /shop/c becomes a -> c and b -> c. Definer so
--- it writes slug_redirects regardless of who updated the product.
+-- Records old -> new whenever a catalogue slug changes, collapsing chains so
+-- /shop/a -> /shop/b -> /shop/c becomes a -> c and b -> c. Definer so it
+-- writes slug_redirects regardless of who did the update. Products and
+-- bundles share /shop/<slug>, so both use this — the entity type comes from
+-- whichever table fired it.
 create or replace function public.handle_product_slug_change()
 returns trigger
 language plpgsql
@@ -520,6 +700,7 @@ as $$
 declare
   old_path text := '/shop/' || old.slug;
   new_path text := '/shop/' || new.slug;
+  entity   text := case when tg_table_name = 'bundles' then 'bundle' else 'product' end;
 begin
   if new.slug is distinct from old.slug then
     update public.slug_redirects
@@ -529,10 +710,11 @@ begin
     delete from public.slug_redirects where "fromPath" = new_path;
 
     insert into public.slug_redirects ("entityType", "entityId", "fromPath", "toPath", "statusCode", "createdBy")
-    values ('product', new.id, old_path, new_path, 301, auth.uid())
+    values (entity, new.id, old_path, new_path, 301, auth.uid())
     on conflict ("fromPath") do update
       set "toPath" = excluded."toPath",
           "entityId" = excluded."entityId",
+          "entityType" = excluded."entityType",
           "statusCode" = excluded."statusCode";
   end if;
   return new;
@@ -546,9 +728,16 @@ create trigger products_slug_redirect
 after update of slug on public.products
 for each row execute procedure public.handle_product_slug_change();
 
+drop trigger if exists bundles_slug_redirect on public.bundles;
+create trigger bundles_slug_redirect
+after update of slug on public.bundles
+for each row execute procedure public.handle_product_slug_change();
+
 -- Public build-time read surface: only redirects whose target is a published
--- product. Definer function in the private schema strips unpublished targets;
--- the security_invoker view exposes the sanitized result to anon.
+-- product or bundle. Definer function in the private schema strips
+-- unpublished targets; the security_invoker view exposes the sanitized result
+-- to anon. A redirect is kept if EITHER catalogue serves its target — both
+-- live under /shop/<slug>, so the check is on the path, not the entity type.
 create or replace function private.active_slug_redirects()
 returns setof public.slug_redirects
 language sql
@@ -558,12 +747,17 @@ set search_path = ''
 as $$
   select sr.*
   from public.slug_redirects sr
-  where sr."entityType" = 'product'
-    and exists (
+  where exists (
       select 1
       from public.products p
       where p.published = true
         and ('/shop/' || p.slug) = sr."toPath"
+    )
+     or exists (
+      select 1
+      from public.bundles b
+      where b.published = true
+        and ('/shop/' || b.slug) = sr."toPath"
     );
 $$;
 

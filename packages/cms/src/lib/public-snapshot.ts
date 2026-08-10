@@ -14,6 +14,8 @@ import type { CmsSnapshot } from '../types'
  * Strip a full CMS snapshot down to public catalogue content only:
  * - products: published only (storage keys are already removed upstream by the
  *   catalog_products view)
+ * - bundles: published only, and their membership narrowed to published
+ *   resources so the site can never advertise contents a buyer can't get
  * - faqs / testimonials: published only
  * - customers / orders / payments / form submissions: always empty
  * - stats: recalculated from the public content
@@ -26,11 +28,28 @@ export const toPublicSnapshot = (snapshot: CmsSnapshot): CmsSnapshot => {
   const faqs = snapshot.faqs.filter((faq) => faq.published)
   const testimonials = snapshot.testimonials.filter((testimonial) => testimonial.published)
 
+  // catalog_bundles already does this server-side, but the admin snapshot
+  // reads the base table — so re-narrow here rather than trusting the source.
+  const liveSlugs = new Set(products.map((product) => product.slug))
+  const bundles = snapshot.bundles
+    .filter((bundle) => bundle.published)
+    .map((bundle) => {
+      const keep = bundle.includedProductSlugs
+        .map((slug, index) => ({ slug, id: bundle.includedProductIds[index] }))
+        .filter((member) => liveSlugs.has(member.slug))
+      return {
+        ...bundle,
+        includedProductSlugs: keep.map((member) => member.slug),
+        includedProductIds: keep.map((member) => member.id).filter(Boolean),
+      }
+    })
+
   return {
     generatedAt: snapshot.generatedAt,
     source: snapshot.source,
     valueLists: snapshot.valueLists,
     products,
+    bundles,
     faqs,
     testimonials,
     customers: [],
@@ -42,8 +61,7 @@ export const toPublicSnapshot = (snapshot: CmsSnapshot): CmsSnapshot => {
       productCount: products.length,
       subjectCount: snapshot.valueLists.subjects.length,
       gradeCount: snapshot.valueLists.grades.length,
-      bundleCount: products.filter((product) => product.productKind === 'Bundle').length,
-      accessPlanCount: products.filter((product) => product.productKind === 'Access Plan').length,
+      bundleCount: bundles.length,
       orderCount: 0,
       customerCount: 0,
     },
