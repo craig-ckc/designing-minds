@@ -123,6 +123,21 @@ await writeFile(path.join(distDir, 'sitemap.xml'), server.sitemapXml(routes, sit
 await writeFile(path.join(distDir, 'robots.txt'), server.robotsTxt(server.FUNCTIONAL_NOINDEX_PATHS, siteUrl), 'utf8')
 await writeFile(path.join(distDir, 'llms.txt'), server.llmsTxt(routes, siteUrl), 'utf8')
 
+// build-info.json — the deployed site's own record of what it was built from.
+// The admin fetches this to tell "live" apart from "changed since publish": a
+// record is stale when its updatedAt is newer than `contentAt`.
+//
+// `contentAt` (the moment the CMS snapshot was read), NOT `builtAt`, is the
+// honest cut-off — anything saved after the snapshot was fetched did not make
+// it into this deployment even though the build was still running.
+const buildInfo = {
+  contentAt: snapshot.generatedAt,
+  builtAt: new Date().toISOString(),
+  source: snapshot.source,
+  routes: routes.length,
+}
+await writeFile(path.join(distDir, 'build-info.json'), `${JSON.stringify(buildInfo, null, 2)}\n`, 'utf8')
+
 console.log(`[prerender] Rendered ${routes.length} routes, ${redirects.length} redirects → dist/`)
 
 /* ------------------------ Vercel Build Output API ---------------------- */
@@ -149,13 +164,25 @@ const config = {
     ...server.redirectRoutes(redirects),
     // 2. Proxy the API to the functions deployment.
     { src: '/api/(.*)', dest: `${apiOrigin}/api/$1` },
-    // 3. Serve generated static files (route HTML, assets, sitemap, robots).
+    // 3. build-info.json is polled cross-origin by the admin app to work out
+    //    which records are live, so it needs CORS and must never be cached —
+    //    a stale copy would report content as published that isn't.
+    //    `continue` applies the headers and falls through to the filesystem.
+    {
+      src: '/build-info.json',
+      headers: {
+        'access-control-allow-origin': '*',
+        'cache-control': 'no-store, max-age=0, must-revalidate',
+      },
+      continue: true,
+    },
+    // 4. Serve generated static files (route HTML, assets, sitemap, robots).
     { handle: 'filesystem' },
-    // 4. Known functional client routes (auth, cart, checkout, account) →
+    // 5. Known functional client routes (auth, cart, checkout, account) →
     //    noindex SPA shell with a 200. These aren't prerendered; they render
     //    and load their own data in the browser.
     { src: functionalSpaSrc, dest: '/_shell.html' },
-    // 5. Everything else is a genuinely unknown URL → serve the shell (so the
+    // 6. Everything else is a genuinely unknown URL → serve the shell (so the
     //    client shows the 404 page) but with a real 404 status, not a soft 404.
     { src: '/.*', dest: '/_shell.html', status: 404 },
   ],
