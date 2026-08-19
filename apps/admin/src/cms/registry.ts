@@ -62,6 +62,7 @@ const products: AdminCollection = {
     { key: 'subjects', label: 'Subject', type: 'multiReference', valueList: 'subjects', required: true, maxSelected: 1 },
 
     { key: 'purchasedFiles', label: 'Purchased files', type: 'fileList' },
+    { key: 'galleryImages', label: 'Preview images', type: 'imageGallery' },
 
     { key: 'faqs', label: 'FAQs referenced by this product', type: 'multiReference', collection: 'faqs', valueKey: 'id' },
 
@@ -79,6 +80,11 @@ const products: AdminCollection = {
       title: 'Files',
       hint: 'Files buyers receive after purchasing this resource.',
       fields: ['purchasedFiles'],
+    },
+    {
+      title: 'Preview images',
+      hint: 'Shown to anyone browsing, after the generated cover. Drag in as many as you like — the first one here is the second thing a shopper sees.',
+      fields: ['galleryImages'],
     },
     { title: 'Related FAQs', fields: ['faqs'] },
     { title: 'SEO', fields: ['seo.title', 'seo.description'] },
@@ -157,6 +163,8 @@ const bundles: AdminCollection = {
       helpText: 'Exactly what a buyer receives. Price saving, subjects and terms are worked out from these.',
     },
 
+    { key: 'galleryImages', label: 'Preview images', type: 'imageGallery' },
+
     { key: 'faqs', label: 'FAQs referenced by this bundle', type: 'multiReference', collection: 'faqs', valueKey: 'id' },
 
     { key: 'seo.title', label: 'Meta title', type: 'text' },
@@ -167,6 +175,11 @@ const bundles: AdminCollection = {
     { title: 'Pricing & visibility', fields: ['priceZar', 'sortOrder', 'featured'] },
     { title: 'Classification', fields: ['bundleScope', 'grade', 'term', 'year'] },
     { title: 'Contents', hint: 'The resources this bundle unlocks.', fields: ['includedProductIds'] },
+    {
+      title: 'Preview images',
+      hint: 'Shown to anyone browsing, after the generated cover stack. Drag in as many as you like — the first one here is the second thing a shopper sees.',
+      fields: ['galleryImages'],
+    },
     { title: 'Related FAQs', fields: ['faqs'] },
     { title: 'SEO', fields: ['seo.title', 'seo.description'] },
   ],

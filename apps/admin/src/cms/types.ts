@@ -36,6 +36,7 @@ export type FieldType =
   | 'reference'
   | 'multiReference'
   | 'fileList'
+  | 'imageGallery'
 
 /** Collections that a Reference Field can point at. */
 export type ReferenceCollection = 'faqs' | 'products'
@@ -85,7 +86,14 @@ export type ReferenceField = SingleReferenceField | MultiReferenceField
 
 export type FileListField = FieldBase & { type: 'fileList' }
 
-export type AdminField = PrimitiveField | SlugField | SelectField | ReferenceField | FileListField
+/**
+ * A gallery of images stored on the record, in the order a visitor sees them.
+ * The plural counterpart to `fileList`: that field holds one paid artefact,
+ * this one holds as many public preview images as an editor wants.
+ */
+export type ImageGalleryField = FieldBase & { type: 'imageGallery' }
+
+export type AdminField = PrimitiveField | SlugField | SelectField | ReferenceField | FileListField | ImageGalleryField
 
 /* ------------------------------ List columns --------------------------- */
 

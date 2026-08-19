@@ -6,7 +6,8 @@ import { collectionRegistry, getCollection } from './cms/registry'
 import { createAdminAdapter, selectRecord } from './cms/adapter'
 import { getPath, getRecordTitle, setPath } from './cms/record'
 import type { AdminCollection, AdminRecord } from './cms/types'
-import { UploadsProvider, type UploadJob } from './lib/uploads'
+import { UploadsProvider, type UploadedArtifact, type UploadJob } from './lib/uploads'
+import type { UploadPurpose } from './lib/upload-transport'
 import { Shell } from './components/Shell'
 import { LoadingScreen, StatePanel } from './components/ui'
 import { ScrollArea } from './components/primitives'
@@ -76,9 +77,10 @@ function App() {
     (
       recordId: string,
       file: File,
+      purpose: UploadPurpose,
       onProgress: (fraction: number) => void,
       onAbortHandle: (abort: () => void) => void,
-    ): Promise<ProductFile> => adapter.uploadFile({ id: recordId }, file, onProgress, onAbortHandle),
+    ): Promise<UploadedArtifact> => adapter.uploadFile({ id: recordId }, file, purpose, onProgress, onAbortHandle),
     [adapter],
   )
 
@@ -91,16 +93,21 @@ function App() {
    * isn't quietly thrown away.
    */
   const attachOrphanedFile = useCallback(
-    async (job: UploadJob, file: ProductFile) => {
+    async (job: UploadJob, file: UploadedArtifact) => {
       const collection = getCollection(job.collectionId)
       const current = snapshotRef.current
       if (!collection || !current) return
       const record = selectRecord(current, job.collectionId, job.recordId)
       if (!record) return
 
-      const existing = (getPath(record, job.fieldKey) as ProductFile[] | undefined) ?? []
+      const existing = (getPath(record, job.fieldKey) as UploadedArtifact[] | undefined) ?? []
+      // Replacing is a purchased-file move only — a gallery has no Replace, so
+      // its uploads only ever append. The label is carried across because it is
+      // the editor's words about the file, not the file's own name.
       const next = job.replacesFileId
-        ? existing.map((entry) => (entry.id === job.replacesFileId ? { ...file, label: entry.label } : entry))
+        ? existing.map((entry) =>
+            entry.id === job.replacesFileId ? { ...file, label: (entry as ProductFile).label } : entry,
+          )
         : [...existing, file]
       await saveRecord(collection, setPath(record, job.fieldKey, next))
     },

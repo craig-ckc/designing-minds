@@ -51,7 +51,7 @@ export function FileListField({
 
   // While this editor is open, finished uploads land in the draft rather than
   // being written straight to the record.
-  useUploadTarget(collectionId, recordId, fieldKey, (file, replacesFileId) => {
+  useUploadTarget<ProductFile>(collectionId, recordId, fieldKey, (file, replacesFileId) => {
     onChange((current) =>
       replacesFileId
         ? current.map((entry) => (entry.id === replacesFileId ? { ...file, label: entry.label } : entry))
@@ -63,7 +63,7 @@ export function FileListField({
   const queue = (selected: FileList | File[] | null, replacesFileId?: string) => {
     const file = [...(selected ?? [])][0]
     if (!file) return
-    start({ collectionId, recordId, fieldKey, file, replacesFileId })
+    start({ collectionId, recordId, fieldKey, purpose: 'purchased', file, replacesFileId })
   }
 
   const onDrop = (event: DragEvent<HTMLLabelElement>) => {

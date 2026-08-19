@@ -8,6 +8,16 @@
    needs to see that it is moving.
    ------------------------------------------------------------------------- */
 
+/**
+ * Which bucket an upload is bound for, and so what it becomes on the record.
+ *
+ * 'purchased' is paid content in the private bucket, reachable only through a
+ * signed URL after an entitlement check. 'gallery' is public marketing in the
+ * public media bucket, carrying a permanent URL the prerendered site can embed.
+ * Mirrors the `purpose` accepted by POST /api/admin/upload-url.
+ */
+export type UploadPurpose = 'purchased' | 'gallery'
+
 export interface UploadHandle {
   /** Resolves when the object is stored; rejects on network/HTTP failure or abort. */
   done: Promise<void>

@@ -8,7 +8,8 @@
    - save() is the only per-collection branch: it dispatches to the repository's
      typed save method and returns a snapshot mutator to fold the result back in.
    - uploadFile() reuses the server signed-upload flow (was inline in the old
-     ProductEditorPage).
+     ProductEditorPage). It serves both upload fields: `purpose` picks the
+     bucket, and so which artefact the caller gets back.
    ------------------------------------------------------------------------- */
 
 import {
@@ -24,11 +25,12 @@ import {
   type Faq,
   type Product,
   type ProductFile,
+  type ProductImage,
   type Testimonial,
 } from '@designing-minds/cms'
 import { supabase } from '../lib/supabase'
 import { apiUrl } from '../lib/api'
-import { putWithProgress } from '../lib/upload-transport'
+import { putWithProgress, type UploadPurpose } from '../lib/upload-transport'
 import type { AdminCollection, AdminRecord, FieldContext, FieldOption, ReferenceField, SelectField } from './types'
 import { getPath } from './record'
 
@@ -292,11 +294,36 @@ export type AdminAdapter = {
   uploadFile: (
     record: AdminRecord,
     file: File,
+    /** 'purchased' → private bucket, 'gallery' → public bucket. */
+    purpose: UploadPurpose,
     onProgress?: (fraction: number) => void,
     /** Receives a cancel function once the request is actually in flight. */
     onAbortHandle?: (abort: () => void) => void,
-  ) => Promise<ProductFile>
+  ) => Promise<ProductFile | ProductImage>
 }
+
+/**
+ * An image's intrinsic size, read from the bytes the admin just picked.
+ *
+ * Measured here rather than on the website because this is the only moment the
+ * original file is in hand. Storing it lets the gallery reserve the right box
+ * before the image loads, so a visitor never watches the page jump. A file the
+ * browser cannot decode resolves to no dimensions rather than rejecting — an
+ * unusual image format is not a reason to fail the upload.
+ */
+const readImageSize = (file: File): Promise<{ width?: number; height?: number }> =>
+  new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) return resolve({})
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    const done = (size: { width?: number; height?: number }) => {
+      URL.revokeObjectURL(url)
+      resolve(size)
+    }
+    image.onload = () => done({ width: image.naturalWidth, height: image.naturalHeight })
+    image.onerror = () => done({})
+    image.src = url
+  })
 
 export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
   return {
@@ -332,22 +359,55 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
      * millisecond would otherwise collide on both the record and the storage
      * key, and multi-file selection makes that easy to hit.
      */
-    async uploadFile(record, file, onProgress, onAbortHandle) {
+    async uploadFile(record, file, purpose, onProgress, onAbortHandle) {
       const fileId = crypto.randomUUID()
+      // Read before the request goes out: the measurement is local and the
+      // upload is not, so doing it first costs nothing and keeps the two
+      // failure modes apart.
+      const size = purpose === 'gallery' ? await readImageSize(file) : {}
+
       const { data } = await supabase.auth.getSession()
       const token = data.session?.access_token
       if (!token) throw new Error('Admin session required.')
       const response = await fetch(apiUrl('/api/admin/upload-url'), {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-        body: JSON.stringify({ productId: record.id, fileId, filename: file.name }),
+        body: JSON.stringify({ recordId: record.id, fileId, filename: file.name, purpose }),
       })
-      const body = (await response.json()) as { uploadUrl?: string; storageKey?: string; error?: string }
+      const body = (await response.json()) as {
+        uploadUrl?: string
+        storageKey?: string
+        publicUrl?: string
+        error?: string
+      }
       if (!response.ok || !body.uploadUrl || !body.storageKey) throw new Error(body.error ?? 'Unable to create upload URL.')
+      // A gallery image without a public URL is useless to the website, and the
+      // record would store an image that can never render. Refuse it here
+      // rather than saving something broken.
+      if (purpose === 'gallery' && !body.publicUrl) {
+        throw new Error('The server did not return a public URL for this image.')
+      }
 
       const handle = putWithProgress(body.uploadUrl, file, onProgress ?? (() => {}))
       onAbortHandle?.(handle.abort)
       await handle.done
+
+      if (purpose === 'gallery') {
+        const image: ProductImage = {
+          id: fileId,
+          storageKey: body.storageKey,
+          url: body.publicUrl as string,
+          filename: file.name,
+          // Left empty on purpose: alt text is a judgement about what the image
+          // conveys, and defaulting it to the filename would put "IMG_4021.jpg"
+          // into a screen reader while looking like it had been filled in.
+          alt: '',
+          sizeBytes: file.size,
+          contentType: file.type || undefined,
+          ...size,
+        }
+        return image
+      }
 
       return {
         id: fileId,

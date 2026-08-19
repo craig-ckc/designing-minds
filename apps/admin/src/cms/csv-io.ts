@@ -12,9 +12,11 @@ import { parseCsv, toCsv } from '../lib/csv.ts'
 
 /* -------------------------------- Export ------------------------------- */
 
-/** fileList fields hold storage objects that cannot round-trip through CSV. */
+/** fileList and imageGallery fields hold storage objects that cannot round-trip
+ *  through CSV — a filename in a cell says nothing about where the bytes are. */
+const NON_EXPORTABLE: ReadonlySet<AdminField['type']> = new Set(['fileList', 'imageGallery'])
 const exportableFields = (collection: AdminCollection): AdminField[] =>
-  collection.fields.filter((field) => field.type !== 'fileList')
+  collection.fields.filter((field) => !NON_EXPORTABLE.has(field.type))
 
 function formatCell(value: unknown): string {
   if (value == null) return ''

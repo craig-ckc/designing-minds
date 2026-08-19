@@ -1,12 +1,13 @@
 import { type ReactNode } from 'react'
 import { cn } from '@designing-minds/utils'
-import type { ProductFile } from '@designing-minds/cms'
+import type { ProductFile, ProductImage } from '@designing-minds/cms'
 import type { AdminField, AdminRecord, FieldContext, MultiReferenceField, SelectField, SingleReferenceField } from '../../cms/types'
 import { getPath } from '../../cms/record'
 import { FIELD } from '../tokens'
 import { Icon } from '../ui'
 import { Input, ReferencePicker, Select, Switch, Textarea, type SelectOption } from '../primitives'
 import { FileListField } from './FileListField'
+import { ImageGalleryField } from './ImageGalleryField'
 import { RichTextEditor } from './RichTextEditor'
 
 type Props = {
@@ -136,6 +137,9 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
       case 'fileList':
         return renderFileList()
 
+      case 'imageGallery':
+        return renderImageGallery()
+
       default:
         return <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
     }
@@ -188,6 +192,21 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
     )
   }
 
+  function renderImageGallery(): ReactNode {
+    const images = Array.isArray(value) ? (value as ProductImage[]) : []
+    return (
+      <ImageGalleryField
+        collectionId={collectionId}
+        recordId={record.id}
+        fieldKey={field.key}
+        images={images}
+        onChange={(update) => onUpdate(field.key, update)}
+        disabled={disabled}
+        labelId={`${inputId}:label`}
+      />
+    )
+  }
+
   function renderFileList(): ReactNode {
     const files = Array.isArray(value) ? (value as ProductFile[]) : []
     return (
@@ -205,16 +224,19 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
   }
 }
 
+/* A file list and an image gallery are groups of controls, not one input, so
+   their caption is a plain label referenced by aria-labelledby rather than a
+   <label htmlFor> pointing at something that can't take focus. */
+const GROUP_FIELDS = new Set<AdminField['type']>(['fileList', 'imageGallery'])
+
 function FieldShell({ field, inputId, children }: { field: AdminField; inputId: string; children: ReactNode }) {
-  // A file list is a group of controls, not one input, so its caption is a
-  // plain label referenced by aria-labelledby rather than a <label htmlFor>
-  // pointing at something that can't take focus.
-  const Caption = field.type === 'fileList' ? 'span' : 'label'
+  const isGroup = GROUP_FIELDS.has(field.type)
+  const Caption = isGroup ? 'span' : 'label'
   return (
     <div className="grid gap-2">
       <Caption
         id={`${inputId}:label`}
-        htmlFor={field.type === 'fileList' ? undefined : inputId}
+        htmlFor={isGroup ? undefined : inputId}
         className="text-[0.92rem] font-medium"
       >
         {field.label}

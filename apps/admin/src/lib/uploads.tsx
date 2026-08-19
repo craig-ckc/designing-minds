@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react'
-import type { ProductFile } from '@designing-minds/cms'
-import { UploadAbortedError } from './upload-transport'
+import type { ProductFile, ProductImage } from '@designing-minds/cms'
+import { UploadAbortedError, type UploadPurpose } from './upload-transport'
 
 /* -------------------------------------------------------------------------
    Background uploads.
@@ -16,6 +16,12 @@ import { UploadAbortedError } from './upload-transport'
    flight, and the field shows explicit progress, so leaving mid-upload is a
    decision rather than an accident.
 
+   One queue serves both upload fields. What a finished upload BECOMES differs —
+   a purchased file (private bucket, signed on demand) or a gallery image (public
+   bucket, permanent url) — so the artefact is typed as the union and the field
+   that started the job is the thing that knows which arm it is. The queue itself
+   only moves bytes and reports progress, so it has no reason to care.
+
    Where a finished file lands depends on who is listening:
      * the editor for that record is open  → it receives the file and folds it
        into the draft, so the admin sees it appear and saves when ready
@@ -25,12 +31,19 @@ import { UploadAbortedError } from './upload-transport'
 
 export type UploadStatus = 'uploading' | 'done' | 'error'
 
+export type { UploadPurpose }
+
+/** What a finished upload becomes, by purpose. */
+export type UploadedArtifact = ProductFile | ProductImage
+
 export interface UploadJob {
   id: string
   collectionId: string
   recordId: string
   /** Record key the file belongs to, e.g. `purchasedFiles`. */
   fieldKey: string
+  /** Which bucket the bytes are going to, and so what they come back as. */
+  purpose: UploadPurpose
   filename: string
   sizeBytes: number
   /** 0–1. */
@@ -66,7 +79,7 @@ const patch = (id: string, changes: Partial<UploadJob>) => {
 }
 
 /** Live handlers, keyed `collectionId:recordId:fieldKey`, for open editors. */
-const targets = new Map<string, (file: ProductFile, replacesFileId?: string) => void>()
+const targets = new Map<string, (file: UploadedArtifact, replacesFileId?: string) => void>()
 const targetKey = (collectionId: string, recordId: string, fieldKey: string) =>
   `${collectionId}:${recordId}:${fieldKey}`
 
@@ -76,6 +89,7 @@ interface StartInput {
   collectionId: string
   recordId: string
   fieldKey: string
+  purpose: UploadPurpose
   file: File
   replacesFileId?: string
 }
@@ -101,11 +115,12 @@ export function UploadsProvider({
   upload: (
     recordId: string,
     file: File,
+    purpose: UploadPurpose,
     onProgress: (fraction: number) => void,
     onAbortHandle: (abort: () => void) => void,
-  ) => Promise<ProductFile>
+  ) => Promise<UploadedArtifact>
   /** Attach a finished file when no editor is open to receive it. */
-  onOrphaned: (job: UploadJob, file: ProductFile) => Promise<void>
+  onOrphaned: (job: UploadJob, file: UploadedArtifact) => Promise<void>
   /** Tell the admin an upload finished (or failed) — they may be elsewhere. */
   onNotify: (message: string, tone: 'info' | 'error') => void
 }) {
@@ -124,6 +139,7 @@ export function UploadsProvider({
       collectionId: input.collectionId,
       recordId: input.recordId,
       fieldKey: input.fieldKey,
+      purpose: input.purpose,
       filename: input.file.name,
       sizeBytes: input.file.size,
       progress: 0,
@@ -138,6 +154,7 @@ export function UploadsProvider({
         const file = await live.current.upload(
           input.recordId,
           input.file,
+          input.purpose,
           (fraction) => patch(id, { progress: fraction }),
           (abort) => aborts.set(id, abort),
         )
@@ -222,11 +239,11 @@ export function useFieldUploads(collectionId: string, recordId: string, fieldKey
  * file that lands while it's on screen goes into the draft instead of being
  * written straight through.
  */
-export function useUploadTarget(
+export function useUploadTarget<T extends UploadedArtifact>(
   collectionId: string,
   recordId: string,
   fieldKey: string,
-  handler: (file: ProductFile, replacesFileId?: string) => void,
+  handler: (file: T, replacesFileId?: string) => void,
 ) {
   const live = useRef(handler)
   useEffect(() => {
@@ -235,7 +252,9 @@ export function useUploadTarget(
 
   useEffect(() => {
     const key = targetKey(collectionId, recordId, fieldKey)
-    const forward = (file: ProductFile, replacesFileId?: string) => live.current(file, replacesFileId)
+    // The field that registered owns this fieldKey, so it is the authority on
+    // which arm of the union its own uploads come back as.
+    const forward = (file: UploadedArtifact, replacesFileId?: string) => live.current(file as T, replacesFileId)
     targets.set(key, forward)
     return () => {
       // Only clear our own registration — a remount may have replaced it.
