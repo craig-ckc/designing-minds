@@ -80,7 +80,16 @@ create table if not exists public.products (
   "sortOrder" integer not null default 0,
   seo jsonb not null default '{}',
   faqs text[] not null default '{}',
-  "updatedAt" timestamptz not null default now()
+  "updatedAt" timestamptz not null default now(),
+  -- Preview images shown on the Product Detail. The opposite of purchasedFiles:
+  -- marketing, not paid content, so these live in the PUBLIC media bucket and
+  -- carry their permanent public url inline rather than a key to sign later.
+  --
+  -- LAST on purpose. published_products() returns `setof public.products`, which
+  -- matches POSITIONALLY, and ALTER TABLE can only append — so a column added
+  -- here mid-list would sit at a different index on an already-migrated database
+  -- than on a fresh one, and the function would compile against only one of them.
+  "galleryImages" jsonb not null default '[]'
 );
 
 -- A priced package of individual resources. Subjects, terms, file count and
@@ -97,6 +106,7 @@ create table if not exists public.bundles (
   term text not null,
   year text not null,
   "bundleScope" text check ("bundleScope" in ('Term', 'Full Year')),
+  "galleryImages" jsonb not null default '[]',
   featured boolean not null default false,
   published boolean not null default false,
   "sortOrder" integer not null default 0,
@@ -221,7 +231,11 @@ as $$
     p."sortOrder",
     p.seo,
     p.faqs,
-    p."updatedAt"
+    p."updatedAt",
+    -- Passed through whole, unlike purchasedFiles above: a gallery image is
+    -- public marketing, so withholding its url would only break the page.
+    -- Last, matching the column's position in the table — see the note there.
+    p."galleryImages"
   from public.products p
   where p.published = true;
 $$;
@@ -250,6 +264,7 @@ returns table (
   term text,
   year text,
   "bundleScope" text,
+  "galleryImages" jsonb,
   featured boolean,
   published boolean,
   "sortOrder" integer,
@@ -275,6 +290,7 @@ as $$
     b.term,
     b.year,
     b."bundleScope",
+    b."galleryImages",
     b.featured,
     b.published,
     b."sortOrder",

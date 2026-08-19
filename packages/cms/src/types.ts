@@ -53,6 +53,32 @@ export interface SeoMeta {
   description: string
 }
 
+/**
+ * An image in a catalogue record's preview gallery.
+ *
+ * Public by construction: unlike `ProductFile`, which is paid content behind a
+ * signed URL, a gallery image is marketing shown to anonymous visitors. It
+ * lives in the public media bucket and carries its permanent `url` inline so
+ * the prerendered static HTML can reference it without minting anything.
+ */
+export interface ProductImage {
+  id: string
+  /** Provider-neutral key inside the PUBLIC media bucket. */
+  storageKey: string
+  /** Permanent public URL for the object — safe to bake into static HTML. */
+  url: string
+  /** Original filename at upload time. Shown in the admin, never to a visitor. */
+  filename: string
+  /** Author-supplied alternative text. Empty means "decorative". */
+  alt: string
+  sizeBytes?: number
+  contentType?: string
+  /** Intrinsic pixel size, measured in the browser at upload time, so the
+   *  gallery can reserve the right box and avoid layout shift. */
+  width?: number
+  height?: number
+}
+
 /** A file attached to a Product. Files live on Products, not a separate collection. */
 export interface ProductFile {
   id: string
@@ -86,6 +112,8 @@ export interface Product {
   subjects: string[]
   marks: number | null
   purchasedFiles: ProductFile[]
+  /** Preview gallery shown after the generated cover on the Product Detail. */
+  galleryImages: ProductImage[]
   featured: boolean
   published: boolean
   sortOrder: number
@@ -117,6 +145,8 @@ export interface Bundle {
   term: Term
   year: string
   bundleScope?: BundleScope
+  /** Preview gallery shown after the generated cover stack on the Product Detail. */
+  galleryImages: ProductImage[]
   featured: boolean
   published: boolean
   sortOrder: number

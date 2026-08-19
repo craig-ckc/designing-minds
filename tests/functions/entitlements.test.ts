@@ -15,6 +15,7 @@ const product = (overrides: Partial<Product> & Pick<Product, 'slug' | 'productKi
   subjects: ['mathematics'],
   marks: null,
   purchasedFiles: [],
+  galleryImages: [],
   featured: false,
   published: true,
   sortOrder: 0,
