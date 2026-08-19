@@ -20,7 +20,7 @@ import { Button } from '../components/ui/button'
 import { FaqAccordion } from '../components/ui/faq-accordion'
 import { IncludedProduct } from '../components/ui/included-product'
 import { ProductCard } from '../components/ui/product-card'
-import { ProductCover } from '../components/ui/product-cover'
+import { ProductGallery } from '../components/ui/product-gallery'
 import { SpecRow } from '../components/ui/spec-row'
 import { addCartSlug } from '../lib/cart'
 import { Markdown } from '../lib/markdown'
@@ -98,9 +98,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
 
           <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
             <div>
-              <div className="flex justify-center px-8 py-4 sm:px-12">
-                <ProductCover product={product} className="max-w-[22rem]" priority />
-              </div>
+              <ProductGallery item={product} images={product.galleryImages ?? []} />
 
               {/* An "About this resource" heading over nothing reads worse than
                   no section at all, so the block waits for real copy. */}
@@ -214,14 +212,11 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
 
         <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
           <div>
-            <div className="flex justify-center px-8 py-4 sm:px-12">
-              <ProductCover
-                product={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
-                stacked
-                className="max-w-[22rem]"
-                priority
-              />
-            </div>
+            <ProductGallery
+              item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
+              images={bundle.galleryImages ?? []}
+              stacked
+            />
 
             {hasRealCopy(bundle.fullDescription) ? (
               <div className="mt-8 text-ink-soft">

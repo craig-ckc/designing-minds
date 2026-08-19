@@ -4,9 +4,14 @@ import test from 'node:test'
 
 const productPageSource = readFileSync(new URL('../../apps/web/src/pages/product-page.tsx', import.meta.url), 'utf8')
 
-test('product detail media uses the centered shared product cover', () => {
-  assert.match(productPageSource, /import \{ ProductCover \} from '\.\.\/components\/ui\/product-cover'/)
-  assert.match(productPageSource, /className="flex justify-center[^\"]*"[\s\S]*<ProductCover product=\{product\}/)
+test('product detail media goes through the shared gallery, cover first', () => {
+  // The page no longer places a cover directly: the gallery owns that slot and
+  // composes the cover as its first slide, so both detail views get arrows the
+  // moment a record has uploads without either of them knowing about it.
+  assert.match(productPageSource, /import \{ ProductGallery \} from '\.\.\/components\/ui\/product-gallery'/)
+  assert.match(productPageSource, /<ProductGallery item=\{product\} images=\{product\.galleryImages \?\? \[\]\} \/>/)
+  assert.match(productPageSource, /<ProductGallery[\s\S]*images=\{bundle\.galleryImages \?\? \[\]\}[\s\S]*stacked/)
+  assert.doesNotMatch(productPageSource, /<ProductCover/)
   assert.doesNotMatch(productPageSource, /<Placeholder/)
 })
 

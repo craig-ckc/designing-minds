@@ -17,13 +17,21 @@ test('Manrope loads directly without a render-blocking remote stylesheet', () =>
 
 test('only the above-the-fold product cover promotes its illustration', () => {
   const cover = read('src/components/ui/product-cover.tsx')
-  const productPage = read('src/pages/product-page.tsx')
+  const gallery = read('src/components/ui/product-gallery.tsx')
   const optimizer = read('scripts/optimize-images.mjs')
 
   assert.match(cover, /loading=\{priority \? 'eager' : 'lazy'\}/)
   assert.match(cover, /fetchPriority=\{priority \? 'high' : 'auto'\}/)
   assert.match(cover, /priority=\{priority && i === layers\.length - 1\}/)
-  assert.match(productPage, /<ProductCover product=\{product\} className="max-w-\[22rem\]" priority \/>/)
+  // The gallery owns the media slot now, so it is what decides which image is
+  // the LCP candidate. The cover is promoted on BOTH branches — with and
+  // without uploads it is still the first thing painted.
+  const galleryCovers = gallery.match(/<ProductCover[\s\S]*?priority/g) ?? []
+  assert.equal(galleryCovers.length, 2, 'both gallery branches should promote the cover')
+  // Uploaded slides are off-screen until the visitor pages to them, so nothing
+  // else competes with the cover for the initial fetch.
+  assert.match(gallery, /loading="lazy"/)
+  assert.doesNotMatch(gallery, /fetchPriority="high"/)
   assert.match(optimizer, /const SUBJECT_AVIF_MAX_PX = 640/)
   assert.match(optimizer, /ext === '\.avif' && rel\.split\(path\.sep\)\[0\] === 'subjects'/)
   assert.match(optimizer, /width: SUBJECT_AVIF_MAX_PX[\s\S]*height: SUBJECT_AVIF_MAX_PX[\s\S]*withoutEnlargement: true/)
