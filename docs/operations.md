@@ -80,7 +80,7 @@ Admin:
 | --- | --- |
 | `VITE_SUPABASE_URL` | Public Supabase URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Publishable/anon key |
-| `VITE_WEB_URL` | Production storefront origin used by Preview |
+| `VITE_WEB_URL` | Deployed storefront origin, used by Preview links and by the live/unpublished check. Must be the origin actually serving the built site (it is polled for `/build-info.json`); pointing it at a hostname still served by something else makes every record's publish state read as unknown. |
 | `VITE_API_BASE_URL` | Functions origin when not using same-origin rewrites |
 
 Web static generation:
@@ -103,7 +103,8 @@ Functions:
 | `PAYFAST_MODE` | Production mode (`live`) |
 | `PAYFAST_ALLOWED_IPS` | Optional ITN source-IP override; leave blank to resolve PayFast's ITN hosts via DNS |
 | `STORAGE_BUCKET` | Private product-file bucket |
-| `ALLOWED_ORIGINS` | Web/admin origins if direct cross-origin calls are used |
+| `PUBLIC_MEDIA_BUCKET` | Public bucket for catalogue preview-gallery images (`public_media`). Gallery uploads fail without it; purchased files are unaffected |
+| `ALLOWED_ORIGINS` | Comma-separated origins allowed to call the API cross-origin. The admin is the only such caller — the web project proxies `/api/*` server-side, so it needs no entry. Every hostname the admin is opened from must be listed, including the project's `*.vercel.app` alias; a missing one surfaces in the browser as an opaque "Failed to fetch" on the preflight, not as a server error |
 | `VERCEL_WEB_DEPLOY_HOOK_URL` | Secret Deploy Hook for the web project |
 | `RESEND_API_KEY` | Resend API key (blank disables sending) |
 | `RESEND_FROM` | Verified sender, e.g. `Designing Minds <noreply@designingminds.co.za>` |
