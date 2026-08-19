@@ -102,7 +102,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
           {visible.length > 0 ? (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {renderedPackages.map((bundle) => (
-                <BundleCard key={bundle.id} bundle={bundle} snapshot={snapshot} />
+                <BundleCard key={bundle.id} bundle={bundle} snapshot={snapshot} className="col-span-2" />
               ))}
             </div>
           ) : (

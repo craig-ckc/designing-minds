@@ -118,7 +118,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {rendered.map((entry) =>
                 entry.kind === 'bundle' ? (
-                  <BundleCard key={entry.bundle.id} bundle={entry.bundle} snapshot={snapshot} />
+                  <BundleCard key={entry.bundle.id} bundle={entry.bundle} snapshot={snapshot} className="col-span-2" />
                 ) : (
                   <ProductCard key={entry.product.id} product={entry.product} />
                 ),

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { bundleContents, priceLabel, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
+import { cn } from '@designing-minds/utils'
 import { Button } from './button'
 import { Card } from './card'
 import { Icon } from './icon'
@@ -16,7 +17,16 @@ import { useCartSlugs } from '../../lib/use-cart'
  * A bundle has no subjects of its own; they come from its members, which is
  * also what drives the cover art.
  */
-export function BundleCard({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnapshot }) {
+export function BundleCard({
+  bundle,
+  snapshot,
+  className = '',
+}: {
+  bundle: Bundle
+  snapshot: CmsSnapshot
+  /** Forwarded to the card so a caller can place it in a grid (e.g. col-span-2). */
+  className?: string
+}) {
   const inCart = useCartSlugs().includes(bundle.slug)
   const href = `/shop/${bundle.slug}`
   const contents = bundleContents(snapshot, bundle)
@@ -27,16 +37,19 @@ export function BundleCard({ bundle, snapshot }: { bundle: Bundle; snapshot: Cms
       as="article"
       variant="surface"
       pad="none"
-      className="group flex flex-col rounded-lg transition-colors duration-200 hover:border-primary/40"
+      className={cn(
+        'group flex flex-row rounded-lg transition-colors duration-200 hover:border-primary/40',
+        className,
+      )}
     >
-      <Link to={href} aria-label={`View ${bundle.title}`} className="block">
+      <Link to={href} aria-label={`View ${bundle.title}`} className="block w-2/5 flex-none">
         <ProductCover
           product={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
           stacked
         />
       </Link>
 
-      <div className="flex flex-1 flex-col p-3 pt-0">
+      <div className="flex min-w-0 flex-1 flex-col p-3">
         <Link to={href} className="inline-flex min-h-6 items-center py-0.5">
           <h3 className="text-body-lg font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary-ink">
             {bundle.title}
