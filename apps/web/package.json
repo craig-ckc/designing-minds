@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build && npm run build:ssr && npm run optimize:images && npm run prerender",
     "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist-server",
     "optimize:images": "node scripts/optimize-images.mjs dist",
-    "prerender": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/prerender.mjs",
+    "prerender": "node --env-file-if-exists=.env --env-file-if-exists=.env.production --env-file-if-exists=.env.local scripts/prerender.mjs",
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test ../../tests/web/*.test.ts",
     "preview": "vite preview"

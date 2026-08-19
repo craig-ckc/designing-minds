@@ -26,7 +26,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://designing-minds-api.vercel.app/api/:path*"
+      "destination": "https://api.designingminds.co.za/api/:path*"
     },
     {
       "source": "/(.*)",

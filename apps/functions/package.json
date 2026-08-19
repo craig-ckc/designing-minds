@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch --env-file-if-exists=.env.local --experimental-strip-types src/server.ts",
+    "dev:prod": "node --env-file=.env.production --experimental-strip-types src/server.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
     "test": "vitest run --root ../.. tests/functions"

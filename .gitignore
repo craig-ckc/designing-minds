@@ -11,4 +11,8 @@ coverage/
 .env
 .env.local
 .env.*.local
+# .env.production files are complete, provider-portable production configs that
+# carry real credentials. This repository is PUBLIC — never commit them.
+# The committed templates are the .env.example files.
+.env.production
 .vercel/
