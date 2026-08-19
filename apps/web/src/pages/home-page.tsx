@@ -15,7 +15,7 @@ export function HomePage({ snapshot, loadError }: { snapshot: CmsSnapshot | null
   return (
     <>
       <HomeHeroSection snapshot={snapshot} />
-      <TrustStatsSection snapshot={snapshot} />
+      <TrustStatsSection />
       <GetToKnowSection />
       <HomeBundlesSection snapshot={snapshot} loadError={loadError} />
       <HomeTestimonialsSection snapshot={snapshot} />

@@ -13,7 +13,7 @@ export function AboutPage({ snapshot, loadError }: { snapshot: CmsSnapshot | nul
     <>
       <AboutHeroSection />
       <OurStorySection />
-      <TrustStatsSection snapshot={snapshot} caption="The difference we’ve made so far" />
+      <TrustStatsSection caption="The difference we’ve made so far" />
       <AboutStorySection />
       <AboutValuesSection />
       <AboutTestimonialsSection snapshot={snapshot} loadError={loadError} />
