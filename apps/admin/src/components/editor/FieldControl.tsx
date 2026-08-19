@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { cn } from '@designing-minds/utils'
 import type { ProductFile } from '@designing-minds/cms'
-import type { AdminField, AdminRecord, FieldContext, ReferenceField, SelectField } from '../../cms/types'
+import type { AdminField, AdminRecord, FieldContext, MultiReferenceField, SelectField, SingleReferenceField } from '../../cms/types'
 import { getPath } from '../../cms/record'
 import { FIELD } from '../tokens'
 import { Icon } from '../ui'
@@ -165,7 +165,7 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
     )
   }
 
-  function renderReferenceSingle(reference: ReferenceField): ReactNode {
+  function renderReferenceSingle(reference: SingleReferenceField): ReactNode {
     const current = value == null ? '' : String(value)
     const options: SelectOption[] = current === '' ? [{ label: 'Select…', value: '' }] : []
     options.push(...ctx.optionsForReference(reference))
@@ -173,7 +173,7 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
   }
 
   /* Type-ahead picker: type to filter, click to add — scales to large collections. */
-  function renderMultiReference(reference: ReferenceField): ReactNode {
+  function renderMultiReference(reference: MultiReferenceField): ReactNode {
     const options = ctx.optionsForReference(reference)
     const selected = Array.isArray(value) ? (value as string[]) : []
     return (
@@ -183,6 +183,7 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
         selected={selected}
         onChange={(next) => onUpdate(field.key, next)}
         disabled={disabled}
+        maxSelected={reference.maxSelected}
       />
     )
   }

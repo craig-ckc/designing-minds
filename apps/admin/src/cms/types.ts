@@ -79,7 +79,9 @@ type SelectExtras = { allowEmpty?: boolean; emptyLabel?: string; emptyValue?: st
 
 export type SelectField = FieldBase & { type: 'select' } & SelectSource & SelectExtras
 
-export type ReferenceField = FieldBase & { type: 'reference' | 'multiReference' } & ReferenceSource
+export type SingleReferenceField = FieldBase & { type: 'reference' } & ReferenceSource
+export type MultiReferenceField = FieldBase & { type: 'multiReference'; maxSelected?: number } & ReferenceSource
+export type ReferenceField = SingleReferenceField | MultiReferenceField
 
 export type FileListField = FieldBase & { type: 'fileList' }
 

@@ -59,7 +59,7 @@ const products: AdminCollection = {
     { key: 'term', label: 'Term', type: 'select', valueList: 'terms', required: true },
     { key: 'year', label: 'Year', type: 'select', valueList: 'years', required: true },
     { key: 'marks', label: 'Marks', type: 'number', nullable: true },
-    { key: 'subjects', label: 'Subjects (at least one)', type: 'multiReference', valueList: 'subjects', required: true },
+    { key: 'subjects', label: 'Subject', type: 'multiReference', valueList: 'subjects', required: true, maxSelected: 1 },
 
     { key: 'purchasedFiles', label: 'Purchased files', type: 'fileList' },
 

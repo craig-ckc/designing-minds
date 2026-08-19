@@ -3,6 +3,7 @@ import { cn } from '@designing-minds/utils'
 import { FIELD } from '../tokens'
 import { Icon } from '../ui'
 import { Button } from './Button'
+import { enforceMaxSelected } from './reference-picker-utils'
 
 export type PickerOption = { label: string; value: string }
 
@@ -17,6 +18,7 @@ export function ReferencePicker({
   onChange,
   disabled,
   id,
+  maxSelected,
   placeholder = 'Type to search…',
 }: {
   options: PickerOption[]
@@ -25,10 +27,18 @@ export function ReferencePicker({
   onChange: (next: string[]) => void
   disabled?: boolean
   id?: string
+  /** When set, at most this many items may be selected. Selecting a new item
+   *  at the limit replaces the earliest pick. */
+  maxSelected?: number
   placeholder?: string
 }) {
   const byValue = new Map(options.map((option) => [option.value, option]))
   const value = selected.map((item) => byValue.get(item) ?? { label: item, value: item })
+
+  function emit(next: string[]) {
+    if (maxSelected != null) next = enforceMaxSelected(next, maxSelected)
+    onChange(next)
+  }
 
   return (
     <div className="grid gap-2">
@@ -37,7 +47,7 @@ export function ReferencePicker({
           multiple
           items={options}
           value={value}
-          onValueChange={(next) => onChange(next.map((option) => option.value))}
+          onValueChange={(next) => emit(next.map((option) => option.value))}
           isItemEqualToValue={(a, b) => a.value === b.value}
         >
           <Combobox.Input id={id} placeholder={placeholder} className={cn(FIELD, 'min-h-[42px] text-[0.92rem]')} />
@@ -79,7 +89,7 @@ export function ReferencePicker({
                   size="icon"
                   className="h-6 w-6"
                   aria-label={`Remove ${option.label}`}
-                  onClick={() => onChange(selected.filter((item) => item !== option.value))}
+                  onClick={() => emit(selected.filter((item) => item !== option.value))}
                 >
                   <span className="h-3.5 w-3.5">
                     <Icon name="close" />

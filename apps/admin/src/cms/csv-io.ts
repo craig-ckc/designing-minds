@@ -6,9 +6,9 @@
    write happens.
    ------------------------------------------------------------------------- */
 
-import type { AdminCollection, AdminField, AdminRecord, FieldContext, FieldOption } from './types'
-import { fieldIsVisible, getPath, setPath } from './record'
-import { parseCsv, toCsv } from '../lib/csv'
+import type { AdminCollection, AdminField, AdminRecord, FieldContext, FieldOption, MultiReferenceField } from './types'
+import { fieldIsVisible, getPath, setPath } from './record.ts'
+import { parseCsv, toCsv } from '../lib/csv.ts'
 
 /* -------------------------------- Export ------------------------------- */
 
@@ -95,12 +95,17 @@ function parseCell(field: AdminField, raw: string, ctx: FieldContext): ParseResu
         : { ok: false, error: `"${text}" is not one of: ${allowed(options)}` }
     }
     case 'multiReference': {
-      const options = ctx.optionsForReference(field)
+      const multiField = field as MultiReferenceField
+      const options = ctx.optionsForReference(multiField)
       const values: string[] = []
       for (const part of text.split(';').map((item) => item.trim()).filter(Boolean)) {
         const match = matchOption(options, part)
         if (!match) return { ok: false, error: `"${part}" is not one of: ${allowed(options)}` }
         values.push(match.value)
+      }
+      if (multiField.maxSelected != null && values.length > multiField.maxSelected) {
+        const noun = multiField.maxSelected === 1 ? 'value' : 'values'
+        return { ok: false, error: `select at most ${multiField.maxSelected} ${noun}` }
       }
       return { ok: true, value: values }
     }
