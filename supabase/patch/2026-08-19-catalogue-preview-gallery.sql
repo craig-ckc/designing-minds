@@ -194,8 +194,9 @@ commit;
 -- One manual step this file cannot do for you: create the public bucket.
 --
 --   Supabase Dashboard > Storage > New bucket
---     Name   : public-media
+--     Name   : public_media
 --     Public : ON        <- the whole point; STORAGE_BUCKET stays private
 --
--- Then set PUBLIC_MEDIA_BUCKET=public-media on the functions project (see
+-- Then set PUBLIC_MEDIA_BUCKET=public_media on the functions project (see
 -- apps/functions/.env.example). Uploads fail with a clear error until it is set.
+-- The name itself is arbitrary; it only has to match the env var exactly.
