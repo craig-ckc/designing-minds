@@ -62,10 +62,23 @@ export const PAYFAST_FIELD_ORDER = [
 
 export type PayfastFields = Record<string, string | number | boolean | null | undefined>
 
-const encode = (value: string) =>
-  encodeURIComponent(value.trim())
+interface EncodeOptions {
+  trim?: boolean
+  // PHP's urlencode() (which PayFast's servers use) also escapes "~", which
+  // encodeURIComponent leaves alone.
+  phpTilde?: boolean
+}
+
+// Mirrors PHP urlencode(): spaces become "+" and !'()* are percent-encoded.
+const encodeValue = (value: string, { trim = true, phpTilde = false }: EncodeOptions = {}) => {
+  let encoded = encodeURIComponent(trim ? value.trim() : value)
     .replace(/%20/g, '+')
     .replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)
+  if (phpTilde) encoded = encoded.replace(/~/g, '%7E')
+  return encoded
+}
+
+const encode = (value: string) => encodeValue(value)
 
 export const payfastMode = (): PayfastMode => (process.env.PAYFAST_MODE === 'live' ? 'live' : 'sandbox')
 
@@ -83,12 +96,18 @@ export const payfastCredentials = (): { merchantId: string; merchantKey: string 
   throw new Error('PAYFAST_MERCHANT_ID and PAYFAST_MERCHANT_KEY must be set.')
 }
 
-const payfastPassphrase = (): string => {
+export type PayfastPassphraseSource = 'configured' | 'sandbox-fallback' | 'none'
+
+const resolvePayfastPassphrase = (): { passphrase: string; source: PayfastPassphraseSource } => {
   const configured = process.env.PAYFAST_PASSPHRASE
+  if (configured) return { passphrase: configured, source: 'configured' }
   const usesSandboxFallback =
     payfastMode() === 'sandbox' && !process.env.PAYFAST_MERCHANT_ID && !process.env.PAYFAST_MERCHANT_KEY
-  return configured || (usesSandboxFallback ? SANDBOX_PASSPHRASE : '')
+  if (usesSandboxFallback) return { passphrase: SANDBOX_PASSPHRASE, source: 'sandbox-fallback' }
+  return { passphrase: '', source: 'none' }
 }
+
+const payfastPassphrase = (): string => resolvePayfastPassphrase().passphrase
 
 export const signaturePayload = (fields: PayfastFields, passphrase = '', order: readonly string[] = PAYFAST_FIELD_ORDER): string => {
   const pairs: string[] = []
@@ -106,22 +125,94 @@ export const signPayfastFields = (fields: PayfastFields, order: readonly string[
   return createHash('md5').update(signaturePayload(fields, passphrase, order)).digest('hex')
 }
 
-export const verifyPayfastSignature = (fields: PayfastFields): boolean => {
-  const received = typeof fields.signature === 'string' ? fields.signature : ''
-  if (!received) return false
-  const order = Object.keys(fields).filter((key) => key !== 'signature')
+// Canonicalisations of an ITN payload. "received-order" is PayFast's documented
+// algorithm: every posted field except the signature, in the order received,
+// PHP-urlencoded, then the passphrase. The others differ in one detail each so
+// that a mismatch can be attributed precisely from the logs.
+export type PayfastSignatureVariant =
+  | 'received-order'
+  | 'exclude-empty'
+  | 'no-trim'
+  | 'php-tilde'
+  | 'exclude-empty-no-trim'
+  | 'no-passphrase'
+
+interface VariantSpec {
+  skipEmpty?: boolean
+  trim?: boolean
+  phpTilde?: boolean
+  passphrase?: boolean
+}
+
+const VARIANTS: Record<PayfastSignatureVariant, VariantSpec> = {
+  'received-order': {},
+  'exclude-empty': { skipEmpty: true },
+  'no-trim': { trim: false },
+  'php-tilde': { phpTilde: true },
+  'exclude-empty-no-trim': { skipEmpty: true, trim: false },
+  'no-passphrase': { passphrase: false },
+}
+
+// A signature that omits the passphrase can be forged by anyone who saw the
+// fields, so it is reported for diagnosis but never accepted.
+const ACCEPTED_VARIANTS: readonly PayfastSignatureVariant[] = [
+  'received-order',
+  'exclude-empty',
+  'no-trim',
+  'php-tilde',
+  'exclude-empty-no-trim',
+]
+
+const itnSignature = (fields: PayfastFields, passphrase: string, spec: VariantSpec): string => {
   const pairs: string[] = []
-  for (const key of order) {
+  for (const key of Object.keys(fields)) {
+    if (key === 'signature') continue
     const value = fields[key]
     if (value === undefined || value === null) continue
     // PayFast includes present-but-empty ITN fields in its signed payload. This
     // intentionally differs from outbound form signing, which omits empties.
-    pairs.push(`${key}=${encode(String(value))}`)
+    if (spec.skipEmpty && String(value) === '') continue
+    pairs.push(`${key}=${encodeValue(String(value), { trim: spec.trim ?? true, phpTilde: spec.phpTilde ?? false })}`)
   }
-  const passphrase = payfastPassphrase()
-  if (passphrase) pairs.push(`passphrase=${encode(passphrase)}`)
-  return createHash('md5').update(pairs.join('&')).digest('hex') === received
+  if (passphrase && spec.passphrase !== false) pairs.push(`passphrase=${encodeValue(passphrase)}`)
+  return createHash('md5').update(pairs.join('&')).digest('hex')
 }
+
+export interface PayfastSignatureCheck {
+  accepted: boolean
+  /** Signature PayFast sent ("" when absent). */
+  received: string
+  /** What PayFast's documented algorithm yields for these fields. */
+  expected: string
+  /** Which canonicalisation reproduced the received signature, if any. */
+  matchedVariant: PayfastSignatureVariant | null
+  passphraseSource: PayfastPassphraseSource
+  passphraseLength: number
+  /** Field names in the order received, signature excluded. */
+  keys: string[]
+}
+
+// Verifies an ITN signature and explains the outcome, so a rejected ITN can be
+// diagnosed from the logs without logging the shopper's details.
+export const explainPayfastSignature = (fields: PayfastFields): PayfastSignatureCheck => {
+  const received = typeof fields.signature === 'string' ? fields.signature.trim().toLowerCase() : ''
+  const { passphrase, source } = resolvePayfastPassphrase()
+  const keys = Object.keys(fields).filter((key) => key !== 'signature')
+  const expected = itnSignature(fields, passphrase, VARIANTS['received-order'])
+  let matchedVariant: PayfastSignatureVariant | null = null
+  if (received) {
+    for (const variant of Object.keys(VARIANTS) as PayfastSignatureVariant[]) {
+      if (itnSignature(fields, passphrase, VARIANTS[variant]) === received) {
+        matchedVariant = variant
+        break
+      }
+    }
+  }
+  const accepted = matchedVariant !== null && ACCEPTED_VARIANTS.includes(matchedVariant)
+  return { accepted, received, expected, matchedVariant, passphraseSource: source, passphraseLength: passphrase.length, keys }
+}
+
+export const verifyPayfastSignature = (fields: PayfastFields): boolean => explainPayfastSignature(fields).accepted
 
 export const buildPayfastProcess = (fields: PayfastFields) => {
   const signedFields = { ...fields, signature: signPayfastFields(fields) }

@@ -7,6 +7,7 @@ import {
   SANDBOX_MERCHANT_ID,
   SANDBOX_MERCHANT_KEY,
   SANDBOX_PASSPHRASE,
+  explainPayfastSignature,
   payfastCredentials,
   signPayfastFields,
   signaturePayload,
@@ -142,6 +143,79 @@ describe('verifyPayfastSignature (ITN / received order)', () => {
 
   it('rejects a missing signature', () => {
     expect(verifyPayfastSignature(itnFields())).toBe(false)
+  })
+
+  it('explains a mismatch without exposing field values', () => {
+    const fields = { ...itnFields(), email_address: 'shopper@example.com', signature: '0'.repeat(32) }
+    const check = explainPayfastSignature(fields)
+    expect(check.accepted).toBe(false)
+    expect(check.matchedVariant).toBeNull()
+    expect(check.received).toBe('0'.repeat(32))
+    expect(check.expected).toBe(
+      createHash('md5')
+        .update('m_payment_id=pay-123&pf_payment_id=987654&payment_status=COMPLETE&amount_gross=100.00&email_address=shopper%40example.com&passphrase=itn-secret')
+        .digest('hex'),
+    )
+    expect(check.keys).toEqual(['m_payment_id', 'pf_payment_id', 'payment_status', 'amount_gross', 'email_address'])
+    expect(check.passphraseSource).toBe('configured')
+    expect(check.passphraseLength).toBe('itn-secret'.length)
+    expect(JSON.stringify(check)).not.toContain('shopper')
+  })
+
+  it('accepts a signature PayFast computed without its empty fields, and says so', () => {
+    const fields = { ...itnFields(), custom_str1: '', name_last: '' }
+    const signedPayload = 'm_payment_id=pay-123&pf_payment_id=987654&payment_status=COMPLETE&amount_gross=100.00&passphrase=itn-secret'
+    const signature = createHash('md5').update(signedPayload).digest('hex')
+    const check = explainPayfastSignature({ ...fields, signature })
+    expect(check.accepted).toBe(true)
+    expect(check.matchedVariant).toBe('exclude-empty')
+    expect(verifyPayfastSignature({ ...fields, signature })).toBe(true)
+  })
+
+  it('accepts a signature computed over untrimmed values, and says so', () => {
+    const fields = { ...itnFields(), item_name: ' padded ' }
+    const signedPayload = 'm_payment_id=pay-123&pf_payment_id=987654&payment_status=COMPLETE&amount_gross=100.00&item_name=+padded+&passphrase=itn-secret'
+    const signature = createHash('md5').update(signedPayload).digest('hex')
+    const check = explainPayfastSignature({ ...fields, signature })
+    expect(check.accepted).toBe(true)
+    expect(check.matchedVariant).toBe('no-trim')
+  })
+
+  it('accepts PHP-style encoding of "~", and says so', () => {
+    const fields = { ...itnFields(), email_address: 'a~b@example.com' }
+    const signedPayload = 'm_payment_id=pay-123&pf_payment_id=987654&payment_status=COMPLETE&amount_gross=100.00&email_address=a%7Eb%40example.com&passphrase=itn-secret'
+    const signature = createHash('md5').update(signedPayload).digest('hex')
+    const check = explainPayfastSignature({ ...fields, signature })
+    expect(check.accepted).toBe(true)
+    expect(check.matchedVariant).toBe('php-tilde')
+  })
+
+  it('recognises but never accepts a signature computed without the passphrase', () => {
+    const fields = itnFields()
+    const signedPayload = 'm_payment_id=pay-123&pf_payment_id=987654&payment_status=COMPLETE&amount_gross=100.00'
+    const signature = createHash('md5').update(signedPayload).digest('hex')
+    const check = explainPayfastSignature({ ...fields, signature })
+    expect(check.matchedVariant).toBe('no-passphrase')
+    expect(check.accepted).toBe(false)
+    expect(verifyPayfastSignature({ ...fields, signature })).toBe(false)
+  })
+
+  it('reports the sandbox fallback passphrase when no merchant credentials are configured', () => {
+    const saved = { id: process.env.PAYFAST_MERCHANT_ID, key: process.env.PAYFAST_MERCHANT_KEY, mode: process.env.PAYFAST_MODE }
+    delete process.env.PAYFAST_PASSPHRASE
+    delete process.env.PAYFAST_MERCHANT_ID
+    delete process.env.PAYFAST_MERCHANT_KEY
+    process.env.PAYFAST_MODE = 'sandbox'
+    try {
+      const check = explainPayfastSignature({ ...itnFields(), signature: 'x' })
+      expect(check.passphraseSource).toBe('sandbox-fallback')
+      expect(check.passphraseLength).toBe(SANDBOX_PASSPHRASE.length)
+    } finally {
+      if (saved.id !== undefined) process.env.PAYFAST_MERCHANT_ID = saved.id
+      if (saved.key !== undefined) process.env.PAYFAST_MERCHANT_KEY = saved.key
+      if (saved.mode === undefined) delete process.env.PAYFAST_MODE
+      else process.env.PAYFAST_MODE = saved.mode
+    }
   })
 })
 
