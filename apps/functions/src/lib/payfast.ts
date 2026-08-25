@@ -125,10 +125,13 @@ export const signPayfastFields = (fields: PayfastFields, order: readonly string[
   return createHash('md5').update(signaturePayload(fields, passphrase, order)).digest('hex')
 }
 
-// Canonicalisations of an ITN payload. "received-order" is PayFast's documented
-// algorithm: every posted field except the signature, in the order received,
-// PHP-urlencoded, then the passphrase. The others differ in one detail each so
-// that a mismatch can be attributed precisely from the logs.
+// Canonicalisations of an ITN payload. "received-order" is PayFast's reference
+// algorithm (docs sample and official PHP SDK): every posted field *up to* the
+// signature, in the order received, PHP-urlencoded, then the passphrase.
+// Anything PayFast posts after the signature is not part of what it signed —
+// the reference code breaks out of its loop at "signature" — so it is ignored.
+// The other variants differ in one detail each so that a mismatch can be
+// attributed precisely from the logs.
 export type PayfastSignatureVariant =
   | 'received-order'
   | 'exclude-empty'
@@ -163,10 +166,15 @@ const ACCEPTED_VARIANTS: readonly PayfastSignatureVariant[] = [
   'exclude-empty-no-trim',
 ]
 
+const signedKeys = (fields: PayfastFields): string[] => {
+  const keys = Object.keys(fields)
+  const signatureAt = keys.indexOf('signature')
+  return signatureAt === -1 ? keys : keys.slice(0, signatureAt)
+}
+
 const itnSignature = (fields: PayfastFields, passphrase: string, spec: VariantSpec): string => {
   const pairs: string[] = []
-  for (const key of Object.keys(fields)) {
-    if (key === 'signature') continue
+  for (const key of signedKeys(fields)) {
     const value = fields[key]
     if (value === undefined || value === null) continue
     // PayFast includes present-but-empty ITN fields in its signed payload. This
@@ -188,8 +196,10 @@ export interface PayfastSignatureCheck {
   matchedVariant: PayfastSignatureVariant | null
   passphraseSource: PayfastPassphraseSource
   passphraseLength: number
-  /** Field names in the order received, signature excluded. */
+  /** Field names PayFast signed: those received before the signature, in order. */
   keys: string[]
+  /** Field names received after the signature; posted but not signed. */
+  trailingKeys: string[]
 }
 
 // Verifies an ITN signature and explains the outcome, so a rejected ITN can be
@@ -197,7 +207,8 @@ export interface PayfastSignatureCheck {
 export const explainPayfastSignature = (fields: PayfastFields): PayfastSignatureCheck => {
   const received = typeof fields.signature === 'string' ? fields.signature.trim().toLowerCase() : ''
   const { passphrase, source } = resolvePayfastPassphrase()
-  const keys = Object.keys(fields).filter((key) => key !== 'signature')
+  const keys = signedKeys(fields)
+  const trailingKeys = Object.keys(fields).slice(keys.length + 1)
   const expected = itnSignature(fields, passphrase, VARIANTS['received-order'])
   let matchedVariant: PayfastSignatureVariant | null = null
   if (received) {
@@ -209,7 +220,7 @@ export const explainPayfastSignature = (fields: PayfastFields): PayfastSignature
     }
   }
   const accepted = matchedVariant !== null && ACCEPTED_VARIANTS.includes(matchedVariant)
-  return { accepted, received, expected, matchedVariant, passphraseSource: source, passphraseLength: passphrase.length, keys }
+  return { accepted, received, expected, matchedVariant, passphraseSource: source, passphraseLength: passphrase.length, keys, trailingKeys }
 }
 
 export const verifyPayfastSignature = (fields: PayfastFields): boolean => explainPayfastSignature(fields).accepted

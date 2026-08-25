@@ -25,7 +25,8 @@ const logSignatureMismatch = (req: Parameters<Handler>[0], fields: PayfastFields
     JSON.stringify({
       contentType: req.headers['content-type'] ?? req.headers['Content-Type'] ?? null,
       rawBodyLength: req.rawBody?.length ?? 0,
-      parsedKeys: check.keys,
+      signedKeys: check.keys,
+      trailingKeys: check.trailingKeys,
       m_payment_id: fields.m_payment_id ?? null,
       pf_payment_id: fields.pf_payment_id ?? null,
       payment_status: fields.payment_status ?? null,

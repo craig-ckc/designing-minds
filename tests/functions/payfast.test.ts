@@ -157,9 +157,24 @@ describe('verifyPayfastSignature (ITN / received order)', () => {
         .digest('hex'),
     )
     expect(check.keys).toEqual(['m_payment_id', 'pf_payment_id', 'payment_status', 'amount_gross', 'email_address'])
+    expect(check.trailingKeys).toEqual([])
     expect(check.passphraseSource).toBe('configured')
     expect(check.passphraseLength).toBe('itn-secret'.length)
     expect(JSON.stringify(check)).not.toContain('shopper')
+  })
+
+  it("ignores fields posted after the signature, like PayFast's reference code", () => {
+    // PayFast's PHP sample and SDK break out of the loop at "signature", so a
+    // field that follows it was never part of what PayFast signed.
+    const fields = itnFields()
+    const signature = signPayfastFields(fields, Object.keys(fields))
+    const check = explainPayfastSignature({ ...fields, signature, payment_method: 'cc', extra: 'later' })
+    expect(check.accepted).toBe(true)
+    expect(check.matchedVariant).toBe('received-order')
+    expect(check.keys).toEqual(['m_payment_id', 'pf_payment_id', 'payment_status', 'amount_gross'])
+    expect(check.trailingKeys).toEqual(['payment_method', 'extra'])
+    // …but tampering with a signed field still fails.
+    expect(verifyPayfastSignature({ ...fields, amount_gross: '0.01', signature, extra: 'later' })).toBe(false)
   })
 
   it('accepts a signature PayFast computed without its empty fields, and says so', () => {
