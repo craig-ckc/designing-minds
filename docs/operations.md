@@ -54,6 +54,7 @@ Preview functions env:
 | `PAYFAST_MODE` | `sandbox` |
 | `STORAGE_BUCKET` | Sandbox private bucket |
 | `SITE_URL` | Web preview URL |
+| `API_PUBLIC_ORIGIN` | Functions branch preview URL (PayFast posts the ITN here directly) |
 
 Preview web/admin env:
 
@@ -96,7 +97,8 @@ Functions:
 | --- | --- |
 | `SUPABASE_URL` | Supabase URL |
 | `SUPABASE_SECRET_KEY` | Server-only Supabase key |
-| `SITE_URL` | Public storefront origin used for payment and unsubscribe URLs |
+| `SITE_URL` | Public storefront origin used for payment return/cancel and unsubscribe URLs |
+| `API_PUBLIC_ORIGIN` | Public origin of the functions project (`https://api.designingminds.co.za`). PayFast's `notify_url` is built from it so the ITN reaches the webhook directly; via the web project's `/api/*` proxy the webhook sees Vercel's IP instead of PayFast's and rejects the ITN, leaving paid orders pending |
 | `PAYFAST_MERCHANT_ID` | PayFast production credential |
 | `PAYFAST_MERCHANT_KEY` | PayFast production credential |
 | `PAYFAST_PASSPHRASE` | PayFast production secret |
@@ -112,7 +114,7 @@ Functions:
 | `MAILCHIMP_API_KEY` | Mailchimp API key; `-usX` suffix picks the datacenter (blank disables sync) |
 | `MAILCHIMP_AUDIENCE_ID` | Mailchimp audience/list ID to sync submitters into |
 
-Use one canonical storefront origin everywhere. Attach it to the web project, redirect the alternate `www`/apex hostname to it, and use the same origin for `VITE_SITE_URL`, functions `SITE_URL`, admin `VITE_WEB_URL`, PayFast return/cancel/notify URLs, and Supabase Auth redirect allowlists. Environment changes only affect a new deployment; redeploy each affected project after changing them.
+Use one canonical storefront origin everywhere. Attach it to the web project, redirect the alternate `www`/apex hostname to it, and use the same origin for `VITE_SITE_URL`, functions `SITE_URL`, admin `VITE_WEB_URL`, PayFast return/cancel URLs, and Supabase Auth redirect allowlists. The PayFast `notify_url` is the exception: it is built from `API_PUBLIC_ORIGIN` and must point at the functions project itself. Environment changes only affect a new deployment; redeploy each affected project after changing them.
 
 ## Static Publish Flow
 
@@ -213,7 +215,7 @@ Code quality:
 Monitoring:
 
 - [ ] Vercel and Supabase logs are accessible.
-- [ ] PayFast ITN failures are visible in logs.
+- [ ] PayFast ITN failures are visible in logs. A rejected signature logs `PayFast ITN signature mismatch` with the field order, the canonicalisation that would have matched (if any), and the passphrase source — enough to attribute the cause without the shopper's details.
 - [ ] Email bounce/complaint monitoring is enabled if custom SMTP is used.
 - [ ] Rollback target deployment and database restore plan are known.
 - [ ] Support path is ready for payment/download issues.
