@@ -4,6 +4,7 @@ import { createServiceClient } from '../lib/supabase.ts'
 import { requireUser } from '../lib/auth.ts'
 import { formatPayfastAmount, toCents } from '../lib/money.ts'
 import { buildPayfastProcess, payfastCredentials } from '../lib/payfast.ts'
+import { apiOrigin, siteUrl } from '../lib/origins.ts'
 
 interface CheckoutInput {
   items: { productSlug: string }[]
@@ -22,13 +23,6 @@ function isCheckoutInput(value: unknown): value is CheckoutInput {
     Array.isArray((value as CheckoutInput).items) &&
     (value as CheckoutInput).items.every((item) => typeof item?.productSlug === 'string')
   )
-}
-
-const siteUrl = () => {
-  const configured = process.env.SITE_URL
-  if (!configured) throw new Error('SITE_URL must be set for checkout URLs.')
-  const trimmed = configured.replace(/\/+$/, '')
-  return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
 }
 
 const orderReference = () => `DM-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
@@ -133,7 +127,8 @@ export const checkout: Handler = async (req) => {
       merchant_key: merchantKey,
       return_url: `${baseUrl}/checkout/return?order=${orderId}`,
       cancel_url: `${baseUrl}/checkout/cancel?order=${orderId}`,
-      notify_url: `${baseUrl}/api/payment-webhook`,
+      // The ITN must hit the functions origin directly — see lib/origins.ts.
+      notify_url: `${apiOrigin()}/api/payment-webhook`,
       name_first: customer.name.split(/\s+/)[0] ?? customer.name,
       email_address: customer.email,
       m_payment_id: paymentId,

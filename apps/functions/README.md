@@ -29,6 +29,11 @@ To test checkout, set `PAYFAST_MODE=sandbox` (the default). `/checkout` returns 
 handoff to `sandbox.payfast.co.za`; leave the PayFast merchant ID, merchant key,
 and passphrase blank to use the public passphrase-enabled sandbox account.
 
+The ITN (`notify_url`) is built from `API_PUBLIC_ORIGIN` — the functions
+project's own public origin — falling back to `SITE_URL`. On Vercel set it to
+`https://api.designingminds.co.za`; if the ITN arrives through the web
+project's `/api/*` proxy instead, the webhook sees the proxy's IP and rejects it.
+
 ## Deploy
 
 Production deploys `apps/functions` as the Vercel API app. The API route
