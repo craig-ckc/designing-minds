@@ -1,6 +1,7 @@
 import type {
   Bundle,
   CmsSnapshot,
+  DeletableCollection,
   Faq,
   Order,
   Product,
@@ -277,3 +278,64 @@ export const updateTestimonialInSnapshot = (snapshot: CmsSnapshot, testimonial: 
   ...snapshot,
   testimonials: upsert(snapshot.testimonials, testimonial).sort((a, b) => a.sortOrder - b.sortOrder),
 })
+
+/**
+ * Drops deleted rows from a snapshot in hand.
+ *
+ * The counterpart to the upserts above, and it has one extra job: the schema
+ * cascades a deleted product out of `bundle_products`, so a bundle already
+ * loaded here would still claim a member the database no longer has. Mirroring
+ * that cascade keeps the in-memory snapshot honest instead of showing
+ * membership that would vanish on the next reload.
+ *
+ * `stats` is recomputed for the same reason — `productCount` is just the array
+ * length at read time, so leaving it alone would show the dashboard a total
+ * that no longer matches the list beside it.
+ *
+ * NOTE: `products.faqs` / `bundles.faqs` are `text[]` with no foreign key, so
+ * deleting an FAQ genuinely leaves its id behind on any record referencing it.
+ * That is left as-is rather than cleaned here, because the database keeps it —
+ * pretending otherwise would make the snapshot disagree with the server.
+ */
+export const removeRecordsFromSnapshot = (
+  snapshot: CmsSnapshot,
+  collection: DeletableCollection,
+  ids: string[],
+): CmsSnapshot => {
+  if (ids.length === 0) return snapshot
+  const gone = new Set(ids)
+  const keep = <T extends { id: string }>(items: T[]): T[] => items.filter((item) => !gone.has(item.id))
+
+  switch (collection) {
+    case 'products': {
+      const products = keep(snapshot.products)
+      return {
+        ...snapshot,
+        products,
+        bundles: snapshot.bundles.map((bundle) => {
+          const removedAt = bundle.includedProductIds
+            .map((id, index) => (gone.has(id) ? index : -1))
+            .filter((index) => index >= 0)
+          if (removedAt.length === 0) return bundle
+          const drop = new Set(removedAt)
+          return {
+            ...bundle,
+            includedProductIds: bundle.includedProductIds.filter((_, i) => !drop.has(i)),
+            // Slugs are the same list keyed differently, so they must lose the
+            // same positions or the two fall out of step.
+            includedProductSlugs: bundle.includedProductSlugs.filter((_, i) => !drop.has(i)),
+          }
+        }),
+        stats: { ...snapshot.stats, productCount: products.length },
+      }
+    }
+    case 'bundles': {
+      const bundles = keep(snapshot.bundles)
+      return { ...snapshot, bundles, stats: { ...snapshot.stats, bundleCount: bundles.length } }
+    }
+    case 'faqs':
+      return { ...snapshot, faqs: keep(snapshot.faqs) }
+    case 'testimonials':
+      return { ...snapshot, testimonials: keep(snapshot.testimonials) }
+  }
+}

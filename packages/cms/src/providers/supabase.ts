@@ -1,10 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type {
+  Bundle,
   CmsRepository,
   CmsSnapshot,
   ContactSubmission,
   Customer,
-  Bundle,
+  DeletableCollection,
   Faq,
   NewsletterSubmission,
   Order,
@@ -122,6 +123,14 @@ const toBundle = (row: BundleRow): Bundle => {
   }
 }
 
+/** Table per deletable collection — see `DeletableCollection` in ../types. */
+const DELETABLE_TABLES: Record<DeletableCollection, string> = {
+  products: TABLES.products,
+  bundles: TABLES.bundles,
+  faqs: TABLES.faqs,
+  testimonials: TABLES.testimonials,
+}
+
 /**
  * Extract rows, tolerating a not-yet-migrated table: a missing relation
  * (PostgREST PGRST205 / Postgres 42P01) yields [] with a warning; any other
@@ -231,6 +240,26 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
         statusCode: Number(row.statusCode) as SlugRedirect['statusCode'],
       }))
     },
+    /**
+     * Deletes by id, then verifies. `.select()` on a delete returns the rows
+     * that were actually removed, which is the only way to tell a successful
+     * delete from one row-level security quietly refused — an RLS denial on
+     * DELETE sets no error and reports no rows.
+     */
+    async deleteRecords(collection: DeletableCollection, ids: string[]) {
+      if (ids.length === 0) return
+      const table = DELETABLE_TABLES[collection]
+      const res = await client.from(table).delete().in('id', ids).select('id')
+      if (res.error) throw new Error(res.error.message)
+      const removed = (res.data as { id: string }[] | null)?.length ?? 0
+      if (removed !== ids.length) {
+        throw new Error(
+          `Deleted ${removed} of ${ids.length} ${collection}. The rest were already gone, ` +
+            'or this account is not allowed to delete them.',
+        )
+      }
+    },
+
     async saveProduct(product: Product) {
       const res = await client.from(TABLES.products).upsert(stamped(product)).select().single()
       if (res.error) throw new Error(res.error.message)

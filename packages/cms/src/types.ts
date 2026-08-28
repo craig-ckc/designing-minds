@@ -315,6 +315,15 @@ export interface CmsSnapshot {
 
 /* -------------------------------- Repository --------------------------- */
 
+/**
+ * Collections whose rows the admin may permanently delete.
+ *
+ * Deliberately the four editable content collections and nothing else. Orders,
+ * payments, customers and form submissions are business history rather than
+ * content — the same reason they are read-only in the admin registry.
+ */
+export type DeletableCollection = 'products' | 'bundles' | 'faqs' | 'testimonials'
+
 export interface CmsRepository {
   mode: CmsProviderMode
   canWrite: boolean
@@ -330,4 +339,20 @@ export interface CmsRepository {
   saveBundle: (bundle: Bundle) => Promise<Bundle>
   saveFaq: (faq: Faq) => Promise<Faq>
   saveTestimonial: (testimonial: Testimonial) => Promise<Testimonial>
+  /**
+   * Permanently removes rows. This is not `published: false` — that hides a
+   * record and is reversible; this destroys it and is not.
+   *
+   * What travels with it, per the schema's own cascades: `bundle_products`
+   * (so a deleted product leaves every bundle that contained it) and
+   * `cart_items` (so it leaves any shopper's live cart). Order history is NOT
+   * affected — `orders.items` is a JSONB snapshot taken at purchase, not a
+   * foreign key, so a past order still reads correctly.
+   *
+   * Resolves only once the rows are gone. A partial delete throws rather than
+   * reporting success, because row-level security refuses a delete silently:
+   * without checking what came back, a denied delete looks identical to a
+   * successful one.
+   */
+  deleteRecords: (collection: DeletableCollection, ids: string[]) => Promise<void>
 }
