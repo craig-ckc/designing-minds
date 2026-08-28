@@ -38,6 +38,41 @@ export function matchesFilters(record: AdminRecord, filters: Record<string, stri
   )
 }
 
+/**
+ * Whether a record matches a free-text query.
+ *
+ * Scope comes from the collection's `searchFields`, which is now exactly its
+ * `titleField` — the box answers "what is it called" and nothing else. It used
+ * to reach across slug, grade, term, year, format and subjects, which made
+ * results impossible to predict: typing "test" returned every product whose
+ * *format* happened to be a test. Structured narrowing belongs to the filter
+ * popover, which still offers grade, term and format.
+ *
+ * Tokens are AND-ed, so several words from a name match in any order — "test
+ * grade 6" finds "Grade 6 Mathematics Term 1 Test + Memo", which a single
+ * substring test would not.
+ *
+ * Deliberately not fuzzy: no stemming, no synonyms. "maths" will not find
+ * "Mathematics" — that wants a synonym list, and guessing at one silently is
+ * worse than not having it.
+ */
+export function matchesSearch(record: AdminRecord, searchFields: string[], query: string): boolean {
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return true
+
+  const haystack = searchFields
+    .map((key) => {
+      const value = getPath(record, key)
+      // An array field (a product's subjects) joins on a space so each entry is
+      // its own word; String(['a','b']) would give "a,b" and glue them together.
+      return Array.isArray(value) ? value.join(' ') : String(value ?? '')
+    })
+    .join(' ')
+    .toLowerCase()
+
+  return tokens.every((token) => haystack.includes(token))
+}
+
 /** The record's primary label, from the collection's titleField. */
 export function getRecordTitle(collection: AdminCollection, record: AdminRecord): string {
   const value = getPath(record, collection.titleField)

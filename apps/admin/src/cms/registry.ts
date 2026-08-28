@@ -36,7 +36,7 @@ const products: AdminCollection = {
   subtitleField: 'resourceFormat',
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
-  searchFields: ['title', 'slug', 'grade', 'term', 'resourceFormat'],
+  searchFields: ['title'],
   filters: [
     { key: 'grade', label: 'Grade', valueList: 'grades' },
     { key: 'term', label: 'Term', valueList: 'terms' },
@@ -116,7 +116,7 @@ const bundles: AdminCollection = {
   subtitleField: 'bundleScope',
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
-  searchFields: ['title', 'slug', 'grade', 'term'],
+  searchFields: ['title'],
   filters: [
     { key: 'grade', label: 'Grade', valueList: 'grades' },
     { key: 'term', label: 'Term', valueList: 'terms' },
@@ -212,7 +212,7 @@ const faqs: AdminCollection = {
   subtitleField: 'category',
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
-  searchFields: ['question', 'category'],
+  searchFields: ['question'],
   filters: [
     { key: 'category', label: 'Category' },
     { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
@@ -245,7 +245,7 @@ const testimonials: AdminCollection = {
   subtitleField: 'context',
   statusField: 'published',
   statusLabels: PUBLISH_LABELS,
-  searchFields: ['customerName', 'quote', 'context'],
+  searchFields: ['customerName'],
   filters: [
     { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
     { key: 'featured', label: 'Featured', options: boolOptions('Featured', 'Not featured') },
@@ -285,7 +285,7 @@ const orders: AdminCollection = {
   titleField: 'reference',
   subtitleField: 'customerName',
   readOnly: true,
-  searchFields: ['reference', 'customerName', 'customerEmail'],
+  searchFields: ['reference'],
   filters: [{ key: 'status', label: 'Status', options: literalOptions(['pending', 'paid', 'fulfilled', 'refunded', 'failed']) }],
   fields: [
     { key: 'reference', label: 'Reference', type: 'readonly' },
@@ -320,7 +320,7 @@ const customers: AdminCollection = {
   titleField: 'name',
   subtitleField: 'email',
   readOnly: true,
-  searchFields: ['name', 'email'],
+  searchFields: ['name'],
   fields: [
     { key: 'name', label: 'Name', type: 'readonly' },
     { key: 'email', label: 'Email', type: 'readonly' },
@@ -346,7 +346,7 @@ const payments: AdminCollection = {
   titleField: 'reference',
   subtitleField: 'provider',
   readOnly: true,
-  searchFields: ['reference', 'orderReference', 'provider'],
+  searchFields: ['reference'],
   filters: [
     { key: 'status', label: 'Status', options: literalOptions(['pending', 'succeeded', 'failed', 'refunded']) },
     { key: 'provider', label: 'Provider' },
@@ -383,7 +383,7 @@ const formContact: AdminCollection = {
   titleField: 'email',
   subtitleField: 'name',
   readOnly: true,
-  searchFields: ['name', 'email'],
+  searchFields: ['email'],
   fields: [
     { key: 'name', label: 'Name', type: 'readonly' },
     { key: 'email', label: 'Email', type: 'readonly' },
