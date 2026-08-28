@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { Toolbar as BaseToolbar } from '@base-ui/react/toolbar'
 import { Toggle } from '@base-ui/react/toggle'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 
 /**
  * Grouped control strip on the Base UI Toolbar primitive — arrow-key roving
@@ -12,7 +12,7 @@ export function Toolbar({ children, className, label }: { children: ReactNode; c
   return (
     <BaseToolbar.Root
       aria-label={label}
-      className={cn('flex flex-wrap items-center gap-0.5 border-b border-line bg-surface-alt/60 px-2 py-1.5', className)}
+      className={cn('flex flex-wrap items-center gap-0.5 border-b border-line bg-surface-alt px-1.5 py-1', className)}
     >
       {children}
     </BaseToolbar.Root>
@@ -45,7 +45,7 @@ export function ToolbarToggle({
       // Keep focus in the editor so marks apply to the current selection.
       onMouseDown={(event) => event.preventDefault()}
       className={cn(
-        'grid h-7 min-w-7 cursor-default place-items-center rounded-control px-1.5 text-[0.8rem] font-medium text-ink-soft transition',
+        'grid h-6 min-w-6 cursor-default place-items-center rounded-control px-1.5 text-ui font-medium text-ink-soft transition',
         'hover:bg-surface-alt hover:text-ink',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
         'data-[pressed]:bg-primary data-[pressed]:text-on-primary data-[pressed]:hover:bg-primary',
@@ -59,5 +59,5 @@ export function ToolbarToggle({
 
 /** Vertical rule between toolbar groups. */
 export function ToolbarSeparator() {
-  return <BaseToolbar.Separator className="mx-1 h-4 w-px bg-line" />
+  return <BaseToolbar.Separator className="mx-0.5 h-3.5 w-px bg-line" />
 }

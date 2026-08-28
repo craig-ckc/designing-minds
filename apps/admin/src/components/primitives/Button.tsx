@@ -1,6 +1,6 @@
 import { type ComponentPropsWithoutRef } from 'react'
 import { Button as BaseButton } from '@base-ui/react/button'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 import { buttonStyles, type ButtonSize, type ButtonVariant } from './button-styles'
 
 export type ButtonProps = Omit<ComponentPropsWithoutRef<typeof BaseButton>, 'className'> & {

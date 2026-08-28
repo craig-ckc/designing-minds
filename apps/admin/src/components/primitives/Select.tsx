@@ -1,6 +1,5 @@
 import { Select as BaseSelect } from '@base-ui/react/select'
-import { cn } from '@designing-minds/utils'
-import { FIELD } from '../tokens'
+import { cn, FIELD, POPUP, POPUP_ROW } from '../../design'
 import { Icon } from '../ui'
 
 export type SelectOption = { label: string; value: string }
@@ -30,21 +29,21 @@ export function Select({
         className={cn(FIELD, 'flex items-center justify-between gap-2 text-left disabled:opacity-50', className)}
       >
         <BaseSelect.Value placeholder={placeholder} />
-        <BaseSelect.Icon className="h-4 w-4 flex-none text-muted">
+        <BaseSelect.Icon className="size-3.5 flex-none text-muted">
           <Icon name="chevron" />
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
         <BaseSelect.Positioner sideOffset={6} className="z-50">
-          <BaseSelect.Popup className="max-h-[18rem] min-w-[var(--anchor-width)] overflow-auto rounded-control border border-line bg-surface py-1 text-[0.9rem] shadow-lg">
+          <BaseSelect.Popup className={cn(POPUP, 'max-h-[16rem] min-w-[var(--anchor-width)] overflow-auto py-1')}>
             {options.map((option) => (
               <BaseSelect.Item
                 key={option.value}
                 value={option.value}
-                className="flex cursor-default items-center justify-between gap-3 px-3 py-1.5 outline-none data-[highlighted]:bg-surface-alt data-[selected]:font-medium"
+                className={cn(POPUP_ROW, 'justify-between gap-3 data-[selected]:font-medium')}
               >
                 <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
-                <BaseSelect.ItemIndicator className="h-4 w-4 flex-none">
+                <BaseSelect.ItemIndicator className="size-3.5 flex-none">
                   <Icon name="check" />
                 </BaseSelect.ItemIndicator>
               </BaseSelect.Item>

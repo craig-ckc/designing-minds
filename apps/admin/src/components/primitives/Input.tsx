@@ -1,7 +1,6 @@
 import { type ComponentPropsWithoutRef } from 'react'
 import { Input as BaseInput } from '@base-ui/react/input'
-import { cn } from '@designing-minds/utils'
-import { FIELD } from '../tokens'
+import { cn, FIELD } from '../../design'
 
 export type InputProps = Omit<ComponentPropsWithoutRef<typeof BaseInput>, 'className'> & { className?: string }
 

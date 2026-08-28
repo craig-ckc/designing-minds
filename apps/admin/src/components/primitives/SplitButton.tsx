@@ -1,6 +1,6 @@
 import { type ReactElement, type ReactNode } from 'react'
 import { Menu as BaseMenu } from '@base-ui/react/menu'
-import { cn } from '@designing-minds/utils'
+import { cn, POPUP } from '../../design'
 import { Button, type ButtonProps } from './Button'
 import { buttonStyles, type ButtonVariant } from './button-styles'
 
@@ -54,9 +54,9 @@ export function SplitButton({
         <BaseMenu.Trigger
           disabled={disabled}
           aria-label={menuLabel}
-          className={cn(buttonStyles({ variant, size: 'sm' }), 'rounded-l-none px-2')}
+          className={cn(buttonStyles({ variant, size: 'sm' }), 'rounded-l-none px-1')}
         >
-          <span className="h-3.5 w-3.5">
+          <span className="size-4">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <path d="m6 9 6 6 6-6" />
             </svg>
@@ -64,9 +64,7 @@ export function SplitButton({
         </BaseMenu.Trigger>
         <BaseMenu.Portal>
           <BaseMenu.Positioner align="end" sideOffset={6} className="z-50">
-            <BaseMenu.Popup className="min-w-[260px] rounded-control border border-line bg-surface py-1 text-[0.88rem] shadow-lg">
-              {menu}
-            </BaseMenu.Popup>
+            <BaseMenu.Popup className={cn(POPUP, 'min-w-[220px] py-1')}>{menu}</BaseMenu.Popup>
           </BaseMenu.Positioner>
         </BaseMenu.Portal>
       </BaseMenu.Root>
@@ -97,7 +95,7 @@ export function MenuChoice({
     <BaseMenu.Item
       onClick={onClick}
       className={cn(
-        'grid cursor-default gap-0.5 px-3 py-2 outline-none',
+        'grid cursor-default gap-0.5 px-2.5 py-1.5 outline-none',
         'data-[highlighted]:bg-surface-alt',
         selected && 'bg-surface-alt',
       )}
@@ -106,10 +104,10 @@ export function MenuChoice({
         <span className={cn('min-w-0 flex-1 truncate', selected ? 'font-semibold text-ink' : 'text-ink-soft')}>
           {label}
         </span>
-        {selected ? <span className="flex-none text-[0.72rem] uppercase tracking-[0.08em] text-muted">Current</span> : null}
+        {selected ? <span className="flex-none text-meta uppercase text-muted">Current</span> : null}
         {trailing}
       </span>
-      {description ? <span className="text-[0.8rem] leading-snug text-muted">{description}</span> : null}
+      {description ? <span className="text-ui text-muted">{description}</span> : null}
     </BaseMenu.Item>
   )
 }

@@ -1,9 +1,8 @@
 import { type ReactNode } from 'react'
-import { cn } from '@designing-minds/utils'
 import type { ProductFile, ProductImage } from '@designing-minds/cms'
 import type { AdminField, AdminRecord, FieldContext, MultiReferenceField, SelectField, SingleReferenceField } from '../../cms/types'
 import { getPath } from '../../cms/record'
-import { FIELD } from '../tokens'
+import { cn, FIELD_HELP, FIELD_LABEL, SUNK } from '../../design'
 import { Icon } from '../ui'
 import { Input, ReferencePicker, Select, Switch, Textarea, type SelectOption } from '../primitives'
 import { FileListField } from './FileListField'
@@ -30,7 +29,7 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
     switch (field.type) {
       case 'readonly': {
         const text = value == null || value === '' ? '—' : String(value)
-        return <div className={cn(FIELD, 'whitespace-pre-line text-ink-soft')}>{text}</div>
+        return <div className={cn(SUNK, 'min-h-field whitespace-pre-line px-2.5 py-1 text-ui text-ink-soft')}>{text}</div>
       }
 
       /* Renders an object (e.g. a JSONB "data" bag) as read-only label/value
@@ -39,14 +38,14 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
         const entries =
           value && typeof value === 'object' && !Array.isArray(value) ? Object.entries(value as Record<string, unknown>) : []
         if (entries.length === 0) {
-          return <div className={cn(FIELD, 'text-ink-soft')}>No additional fields.</div>
+          return <div className={cn(SUNK, 'min-h-field px-2.5 py-1 text-ui text-ink-soft')}>No additional fields.</div>
         }
         return (
-          <dl className="grid gap-2.5 rounded-control border border-line bg-surface-alt p-3">
+          <dl className={cn(SUNK, 'grid gap-2 p-2.5')}>
             {entries.map(([key, entryValue]) => (
               <div key={key} className="grid gap-0.5">
-                <dt className="text-[0.75rem] uppercase tracking-[0.06em] text-muted">{key}</dt>
-                <dd className="whitespace-pre-wrap text-[0.9rem] text-ink">
+                <dt className="text-meta uppercase text-muted">{key}</dt>
+                <dd className="whitespace-pre-wrap text-ui text-ink">
                   {entryValue == null || entryValue === '' ? '—' : String(entryValue)}
                 </dd>
               </div>
@@ -59,9 +58,9 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
       case 'boolean': {
         const checked = Boolean(value)
         return (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <Switch id={inputId} checked={checked} onCheckedChange={(next) => onUpdate(field.key, next)} disabled={disabled} />
-            <span className="text-[0.88rem] text-ink-soft">{checked ? 'On' : 'Off'}</span>
+            <span className="text-ui text-ink-soft">{checked ? 'On' : 'Off'}</span>
           </div>
         )
       }
@@ -112,12 +111,12 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
           <>
             <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
             {field.urlPrefix ? (
-              <div className="mt-2 flex items-center gap-2 rounded-control border border-line bg-surface-alt px-3 py-2 text-[0.82rem] text-muted">
-                <span className="h-3.5 w-3.5 flex-none">
+              <div className={cn(SUNK, 'mt-2 flex items-center gap-2 px-2.5 py-1 text-ui text-ink-soft')}>
+                <span className="size-3 flex-none">
                   <Icon name="external" />
                 </span>
                 <span className="min-w-0 break-all">
-                  {field.urlPrefix}
+                  <span className="text-muted">{field.urlPrefix}</span>
                   <strong className="font-medium text-ink">{String(value || 'your-slug')}</strong>
                 </span>
               </div>
@@ -176,10 +175,38 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
     return <Select id={inputId} value={current} disabled={disabled} options={options} onValueChange={(next) => onUpdate(field.key, next)} />
   }
 
-  /* Type-ahead picker: type to filter, click to add — scales to large collections. */
   function renderMultiReference(reference: MultiReferenceField): ReactNode {
     const options = ctx.optionsForReference(reference)
     const selected = Array.isArray(value) ? (value as string[]) : []
+
+    /* A reference capped at one is a single choice wearing a picker's clothes.
+       The type-ahead invites you to keep typing and the chip list invites you
+       to keep adding, so the control advertises exactly what `maxSelected: 1`
+       forbids — and a product's Subject is the case in point.
+
+       Only the control changes. The column stays `string[]` (Product.subjects
+       is an array of display names, required to hold at least one), so this
+       reads value[0] and writes a one-item array back. Clearing writes `[]`
+       rather than `['']`, which is what the required check looks for. */
+    if (reference.maxSelected === 1) {
+      const current = selected[0] ?? ''
+      // Mirrors renderReferenceSingle: the empty choice only exists until one
+      // is made, because these fields are required and there is no going back
+      // to "unset" once a value is in.
+      const choices: SelectOption[] = current === '' ? [{ label: 'Select…', value: '' }] : []
+      choices.push(...options)
+      return (
+        <Select
+          id={inputId}
+          value={current}
+          disabled={disabled}
+          options={choices}
+          onValueChange={(next) => onUpdate(field.key, next === '' ? [] : [next])}
+        />
+      )
+    }
+
+    /* Type-ahead picker: type to filter, click to add — scales to large collections. */
     return (
       <ReferencePicker
         id={inputId}
@@ -234,16 +261,19 @@ function FieldShell({ field, inputId, children }: { field: AdminField; inputId: 
   const Caption = isGroup ? 'span' : 'label'
   return (
     <div className="grid gap-2">
+      {/* The label steps down to control size and regular weight, deliberately
+          not bold, so the eye goes to the value below it rather than competing
+          with it. */}
       <Caption
         id={`${inputId}:label`}
         htmlFor={isGroup ? undefined : inputId}
-        className="text-[0.92rem] font-medium"
+        className={FIELD_LABEL}
       >
         {field.label}
-        {field.required ? <span className="text-muted"> *</span> : null}
+        {field.required ? <span className="text-danger"> *</span> : null}
       </Caption>
       {children}
-      {field.helpText ? <p className="text-[0.82rem] text-muted">{field.helpText}</p> : null}
+      {field.helpText ? <p className={FIELD_HELP}>{field.helpText}</p> : null}
     </div>
   )
 }

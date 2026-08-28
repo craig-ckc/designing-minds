@@ -33,21 +33,21 @@ export function FilterPopover({
     <Popover
       trigger={
         <Button variant="outline" size="sm" aria-label={active ? `Filter (${active} active)` : 'Filter'}>
-          <span className="h-3.5 w-3.5">
+          <span className="size-4">
             <Icon name="filter" />
           </span>
           Filter
           {active > 0 ? (
-            <span className="grid h-4 min-w-4 place-items-center rounded-pill bg-primary px-1 text-[0.68rem] font-semibold text-on-primary">
+            <span className="grid h-3.5 min-w-3.5 place-items-center rounded-pill bg-primary px-1 text-meta font-semibold text-on-primary">
               {active}
             </span>
           ) : null}
         </Button>
       }
-      className="w-[280px]"
+      className="w-[240px]"
     >
-      <div className="flex flex-none items-center justify-between border-b border-line px-3.5 py-2.5">
-        <span className="text-[0.8rem] font-semibold uppercase tracking-[0.08em] text-muted">Filters</span>
+      <div className="flex flex-none items-center justify-between border-b border-line px-2.5 py-1.5">
+        <span className="text-meta font-semibold uppercase text-muted">Filters</span>
         {active > 0 ? (
           <Button variant="ghost" size="sm" onClick={() => onChange({})}>
             Clear all
@@ -55,15 +55,15 @@ export function FilterPopover({
         ) : null}
       </div>
 
-      <ScrollArea className="min-h-0 flex-1" viewportClassName="px-3.5 py-3">
-        <div className="grid gap-4">
+      <ScrollArea className="min-h-0 flex-1" viewportClassName="px-2.5 py-2">
+        <div className="grid gap-3">
           {facets.map((facet) => (
-            <fieldset key={facet.key} className="grid gap-1.5">
-              <legend className="mb-1.5 text-[0.82rem] font-medium">{facet.label}</legend>
+            <fieldset key={facet.key} className="grid gap-1">
+              <legend className="mb-1 text-ui font-medium">{facet.label}</legend>
               {facet.options.map((option) => {
                 const checked = (filters[facet.key] ?? []).includes(option.value)
                 return (
-                  <label key={option.value} className="flex cursor-pointer items-center gap-2 text-[0.88rem] text-ink-soft">
+                  <label key={option.value} className="flex cursor-pointer items-center gap-2 text-ui text-ink-soft">
                     <Checkbox
                       checked={checked}
                       onCheckedChange={() => toggle(facet.key, option.value)}
@@ -73,7 +73,7 @@ export function FilterPopover({
                   </label>
                 )
               })}
-              {facet.options.length === 0 ? <span className="text-[0.82rem] text-muted">No values yet.</span> : null}
+              {facet.options.length === 0 ? <span className="text-ui text-muted">No values yet.</span> : null}
             </fieldset>
           ))}
         </div>

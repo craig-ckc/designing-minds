@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { cn } from '@designing-minds/utils'
 import type { AdminCollection, AdminRecord, FieldContext } from '../../cms/types'
 import { buildCsv, buildImportPlan, type ImportPlan } from '../../cms/csv-io'
 import { downloadCsv } from '../../lib/csv'
 import { Pill } from '../Badge'
 import { Button, buttonStyles, Dialog, FileInput, ScrollArea } from '../primitives'
+import { cn, TD, TH } from '../../design'
 
 type Step =
   | { name: 'pick' }
@@ -82,15 +82,15 @@ export function ImportDialog({
       className={cn(step.name === 'preview' && 'w-[min(760px,calc(100vw-2rem))]')}
     >
       {step.name === 'pick' ? (
-        <div className="mt-3 grid gap-4">
-          <p className="text-[0.9rem] leading-relaxed text-ink-soft">
+        <div className="mt-3 grid gap-3">
+          <p className="text-ui text-ink-soft">
             Upload a CSV whose header row uses the field keys of this collection. Rows with an existing{' '}
             <code className="rounded-tight bg-surface-alt px-1">id</code> update that record; rows without an id create new{' '}
             {collection.label.toLowerCase()}. Blank cells keep the current value. Nothing is saved until you confirm the
             preview.
           </p>
-          {fileError ? <p className="text-[0.85rem] text-danger">{fileError}</p> : null}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {fileError ? <p className="text-ui text-danger">{fileError}</p> : null}
+          <div className="flex flex-wrap items-center gap-2">
             <FileInput
               label="CSV file"
               accept=".csv,text/csv"
@@ -130,14 +130,14 @@ export function ImportDialog({
       ) : null}
 
       {step.name === 'applying' ? (
-        <p className="mt-4 text-[0.9rem] text-ink-soft">
+        <p className="mt-3 text-ui text-ink-soft">
           Importing… {step.done} of {step.total}
         </p>
       ) : null}
 
       {step.name === 'done' ? (
-        <div className="mt-3 grid gap-4">
-          <p className="text-[0.9rem] text-ink-soft">
+        <div className="mt-3 grid gap-3">
+          <p className="text-ui text-ink-soft">
             Imported {step.imported} {step.imported === 1 ? 'record' : 'records'}.
             {step.failed > 0 ? ` ${step.failed} failed to save.` : ''}
             {step.skipped > 0 ? ` ${step.skipped} row${step.skipped === 1 ? ' was' : 's were'} skipped due to errors.` : ''}
@@ -167,18 +167,17 @@ function PreviewStep({
   onApply: () => void
 }) {
   const errorCount = plan.rows.length - plan.validCount
-  const th = 'whitespace-nowrap px-3 py-2 text-left text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-muted'
 
   return (
     <div className="mt-3 grid min-h-0 gap-3">
-      <p className="text-[0.88rem] text-ink-soft">
+      <p className="text-ui text-ink-soft">
         <strong className="font-medium text-ink">{filename}</strong> — {plan.rows.length}{' '}
         {plan.rows.length === 1 ? 'row' : 'rows'}: {plan.validCount} valid
         {errorCount > 0 ? `, ${errorCount} with errors (skipped on import)` : ''}.
       </p>
 
       {plan.warnings.length > 0 ? (
-        <ul className="grid gap-1 text-[0.82rem] text-muted">
+        <ul className="grid gap-1 text-ui text-muted">
           {plan.warnings.map((warning) => (
             <li key={warning}>· {warning}</li>
           ))}
@@ -188,28 +187,28 @@ function PreviewStep({
       {plan.rows.length > 0 ? (
         <div className="flex max-h-[320px] min-h-0 flex-col overflow-hidden rounded-control border border-line">
           <ScrollArea className="min-h-0 flex-1">
-            <table className="w-full border-collapse text-[0.85rem]">
+            <table className="w-full border-collapse text-ui">
               <thead className="sticky top-0 z-10 bg-surface-alt">
                 <tr className="border-b border-line">
-                  <th className={th}>Line</th>
-                  <th className={th}>{collection.singular}</th>
-                  <th className={th}>Action</th>
-                  <th className={th}>Issues</th>
+                  <th className={TH}>Line</th>
+                  <th className={TH}>{collection.singular}</th>
+                  <th className={TH}>Action</th>
+                  <th className={TH}>Issues</th>
                 </tr>
               </thead>
               <tbody>
                 {plan.rows.map((row) => (
-                  <tr key={row.line} className="border-b border-line last:border-b-0 align-top">
-                    <td className="px-3 py-2 text-muted">{row.line}</td>
-                    <td className="px-3 py-2 font-medium">{row.title}</td>
-                    <td className="px-3 py-2">
+                  <tr key={row.line} className="border-b border-line last:border-b-0">
+                    <td className={cn(TD, 'align-top text-muted')}>{row.line}</td>
+                    <td className={cn(TD, 'align-top font-medium')}>{row.title}</td>
+                    <td className={cn(TD, 'align-top')}>
                       <Pill tone={row.action === 'create' ? 'solid' : 'outline'}>{row.action}</Pill>
                     </td>
-                    <td className="px-3 py-2">
+                    <td className={cn(TD, 'align-top')}>
                       {row.errors.length === 0 ? (
                         <span className="text-muted">—</span>
                       ) : (
-                        <ul className="grid gap-0.5 text-[0.82rem] text-danger">
+                        <ul className="grid gap-0.5 text-ui text-danger">
                           {row.errors.map((error) => (
                             <li key={error}>{error}</li>
                           ))}
@@ -224,7 +223,7 @@ function PreviewStep({
         </div>
       ) : null}
 
-      <div className="flex items-center justify-end gap-2.5">
+      <div className="flex items-center justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onBack}>
           Choose another file
         </Button>

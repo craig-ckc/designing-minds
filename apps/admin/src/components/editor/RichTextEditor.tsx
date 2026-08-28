@@ -1,7 +1,7 @@
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 import { Toolbar, ToolbarSeparator, ToolbarToggle } from '../primitives'
 
 /**
@@ -30,7 +30,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         ...(id ? { id } : {}),
-        class: 'tiptap min-h-[180px] px-3.5 py-2.5',
+        class: 'tiptap min-h-[140px] px-2.5 py-2',
         role: 'textbox',
         'aria-multiline': 'true',
       },

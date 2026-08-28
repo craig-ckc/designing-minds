@@ -1,4 +1,4 @@
-import { cv } from '@designing-minds/utils'
+import { cv } from '../../design'
 
 export type ButtonVariant = 'solid' | 'soft' | 'outline' | 'ghost' | 'text'
 export type ButtonSize = 'sm' | 'md' | 'icon'
@@ -14,7 +14,7 @@ export type ButtonSize = 'sm' | 'md' | 'icon'
  */
 export const buttonStyles = cv({
   base: [
-    'inline-flex items-center justify-center gap-1.5 font-medium transition select-none',
+    'inline-flex items-center justify-center gap-1 font-medium transition select-none',
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ],
@@ -33,9 +33,9 @@ export const buttonStyles = cv({
       text: ['text-ink-soft hover:text-ink'],
     },
     size: {
-      sm: ['h-8 px-3 text-[0.82rem]'],
-      md: ['h-9 px-3.5 text-[0.88rem]'],
-      icon: ['h-7 w-7'],
+      sm: ['h-field px-2 text-ui'],
+      md: ['h-7 px-2.5 text-ui'],
+      icon: ['size-field p-1'],
     },
   },
 })

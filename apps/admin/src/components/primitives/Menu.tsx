@@ -1,6 +1,6 @@
 import { type ReactElement, type ReactNode } from 'react'
 import { Menu as BaseMenu } from '@base-ui/react/menu'
-import { cn } from '@designing-minds/utils'
+import { cn, POPUP, POPUP_ROW } from '../../design'
 
 /** Dropdown menu on the Base UI Menu primitive; `trigger` is the anchor element. */
 export function Menu({
@@ -17,9 +17,7 @@ export function Menu({
       <BaseMenu.Trigger render={trigger} />
       <BaseMenu.Portal>
         <BaseMenu.Positioner align={align} sideOffset={6} className="z-50">
-          <BaseMenu.Popup className="min-w-[220px] rounded-control border border-line bg-surface py-1 text-[0.88rem] shadow-lg">
-            {children}
-          </BaseMenu.Popup>
+          <BaseMenu.Popup className={cn(POPUP, 'min-w-[200px] py-1')}>{children}</BaseMenu.Popup>
         </BaseMenu.Positioner>
       </BaseMenu.Portal>
     </BaseMenu.Root>
@@ -38,10 +36,7 @@ export function MenuItem({
   return (
     <BaseMenu.Item
       onClick={onClick}
-      className={cn(
-        'flex cursor-default items-center gap-2 px-3 py-1.5 text-ink-soft outline-none data-[highlighted]:bg-surface-alt data-[highlighted]:text-ink',
-        className,
-      )}
+      className={cn(POPUP_ROW, 'text-ink-soft data-[highlighted]:text-ink', className)}
     >
       {children}
     </BaseMenu.Item>
@@ -50,7 +45,7 @@ export function MenuItem({
 
 /** Non-interactive informational row (e.g. the signed-in account). */
 export function MenuLabel({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('px-3 py-1.5 text-[0.8rem] text-muted', className)}>{children}</div>
+  return <div className={cn('px-2.5 py-1 text-ui text-muted', className)}>{children}</div>
 }
 
 export function MenuSeparator() {

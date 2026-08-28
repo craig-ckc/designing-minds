@@ -1,8 +1,8 @@
 import { type ReactNode } from 'react'
-import { cn, cv } from '@designing-minds/utils'
+import { cn, cv } from '../design'
 import type { OrderStatus, PaymentStatus } from '@designing-minds/cms'
 
-type Tone = 'solid' | 'outline' | 'muted' | 'warn' | 'info'
+type Tone = 'solid' | 'outline' | 'muted' | 'warn' | 'info' | 'success'
 
 /**
  * Status shown as a plain text label with a single leading tone dot — the
@@ -11,9 +11,10 @@ type Tone = 'solid' | 'outline' | 'muted' | 'warn' | 'info'
  * never a filled background. Export names keep the `Pill` suffix so callers
  * (RecordTable, DashboardPage) don't churn.
  *
- * `warn` / `info` carry publish state: saved-but-not-live, and rebuild in
- * flight. They're the only tones that leave the warm neutral palette, which is
- * the point — "this isn't on the site yet" has to be noticeable.
+ * `warn` / `info` / `success` carry publish state: saved-but-not-live, rebuild
+ * in flight, and live on the site. They're the only tones that leave the
+ * neutral (true grey, not warm) palette, which is the point — publish state
+ * has to be noticeable.
  */
 const dotStyles = cv({
   base: ['h-1.5 w-1.5 flex-none rounded-full'],
@@ -24,6 +25,7 @@ const dotStyles = cv({
       muted: ['bg-line-strong'],
       warn: ['bg-warn'],
       info: ['bg-info'],
+      success: ['bg-success'],
     },
   },
   defaultVariants: { tone: 'outline' },
@@ -38,6 +40,7 @@ const labelStyles = cv({
       muted: ['text-muted'],
       warn: ['text-warn'],
       info: ['text-info'],
+      success: ['text-success'],
     },
   },
   defaultVariants: { tone: 'outline' },

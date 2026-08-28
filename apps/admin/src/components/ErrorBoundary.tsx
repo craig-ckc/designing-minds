@@ -30,19 +30,19 @@ export class ErrorBoundary extends Component<{ children: ReactNode; label?: stri
     if (!error) return this.props.children
 
     return (
-      <div className="grid min-h-0 flex-1 place-items-center px-6 py-10">
-        <div className="grid max-w-[520px] gap-3 text-center">
-          <h2 className="text-[1.2rem] font-bold tracking-[-0.02em]">
+      <div className="grid min-h-0 flex-1 place-items-center px-4 py-8">
+        <div className="grid max-w-[520px] gap-2.5 text-center">
+          <h2 className="text-section">
             {this.props.label ?? 'Something went wrong on this screen'}
           </h2>
-          <p className="text-[0.9rem] text-ink-soft">
+          <p className="text-ui text-ink-soft">
             The rest of the admin is still working — you can go back and carry on. If this keeps happening, the message
             below is the useful part.
           </p>
-          <pre className="overflow-x-auto rounded-control border border-line bg-surface-alt px-3 py-2 text-left text-[0.8rem] text-danger">
+          <pre className="overflow-x-auto rounded-control border border-line bg-surface-alt px-2.5 py-1.5 text-left text-ui text-danger">
             {error.message}
           </pre>
-          <div className="flex justify-center gap-2.5">
+          <div className="flex justify-center gap-2">
             <Button variant="outline" size="sm" onClick={() => this.setState({ error: null })}>
               Try again
             </Button>

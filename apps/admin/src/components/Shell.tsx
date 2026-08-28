@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
+import { cn, BAR, CHIP_DASHED } from '../design'
 import { repository } from '../repository'
 import { getCollection } from '../cms/registry'
 import { selectRecord } from '../cms/adapter'
@@ -33,10 +34,10 @@ function AdminBreadcrumb({ snapshot }: { snapshot: CmsSnapshot | null }) {
     document.title = `${trail.title} | Designing Minds Admin`
   }, [trail.title])
 
-  if (!trail.collection) return <span className="hidden text-[0.8rem] text-muted md:block">Dashboard</span>
+  if (!trail.collection) return <span className="hidden text-ui text-muted md:block">Dashboard</span>
 
   return (
-    <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 text-[0.8rem] md:flex">
+    <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 text-ui md:flex">
       <Link to="/" className="text-muted transition hover:text-ink">Dashboard</Link>
       <span aria-hidden className="text-line-strong">/</span>
       {trail.record ? (
@@ -65,13 +66,15 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-12 flex-none items-center gap-3 border-b border-line bg-surface px-3">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span className="grid h-7 w-7 flex-none place-items-center rounded-control bg-primary text-[0.72rem] font-bold tracking-[-0.04em] text-on-primary">
+    <header className={cn(BAR, 'sticky top-0 z-30 gap-2')}>
+      <div className="flex min-w-0 items-center gap-2">
+        {/* Negative tracking kept deliberately: this is a logotype, not body
+            text, and it's the one exception to the "delete tracking" rule. */}
+        <span className="grid size-6 flex-none place-items-center rounded-control bg-primary text-meta font-bold tracking-[-0.04em] text-on-primary">
           DM
         </span>
-        <span className="hidden truncate text-[0.9rem] font-semibold tracking-[-0.01em] sm:block">Designing Minds</span>
-        <span className="hidden flex-none text-[0.72rem] font-medium uppercase tracking-[0.1em] text-muted md:block">
+        <span className="hidden truncate text-title font-semibold sm:block">Designing Minds</span>
+        <span className="hidden flex-none text-meta font-medium uppercase text-muted md:block">
           Admin
         </span>
       </div>
@@ -81,9 +84,7 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
       <div className="ml-auto flex flex-none items-center gap-2">
         {!repository.canWrite ? (
-          <span className="hidden rounded-pill border border-dashed border-line-strong px-2.5 py-0.5 text-[0.72rem] font-medium uppercase tracking-[0.06em] text-muted sm:inline-flex">
-            Read only
-          </span>
+          <span className={cn(CHIP_DASHED, 'hidden sm:inline-flex')}>Read only</span>
         ) : null}
 
         <Button
@@ -95,7 +96,7 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
           }
         >
           Preview
-          <span className="h-3.5 w-3.5">
+          <span className="size-4">
             <Icon name="external" />
           </span>
         </Button>
@@ -110,8 +111,8 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
           }
         >
           <MenuLabel>
-            <span className="block text-[0.72rem] uppercase tracking-[0.08em]">Signed in</span>
-            <span className="block truncate text-[0.85rem] text-ink">{email}</span>
+            <span className="block text-meta uppercase">Signed in</span>
+            <span className="block truncate text-ui text-ink">{email}</span>
           </MenuLabel>
           <MenuLabel className="flex items-center gap-1.5">
             <span className={`h-1.5 w-1.5 rounded-full ${repository.canWrite ? 'bg-primary' : 'bg-line-strong'}`} />
@@ -155,7 +156,7 @@ export function Shell({
     <div className="flex h-screen flex-col overflow-hidden">
       <TopBar snapshot={snapshot} />
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-[256px] flex-none border-r border-line bg-surface lg:block">
+        <aside className="hidden w-pane flex-none border-r border-line bg-surface lg:block">
           {snapshot ? <CollectionSidebar snapshot={snapshot} /> : null}
         </aside>
 
@@ -165,13 +166,13 @@ export function Shell({
           <ErrorBoundary>{children}</ErrorBoundary>
 
           {message || error ? (
-            <div className="pointer-events-none absolute bottom-4 right-4 z-20 max-w-sm">
+            <div className="pointer-events-none absolute bottom-3 right-3 z-20 max-w-sm">
               {error ? (
-                <div className="pointer-events-auto rounded-control border border-danger bg-danger-tint px-4 py-2.5 text-[0.9rem] text-danger shadow-lg">
+                <div className="pointer-events-auto rounded-control border border-danger bg-danger-tint px-3 py-2 text-ui text-danger shadow-popup">
                   {error}
                 </div>
               ) : (
-                <div className="pointer-events-auto rounded-control border border-line bg-surface px-4 py-2.5 text-[0.9rem] text-ink-soft shadow-lg">
+                <div className="pointer-events-auto rounded-control border border-line bg-surface px-3 py-2 text-ui text-ink-soft shadow-popup">
                   {message}
                 </div>
               )}

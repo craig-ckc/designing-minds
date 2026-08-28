@@ -1,6 +1,6 @@
 import { type ReactElement, type ReactNode } from 'react'
 import { Popover as BasePopover } from '@base-ui/react/popover'
-import { cn } from '@designing-minds/utils'
+import { cn, POPUP } from '../../design'
 
 /** Anchored popup on the Base UI Popover primitive; `trigger` is the anchor element. */
 export function Popover({
@@ -20,10 +20,7 @@ export function Popover({
       <BasePopover.Portal>
         <BasePopover.Positioner align={align} sideOffset={6} className="z-50">
           <BasePopover.Popup
-            className={cn(
-              'flex max-h-[min(420px,var(--available-height))] flex-col overflow-hidden rounded-control border border-line bg-surface text-[0.88rem] shadow-lg',
-              className,
-            )}
+            className={cn(POPUP, 'flex max-h-[min(420px,var(--available-height))] flex-col overflow-hidden', className)}
           >
             {children}
           </BasePopover.Popup>

@@ -1,6 +1,5 @@
 import { Combobox } from '@base-ui/react/combobox'
-import { cn } from '@designing-minds/utils'
-import { FIELD } from '../tokens'
+import { cn, FIELD, POPUP, POPUP_ROW } from '../../design'
 import { Icon } from '../ui'
 import { Button } from './Button'
 import { enforceMaxSelected } from './reference-picker-utils'
@@ -50,20 +49,20 @@ export function ReferencePicker({
           onValueChange={(next) => emit(next.map((option) => option.value))}
           isItemEqualToValue={(a, b) => a.value === b.value}
         >
-          <Combobox.Input id={id} placeholder={placeholder} className={cn(FIELD, 'min-h-[42px] text-[0.92rem]')} />
+          <Combobox.Input id={id} placeholder={placeholder} className={FIELD} />
           <Combobox.Portal>
             <Combobox.Positioner align="start" sideOffset={6} className="z-50">
-              <Combobox.Popup className="max-h-[16rem] w-[var(--anchor-width)] overflow-auto rounded-control border border-line bg-surface py-1 text-[0.9rem] shadow-lg">
-                <Combobox.Empty className="px-3 py-2 text-[0.85rem] text-muted">No matches.</Combobox.Empty>
+              <Combobox.Popup className={cn(POPUP, 'max-h-[16rem] w-[var(--anchor-width)] overflow-auto py-1')}>
+                <Combobox.Empty className="px-2.5 py-1.5 text-ui text-muted">No matches.</Combobox.Empty>
                 <Combobox.List>
                   {(option: PickerOption) => (
                     <Combobox.Item
                       key={option.value}
                       value={option}
-                      className="flex cursor-default items-center justify-between gap-3 px-3 py-1.5 outline-none data-[highlighted]:bg-surface-alt data-[selected]:font-medium"
+                      className={cn(POPUP_ROW, 'justify-between gap-3 data-[selected]:font-medium')}
                     >
                       <span className="min-w-0 truncate">{option.label}</span>
-                      <Combobox.ItemIndicator className="h-4 w-4 flex-none">
+                      <Combobox.ItemIndicator className="size-3.5 flex-none">
                         <Icon name="check" />
                       </Combobox.ItemIndicator>
                     </Combobox.Item>
@@ -76,23 +75,35 @@ export function ReferencePicker({
       ) : null}
 
       {value.length > 0 ? (
-        <ul className="grid gap-1.5">
+        /* Chips, wrapping — each sized to its own text, so the list is as tall
+           as it needs to be instead of one full-width row per item. A bundle
+           with sixteen members was sixteen 1100px boxes holding 200px of text,
+           with the remove control a thousand pixels from the label it removed.
+
+           Each chip is two zones split by a rule that runs the chip's full
+           height, edge to edge: the label with its own padding, and a square
+           cell for the trash. Square because it holds a glyph and nothing else
+           — padding on that side would only make it lopsided. */
+        <ul className="flex flex-wrap gap-1.5">
           {value.map((option) => (
             <li
               key={option.value}
-              className="flex items-center justify-between gap-3 rounded-control border border-line bg-surface px-3 py-2 text-[0.9rem]"
+              className="flex h-5.5 max-w-full items-center overflow-hidden rounded-tight bg-ref text-ref-ink"
             >
-              <span className="min-w-0 truncate">{option.label}</span>
+              <span className="min-w-0 truncate px-2 text-ui font-medium">{option.label}</span>
               {!disabled ? (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6"
+                  // Square, flush to the chip's edges, and its left border IS
+                  // the divider — a separate 1px element would sit inside the
+                  // padding and stop short of the chip's top and bottom.
+                  className="size-5.5 flex-none rounded-none border-l border-ref-line p-0 text-ref-ink hover:bg-ref-line hover:text-ref-ink"
                   aria-label={`Remove ${option.label}`}
                   onClick={() => emit(selected.filter((item) => item !== option.value))}
                 >
-                  <span className="h-3.5 w-3.5">
-                    <Icon name="close" />
+                  <span className="size-3">
+                    <Icon name="trash" />
                   </span>
                 </Button>
               ) : null}
@@ -100,7 +111,7 @@ export function ReferencePicker({
           ))}
         </ul>
       ) : (
-        <p className="text-[0.85rem] text-muted">Nothing selected yet.</p>
+        <p className="text-ui text-muted">Nothing selected yet.</p>
       )}
     </div>
   )

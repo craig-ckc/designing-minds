@@ -37,27 +37,27 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-canvas px-6">
+    <main className="grid min-h-screen place-items-center bg-canvas px-4">
       <form
         onSubmit={(event) => void submit(event)}
-        className="grid w-full max-w-sm gap-4 rounded-card border border-line bg-surface p-6"
+        className="grid w-full max-w-sm gap-3 rounded-card border border-line bg-surface p-4"
       >
         <div>
-          <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-muted">Designing Minds Admin</p>
-          <h1 className="mt-1 text-[1.6rem]">Choose a new password</h1>
+          <p className="text-meta font-semibold uppercase text-muted">Designing Minds Admin</p>
+          <h1 className="mt-1 text-page">Choose a new password</h1>
         </div>
         {error ? (
-          <p className="rounded-control border border-danger bg-danger-tint px-3 py-2 text-[0.9rem] text-danger">{error}</p>
+          <p className="rounded-control border border-danger bg-danger-tint px-2.5 py-1.5 text-ui text-danger">{error}</p>
         ) : null}
-        <label className="grid gap-1.5 text-[0.9rem]">
+        <label className="grid gap-2 text-ui">
           New password
           <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required />
         </label>
-        <label className="grid gap-1.5 text-[0.9rem]">
+        <label className="grid gap-2 text-ui">
           Confirm password
           <Input type="password" value={confirm} onChange={(event) => setConfirm(event.target.value)} autoComplete="new-password" required />
         </label>
-        <Button type="submit" variant="solid" size="md" disabled={submitting} className="h-[42px] w-full">
+        <Button type="submit" variant="solid" size="md" disabled={submitting} className="h-7 w-full">
           {submitting ? 'Saving…' : 'Update password'}
         </Button>
       </form>

@@ -1,8 +1,8 @@
 import { useState, type DragEvent } from 'react'
-import { cn } from '@designing-minds/utils'
 import type { ProductFile } from '@designing-minds/cms'
 import { formatBytes } from '../../lib/upload-transport'
 import { useFieldUploads, useUploadTarget, useUploads, type UploadJob } from '../../lib/uploads'
+import { cn } from '../../design'
 import { Icon } from '../ui'
 import { Button, buttonStyles, FileInput } from '../primitives'
 
@@ -81,9 +81,9 @@ export function FileListField({
   return (
     // A file list has no single focusable control, so it is announced as a
     // labelled group rather than pointing a <label> at something invisible.
-    <div role="group" aria-labelledby={labelId} className="grid gap-2.5">
+    <div role="group" aria-labelledby={labelId} className="grid gap-2">
       {files.length > 0 ? (
-        <ul className="grid gap-2.5">
+        <ul className="grid gap-2">
           {files.map((file) => (
             <li key={file.id}>
               <FileCard
@@ -127,28 +127,28 @@ export function FileListField({
               onDragLeave={() => setDragActive(false)}
               onDrop={onDrop}
               className={cn(
-                'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-control border-2 border-dashed px-4 py-5 text-center transition',
+                'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-dashed px-3 py-4 text-center transition',
                 // The input is a sibling, so `focus-within` never sees it.
                 'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-focus-visible:outline-offset-1',
                 dragActive ? 'border-primary bg-primary-tint' : 'border-line-strong bg-surface-alt hover:border-primary',
               )}
             >
-              <span className="grid h-8 w-8 place-items-center rounded-pill bg-surface text-ink-soft">
-                <span className="h-4 w-4">
+              <span className="grid size-7 place-items-center rounded-pill bg-surface text-ink-soft">
+                <span className="size-4">
                   <Icon name="upload" />
                 </span>
               </span>
-              <span className="text-[0.85rem] font-medium text-ink">
+              <span className="text-ui font-medium text-ink">
                 {dragActive ? 'Drop to upload' : 'Drag & drop a file here'}
               </span>
-              <span className="text-[0.8rem] text-muted">
+              <span className="text-ui text-muted">
                 or <span className="font-medium text-primary">click to browse</span>
               </span>
             </label>
           )}
         />
       ) : files.length === 0 && active.length === 0 ? (
-        <p className="text-[0.85rem] text-muted">No file attached.</p>
+        <p className="text-ui text-muted">No file attached.</p>
       ) : null}
     </div>
   )
@@ -171,25 +171,25 @@ function FileCard({
 
   return (
     <div className="rounded-control border border-line bg-surface">
-      <div className="flex items-start gap-3 p-3">
-        <span className="grid h-11 w-11 flex-none place-items-center rounded-control bg-ph text-ph-glyph">
-          <span className="h-5 w-5">
+      <div className="flex items-start gap-2 p-2.5">
+        <span className="grid size-9 flex-none place-items-center rounded-control bg-ph text-ph-glyph">
+          <span className="size-4">
             <Icon name="doc" />
           </span>
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5">
-          <span className="truncate text-[0.9rem] font-medium text-ink">{file.filename}</span>
-          <span className="truncate text-[0.8rem] text-muted">
+          <span className="truncate text-ui font-medium text-ink">{file.filename}</span>
+          <span className="truncate text-ui text-muted">
             {[size, file.contentType].filter(Boolean).join(' · ') || 'Stored'}
           </span>
           {!file.storageKey ? (
-            <span className="text-[0.8rem] text-warn">Not stored yet — re-upload this file.</span>
+            <span className="text-ui text-warn">Not stored yet — re-upload this file.</span>
           ) : null}
         </span>
       </div>
 
       {!disabled ? (
-        <div className="flex flex-wrap items-center gap-2 border-t border-line px-3 py-2">
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-line px-2.5 py-1.5">
           {/* Replace, not "upload again": the entry keeps its id so anything
               already pointing at this file follows the new bytes.
 
@@ -209,7 +209,7 @@ function FileCard({
                   'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-focus-visible:outline-offset-1',
                 )}
               >
-                <span className="h-3.5 w-3.5">
+                <span className="size-4">
                   <Icon name="upload" />
                 </span>
                 Replace
@@ -217,7 +217,7 @@ function FileCard({
             )}
           />
           <Button variant="ghost" size="sm" onClick={onDelete}>
-            <span className="h-3.5 w-3.5">
+            <span className="size-4">
               <Icon name="close" />
             </span>
             Delete
@@ -235,10 +235,10 @@ function UploadProgress({ job }: { job: UploadJob }) {
   const percent = Math.round(job.progress * 100)
 
   return (
-    <div className="rounded-control border border-line bg-surface-alt px-3 py-2.5">
-      <div className="flex items-center gap-3">
-        <span className="min-w-0 flex-1 truncate text-[0.85rem] font-medium text-ink">{job.filename}</span>
-        <span className="flex-none text-[0.8rem] tabular-nums text-muted">{percent}%</span>
+    <div className="rounded-control border border-line bg-surface-alt px-2.5 py-1.5">
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-ui font-medium text-ink">{job.filename}</span>
+        <span className="flex-none text-ui tabular-nums text-muted">{percent}%</span>
         <Button variant="ghost" size="sm" onClick={() => cancel(job.id)}>
           Cancel
         </Button>
@@ -250,14 +250,14 @@ function UploadProgress({ job }: { job: UploadJob }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label={`Uploading ${job.filename}`}
-        className="mt-2 h-1.5 w-full overflow-hidden rounded-pill bg-line"
+        className="mt-1.5 h-1 w-full overflow-hidden rounded-pill bg-line"
       >
         <div className="h-full rounded-pill bg-primary transition-[width] duration-200" style={{ width: `${percent}%` }} />
       </div>
 
       {/* Says the quiet part out loud: this is the state where closing the tab
           loses the file, and the upload survives moving around the admin. */}
-      <p className="mt-1.5 text-[0.78rem] text-muted">
+      <p className="mt-1 text-ui text-muted">
         {percent < 100
           ? 'Uploading — you can keep working, but don’t refresh or close this tab.'
           : 'Finishing up…'}
@@ -269,8 +269,8 @@ function UploadProgress({ job }: { job: UploadJob }) {
 function FailedUpload({ job }: { job: UploadJob }) {
   const { dismiss } = useUploads()
   return (
-    <div className="flex items-start gap-3 rounded-control border border-danger bg-danger-tint px-3 py-2.5">
-      <span className="min-w-0 flex-1 text-[0.85rem] text-danger">
+    <div className="flex items-start gap-2 rounded-control border border-danger bg-danger-tint px-2.5 py-1.5">
+      <span className="min-w-0 flex-1 text-ui text-danger">
         <span className="font-medium">{job.filename}</span> — {job.error ?? 'Upload failed.'}
       </span>
       <Button variant="ghost" size="sm" onClick={() => dismiss(job.id)}>

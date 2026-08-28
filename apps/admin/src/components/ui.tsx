@@ -1,17 +1,17 @@
 import { type ReactNode } from 'react'
-import { CARD } from './tokens'
+import { cn, CARD, TH, TD } from '../design'
 import { ScrollArea } from './primitives'
 
 /* -------------------------------------------------------------------------
    Shared page furniture. Interactive controls belong in ./primitives (Base UI
    backed); this file holds the icon set and the few layout pieces the
-   dashboard and state screens share. Class strings (CARD, FIELD) live in
-   ./tokens so this file only exports components for Fast Refresh.
+   dashboard and state screens share. Class strings (CARD, TH, TD…) live in
+   ../design so this file only exports components for Fast Refresh.
    ------------------------------------------------------------------------- */
 
 function Eyebrow({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <p className={`mb-4 inline-block text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-muted ${className}`}>
+    <p className={`mb-1.5 inline-block text-meta font-semibold uppercase text-muted ${className}`}>
       {children}
     </p>
   )
@@ -41,6 +41,7 @@ export type IconName =
   | 'settings'
   | 'close'
   | 'upload'
+  | 'trash'
 
 export function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -118,6 +119,13 @@ export function Icon({ name }: { name: IconName }) {
     rand: <path d="M7 4h6a4 4 0 0 1 0 8H7m0 0v8m0-8h4l5 8M7 4v8" />,
     back: <path d="M19 12H5M11 18l-6-6 6-6" />,
     close: <path d="M18 6 6 18M6 6l12 12" />,
+    /* Lid, can, and two score lines — a delete that reads as permanent. */
+    trash: (
+      <>
+        <path d="M4 7h16M10 4h4M9 7v12M15 7v12" />
+        <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+      </>
+    ),
   }
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -129,9 +137,9 @@ export function Icon({ name }: { name: IconName }) {
 /**
  * Page heading for a full-page route (the dashboard, state screens).
  *
- * Renders an <h1>: these pages had no level-one heading at all, and the global
- * h1–h4 styles are the public site's display scale, which is far too large for
- * a dense workspace — so the size is set here rather than inherited.
+ * Renders an <h1>: these pages had no level-one heading at all. The base h1
+ * style is already `text-page` (see index.css), so the class here just states
+ * that explicitly rather than leaving it implicit.
  */
 export function PageHeader({
   eyebrow,
@@ -145,13 +153,13 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div className="max-w-[640px]">
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h1 className="text-[1.5rem] font-bold tracking-[-0.025em]">{title}</h1>
-        {description ? <p className="mt-2 text-[0.95rem] text-muted">{description}</p> : null}
+        <h1 className="text-page">{title}</h1>
+        {description ? <p className="mt-1.5 text-ui text-muted">{description}</p> : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   )
 }
@@ -170,19 +178,14 @@ export function TableWrap({ children }: { children: ReactNode }) {
   )
 }
 
+/** Sentence-case, 12px semibold — not the old uppercase micro-caps head. */
 export function Th({ children, className = '' }: { children?: ReactNode; className?: string }) {
-  return (
-    <th
-      className={`whitespace-nowrap px-3 py-2.5 text-left text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-muted ${className}`}
-    >
-      {children}
-    </th>
-  )
+  return <th className={cn(TH, className)}>{children}</th>
 }
 
 export function Td({ children, className = '', colSpan }: { children?: ReactNode; className?: string; colSpan?: number }) {
   return (
-    <td colSpan={colSpan} className={`whitespace-nowrap px-3 py-3 align-middle text-[0.92rem] ${className}`}>
+    <td colSpan={colSpan} className={cn(TD, className)}>
       {children}
     </td>
   )
@@ -200,16 +203,16 @@ export function Td({ children, className = '', colSpan }: { children?: ReactNode
 export function LoadingScreen({ label = 'Loading the workspace' }: { label?: string }) {
   return (
     <div role="status" aria-live="polite" className="grid min-h-screen place-items-center px-5">
-      <div className="grid justify-items-center gap-3.5">
+      <div className="grid justify-items-center gap-2.5">
         <Spinner />
-        <p className="text-[1.02rem] font-semibold tracking-[-0.015em] text-ink-soft">{label}</p>
+        <p className="text-title font-semibold text-ink-soft">{label}</p>
       </div>
     </div>
   )
 }
 
 /** Indeterminate progress ring. Static for anyone who asked for less motion. */
-export function Spinner({ className = 'h-7 w-7' }: { className?: string }) {
+export function Spinner({ className = 'size-6' }: { className?: string }) {
   return (
     <svg aria-hidden viewBox="0 0 24 24" className={`animate-spin text-primary motion-reduce:animate-none ${className}`}>
       <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2.5" />
@@ -237,10 +240,10 @@ export function StatePanel({
 }) {
   return (
     <div className="grid min-h-[60vh] place-items-center px-5 text-center">
-      <div className="grid max-w-[460px] gap-3">
+      <div className="grid max-w-[460px] gap-2">
         <Eyebrow>{eyebrow}</Eyebrow>
-        <h1 className="text-[1.5rem] font-bold tracking-[-0.025em]">{title}</h1>
-        {body ? <p className="text-[0.95rem] text-ink-soft">{body}</p> : null}
+        <h1 className="text-page">{title}</h1>
+        {body ? <p className="text-ui text-ink-soft">{body}</p> : null}
         {children}
       </div>
     </div>

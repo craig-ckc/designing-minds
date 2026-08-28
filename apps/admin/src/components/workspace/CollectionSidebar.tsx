@@ -2,17 +2,17 @@ import { NavLink } from 'react-router-dom'
 import { type CmsSnapshot } from '@designing-minds/cms'
 import { collectionGroups } from '../../cms/registry'
 import { recordCount } from '../../cms/adapter'
-import { repository } from '../../repository'
 import { Icon } from '../ui'
 import { ScrollArea } from '../primitives'
 
-/* Gutter rule for the side panels: the scroll container insets rows by 8px and
-   each row pads another 8px, so row text lands at 16px — the same x as the
-   `px-4` header and footer labels. Previously the header sat at 16px and rows
-   at 18px, which is the kind of 2px drift that reads as "not quite lining up". */
+/* Gutter rule for the side panels: every label in this column starts at the
+   same x. The header and footer are chrome bars at the app's standard `px-2.5`
+   (10px); rows reach the same 10px as 4px of group inset plus 6px of row
+   padding, the inset being what keeps an active row's fill off the pane edge.
+   Change one of the three and the column visibly steps. */
 const rowCls = ({ isActive }: { isActive: boolean }) =>
-  `group flex items-center gap-2 rounded-control px-2 py-1 text-[0.88rem] transition ${
-    isActive ? 'bg-surface-alt font-medium text-ink' : 'text-ink-soft hover:bg-surface-alt hover:text-ink'
+  `group flex items-center gap-2 rounded-control h-row px-1.5 text-ui transition ${
+    isActive ? 'bg-surface-sunk font-medium text-ink' : 'text-ink-soft hover:bg-surface-alt hover:text-ink'
   }`
 
 /** Registry-driven navigation: Dashboard pinned, then grouped collections with counts. */
@@ -23,26 +23,26 @@ export function CollectionSidebar({ snapshot }: { snapshot: CmsSnapshot }) {
         to="/"
         end
         className={({ isActive }) =>
-          `flex items-center h-12 gap-2.5 border-b border-line px-4 py-3 text-[0.88rem] ${isActive ? 'font-medium text-ink' : 'text-ink-soft'}`
+          `flex h-bar items-center gap-2 border-b border-line px-2.5 text-ui ${isActive ? 'font-medium text-ink' : 'text-ink-soft'}`
         }
       >
-        <span className="h-[16px] w-[16px] flex-none">
+        <span className="size-4 flex-none">
           <Icon name="grid" />
         </span>
         Dashboard
       </NavLink>
 
-      <ScrollArea className="min-h-0 flex-1" viewportClassName="py-2">
+      <ScrollArea className="min-h-0 flex-1" viewportClassName="py-1.5">
         {collectionGroups.map((group) => (
-          <div key={group.group} className="flex flex-col gap-0.5 px-2 pb-2">
-            <div className="px-2 py-1.5">
-              <span className="text-[0.78rem] font-medium text-ink">{group.group}</span>
+          <div key={group.group} className="flex flex-col gap-0.5 px-1 pb-1.5">
+            <div className="px-1.5 py-1.5">
+              <span className="text-title font-semibold text-ink">{group.group}</span>
             </div>
             {group.collections.map((collection) => (
               <NavLink key={collection.id} to={`/${collection.id}`} className={rowCls}>
                 <span className="truncate">{collection.label}</span>
-                <span className="ml-1 flex-none text-[0.78rem] text-muted">{recordCount(snapshot, collection.id)} items</span>
-                <span className="ml-auto h-3.5 w-3.5 flex-none text-muted opacity-0 group-hover:opacity-100 group-[.active]:opacity-100">
+                <span className="ml-1 flex-none text-ui text-muted">{recordCount(snapshot, collection.id)} items</span>
+                <span className="ml-auto size-3.5 flex-none text-muted opacity-0 group-hover:opacity-100 group-[.active]:opacity-100">
                   <Icon name="arrow" />
                 </span>
               </NavLink>
@@ -51,7 +51,6 @@ export function CollectionSidebar({ snapshot }: { snapshot: CmsSnapshot }) {
         ))}
       </ScrollArea>
 
-      <div className="border-t border-line px-4 py-2.5 text-[0.74rem] text-muted">Supabase · {repository.mode}</div>
     </div>
   )
 }

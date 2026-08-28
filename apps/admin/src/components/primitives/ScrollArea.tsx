@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { ScrollArea as BaseScrollArea } from '@base-ui/react/scroll-area'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 
 const scrollbar =
   'flex touch-none select-none rounded-full opacity-0 transition-opacity delay-300 data-[hovering]:opacity-100 data-[hovering]:delay-0 data-[scrolling]:opacity-100 data-[scrolling]:delay-0'

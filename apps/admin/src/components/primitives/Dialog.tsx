@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import { Dialog as BaseDialog } from '@base-ui/react/dialog'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 import { Button } from './Button'
 
 /** Centered modal shell on the Base UI Dialog primitive (monochrome card). */
@@ -26,15 +26,13 @@ export function Dialog({
         <BaseDialog.Popup
           className={cn(
             'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100vh-4rem)] w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col',
-            'rounded-card border border-line bg-surface p-6 shadow-xl',
+            'rounded-card border border-line bg-surface p-4 shadow-popup',
             className,
           )}
         >
-          <BaseDialog.Title className="text-[1.05rem] font-semibold tracking-[-0.01em]">{title}</BaseDialog.Title>
+          <BaseDialog.Title className="text-title font-semibold">{title}</BaseDialog.Title>
           {description ? (
-            <BaseDialog.Description className="mt-2 text-[0.9rem] leading-relaxed text-ink-soft">
-              {description}
-            </BaseDialog.Description>
+            <BaseDialog.Description className="mt-1.5 text-ui text-ink-soft">{description}</BaseDialog.Description>
           ) : null}
           {children}
         </BaseDialog.Popup>
@@ -63,7 +61,7 @@ export function ConfirmDialog({
 }) {
   return (
     <Dialog open={open} onClose={onCancel} title={title} description={description}>
-      <div className="mt-5 flex justify-end gap-2.5">
+      <div className="mt-4 flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onCancel}>
           {cancelLabel}
         </Button>

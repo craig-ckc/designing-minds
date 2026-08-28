@@ -1,5 +1,5 @@
 import { Avatar as BaseAvatar } from '@base-ui/react/avatar'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 
 /**
  * Small circular identity chip on the Base UI Avatar primitive. There is no
@@ -19,8 +19,8 @@ export function Avatar({
   return (
     <BaseAvatar.Root
       className={cn(
-        'grid h-7 w-7 flex-none select-none place-items-center overflow-hidden rounded-pill',
-        'bg-surface-sunk text-[0.72rem] font-semibold text-ink-soft',
+        'grid size-6 flex-none select-none place-items-center overflow-hidden rounded-pill',
+        'bg-surface-sunk text-meta font-semibold text-ink-soft',
         className,
       )}
     >

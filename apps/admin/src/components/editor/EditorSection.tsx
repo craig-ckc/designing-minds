@@ -1,9 +1,11 @@
 import { type ReactNode } from 'react'
-import { cn } from '@designing-minds/utils'
+import { cn, FIELD_HELP } from '../../design'
 
 /**
- * A titled group of fields inside the Record Editor pane. Fields stack in a
- * single full-width column (Webflow-style item editor).
+ * A titled group of fields inside the Record Editor pane. Each section is a
+ * full-width block that owns its own padding, so when `divided` is set the
+ * hairline above it spans the full width of the pane rather than stopping at
+ * a centred column.
  */
 export function EditorSection({
   title,
@@ -17,10 +19,10 @@ export function EditorSection({
   divided?: boolean
 }) {
   return (
-    <section className={cn('grid gap-4', divided && 'border-t border-line pt-7')}>
-      <header className="grid gap-1">
-        <h3 className="text-[1.05rem]">{title}</h3>
-        {hint ? <p className="text-[0.82rem] text-muted">{hint}</p> : null}
+    <section className={cn('grid gap-5 px-4 py-5', divided && 'border-t border-line')}>
+      <header className="grid gap-0.5">
+        <h3 className="text-section">{title}</h3>
+        {hint ? <p className={FIELD_HELP}>{hint}</p> : null}
       </header>
       <div className="grid gap-4">{children}</div>
     </section>

@@ -75,7 +75,7 @@ export function PublishButton({ snapshot }: { snapshot: CmsSnapshot | null }) {
     <span className="flex items-center gap-2">
       {message ? (
         <span
-          className={`hidden max-w-[260px] truncate text-[0.78rem] md:inline ${state === 'error' ? 'text-danger' : 'text-muted'}`}
+          className={`hidden max-w-[260px] truncate text-ui md:inline ${state === 'error' ? 'text-danger' : 'text-muted'}`}
           title={message}
         >
           {message}
@@ -93,7 +93,7 @@ export function PublishButton({ snapshot }: { snapshot: CmsSnapshot | null }) {
         title={title()}
       >
         {pending > 0 && !waiting ? (
-          <span className="h-3.5 w-3.5">
+          <span className="size-4">
             <Icon name="spark" />
           </span>
         ) : null}

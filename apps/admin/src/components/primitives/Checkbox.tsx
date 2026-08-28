@@ -1,5 +1,5 @@
 import { Checkbox as BaseCheckbox } from '@base-ui/react/checkbox'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 import { Icon } from '../ui'
 
 /** Brand checkbox on the Base UI Checkbox primitive. */
@@ -26,7 +26,7 @@ export function Checkbox({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        'grid h-4 w-4 flex-none place-items-center rounded-tight border border-line-strong bg-surface text-on-primary transition',
+        'grid size-3.5 flex-none place-items-center rounded-tight border border-line-strong bg-surface text-on-primary transition',
         'data-[checked]:border-primary-edge data-[checked]:bg-primary',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -34,7 +34,7 @@ export function Checkbox({
       )}
     >
       <BaseCheckbox.Indicator>
-        <span className="block h-3 w-3">
+        <span className="block size-2.5">
           <Icon name="check" />
         </span>
       </BaseCheckbox.Indicator>

@@ -89,7 +89,7 @@ export function publishState(collection: AdminCollection, record: AdminRecord, s
   return updated <= content ? 'published' : 'draft'
 }
 
-export type StateTone = 'solid' | 'outline' | 'muted' | 'warn' | 'info'
+export type StateTone = 'solid' | 'outline' | 'muted' | 'warn' | 'info' | 'success'
 
 export const PUBLISH_STATE_LABEL: Record<PublishState, string> = {
   published: 'Published',
@@ -99,7 +99,7 @@ export const PUBLISH_STATE_LABEL: Record<PublishState, string> = {
 }
 
 export const PUBLISH_STATE_TONE: Record<PublishState, StateTone> = {
-  published: 'solid',
+  published: 'success',
   draft: 'warn',
   unpublished: 'muted',
   unverified: 'outline',

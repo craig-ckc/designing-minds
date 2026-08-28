@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { enforceMaxSelected } from '../../apps/admin/src/components/primitives/reference-picker-utils.ts'
 import { collectionRegistry } from '../../apps/admin/src/cms/registry.ts'
@@ -69,4 +70,42 @@ test('other multiReference fields do not have maxSelected', () => {
   const included = bundles!.fields.find((f) => f.key === 'includedProductIds')!
   assert.equal(included.type, 'multiReference')
   assert.equal((included as any).maxSelected, undefined)
+})
+
+/* ------------------------------------------------------------------ */
+/*  The control a capped reference actually renders                   */
+/* ------------------------------------------------------------------ */
+
+const readAdmin = (path: string) =>
+  readFileSync(new URL(`../../apps/admin/src/${path}`, import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+
+test('a reference capped at one renders a dropdown, not the chip picker', () => {
+  // `maxSelected: 1` and a type-ahead-plus-chips control contradict each other:
+  // the control invites you to add more than the field permits. Products'
+  // Subject is the case in point — one subject, but it looked like many.
+  const control = readAdmin('components/editor/FieldControl.tsx')
+  assert.match(control, /reference\.maxSelected === 1/, 'the capped case should branch before the picker')
+  const capped = control.slice(control.indexOf('reference.maxSelected === 1'))
+  const untilPicker = capped.slice(0, capped.indexOf('<ReferencePicker'))
+  assert.match(untilPicker, /<Select/, 'the capped branch should render a Select')
+})
+
+test('the dropdown still writes the array shape the column expects', () => {
+  // Product.subjects is `string[]` and required to hold at least one, so a
+  // single-choice control must write `['Maths']` / `[]` — never `'Maths'` or
+  // `['']`, either of which would pass the required check while being wrong.
+  const control = readAdmin('components/editor/FieldControl.tsx')
+  const capped = control.slice(control.indexOf('reference.maxSelected === 1'))
+  assert.match(capped, /\[next\]/, 'a chosen value should be wrapped in an array')
+  assert.match(capped, /\?\s*\[\]\s*:/, 'clearing should write an empty array')
+})
+
+test('uncapped references keep the type-ahead picker', () => {
+  // Bundle contents and FAQs genuinely take many, and a dropdown cannot express
+  // that — the branch above must not swallow them.
+  const control = readAdmin('components/editor/FieldControl.tsx')
+  assert.match(control, /<ReferencePicker/)
+  assert.match(control, /maxSelected=\{reference\.maxSelected\}/)
 })

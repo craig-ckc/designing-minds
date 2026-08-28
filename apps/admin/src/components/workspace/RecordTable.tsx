@@ -1,5 +1,4 @@
 import { type ReactNode } from 'react'
-import { cn } from '@designing-minds/utils'
 import { formatCurrency, type OrderStatus, type PaymentStatus } from '@designing-minds/cms'
 import type { AdminCollection, AdminRecord, ListColumn } from '../../cms/types'
 import { getPath } from '../../cms/record'
@@ -13,6 +12,7 @@ import {
 import { useSite } from '../../lib/site-status'
 import { OrderStatusPill, PaymentStatusPill, Pill } from '../Badge'
 import { Checkbox, ScrollArea } from '../primitives'
+import { cn, TD, TH } from '../../design'
 
 /**
  * Dense, full-width record table driven by collection.listColumns. When
@@ -55,11 +55,11 @@ export function RecordTable({
 
   return (
     <ScrollArea orientation={fixedLayout ? 'vertical' : 'both'} className="min-h-0 flex-1">
-      <table className={cn('w-full border-collapse text-[0.85rem]', fixedLayout && 'table-fixed')}>
-        <thead className="sticky top-0 z-10 bg-surface-alt">
+      <table className={cn('w-full border-collapse text-ui', fixedLayout && 'table-fixed')}>
+        <thead className="sticky top-0 z-10 bg-surface">
           <tr className="border-b border-line">
             {selection ? (
-              <th className="w-11 px-4 py-2.5">
+              <th className="w-8 px-2.5 py-1.5">
                 <Checkbox
                   checked={allVisibleSelected}
                   onCheckedChange={selection.onToggleAll}
@@ -71,10 +71,7 @@ export function RecordTable({
               <th
                 key={column.key}
                 style={columnStyle(column)}
-                className={cn(
-                  'whitespace-nowrap px-4 py-2.5 text-left text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-muted',
-                  column.align === 'right' && 'text-right',
-                )}
+                className={cn(TH, column.align === 'right' && 'text-right')}
               >
                 {column.label}
               </th>
@@ -87,12 +84,12 @@ export function RecordTable({
               key={record.id}
               onClick={() => (selection ? selection.onToggle(record.id) : onSelect(record.id))}
               className={cn(
-                'cursor-pointer border-b border-line hover:bg-surface-alt',
-                (selectedId === record.id || selection?.selectedIds.has(record.id)) && 'bg-surface-alt',
+                'h-8 cursor-pointer border-b border-line hover:bg-surface-alt',
+                (selectedId === record.id || selection?.selectedIds.has(record.id)) && 'bg-surface-sunk',
               )}
             >
               {selection ? (
-                <td className="w-11 px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
+                <td className="w-8 px-2.5 py-1.5" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={selection.selectedIds.has(record.id)}
                     onCheckedChange={() => selection.onToggle(record.id)}
@@ -105,7 +102,7 @@ export function RecordTable({
                   key={column.key}
                   style={columnStyle(column)}
                   className={cn(
-                    'px-4 py-2.5 align-middle',
+                    TD,
                     column.align === 'right' && 'text-right',
                     column.key === collection.titleField && 'font-medium',
                   )}
@@ -117,7 +114,7 @@ export function RecordTable({
           ))}
           {records.length === 0 ? (
             <tr>
-              <td colSpan={columns.length + (selection ? 1 : 0)} className="px-4 py-8 text-center text-muted">
+              <td colSpan={columns.length + (selection ? 1 : 0)} className="px-2.5 py-6 text-center text-muted">
                 {emptyMessage}
               </td>
             </tr>
@@ -161,7 +158,7 @@ function renderCell(record: AdminRecord, column: ListColumn, collection: AdminCo
     case 'publish': {
       const state = publishState(collection, record, site)
       return (
-        <span className="flex gap-2.5">
+        <span className="flex gap-2">
           <Pill tone={PUBLISH_STATE_TONE[state]} title={PUBLISH_STATE_HINT[state]}>
             {PUBLISH_STATE_LABEL[state]}
           </Pill>

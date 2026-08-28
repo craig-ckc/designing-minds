@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react'
-import { cn } from '@designing-minds/utils'
+import { cn } from '../../design'
 
 /**
  * File picking, in one place.
