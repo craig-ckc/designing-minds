@@ -7,6 +7,18 @@ import type { AdminRecord } from '../../apps/admin/src/cms/types.ts'
 
 const read = (path: string) => readFileSync(new URL(`../../apps/admin/src/${path}`, import.meta.url), 'utf8')
 
+/**
+ * Source with comments removed. Needed whenever a test asserts something is
+ * *absent*: these files explain their own decisions in prose that quotes the
+ * code being removed, and a bare `doesNotMatch` reads the explanation as the
+ * thing itself.
+ */
+const readCode = (path: string) =>
+  read(path)
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+
 const collection = (id: string) => {
   const found = collectionRegistry.find((entry) => entry.id === id)
   assert.ok(found, `expected a "${id}" collection in the registry`)
@@ -70,9 +82,28 @@ test('a gallery image is refused unless the server returned a public URL', () =>
 test('alt text is left empty rather than defaulted to the filename', () => {
   // "IMG_4021.jpg" read aloud is worse than nothing, and pre-filling it makes an
   // empty field look finished.
-  const adapter = read('cms/adapter.ts')
-  assert.match(adapter, /alt: '',/)
-  assert.match(read('components/editor/ImageGalleryField.tsx'), /onAltChange/)
+  assert.match(read('cms/adapter.ts'), /alt: '',/)
+})
+
+test('the gallery card does not edit alt text, and the column survives anyway', () => {
+  // 2026-08-28: the alt input was hidden to get the card down from five stacked
+  // rows to three. The decision was explicitly "hide it in the UI, keep the
+  // field in the database" — so what matters is that nothing in the write path
+  // learned to drop or overwrite `alt`.
+  const gallery = readCode('components/editor/ImageGalleryField.tsx')
+  assert.doesNotMatch(gallery, /onAltChange/, 'the card should no longer edit alt text')
+  assert.doesNotMatch(gallery, /value=\{image\.alt\}/, 'no control should be bound to alt')
+  assert.doesNotMatch(gallery, /Alt text/, 'the alt label should be gone from the card')
+  // Every image therefore ships without alt, which is what the website reads as
+  // decorative — so the card says so rather than leaving it unexplained.
+  assert.match(gallery, /Decorative/)
+
+  // The column is still part of the shape the admin reads and writes.
+  assert.match(read('../../../packages/cms/src/types.ts'), /alt: string/)
+  assert.match(read('cms/adapter.ts'), /alt: '',/)
+  // A patch helper that spread arbitrary changes over an image is how alt would
+  // get clobbered; it went away with the input.
+  assert.doesNotMatch(gallery, /Partial<ProductImage>/)
 })
 
 test('the field accepts many images at once, unlike the single-file field', () => {

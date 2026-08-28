@@ -1,10 +1,10 @@
 import { useState, type DragEvent } from 'react'
-import { cn } from '@designing-minds/utils'
 import type { ProductImage } from '@designing-minds/cms'
 import { formatBytes } from '../../lib/upload-transport'
 import { useFieldUploads, useUploadTarget, useUploads, type UploadJob } from '../../lib/uploads'
+import { cn } from '../../design'
 import { Icon } from '../ui'
-import { Button, FileInput, Input } from '../primitives'
+import { Button, FileInput } from '../primitives'
 
 /**
  * The preview images shown on a record's Product Detail.
@@ -75,9 +75,6 @@ export function ImageGalleryField({
     queue(event.dataTransfer.files)
   }
 
-  const patchImage = (id: string, changes: Partial<ProductImage>) =>
-    onChange((current) => current.map((entry) => (entry.id === id ? { ...entry, ...changes } : entry)))
-
   const move = (id: string, delta: -1 | 1) =>
     onChange((current) => {
       const from = current.findIndex((entry) => entry.id === id)
@@ -95,23 +92,42 @@ export function ImageGalleryField({
   return (
     // A gallery is many controls, not one input, so it is announced as a
     // labelled group rather than pointing a <label> at something invisible.
-    <div role="group" aria-labelledby={labelId} className="grid gap-2.5">
+    <div role="group" aria-labelledby={labelId} className="grid gap-2">
       {images.length > 0 ? (
-        <ul className="grid gap-2.5 sm:grid-cols-2">
-          {images.map((image, index) => (
-            <li key={image.id}>
-              <ImageCard
-                image={image}
-                position={index + 1}
-                total={images.length}
-                disabled={disabled}
-                onAltChange={(alt) => patchImage(image.id, { alt })}
-                onMove={(delta) => move(image.id, delta)}
-                onDelete={() => onChange((current) => current.filter((entry) => entry.id !== image.id))}
-              />
-            </li>
-          ))}
-        </ul>
+        /* The gallery sizes itself against THIS list, not the viewport: the
+           editor pane is whatever is left after the sidebar and the record
+           list, so `sm:` was asking the wrong question and answering it with
+           two columns whether the pane was 640px or 2000px wide.
+
+           The `@container` deliberately wraps only the list. It resolves to
+           `contain: layout`, which makes the element a containing block for
+           fixed-position descendants — and the drop zone below is a FileInput,
+           whose hidden input is `position: fixed` precisely so it contributes
+           nothing to any ancestor's scroll height (see FileInput's comment for
+           the app-scrolls-out-of-view bug that caused). Containing it here
+           would bring that back.
+
+           Rungs are set by card width, not by taste: each step keeps a card
+           above ~135px, which is what a truncated filename and the row of
+           three 24px icon buttons need. (They used to be set around the
+           alt-text input at ~185px — that input has since been hidden, which
+           is what lets eight columns arrive at 1152px instead of 1560px.) */
+        <div className="@container">
+          <ul className="grid gap-2 grid-cols-1 @sm:grid-cols-2 @xl:grid-cols-4 @4xl:grid-cols-6 @6xl:grid-cols-8">
+            {images.map((image, index) => (
+              <li key={image.id}>
+                <ImageCard
+                  image={image}
+                  position={index + 1}
+                  total={images.length}
+                  disabled={disabled}
+                  onMove={(delta) => move(image.id, delta)}
+                  onDelete={() => onChange((current) => current.filter((entry) => entry.id !== image.id))}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       {active.length > 0 ? (
@@ -144,32 +160,32 @@ export function ImageGalleryField({
               onDragLeave={() => setDragActive(false)}
               onDrop={onDrop}
               className={cn(
-                'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-control border-2 border-dashed px-4 py-5 text-center transition',
+                'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-control border border-dashed px-3 py-4 text-center transition',
                 // The input is a sibling, so `focus-within` never sees it.
                 'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-focus-visible:outline-offset-1',
                 dragActive ? 'border-primary bg-primary-tint' : 'border-line-strong bg-surface-alt hover:border-primary',
               )}
             >
-              <span className="grid h-8 w-8 place-items-center rounded-pill bg-surface text-ink-soft">
-                <span className="h-4 w-4">
+              <span className="grid size-7 place-items-center rounded-pill bg-surface text-ink-soft">
+                <span className="size-4">
                   <Icon name="upload" />
                 </span>
               </span>
-              <span className="text-[0.85rem] font-medium text-ink">
+              <span className="text-ui font-medium text-ink">
                 {dragActive
                   ? 'Drop to upload'
                   : images.length > 0
                     ? 'Drag & drop more images here'
                     : 'Drag & drop images here'}
               </span>
-              <span className="text-[0.8rem] text-muted">
+              <span className="text-ui text-muted">
                 or <span className="font-medium text-primary">click to browse</span> — you can pick several at once
               </span>
             </label>
           )}
         />
       ) : images.length === 0 && active.length === 0 ? (
-        <p className="text-[0.85rem] text-muted">No preview images.</p>
+        <p className="text-ui text-muted">No preview images.</p>
       ) : null}
     </div>
   )
@@ -182,7 +198,6 @@ function ImageCard({
   position,
   total,
   disabled,
-  onAltChange,
   onMove,
   onDelete,
 }: {
@@ -190,13 +205,11 @@ function ImageCard({
   position: number
   total: number
   disabled?: boolean
-  onAltChange: (alt: string) => void
   onMove: (delta: -1 | 1) => void
   onDelete: () => void
 }) {
   const size = formatBytes(image.sizeBytes)
   const dimensions = image.width && image.height ? `${image.width}×${image.height}` : null
-  const altId = `${image.id}:alt`
 
   return (
     <div className="grid gap-0 overflow-hidden rounded-control border border-line bg-surface">
@@ -211,69 +224,75 @@ function ImageCard({
           decoding="async"
           className="absolute inset-0 h-full w-full object-contain"
         />
-        <span className="absolute left-2 top-2 rounded-pill bg-surface/90 px-2 py-0.5 text-[0.75rem] font-medium tabular-nums text-ink">
+        <span className="absolute left-2 top-2 rounded-pill bg-surface/90 px-1.5 py-0 text-meta font-medium tabular-nums text-ink">
           {position} of {total}
+        </span>
+        {/* Alt text is hidden from this field for now, so every image ships
+            without one — which is exactly what `alt: ''` means to the website:
+            decorative. Said per image rather than once for the field, so that
+            when alt text comes back this badge becomes the real distinction
+            between an image that has one and an image that doesn't. */}
+        <span className="absolute bottom-2 left-2 rounded-pill bg-surface/90 px-1.5 py-0 text-meta font-medium text-muted">
+          Decorative
         </span>
       </div>
 
-      <div className="grid gap-2 p-3">
-        <span className="grid gap-0.5">
-          <span className="truncate text-[0.9rem] font-medium text-ink">{image.filename}</span>
-          <span className="truncate text-[0.8rem] text-muted">
-            {[size, dimensions].filter(Boolean).join(' · ') || 'Stored'}
-          </span>
+      <div className="grid gap-1.5 p-2.5">
+        <span className="truncate text-ui font-medium text-ink">{image.filename}</span>
+        <span className="truncate text-ui text-muted">
+          {[size, dimensions].filter(Boolean).join(' · ') || 'Stored'}
         </span>
 
-        {!disabled ? (
-          <>
-            {/* Alt text belongs to the image, not the record: it describes this
-                picture, so it is edited here rather than in a field far away. */}
-            <label htmlFor={altId} className="text-[0.8rem] font-medium text-ink-soft">
-              Alt text
-            </label>
-            <Input
-              id={altId}
-              value={image.alt}
-              placeholder="Describe what this image shows"
-              onChange={(event) => onAltChange(event.target.value)}
-            />
+        {/* Reorder and remove on one row, icon-only.
 
-            <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={position === 1}
-                aria-label={`Move ${image.filename} earlier`}
-                onClick={() => onMove(-1)}
-              >
-                <span className="h-3.5 w-3.5">
-                  <Icon name="back" />
-                </span>
-                Earlier
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={position === total}
-                aria-label={`Move ${image.filename} later`}
-                onClick={() => onMove(1)}
-              >
-                Later
-                <span className="h-3.5 w-3.5">
-                  <Icon name="arrow" />
-                </span>
-              </Button>
-              <Button variant="ghost" size="sm" aria-label={`Remove ${image.filename}`} onClick={onDelete}>
-                <span className="h-3.5 w-3.5">
-                  <Icon name="close" />
-                </span>
-                Remove
-              </Button>
-            </div>
-          </>
-        ) : (
-          <p className="text-[0.8rem] text-muted">{image.alt || 'No alt text.'}</p>
-        )}
+            The labelled buttons ("Earlier" / "Later" / "Remove") needed ~220px
+            and wrapped onto two lines at every column count above two, so most
+            of a card's height went to three words. `title` carries what the
+            label used to say for anyone hovering; `aria-label` already carried
+            it for everyone else, so nothing is lost to a screen reader.
+
+            Remove sits apart, pushed right: it is destructive and should not be
+            adjacent to the two buttons an editor presses repeatedly. */}
+        {!disabled ? (
+          <div className="flex items-center gap-0.5 border-t border-line pt-1.5">
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={position === 1}
+              title="Move earlier"
+              aria-label={`Move ${image.filename} earlier`}
+              onClick={() => onMove(-1)}
+            >
+              <span className="size-4">
+                <Icon name="back" />
+              </span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={position === total}
+              title="Move later"
+              aria-label={`Move ${image.filename} later`}
+              onClick={() => onMove(1)}
+            >
+              <span className="size-4">
+                <Icon name="arrow" />
+              </span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto"
+              title="Remove"
+              aria-label={`Remove ${image.filename}`}
+              onClick={onDelete}
+            >
+              <span className="size-4">
+                <Icon name="close" />
+              </span>
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   )
@@ -286,10 +305,10 @@ function UploadProgress({ job }: { job: UploadJob }) {
   const percent = Math.round(job.progress * 100)
 
   return (
-    <div className="rounded-control border border-line bg-surface-alt px-3 py-2.5">
-      <div className="flex items-center gap-3">
-        <span className="min-w-0 flex-1 truncate text-[0.85rem] font-medium text-ink">{job.filename}</span>
-        <span className="flex-none text-[0.8rem] tabular-nums text-muted">{percent}%</span>
+    <div className="rounded-control border border-line bg-surface-alt px-2.5 py-1.5">
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-ui font-medium text-ink">{job.filename}</span>
+        <span className="flex-none text-ui tabular-nums text-muted">{percent}%</span>
         <Button variant="ghost" size="sm" onClick={() => cancel(job.id)}>
           Cancel
         </Button>
@@ -301,12 +320,12 @@ function UploadProgress({ job }: { job: UploadJob }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label={`Uploading ${job.filename}`}
-        className="mt-2 h-1.5 w-full overflow-hidden rounded-pill bg-line"
+        className="mt-1.5 h-1 w-full overflow-hidden rounded-pill bg-line"
       >
         <div className="h-full rounded-pill bg-primary transition-[width] duration-200" style={{ width: `${percent}%` }} />
       </div>
 
-      <p className="mt-1.5 text-[0.78rem] text-muted">
+      <p className="mt-1 text-ui text-muted">
         {percent < 100
           ? 'Uploading — you can keep working, but don’t refresh or close this tab.'
           : 'Finishing up…'}
@@ -318,8 +337,8 @@ function UploadProgress({ job }: { job: UploadJob }) {
 function FailedUpload({ job }: { job: UploadJob }) {
   const { dismiss } = useUploads()
   return (
-    <div className="flex items-start gap-3 rounded-control border border-danger bg-danger-tint px-3 py-2.5">
-      <span className="min-w-0 flex-1 text-[0.85rem] text-danger">
+    <div className="flex items-start gap-2 rounded-control border border-danger bg-danger-tint px-2.5 py-1.5">
+      <span className="min-w-0 flex-1 text-ui text-danger">
         <span className="font-medium">{job.filename}</span> — {job.error ?? 'Upload failed.'}
       </span>
       <Button variant="ghost" size="sm" onClick={() => dismiss(job.id)}>
