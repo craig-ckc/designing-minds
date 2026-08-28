@@ -2,7 +2,7 @@ import { Combobox } from '@base-ui/react/combobox'
 import { cn, FIELD, POPUP, POPUP_ROW } from '../../design'
 import { Icon } from '../ui'
 import { Button } from './Button'
-import { enforceMaxSelected } from './reference-picker-utils'
+import { availableOptions, enforceMaxSelected } from './reference-picker-utils'
 
 export type PickerOption = { label: string; value: string }
 
@@ -33,6 +33,8 @@ export function ReferencePicker({
 }) {
   const byValue = new Map(options.map((option) => [option.value, option]))
   const value = selected.map((item) => byValue.get(item) ?? { label: item, value: item })
+  // Suggestions are only ever things you haven't added yet — see availableOptions.
+  const available = availableOptions(options, selected)
 
   function emit(next: string[]) {
     if (maxSelected != null) next = enforceMaxSelected(next, maxSelected)
@@ -44,7 +46,7 @@ export function ReferencePicker({
       {!disabled ? (
         <Combobox.Root
           multiple
-          items={options}
+          items={available}
           value={value}
           onValueChange={(next) => emit(next.map((option) => option.value))}
           isItemEqualToValue={(a, b) => a.value === b.value}
@@ -53,18 +55,17 @@ export function ReferencePicker({
           <Combobox.Portal>
             <Combobox.Positioner align="start" sideOffset={6} className="z-50">
               <Combobox.Popup className={cn(POPUP, 'max-h-[16rem] w-[var(--anchor-width)] overflow-auto py-1')}>
-                <Combobox.Empty className="px-2.5 py-1.5 text-ui text-muted">No matches.</Combobox.Empty>
+                <Combobox.Empty className="px-2.5 py-1.5 text-ui text-muted">
+                  {available.length === 0 && options.length > 0 ? 'Everything is already added.' : 'No matches.'}
+                </Combobox.Empty>
                 <Combobox.List>
                   {(option: PickerOption) => (
                     <Combobox.Item
                       key={option.value}
                       value={option}
-                      className={cn(POPUP_ROW, 'justify-between gap-3 data-[selected]:font-medium')}
+                      className={POPUP_ROW}
                     >
                       <span className="min-w-0 truncate">{option.label}</span>
-                      <Combobox.ItemIndicator className="size-3.5 flex-none">
-                        <Icon name="check" />
-                      </Combobox.ItemIndicator>
                     </Combobox.Item>
                   )}
                 </Combobox.List>

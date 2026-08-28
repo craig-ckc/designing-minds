@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { enforceMaxSelected } from '../../apps/admin/src/components/primitives/reference-picker-utils.ts'
+import {
+  availableOptions,
+  enforceMaxSelected,
+} from '../../apps/admin/src/components/primitives/reference-picker-utils.ts'
 import { collectionRegistry } from '../../apps/admin/src/cms/registry.ts'
 
 /* ------------------------------------------------------------------ */
@@ -108,4 +111,62 @@ test('uncapped references keep the type-ahead picker', () => {
   const control = readAdmin('components/editor/FieldControl.tsx')
   assert.match(control, /<ReferencePicker/)
   assert.match(control, /maxSelected=\{reference\.maxSelected\}/)
+})
+
+/* ------------------------------------------------------------------ */
+/*  availableOptions — what the type-ahead is allowed to suggest      */
+/* ------------------------------------------------------------------ */
+
+const opt = (value: string) => ({ label: value.toUpperCase(), value })
+
+test('an option already picked is not suggested again', () => {
+  // Leaving it in reads as a second, different record: from the dropdown alone
+  // you cannot tell whether the row is the one you added or another like it.
+  const options = [opt('a'), opt('b'), opt('c')]
+  assert.deepEqual(
+    availableOptions(options, ['b']).map((o) => o.value),
+    ['a', 'c'],
+  )
+})
+
+test('the remaining options keep their original order', () => {
+  const options = [opt('a'), opt('b'), opt('c'), opt('d')]
+  assert.deepEqual(
+    availableOptions(options, ['c', 'a']).map((o) => o.value),
+    ['b', 'd'],
+  )
+})
+
+test('nothing selected returns the very same array, not a copy', () => {
+  // The common case for a fresh record; there is nothing to filter, so it
+  // should not allocate a new list on every keystroke.
+  const options = [opt('a'), opt('b')]
+  assert.equal(availableOptions(options, []), options)
+})
+
+test('selecting everything leaves nothing to suggest', () => {
+  const options = [opt('a'), opt('b')]
+  assert.deepEqual(availableOptions(options, ['a', 'b']), [])
+})
+
+test('a selected id that matches no option removes nothing', () => {
+  // A stale reference — a member whose record was deleted — must not silently
+  // eat an unrelated suggestion.
+  const options = [opt('a'), opt('b')]
+  assert.deepEqual(
+    availableOptions(options, ['ghost']).map((o) => o.value),
+    ['a', 'b'],
+  )
+})
+
+test('the picker feeds the combobox the filtered list, and says why it is empty', () => {
+  const picker = readAdmin('components/primitives/ReferencePicker.tsx')
+  assert.match(picker, /items=\{available\}/, 'the combobox should only ever offer what is available')
+  // "No matches" is the wrong answer when the real reason is that every option
+  // is already in — that would read as a broken search.
+  assert.match(picker, /Everything is already added\./)
+  // The check indicator and selected weight can no longer occur: nothing in the
+  // list is ever a current selection.
+  assert.doesNotMatch(picker, /ItemIndicator/)
+  assert.doesNotMatch(picker, /data-\[selected\]/)
 })
