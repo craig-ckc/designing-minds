@@ -66,6 +66,35 @@ function App() {
     [adapter],
   )
 
+  /**
+   * Permanently deletes records. Distinct from unpublishing: that is a field on
+   * the record and reversible, this destroys the rows.
+   *
+   * Returns whether it succeeded so the caller can decide what to do with the
+   * selection — clearing it after a failed delete would hide what went wrong.
+   */
+  const deleteRecords = useCallback(
+    async (collection: AdminCollection, ids: string[]): Promise<boolean> => {
+      if (!adapter.canWrite || ids.length === 0) return false
+      setSaving(true)
+      try {
+        const { apply } = await adapter.remove(collection.id, ids)
+        setSnapshot((current) => (current ? apply(current) : current))
+        setMessage(
+          `Deleted ${ids.length} ${(ids.length === 1 ? collection.singular : collection.label).toLowerCase()}.`,
+        )
+        setError(null)
+        return true
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Unable to delete records.')
+        return false
+      } finally {
+        setSaving(false)
+      }
+    },
+    [adapter],
+  )
+
   // The upload queue outlives any one editor, so it reads the current snapshot
   // through a ref rather than closing over a stale one.
   const snapshotRef = useRef<CmsSnapshot | null>(null)
@@ -186,6 +215,7 @@ function App() {
                 snapshot={snapshot}
                 saving={saving}
                 onSave={saveRecord}
+                onDelete={deleteRecords}
               />
             )
             return [

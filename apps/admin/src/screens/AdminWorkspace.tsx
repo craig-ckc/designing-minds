@@ -1,35 +1,38 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
-import { cn } from '@designing-minds/utils'
 import type { CmsSnapshot } from '@designing-minds/cms'
 import type { AdminCollection, AdminRecord } from '../cms/types'
-import { buildFieldContext, createBlank, resolveFilterFacets, selectRecord, selectRecords } from '../cms/adapter'
-import { fieldIsVisible, getPath, matchesFilters, setPath, uniqueSlug } from '../cms/record'
+import { buildFieldContext, createBlank, isDeletable, resolveFilterFacets, selectRecord, selectRecords } from '../cms/adapter'
+import { fieldIsVisible, getPath, matchesFilters, matchesSearch, setPath, uniqueSlug } from '../cms/record'
 import { buildCsv } from '../cms/csv-io'
 import { downloadCsv } from '../lib/csv'
 import { repository } from '../repository'
 import { useUnsavedChanges } from '../lib/unsaved'
-import { Button, ConfirmDialog } from '../components/primitives'
+import { ConfirmDialog } from '../components/primitives'
 import { RecordsToolbar } from '../components/workspace/RecordsToolbar'
 import { type FilterState } from '../components/workspace/FilterPopover'
 import { RecordTable } from '../components/workspace/RecordTable'
 import { ImportDialog } from '../components/workspace/ImportDialog'
 import { RecordEditor } from '../components/editor/RecordEditor'
+import { cn, STATUSBAR } from '../design'
 
 type SaveFn = (collection: AdminCollection, record: AdminRecord) => Promise<AdminRecord | null>
+
+type DeleteFn = (collection: AdminCollection, ids: string[]) => Promise<boolean>
 
 type Props = {
   collection: AdminCollection
   snapshot: CmsSnapshot
   saving: boolean
   onSave: SaveFn
+  onDelete: DeleteFn
 }
 
 /**
  * The Editorial Workspace for one Collection: the record table (full width) or,
  * once a record is selected via the URL, the record-list pane + Record Editor.
  */
-export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) {
+export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete }: Props) {
   const navigate = useNavigate()
   const { recordId } = useParams()
   const [search, setSearch] = useState('')
@@ -38,28 +41,60 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) 
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set())
   const [importOpen, setImportOpen] = useState(false)
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const records = useMemo(() => selectRecords(snapshot, collection.id), [snapshot, collection.id])
   const ctx = useMemo(() => buildFieldContext(snapshot), [snapshot])
   const facets = useMemo(() => resolveFilterFacets(collection, snapshot, records), [collection, snapshot, records])
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return records.filter((record) => {
-      if (!matchesFilters(record, filters)) return false
-      if (!q) return true
-      return collection.searchFields.some((key) => String(getPath(record, key) ?? '').toLowerCase().includes(q))
-    })
-  }, [records, search, filters, collection])
+  const filtered = useMemo(
+    () =>
+      records.filter(
+        (record) => matchesFilters(record, filters) && matchesSearch(record, collection.searchFields, search),
+      ),
+    [records, search, filters, collection],
+  )
 
   const editable = !collection.readOnly && repository.canWrite
+  // Deleting needs more than write access: the repository only has tables for
+  // the four content collections, and operational records are history.
+  const deletable = editable && isDeletable(collection.id)
+  const bulkStatusAvailable = Boolean(editable && collection.statusField && collection.statusLabels)
+
+  /**
+   * The bar's heading while selecting. It replaces the collection name, so it
+   * has to say what state you are in on its own — "Nothing selected" rather
+   * than "0 products selected", which reads like a broken counter.
+   */
+  /**
+   * What actually happens, per the schema's cascades — not a generic warning.
+   * A product leaves every bundle that contained it and any live cart, because
+   * `bundle_products` and `cart_items` cascade off its id. Past orders are
+   * safe: `orders.items` is a JSONB snapshot taken at purchase.
+   */
+  const deleteWarning =
+    collection.id === 'products'
+      ? 'This cannot be undone. They will also be removed from every bundle that includes them and from any shopper’s cart. Completed orders keep their own record and are unaffected.'
+      : collection.id === 'bundles'
+        ? 'This cannot be undone. They will also be removed from any shopper’s cart. Completed orders keep their own record and are unaffected.'
+        : 'This cannot be undone.'
+
+  const selectionTitle =
+    selected.size === 0
+      ? 'Nothing selected'
+      : `${selected.size} ${(selected.size === 1 ? collection.singular : collection.label).toLowerCase()} selected`
   const editing = Boolean(recordId)
   const selectedId = recordId ?? null
 
   /* ------------------------- Selection & bulk ops ----------------------- */
 
-  const toggleSelecting = () => {
-    setSelecting((on) => !on)
+  const startSelecting = () => {
+    setSelecting(true)
+    setSelected(new Set())
+  }
+
+  const cancelSelecting = () => {
+    setSelecting(false)
     setSelected(new Set())
   }
 
@@ -97,6 +132,25 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) 
     }
   }
 
+  /**
+   * Permanently deletes the selection. The confirm step is not ceremony: this
+   * is the one action in the admin with no undo and no draft to fall back on.
+   *
+   * A failed delete keeps the selection — the error names what went wrong, and
+   * clearing the rows it refers to would take that away.
+   */
+  const deleteSelected = async () => {
+    setConfirmDelete(false)
+    const ids = [...selected]
+    if (ids.length === 0) return
+    setBulkBusy(true)
+    try {
+      if (await onDelete(collection, ids)) setSelected(new Set())
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
   /** Export the selection when one exists, otherwise the current filtered list. */
   const exportCsv = () => {
     const rows = selected.size > 0 ? records.filter((record) => selected.has(record.id)) : filtered
@@ -127,61 +181,31 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) 
   return (
     <div className="flex min-h-0 flex-1">
       <section
-        className={cn('flex min-h-0 flex-col border-r border-line', editing ? 'w-[280px] flex-none' : 'min-w-0 flex-1')}
+        className={cn('flex min-h-0 flex-col border-r border-line', editing ? 'w-pane flex-none' : 'min-w-0 flex-1')}
         aria-label={`${collection.label} records`}
       >
         <RecordsToolbar
           title={collection.label}
+          selectionTitle={selectionTitle}
           query={search}
           onQueryChange={setSearch}
           facets={facets}
           filters={filters}
           onFiltersChange={setFilters}
-          selecting={selecting}
-          onToggleSelecting={toggleSelecting}
+          selecting={!editing && selecting}
+          selectedCount={selected.size}
+          onStartSelecting={startSelecting}
+          onCancelSelecting={cancelSelecting}
           onExport={exportCsv}
+          onDelete={deletable ? () => setConfirmDelete(true) : undefined}
+          onBulkStatus={bulkStatusAvailable ? (on) => void bulkSetStatus(on) : undefined}
+          statusLabels={bulkStatusAvailable ? collection.statusLabels : undefined}
+          busy={bulkBusy}
           onImport={editable ? () => setImportOpen(true) : undefined}
           onNew={editable ? createNew : undefined}
           newLabel={`New ${collection.singular.toLowerCase()}`}
           compact={editing}
         />
-
-        {!editing && selecting ? (
-          <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line bg-surface-alt px-4 py-2 text-[0.85rem]">
-            <span className="font-medium">{selected.size} selected</span>
-            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set(filtered.map((record) => record.id)))}>
-              Select all {filtered.length}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
-              Clear
-            </Button>
-            <span className="ml-auto flex flex-wrap items-center gap-2">
-              {editable && collection.statusField && collection.statusLabels ? (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void bulkSetStatus(true)}
-                    disabled={bulkBusy || selected.size === 0}
-                  >
-                    {collection.statusLabels.verbOn} selected
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void bulkSetStatus(false)}
-                    disabled={bulkBusy || selected.size === 0}
-                  >
-                    {collection.statusLabels.verbOff} selected
-                  </Button>
-                </>
-              ) : null}
-              <Button variant="outline" size="sm" onClick={exportCsv} disabled={selected.size === 0}>
-                Export selected
-              </Button>
-            </span>
-          </div>
-        ) : null}
 
         {/* One table in both states — narrowed to its first column while a
             record is open, so the list never becomes a different component. */}
@@ -200,10 +224,24 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) 
           }
         />
 
-        <footer className="flex h-8 flex-none items-center gap-3 border-t border-line px-4 text-[0.8rem] text-muted">
+        <footer className={STATUSBAR}>
           Showing {filtered.length} of {records.length}
           {!editing && selecting && selected.size > 0 ? <span>· {selected.size} selected</span> : null}
         </footer>
+
+        {/* Named counts, and the word "Permanently": the one action here that
+            cannot be undone should not read like the ones that can. */}
+        <ConfirmDialog
+          open={confirmDelete}
+          title={`Delete ${selected.size} ${(selected.size === 1 ? collection.singular : collection.label).toLowerCase()}?`}
+          description={
+            deleteWarning
+          }
+          confirmLabel={`Permanently delete ${selected.size}`}
+          cancelLabel="Keep them"
+          onConfirm={() => void deleteSelected()}
+          onCancel={() => setConfirmDelete(false)}
+        />
 
         {editable && !editing ? (
           <ImportDialog
@@ -225,10 +263,12 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) 
             key={recordId}
             collection={collection}
             initial={initial}
+            isNew={recordId === 'new'}
             records={records}
             ctx={ctx}
             saving={saving}
             onSave={onSave}
+            onDelete={onDelete}
             onBack={goToList}
             onNavigateToRecord={goToRecord}
           />
@@ -245,19 +285,24 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave }: Props) 
 function RecordEditorPane({
   collection,
   initial,
+  isNew,
   records,
   ctx,
   saving,
   onSave,
+  onDelete,
   onBack,
   onNavigateToRecord,
 }: {
   collection: AdminCollection
   initial: AdminRecord
+  /** Straight from the URL: `/collection/new` has nothing on the server yet. */
+  isNew: boolean
   records: AdminRecord[]
   ctx: ReturnType<typeof buildFieldContext>
   saving: boolean
   onSave: SaveFn
+  onDelete: DeleteFn
   onBack: () => void
   onNavigateToRecord: (id: string) => void
 }) {
@@ -386,6 +431,31 @@ function RecordEditorPane({
     setDraft((current) => setPath(current, collection.statusField as string, next))
   }
 
+  /**
+   * Builds a copy of the saved baseline — never the live draft, so this can
+   * never be asked whether it's duplicating what's stored or what's on
+   * screen. The button that triggers it is disabled while dirty for the same
+   * reason: baseline and draft only ever agree when it's enabled.
+   */
+  const duplicateRecord = () => {
+    const title = `${String(getPath(baseline, collection.titleField) ?? '')} (copy)`
+    // Fresh id the same way a brand new record gets one — see createBlank.
+    let copy: AdminRecord = { ...baseline, id: crypto.randomUUID() }
+    copy = setPath(copy, collection.titleField, title)
+    // Never goes live on its own — a duplicate is a starting point to edit,
+    // not a second publish of the original.
+    if (collection.statusField) copy = setPath(copy, collection.statusField, false)
+    if (slugKey) copy = setPath(copy, slugKey, uniqueSlug(title, slugKey, records, copy.id))
+    void persist(copy)
+  }
+
+  /**
+   * Id is stable across edits (nothing in the editor writes to it), so this
+   * always reaches the real saved row regardless of what the draft looks
+   * like on screen.
+   */
+  const deleteThisRecord = (): Promise<boolean> => onDelete(collection, [initial.id])
+
   return (
     <>
       <RecordEditor
@@ -395,6 +465,9 @@ function RecordEditorPane({
         onUpdate={updateValue}
         onSave={() => void persist(draft)}
         onSetStatus={handleSetStatus}
+        onDuplicate={duplicateRecord}
+        onDelete={deleteThisRecord}
+        isNew={isNew}
         onBack={onBack}
         saving={saving}
         dirty={dirty}

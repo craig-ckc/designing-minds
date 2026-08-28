@@ -15,10 +15,12 @@
 import {
   formatCurrency,
   ordersForCustomer,
+  removeRecordsFromSnapshot,
   updateBundleInSnapshot,
   updateFaqInSnapshot,
   updateProductInSnapshot,
   updateTestimonialInSnapshot,
+  type DeletableCollection,
   type Bundle,
   type CmsRepository,
   type CmsSnapshot,
@@ -28,6 +30,7 @@ import {
   type ProductImage,
   type Testimonial,
 } from '@designing-minds/cms'
+import { currentYear, yearOptions } from './years'
 import { supabase } from '../lib/supabase'
 import { apiUrl } from '../lib/api'
 import { putWithProgress, type UploadPurpose } from '../lib/upload-transport'
@@ -157,7 +160,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         priceZar: 0,
         grade: vl.grades[0],
         term: vl.terms[0],
-        year: vl.years[0] ?? '2026',
+        year: currentYear(),
         resourceFormat: vl.resourceFormats[0],
         subjects: [],
         marks: null,
@@ -182,7 +185,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         priceZar: 0,
         grade: vl.grades[0],
         term: vl.terms[0],
-        year: vl.years[0] ?? '2026',
+        year: currentYear(),
         bundleScope: 'Term',
         galleryImages: [],
         featured: false,
@@ -264,8 +267,12 @@ export function buildFieldContext(snapshot: CmsSnapshot): FieldContext {
   const toOptions = (values: readonly string[]) => values.map((value) => ({ label: value, value }))
   return {
     valueLists: snapshot.valueLists,
-    optionsForSelect: (field: SelectField) =>
-      'valueList' in field ? toOptions(snapshot.valueLists[field.valueList]) : field.options,
+    optionsForSelect: (field: SelectField) => {
+      if (!('valueList' in field)) return field.options
+      // Years are a date, not a taxonomy — computed rather than stored. See ./years.
+      if (field.valueList === 'years') return toOptions(yearOptions(snapshot.valueLists.years))
+      return toOptions(snapshot.valueLists[field.valueList])
+    },
     optionsForReference: (field: ReferenceField) => {
       if ('valueList' in field) return toOptions(snapshot.valueLists[field.valueList])
       switch (field.collection) {
@@ -288,9 +295,23 @@ export function buildFieldContext(snapshot: CmsSnapshot): FieldContext {
 
 export type SaveResult = { saved: AdminRecord; apply: (snapshot: CmsSnapshot) => CmsSnapshot }
 
+/** A delete returns no record — only the patch that drops it from the snapshot. */
+export type RemoveResult = { apply: (snapshot: CmsSnapshot) => CmsSnapshot }
+
+const DELETABLE: readonly DeletableCollection[] = ['products', 'bundles', 'faqs', 'testimonials']
+
+/** Narrows a registry id to a collection the repository will actually delete from. */
+export const isDeletable = (collectionId: string): collectionId is DeletableCollection =>
+  (DELETABLE as readonly string[]).includes(collectionId)
+
 export type AdminAdapter = {
   canWrite: boolean
   save: (collectionId: string, record: AdminRecord) => Promise<SaveResult>
+  /**
+   * Permanently deletes records. Same shape as save(): the write happens, then
+   * the caller applies the returned patch to the snapshot it holds.
+   */
+  remove: (collectionId: string, ids: string[]) => Promise<RemoveResult>
   uploadFile: (
     record: AdminRecord,
     file: File,
@@ -350,6 +371,14 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
         default:
           throw new Error(`Collection "${collectionId}" is read-only.`)
       }
+    },
+
+    async remove(collectionId, ids) {
+      // Guarded here as well as in the UI: this is the last point before rows
+      // are destroyed, and "read-only" has to mean it.
+      if (!isDeletable(collectionId)) throw new Error(`Collection "${collectionId}" cannot be deleted from.`)
+      await repository.deleteRecords(collectionId, ids)
+      return { apply: (s) => removeRecordsFromSnapshot(s, collectionId, ids) }
     },
 
     /**
