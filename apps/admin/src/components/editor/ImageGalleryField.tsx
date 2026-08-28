@@ -107,13 +107,14 @@ export function ImageGalleryField({
            the app-scrolls-out-of-view bug that caused). Containing it here
            would bring that back.
 
-           Rungs are set by card width, not by taste: each step keeps a card
-           above ~135px, which is what a truncated filename and the row of
-           three 24px icon buttons need. (They used to be set around the
-           alt-text input at ~185px — that input has since been hidden, which
-           is what lets eight columns arrive at 1152px instead of 1560px.) */
+           Rungs are set by card width, not by taste: every step lands a card
+           between ~185px and ~218px, which is comfortable for a filename that
+           does not truncate mid-word plus the row of three 24px icon buttons.
+           A denser ladder is possible — the card only strictly needs ~135px
+           since the alt-text input was hidden — but at that size the thumbnail
+           stops being a preview, which is the whole point of the field. */
         <div className="@container">
-          <ul className="grid gap-2 grid-cols-1 @sm:grid-cols-2 @xl:grid-cols-4 @4xl:grid-cols-6 @6xl:grid-cols-8">
+          <ul className="grid gap-2 grid-cols-1 @sm:grid-cols-2 @xl:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-6">
             {images.map((image, index) => (
               <li key={image.id}>
                 <ImageCard
