@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react'
-import type { ProductFile, ProductImage } from '@designing-minds/cms'
+import type { PreviewPdf, ProductFile, ProductImage } from '@designing-minds/cms'
 import { UploadAbortedError, type UploadPurpose } from './upload-transport'
 
 /* -------------------------------------------------------------------------
@@ -16,11 +16,12 @@ import { UploadAbortedError, type UploadPurpose } from './upload-transport'
    flight, and the field shows explicit progress, so leaving mid-upload is a
    decision rather than an accident.
 
-   One queue serves both upload fields. What a finished upload BECOMES differs —
-   a purchased file (private bucket, signed on demand) or a gallery image (public
-   bucket, permanent url) — so the artefact is typed as the union and the field
-   that started the job is the thing that knows which arm it is. The queue itself
-   only moves bytes and reports progress, so it has no reason to care.
+   One queue serves every upload field. What a finished upload BECOMES differs —
+   a purchased file (private bucket, signed on demand), a gallery image, or a
+   preview PDF (both public bucket, permanent url) — so the artefact is typed
+   as the union and the field that started the job is the thing that knows
+   which arm it is. The queue itself only moves bytes and reports progress, so
+   it has no reason to care.
 
    Where a finished file lands depends on who is listening:
      * the editor for that record is open  → it receives the file and folds it
@@ -34,7 +35,7 @@ export type UploadStatus = 'uploading' | 'done' | 'error'
 export type { UploadPurpose }
 
 /** What a finished upload becomes, by purpose. */
-export type UploadedArtifact = ProductFile | ProductImage
+export type UploadedArtifact = ProductFile | ProductImage | PreviewPdf
 
 export interface UploadJob {
   id: string

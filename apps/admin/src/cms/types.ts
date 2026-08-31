@@ -37,6 +37,7 @@ export type FieldType =
   | 'multiReference'
   | 'fileList'
   | 'imageGallery'
+  | 'previewPdfList'
 
 /** Collections that a Reference Field can point at. */
 export type ReferenceCollection = 'faqs' | 'products'
@@ -93,7 +94,22 @@ export type FileListField = FieldBase & { type: 'fileList' }
  */
 export type ImageGalleryField = FieldBase & { type: 'imageGallery' }
 
-export type AdminField = PrimitiveField | SlugField | SelectField | ReferenceField | FileListField | ImageGalleryField
+/**
+ * The one free, publicly downloadable PDF preview a Product or Bundle offers.
+ * Stored as an array on the record (`previewPdfs`) so a future plural preview
+ * offering is a UI change, not a migration — but this field renders exactly
+ * one slot, the same single-slot shape as `fileList`.
+ */
+export type PreviewPdfListField = FieldBase & { type: 'previewPdfList' }
+
+export type AdminField =
+  | PrimitiveField
+  | SlugField
+  | SelectField
+  | ReferenceField
+  | FileListField
+  | ImageGalleryField
+  | PreviewPdfListField
 
 /* ------------------------------ List columns --------------------------- */
 

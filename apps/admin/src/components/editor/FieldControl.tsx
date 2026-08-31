@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import type { ProductFile, ProductImage } from '@designing-minds/cms'
+import type { PreviewPdf, ProductFile, ProductImage } from '@designing-minds/cms'
 import type { AdminField, AdminRecord, FieldContext, MultiReferenceField, SelectField, SingleReferenceField } from '../../cms/types'
 import { getPath } from '../../cms/record'
 import { cn, FIELD_HELP, FIELD_LABEL, SUNK } from '../../design'
@@ -7,6 +7,7 @@ import { Icon } from '../ui'
 import { Input, ReferencePicker, Select, Switch, Textarea, type SelectOption } from '../primitives'
 import { FileListField } from './FileListField'
 import { ImageGalleryField } from './ImageGalleryField'
+import { PreviewPdfField } from './PreviewPdfField'
 import { RichTextEditor } from './RichTextEditor'
 
 type Props = {
@@ -139,6 +140,9 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
       case 'imageGallery':
         return renderImageGallery()
 
+      case 'previewPdfList':
+        return renderPreviewPdfList()
+
       default:
         return <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
     }
@@ -249,12 +253,29 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
       />
     )
   }
+
+  function renderPreviewPdfList(): ReactNode {
+    const previews = Array.isArray(value) ? (value as PreviewPdf[]) : []
+    return (
+      <PreviewPdfField
+        collectionId={collectionId}
+        recordId={record.id}
+        fieldKey={field.key}
+        label={field.label}
+        previews={previews}
+        onChange={(update) => onUpdate(field.key, update)}
+        disabled={disabled}
+        labelId={`${inputId}:label`}
+      />
+    )
+  }
 }
 
-/* A file list and an image gallery are groups of controls, not one input, so
-   their caption is a plain label referenced by aria-labelledby rather than a
-   <label htmlFor> pointing at something that can't take focus. */
-const GROUP_FIELDS = new Set<AdminField['type']>(['fileList', 'imageGallery'])
+/* A file list, an image gallery, and a preview PDF slot are groups of
+   controls, not one input, so their caption is a plain label referenced by
+   aria-labelledby rather than a <label htmlFor> pointing at something that
+   can't take focus. */
+const GROUP_FIELDS = new Set<AdminField['type']>(['fileList', 'imageGallery', 'previewPdfList'])
 
 function FieldShell({ field, inputId, children }: { field: AdminField; inputId: string; children: ReactNode }) {
   const isGroup = GROUP_FIELDS.has(field.type)

@@ -14,9 +14,12 @@
  * 'purchased' is paid content in the private bucket, reachable only through a
  * signed URL after an entitlement check. 'gallery' is public marketing in the
  * public media bucket, carrying a permanent URL the prerendered site can embed.
- * Mirrors the `purpose` accepted by POST /api/admin/upload-url.
+ * 'preview' is the free public PDF preview — also the public media bucket with
+ * a permanent URL, but under its own `previews/` prefix so it stays distinct
+ * from gallery images in storage. Mirrors the `purpose` accepted by
+ * POST /api/admin/upload-url.
  */
-export type UploadPurpose = 'purchased' | 'gallery'
+export type UploadPurpose = 'purchased' | 'gallery' | 'preview'
 
 export interface UploadHandle {
   /** Resolves when the object is stored; rejects on network/HTTP failure or abort. */

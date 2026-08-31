@@ -63,6 +63,7 @@ const products: AdminCollection = {
 
     { key: 'purchasedFiles', label: 'Purchased files', type: 'fileList' },
     { key: 'galleryImages', label: 'Preview images', type: 'imageGallery' },
+    { key: 'previewPdfs', label: 'Preview PDF', type: 'previewPdfList' },
 
     { key: 'faqs', label: 'FAQs referenced by this product', type: 'multiReference', collection: 'faqs', valueKey: 'id' },
 
@@ -85,6 +86,11 @@ const products: AdminCollection = {
       title: 'Preview images',
       hint: 'Shown to anyone browsing, after the generated cover. Drag in as many as you like — the first one here is the second thing a shopper sees.',
       fields: ['galleryImages'],
+    },
+    {
+      title: 'Preview PDF',
+      hint: 'A free sample anyone can download from the product page — no purchase or sign-in. The section is hidden on the site until a PDF is added here.',
+      fields: ['previewPdfs'],
     },
     { title: 'Related FAQs', fields: ['faqs'] },
     { title: 'SEO', fields: ['seo.title', 'seo.description'] },
@@ -164,6 +170,7 @@ const bundles: AdminCollection = {
     },
 
     { key: 'galleryImages', label: 'Preview images', type: 'imageGallery' },
+    { key: 'previewPdfs', label: 'Preview PDF', type: 'previewPdfList' },
 
     { key: 'faqs', label: 'FAQs referenced by this bundle', type: 'multiReference', collection: 'faqs', valueKey: 'id' },
 
@@ -179,6 +186,11 @@ const bundles: AdminCollection = {
       title: 'Preview images',
       hint: 'Shown to anyone browsing, after the generated cover stack. Drag in as many as you like — the first one here is the second thing a shopper sees.',
       fields: ['galleryImages'],
+    },
+    {
+      title: 'Preview PDF',
+      hint: 'A free sample anyone can download from the bundle page — no purchase or sign-in. The section is hidden on the site until a PDF is added here.',
+      fields: ['previewPdfs'],
     },
     { title: 'Related FAQs', fields: ['faqs'] },
     { title: 'SEO', fields: ['seo.title', 'seo.description'] },

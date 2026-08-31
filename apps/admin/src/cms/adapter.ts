@@ -25,6 +25,7 @@ import {
   type CmsRepository,
   type CmsSnapshot,
   type Faq,
+  type PreviewPdf,
   type Product,
   type ProductFile,
   type ProductImage,
@@ -166,6 +167,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         marks: null,
         purchasedFiles: [],
         galleryImages: [],
+        previewPdfs: [],
         featured: false,
         published: false,
         sortOrder: snapshot.products.length + 1,
@@ -188,6 +190,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         year: currentYear(),
         bundleScope: 'Term',
         galleryImages: [],
+        previewPdfs: [],
         featured: false,
         published: false,
         sortOrder: snapshot.bundles.length + 1,
@@ -315,12 +318,12 @@ export type AdminAdapter = {
   uploadFile: (
     record: AdminRecord,
     file: File,
-    /** 'purchased' → private bucket, 'gallery' → public bucket. */
+    /** 'purchased' → private bucket, 'gallery' / 'preview' → public bucket. */
     purpose: UploadPurpose,
     onProgress?: (fraction: number) => void,
     /** Receives a cancel function once the request is actually in flight. */
     onAbortHandle?: (abort: () => void) => void,
-  ) => Promise<ProductFile | ProductImage>
+  ) => Promise<ProductFile | ProductImage | PreviewPdf>
 }
 
 /**
@@ -416,6 +419,11 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
       if (purpose === 'gallery' && !body.publicUrl) {
         throw new Error('The server did not return a public URL for this image.')
       }
+      // Same reasoning, same requirement: a preview PDF without a public URL is
+      // a download link that can never resolve.
+      if (purpose === 'preview' && !body.publicUrl) {
+        throw new Error('The server did not return a public URL for this file.')
+      }
 
       const handle = putWithProgress(body.uploadUrl, file, onProgress ?? (() => {}))
       onAbortHandle?.(handle.abort)
@@ -436,6 +444,25 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
           ...size,
         }
         return image
+      }
+
+      if (purpose === 'preview') {
+        // The label defaults to the filename minus its extension, unlike alt
+        // text above: it is visitor-facing (the text on the site's download
+        // button) but always needs *something*, where alt text's honest
+        // default is nothing. The editor renames it from here if they want to.
+        const dot = file.name.lastIndexOf('.')
+        const label = dot > 0 ? file.name.slice(0, dot) : file.name
+        const preview: PreviewPdf = {
+          id: fileId,
+          label,
+          filename: file.name,
+          storageKey: body.storageKey,
+          url: body.publicUrl as string,
+          sizeBytes: file.size,
+          contentType: file.type || undefined,
+        }
+        return preview
       }
 
       return {
