@@ -9,8 +9,10 @@ import {
   relatedProducts,
   type Bundle,
   type CmsSnapshot,
+  type PreviewPdf,
   type Product,
 } from '@designing-minds/cms'
+import { previewDownloadHref } from '../lib/preview-pdf'
 import { subjectAcronymsIn } from '../lib/subject-acronyms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
@@ -73,6 +75,39 @@ function DetailFooterBlocks({ faqs, subject }: { faqs: ReturnType<typeof getFaqs
   )
 }
 
+/**
+ * Free-preview block, shared by both detail views. Callers guard with
+ * `(record.previewPdfs ?? []).length > 0` — this component always renders
+ * whatever it's given, so an empty array is never handed to it.
+ */
+function PreviewPdfSection({ pdfs, subject }: { pdfs: PreviewPdf[]; subject: string }) {
+  return (
+    <div className="mt-8 rounded-card border border-line p-5">
+      <h2 className="text-[1.15rem]">Preview before you buy</h2>
+      <p className="mt-1.5 text-body-sm text-ink-soft">Download a free sample PDF of this {subject} before you buy.</p>
+      <div className="mt-4 grid gap-2">
+        {pdfs.map((pdf) => (
+          // A real cross-origin download, not a route — Button's `href` branch
+          // renders a plain anchor rather than a router Link.
+          <Button
+            key={pdf.id}
+            href={previewDownloadHref(pdf)}
+            rel="noopener"
+            variant="solid-light"
+            className="w-full justify-between"
+          >
+            <span className="flex items-center gap-2.5 truncate">
+              <Icon name="doc" size={18} />
+              <span className="truncate">{pdf.label}</span>
+            </span>
+            <Icon name="download" size={16} />
+          </Button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ----------------------------- Single resource -------------------------- */
 
 function ResourceDetail({ product, snapshot }: { product: Product; snapshot: CmsSnapshot }) {
@@ -82,6 +117,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
   // Cross-sell at the moment of purchase: this resource is already paid for
   // inside a cheaper-per-item bundle.
   const inBundles = bundlesContaining(snapshot, product)
+  const previewPdfs = product.previewPdfs ?? []
 
   return (
     <>
@@ -108,6 +144,8 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
                   <Markdown source={product.fullDescription} className="text-body-lg" />
                 </div>
               ) : null}
+
+              {previewPdfs.length > 0 ? <PreviewPdfSection pdfs={previewPdfs} subject="resource" /> : null}
 
               <DetailFooterBlocks faqs={faqs} subject="resource" />
             </div>
@@ -197,6 +235,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
   // list underneath it. Null when nothing published is listed yet.
   const value = bundleValue(snapshot, bundle)
   const subjects = [...new Set(contents.flatMap((product) => product.subjects))]
+  const previewPdfs = bundle.previewPdfs ?? []
 
   return (
     <section className="section">
@@ -253,6 +292,8 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
                 <p className="text-muted">Included resources are being finalised.</p>
               )}
             </div>
+
+            {previewPdfs.length > 0 ? <PreviewPdfSection pdfs={previewPdfs} subject="bundle" /> : null}
 
             <DetailFooterBlocks faqs={faqs} subject="bundle" />
           </div>
