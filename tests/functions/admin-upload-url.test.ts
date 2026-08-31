@@ -49,6 +49,19 @@ describe('POST /api/admin/upload-url', () => {
     expect(response.body).toMatchObject({ publicUrl: expect.stringContaining('/public/') })
   })
 
+  it('sends preview PDFs to the public bucket under their own prefix and returns a permanent URL', async () => {
+    const response = await post({ recordId: RECORD, fileId: FILE, filename: 'grade4 sample.pdf', purpose: 'preview' })
+
+    expect(response.status).toBe(200)
+    expect(privateUpload).not.toHaveBeenCalled()
+    // Same public bucket as gallery images, but its own prefix — the two must
+    // never collide, since gallery images and preview PDFs are different content.
+    expect(publicUpload).toHaveBeenCalledWith(`previews/${RECORD}/${FILE}-grade4-sample.pdf`)
+    // A preview PDF is a free download, prerendered into static HTML just like a
+    // gallery image — it needs the same kind of URL that keeps working unsigned.
+    expect(response.body).toMatchObject({ publicUrl: expect.stringContaining('/public/') })
+  })
+
   it('keeps purchased files in the private bucket and hands out no public URL', async () => {
     const response = await post({ recordId: RECORD, fileId: FILE, filename: 'grade4.pdf', purpose: 'purchased' })
 

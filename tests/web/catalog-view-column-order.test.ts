@@ -58,7 +58,13 @@ function selectEntries(sql: string, fn: string, from: string): string[] {
   return entries.map((entry) => entry.split('\n').map((line) => line.trim()).filter(Boolean).join(' '))
 }
 
-for (const file of ['schema.sql', 'patch/2026-08-19-catalogue-preview-gallery.sql']) {
+/* The patch under test is the NEWEST one that rebuilds these functions: an
+   older patch's select list is frozen at the schema of its day and stops
+   lining up the moment a later patch appends another column, so only the
+   latest rebuild and schema.sql have to agree. */
+const LATEST_REBUILD_PATCH = 'patch/2026-08-31-preview-pdfs.sql'
+
+for (const file of ['schema.sql', LATEST_REBUILD_PATCH]) {
   test(`${file}: published_products() lines up with public.products position for position`, () => {
     const schema = read('schema.sql')
     const sql = read(file)
@@ -80,19 +86,23 @@ for (const file of ['schema.sql', 'patch/2026-08-19-catalogue-preview-gallery.sq
   })
 }
 
-test('galleryImages is the last column, because ALTER TABLE can only append', () => {
-  // A fresh database (schema.sql) and a migrated one (the patch's ALTER) must
+test('the appended tail is galleryImages then previewPdfs, because ALTER TABLE can only append', () => {
+  // A fresh database (schema.sql) and a migrated one (the patches' ALTERs) must
   // end up with the SAME column order, or one of them gets a function compiled
-  // against the wrong indexes.
+  // against the wrong indexes. The tail is the full append history, in order.
   const columns = tableColumns(read('schema.sql'), 'public.products')
-  assert.equal(columns.at(-1), 'galleryImages', 'galleryImages must be declared last in public.products')
+  assert.deepEqual(
+    columns.slice(-2),
+    ['galleryImages', 'previewPdfs'],
+    'public.products must end with galleryImages then previewPdfs, in append order',
+  )
 
-  const patch = read('patch/2026-08-19-catalogue-preview-gallery.sql')
-  assert.match(patch, /alter table public\.products\s*\n\s*add column if not exists "galleryImages"/)
+  const patch = read(LATEST_REBUILD_PATCH)
+  assert.match(patch, /alter table public\.products\s*\n\s*add column if not exists "previewPdfs"/)
 
-  for (const file of ['schema.sql', 'patch/2026-08-19-catalogue-preview-gallery.sql']) {
+  for (const file of ['schema.sql', LATEST_REBUILD_PATCH]) {
     const entries = selectEntries(read(file), 'private.published_products()', 'from public.products p')
-    assert.equal(entries.at(-1), 'p."galleryImages"', `${file}: galleryImages must be last in the select list`)
+    assert.equal(entries.at(-1), 'p."previewPdfs"', `${file}: previewPdfs must be last in the select list`)
   }
 })
 
@@ -100,7 +110,7 @@ test('published_bundles() is matched by name, so its order only has to match its
   // This one declares an explicit `returns table (...)`, so the risk is
   // different: the return table and the select list must agree with each other,
   // but neither depends on the physical column order of public.bundles.
-  for (const file of ['schema.sql', 'patch/2026-08-19-catalogue-preview-gallery.sql']) {
+  for (const file of ['schema.sql', LATEST_REBUILD_PATCH]) {
     const sql = read(file)
     const at = Math.max(
       sql.indexOf('create or replace function private.published_bundles()'),
@@ -111,11 +121,13 @@ test('published_bundles() is matched by name, so its order only has to match its
     const entries = selectEntries(sql, 'private.published_bundles()', 'from public.bundles b')
 
     assert.equal(declared.length, entries.length, `${file}: bundle return table and select list differ in length`)
-    assert.ok(declared.includes('galleryImages'), `${file}: bundles should return galleryImages`)
-    assert.equal(
-      declared.indexOf('galleryImages'),
-      entries.findIndex((entry) => entry.includes('"galleryImages"')),
-      `${file}: galleryImages sits at different indexes in the bundle return table and select list`,
-    )
+    for (const column of ['galleryImages', 'previewPdfs']) {
+      assert.ok(declared.includes(column), `${file}: bundles should return ${column}`)
+      assert.equal(
+        declared.indexOf(column),
+        entries.findIndex((entry) => entry.includes(`"${column}"`)),
+        `${file}: ${column} sits at different indexes in the bundle return table and select list`,
+      )
+    }
   }
 })

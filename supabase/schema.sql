@@ -84,12 +84,21 @@ create table if not exists public.products (
   -- Preview images shown on the Product Detail. The opposite of purchasedFiles:
   -- marketing, not paid content, so these live in the PUBLIC media bucket and
   -- carry their permanent public url inline rather than a key to sign later.
+  "galleryImages" jsonb not null default '[]',
+  -- Free, publicly downloadable PDF previews shown on the Product Detail —
+  -- same reasoning as galleryImages above and the opposite of purchasedFiles:
+  -- a marketing download anyone can fetch, so it lives in the PUBLIC media
+  -- bucket (its own "previews/" prefix) and carries its permanent public url
+  -- inline rather than a key to sign later.
   --
-  -- LAST on purpose. published_products() returns `setof public.products`, which
-  -- matches POSITIONALLY, and ALTER TABLE can only append — so a column added
-  -- here mid-list would sit at a different index on an already-migrated database
-  -- than on a fresh one, and the function would compile against only one of them.
-  "galleryImages" jsonb not null default '[]'
+  -- LAST on purpose, together with galleryImages above. published_products()
+  -- returns `setof public.products`, which matches POSITIONALLY, and ALTER
+  -- TABLE can only append — so a column added mid-list would sit at a
+  -- different index on an already-migrated database than on a fresh one, and
+  -- the function would compile against only one of them. This constraint
+  -- governs the TAIL order (galleryImages, then previewPdfs), not one
+  -- specific column: whatever is appended next goes after previewPdfs.
+  "previewPdfs" jsonb not null default '[]'
 );
 
 -- A priced package of individual resources. Subjects, terms, file count and
@@ -112,7 +121,15 @@ create table if not exists public.bundles (
   "sortOrder" integer not null default 0,
   seo jsonb not null default '{}',
   faqs text[] not null default '{}',
-  "updatedAt" timestamptz not null default now()
+  "updatedAt" timestamptz not null default now(),
+  -- Free, publicly downloadable PDF previews shown on the Product Detail —
+  -- same reasoning as galleryImages above and the opposite of purchasedFiles:
+  -- a marketing download anyone can fetch, so it lives in the PUBLIC media
+  -- bucket (its own "previews/" prefix) and carries its permanent public url
+  -- inline. published_bundles() declares its own return row type (not `setof
+  -- public.bundles`), so unlike products this position is free — kept last
+  -- here to match how ALTER TABLE appends it on an already-migrated database.
+  "previewPdfs" jsonb not null default '[]'
 );
 
 -- Membership as real foreign keys: deleting a resource removes it from every
@@ -234,8 +251,10 @@ as $$
     p."updatedAt",
     -- Passed through whole, unlike purchasedFiles above: a gallery image is
     -- public marketing, so withholding its url would only break the page.
-    -- Last, matching the column's position in the table — see the note there.
-    p."galleryImages"
+    p."galleryImages",
+    -- Same treatment, same reasoning — and now this one is last, matching the
+    -- column's position in the table (see the note there).
+    p."previewPdfs"
   from public.products p
   where p.published = true;
 $$;
@@ -265,6 +284,7 @@ returns table (
   year text,
   "bundleScope" text,
   "galleryImages" jsonb,
+  "previewPdfs" jsonb,
   featured boolean,
   published boolean,
   "sortOrder" integer,
@@ -291,6 +311,7 @@ as $$
     b.year,
     b."bundleScope",
     b."galleryImages",
+    b."previewPdfs",
     b.featured,
     b.published,
     b."sortOrder",

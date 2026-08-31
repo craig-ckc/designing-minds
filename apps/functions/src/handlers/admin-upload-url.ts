@@ -5,12 +5,16 @@ import { createSupabaseStorageProvider } from '../lib/storage.ts'
 /**
  * Reserve a storage key for an admin upload and hand back a signed PUT URL.
  *
- * `purpose` decides which bucket, and the two are not interchangeable:
+ * `purpose` decides which bucket, and they are not interchangeable:
  *   'purchased' → the private bucket. Paid content; a buyer only ever reaches it
  *                 through issue-download, after an entitlement check.
  *   'gallery'   → the public media bucket. Preview images for the Product
  *                 Detail, so the response also carries the permanent public URL
  *                 the record stores and the prerendered HTML references.
+ *   'preview'   → the public media bucket too, under its own `previews/`
+ *                 prefix. Free, publicly downloadable PDF previews — same
+ *                 public-URL response as 'gallery', just a different key and
+ *                 different content.
  *
  * It defaults to 'purchased' so an older admin build, which sends no purpose at
  * all, keeps behaving exactly as it did.
@@ -21,7 +25,7 @@ interface UploadUrlInput {
   productId?: string
   fileId: string
   filename: string
-  purpose?: 'purchased' | 'gallery'
+  purpose?: 'purchased' | 'gallery' | 'preview'
 }
 
 const isUploadUrlInput = (value: unknown): value is UploadUrlInput => {
@@ -29,7 +33,7 @@ const isUploadUrlInput = (value: unknown): value is UploadUrlInput => {
   if (typeof value !== 'object' || value === null) return false
   if (typeof v.fileId !== 'string' || typeof v.filename !== 'string') return false
   if (typeof v.recordId !== 'string' && typeof v.productId !== 'string') return false
-  return v.purpose === undefined || v.purpose === 'purchased' || v.purpose === 'gallery'
+  return v.purpose === undefined || v.purpose === 'purchased' || v.purpose === 'gallery' || v.purpose === 'preview'
 }
 
 const safeFilename = (filename: string) => filename.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'file'
@@ -57,8 +61,9 @@ export const adminUploadUrl: Handler = async (req) => {
     const storage = createSupabaseStorageProvider()
     const name = safeFilename(req.body.filename)
 
-    if (req.body.purpose === 'gallery') {
-      const key = `gallery/${recordId}/${req.body.fileId}-${name}`
+    if (req.body.purpose === 'gallery' || req.body.purpose === 'preview') {
+      const prefix = req.body.purpose === 'gallery' ? 'gallery' : 'previews'
+      const key = `${prefix}/${recordId}/${req.body.fileId}-${name}`
       const { uploadUrl, publicUrl } = await storage.getPublicSignedUploadUrl(key)
       return ok({ uploadUrl, storageKey: key, publicUrl })
     }

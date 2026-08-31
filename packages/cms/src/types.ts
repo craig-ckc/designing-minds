@@ -79,6 +79,33 @@ export interface ProductImage {
   height?: number
 }
 
+/**
+ * A free, publicly downloadable PDF preview of a catalogue record.
+ *
+ * Public by construction, like `ProductImage` and unlike `ProductFile`: it is
+ * marketing an editor chose to publish, so it lives in the public media bucket
+ * (under its own `previews/` prefix) and carries its permanent `url` inline for
+ * the prerendered static HTML. Anyone with the link can download it — that is
+ * the point.
+ *
+ * Stored as an array (`previewPdfs`) even though the admin currently offers a
+ * single slot, so offering several previews later is a UI change, not a
+ * migration.
+ */
+export interface PreviewPdf {
+  id: string
+  /** Editor-supplied display name, shown to visitors as the download's name. */
+  label: string
+  /** Original filename at upload time. Shown in the admin. */
+  filename: string
+  /** Provider-neutral key inside the PUBLIC media bucket. */
+  storageKey: string
+  /** Permanent public URL for the object — safe to bake into static HTML. */
+  url: string
+  sizeBytes?: number
+  contentType?: string
+}
+
 /** A file attached to a Product. Files live on Products, not a separate collection. */
 export interface ProductFile {
   id: string
@@ -114,6 +141,8 @@ export interface Product {
   purchasedFiles: ProductFile[]
   /** Preview gallery shown after the generated cover on the Product Detail. */
   galleryImages: ProductImage[]
+  /** Free downloadable PDF previews; the Product Detail hides the section when empty. */
+  previewPdfs: PreviewPdf[]
   featured: boolean
   published: boolean
   sortOrder: number
@@ -147,6 +176,8 @@ export interface Bundle {
   bundleScope?: BundleScope
   /** Preview gallery shown after the generated cover stack on the Product Detail. */
   galleryImages: ProductImage[]
+  /** Free downloadable PDF previews; the Product Detail hides the section when empty. */
+  previewPdfs: PreviewPdf[]
   featured: boolean
   published: boolean
   sortOrder: number
