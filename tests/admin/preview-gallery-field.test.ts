@@ -123,7 +123,7 @@ test('per-image progress is reported and cancellable', () => {
   assert.match(gallery, /aria-label=\{`Uploading \$\{job\.filename\}`\}/)
   assert.match(gallery, /cancel\(job\.id\)/)
   // Failures stay on screen with their reason instead of vanishing.
-  assert.match(gallery, /function FailedUpload/)
+  assert.match(gallery, /<UploadFailure /)
 })
 
 test('intrinsic image size is measured at upload time', () => {

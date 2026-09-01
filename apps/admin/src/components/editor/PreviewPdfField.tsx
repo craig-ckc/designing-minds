@@ -3,6 +3,7 @@ import type { PreviewPdf } from '@designing-minds/cms'
 import { formatBytes } from '../../lib/upload-transport'
 import { useFieldUploads, useUploadTarget, useUploads, type UploadJob } from '../../lib/uploads'
 import { cn } from '../../design'
+import { UploadFailure } from './UploadFailure'
 import { Icon } from '../ui'
 import { Button, buttonStyles, FileInput, Input } from '../primitives'
 
@@ -119,7 +120,7 @@ export function PreviewPdfField({
       {jobs
         .filter((job) => job.status === 'error')
         .map((job) => (
-          <FailedUpload key={job.id} job={job} />
+          <UploadFailure key={job.id} job={job} />
         ))}
 
       {!disabled && !slotFilled ? (
@@ -296,16 +297,3 @@ function UploadProgress({ job }: { job: UploadJob }) {
   )
 }
 
-function FailedUpload({ job }: { job: UploadJob }) {
-  const { dismiss } = useUploads()
-  return (
-    <div className="flex items-start gap-2 rounded-control border border-danger bg-danger-tint px-2.5 py-1.5">
-      <span className="min-w-0 flex-1 text-ui text-danger">
-        <span className="font-medium">{job.filename}</span> — {job.error ?? 'Upload failed.'}
-      </span>
-      <Button variant="ghost" size="sm" onClick={() => dismiss(job.id)}>
-        Dismiss
-      </Button>
-    </div>
-  )
-}

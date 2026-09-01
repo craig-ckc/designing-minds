@@ -72,7 +72,13 @@ export const adminUploadUrl: Handler = async (req) => {
     const uploadUrl = await storage.getSignedUploadUrl(key)
     return ok({ uploadUrl, storageKey: key })
   } catch (error) {
-    console.error('admin-upload-url failed:', error instanceof Error ? error.message : error)
-    return serverError('Unable to create upload URL.')
+    // The reason travels to the caller, not just to the log. This endpoint is
+    // behind requireAdmin, so there is nobody to leak to — and an editor whose
+    // upload dies at the reservation step otherwise sees a bare "unable to
+    // create upload URL" with the actual cause (a missing bucket, a bad key,
+    // a rejected service key) visible only in the function logs.
+    const reason = error instanceof Error ? error.message : String(error)
+    console.error('admin-upload-url failed:', reason)
+    return serverError(`Unable to reserve storage for this file: ${reason}`)
   }
 }

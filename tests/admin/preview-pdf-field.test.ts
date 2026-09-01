@@ -129,7 +129,7 @@ test('failed and in-progress uploads are shown, like the sibling fields', () => 
   const field = read('components/editor/PreviewPdfField.tsx')
   assert.match(field, /role="progressbar"/)
   assert.match(field, /cancel\(job\.id\)/)
-  assert.match(field, /function FailedUpload/)
+  assert.match(field, /<UploadFailure /)
 })
 
 test('a new record starts with an empty previewPdfs array', () => {

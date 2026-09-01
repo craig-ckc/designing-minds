@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react'
 import type { PreviewPdf, ProductFile, ProductImage } from '@designing-minds/cms'
-import { UploadAbortedError, type UploadPurpose } from './upload-transport'
+import { UploadAbortedError, UploadFailedError, type UploadPurpose } from './upload-transport'
 
 /* -------------------------------------------------------------------------
    Background uploads.
@@ -50,7 +50,10 @@ export interface UploadJob {
   /** 0–1. */
   progress: number
   status: UploadStatus
+  /** What to tell the editor, in plain English. */
   error?: string
+  /** Storage's own code and message, kept for the cases our sentences don't cover. */
+  errorDetail?: string
   /** Set when this upload replaces an existing file rather than adding one. */
   replacesFileId?: string
 }
@@ -147,6 +150,7 @@ export function UploadsProvider({
       status: 'uploading',
       replacesFileId: input.replacesFileId,
     }
+
     jobs = [...jobs, job]
     emit()
 
@@ -181,8 +185,12 @@ export function UploadsProvider({
           emit()
           return
         }
+        // The reason storage gave, not a generic failure: an editor needs to
+        // know whether the file was too big, the bucket was missing, or the
+        // connection dropped, because those are three different next moves.
         const message = error instanceof Error ? error.message : 'Upload failed.'
-        patch(id, { status: 'error', error: message })
+        const detail = error instanceof UploadFailedError ? error.detail : undefined
+        patch(id, { status: 'error', error: message, errorDetail: detail })
         live.current.onNotify(`${input.file.name} failed to upload. ${message}`, 'error')
       } finally {
         aborts.delete(id)
