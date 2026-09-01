@@ -2,6 +2,7 @@ import { useState, type DragEvent } from 'react'
 import type { ProductImage } from '@designing-minds/cms'
 import { formatBytes } from '../../lib/upload-transport'
 import { useFieldUploads, useUploadTarget, useUploads, type UploadJob } from '../../lib/uploads'
+import { uploadHint, uploadRules } from '../../lib/upload-rules'
 import { cn } from '../../design'
 import { UploadFailure } from './UploadFailure'
 import { Icon } from '../ui'
@@ -149,7 +150,7 @@ export function ImageGalleryField({
       {!disabled ? (
         <FileInput
           label="Upload preview images"
-          accept="image/*"
+          accept={uploadRules.gallery.accept}
           multiple
           onFiles={(picked) => queue(picked)}
           render={(labelProps) => (
@@ -183,6 +184,10 @@ export function ImageGalleryField({
               <span className="text-ui text-muted">
                 or <span className="font-medium text-primary">click to browse</span> — you can pick several at once
               </span>
+              {/* Said before anything is picked, not after a refusal — and this
+                  zone in particular, since a PDF dropped here used to be stored
+                  as an image and shown as one on the website. */}
+              <span className="text-ui text-muted">{uploadHint('gallery')} each</span>
             </label>
           )}
         />

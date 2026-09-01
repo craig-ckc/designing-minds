@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { rejectUpload } from '../../apps/admin/src/lib/upload-rules.ts'
 import { buildCsv } from '../../apps/admin/src/cms/csv-io.ts'
 import { collectionRegistry } from '../../apps/admin/src/cms/registry.ts'
 import type { AdminRecord } from '../../apps/admin/src/cms/types.ts'
@@ -76,7 +77,11 @@ test('preview PDF uploads go to the public bucket, like gallery images', () => {
 
 test('the field only accepts PDFs', () => {
   const field = read('components/editor/PreviewPdfField.tsx')
-  assert.match(field, /accept="application\/pdf,\.pdf"/)
+  // The picker is narrowed from the shared rule, and — because `accept` is
+  // advisory and ignored by drag & drop — the rule is also enforced in the
+  // upload queue. See tests/admin/upload-rules.test.ts.
+  assert.match(field, /accept=\{uploadRules\.preview\.accept\}/)
+  assert.equal(rejectUpload('preview', { name: 'cover.png', type: 'image/png', size: 1000 }) !== null, true)
 })
 
 test('a preview PDF is refused unless the server returned a public URL', () => {

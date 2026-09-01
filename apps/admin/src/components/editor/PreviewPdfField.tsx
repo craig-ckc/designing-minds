@@ -2,6 +2,7 @@ import { useState, type DragEvent } from 'react'
 import type { PreviewPdf } from '@designing-minds/cms'
 import { formatBytes } from '../../lib/upload-transport'
 import { useFieldUploads, useUploadTarget, useUploads, type UploadJob } from '../../lib/uploads'
+import { uploadHint, uploadRules } from '../../lib/upload-rules'
 import { cn } from '../../design'
 import { UploadFailure } from './UploadFailure'
 import { Icon } from '../ui'
@@ -126,7 +127,7 @@ export function PreviewPdfField({
       {!disabled && !slotFilled ? (
         <FileInput
           label={`Upload the ${label.toLowerCase()}`}
-          accept="application/pdf,.pdf"
+          accept={uploadRules.preview.accept}
           onFiles={(picked) => queue(picked)}
           render={(labelProps) => (
             <label
@@ -155,6 +156,8 @@ export function PreviewPdfField({
               <span className="text-ui text-muted">
                 or <span className="font-medium text-primary">click to browse</span>
               </span>
+              {/* Said before anything is picked, not after a refusal. */}
+              <span className="text-ui text-muted">{uploadHint('preview')}</span>
             </label>
           )}
         />
@@ -229,7 +232,7 @@ function PreviewCard({
               handler on top of it. */}
           <FileInput
             label={`Replace ${preview.filename}`}
-            accept="application/pdf,.pdf"
+            accept={uploadRules.preview.accept}
             onFiles={onReplace}
             render={(labelProps) => (
               <label

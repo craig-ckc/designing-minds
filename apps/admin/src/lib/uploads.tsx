@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react'
 import type { PreviewPdf, ProductFile, ProductImage } from '@designing-minds/cms'
 import { UploadAbortedError, UploadFailedError, type UploadPurpose } from './upload-transport'
+import { rejectUpload } from './upload-rules'
 
 /* -------------------------------------------------------------------------
    Background uploads.
@@ -149,6 +150,22 @@ export function UploadsProvider({
       progress: 0,
       status: 'uploading',
       replacesFileId: input.replacesFileId,
+    }
+
+    /* The one gate every upload passes through — too big or the wrong kind of
+       file for this zone, and not a single byte leaves the browser.
+
+       Here rather than in the fields because this is where they all converge:
+       three fields, a file picker and a drag & drop each, and `accept` on the
+       input covers only one of those six paths. The job is still created, just
+       already failed, so the answer appears in the field the file was dropped
+       on instead of in a dialog the editor has to dismiss. */
+    const refusal = rejectUpload(input.purpose, input.file)
+    if (refusal) {
+      jobs = [...jobs, { ...job, status: 'error', error: refusal }]
+      emit()
+      live.current.onNotify(`${input.file.name} was not uploaded. ${refusal}`, 'error')
+      return
     }
 
     jobs = [...jobs, job]

@@ -111,7 +111,7 @@ test('the field accepts many images at once, unlike the single-file field', () =
   // Multi-select on the picker, and every dropped file queued rather than the
   // first — the plural counterpart to FileListField's deliberate single slot.
   assert.match(gallery, /multiple/)
-  assert.match(gallery, /accept="image\/\*"/)
+  assert.match(gallery, /accept=\{uploadRules\.gallery\.accept\}/)
   assert.match(gallery, /for \(const file of \[\.\.\.\(selected \?\? \[\]\)\]\) \{/)
   assert.doesNotMatch(read('components/editor/FileListField.tsx'), /multiple/)
 })

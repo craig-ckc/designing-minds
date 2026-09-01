@@ -2,6 +2,7 @@ import { useState, type DragEvent } from 'react'
 import type { ProductFile } from '@designing-minds/cms'
 import { formatBytes } from '../../lib/upload-transport'
 import { useFieldUploads, useUploadTarget, useUploads, type UploadJob } from '../../lib/uploads'
+import { uploadHint, uploadRules } from '../../lib/upload-rules'
 import { cn } from '../../design'
 import { UploadFailure } from './UploadFailure'
 import { Icon } from '../ui'
@@ -117,6 +118,7 @@ export function FileListField({
       {!disabled && !slotFilled ? (
         <FileInput
           label={`Upload the ${label.toLowerCase()}`}
+          accept={uploadRules.purchased.accept}
           onFiles={(picked) => queue(picked)}
           render={(labelProps) => (
             <label
@@ -145,6 +147,8 @@ export function FileListField({
               <span className="text-ui text-muted">
                 or <span className="font-medium text-primary">click to browse</span>
               </span>
+              {/* Said before anything is picked, not after a refusal. */}
+              <span className="text-ui text-muted">{uploadHint('purchased')}</span>
             </label>
           )}
         />
