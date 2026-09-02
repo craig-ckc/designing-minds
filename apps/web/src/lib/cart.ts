@@ -39,17 +39,23 @@ const storage: CartStorage = {
   },
 }
 
+// A cart line names either a resource or a bundle. The two Collections share
+// the /shop/<slug> space, so a slug is resolved against both public views.
+type CatalogView = 'catalog_products' | 'catalog_bundles'
 interface CatalogRef {
   id: string
   slug: string
 }
 interface CartLine {
-  productId: string
+  productId: string | null
+  bundleId: string | null
 }
 
-const lookup = async (column: 'id' | 'slug', values: string[]): Promise<CatalogRef[]> => {
+const nonNull = <T>(value: T | null): value is T => value !== null
+
+const lookup = async (view: CatalogView, column: 'id' | 'slug', values: string[]): Promise<CatalogRef[]> => {
   if (!supabase || values.length === 0) return []
-  const { data, error } = await supabase.from('catalog_products').select('id,slug').in(column, values)
+  const { data, error } = await supabase.from(view).select('id,slug').in(column, values)
   if (error) throw new Error(error.message)
   return (data ?? []) as CatalogRef[]
 }
@@ -72,22 +78,29 @@ const server: CartServer = {
     if (!supabase) return []
     const cart = await ensureCart(customerId)
     if (!cart) return []
-    const { data, error } = await supabase.from('cart_items').select('productId').eq('cartId', cart.id)
+    const { data, error } = await supabase.from('cart_items').select('productId,bundleId').eq('cartId', cart.id)
     if (error) throw new Error(error.message)
     const lines = (data ?? []) as CartLine[]
-    const products = await lookup('id', [...new Set(lines.map((line) => line.productId))])
-    return products.map((ref) => ref.slug)
+    const [products, bundles] = await Promise.all([
+      lookup('catalog_products', 'id', [...new Set(lines.map((line) => line.productId).filter(nonNull))]),
+      lookup('catalog_bundles', 'id', [...new Set(lines.map((line) => line.bundleId).filter(nonNull))]),
+    ])
+    return [...products, ...bundles].map((ref) => ref.slug)
   },
 
   writeCart: async (customerId, slugs) => {
     if (!supabase) return
     const cart = await ensureCart(customerId)
     if (!cart) return
-    const products = await lookup('slug', slugs)
+    const [products, bundles] = await Promise.all([lookup('catalog_products', 'slug', slugs), lookup('catalog_bundles', 'slug', slugs)])
     const { error: deleteError } = await supabase.from('cart_items').delete().eq('cartId', cart.id)
     if (deleteError) throw new Error(deleteError.message)
-    if (products.length === 0) return
-    const { error: insertError } = await supabase.from('cart_items').insert(products.map((product) => ({ cartId: cart.id, productId: product.id })))
+    const rows = [
+      ...products.map((product) => ({ cartId: cart.id, productId: product.id })),
+      ...bundles.map((bundle) => ({ cartId: cart.id, bundleId: bundle.id })),
+    ]
+    if (rows.length === 0) return
+    const { error: insertError } = await supabase.from('cart_items').insert(rows)
     if (insertError) throw new Error(insertError.message)
   },
 

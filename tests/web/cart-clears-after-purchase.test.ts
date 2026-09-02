@@ -200,6 +200,10 @@ test('the PayFast return page empties the cart and the real store reads ownershi
   const cartSource = read('apps/web/src/lib/cart.ts')
   assert.match(cartSource, /createCartSync\(\{ storage, server \}\)/)
   assert.match(cartSource, /\.from\('orders'\)\.select\('items'\)\.eq\('customerId', customerId\)\.in\('status', \['paid', 'fulfilled'\]\)/)
+  // Bundles share the cart with resources, so the account copy must carry both.
+  assert.match(cartSource, /lookup\('catalog_bundles', 'slug', slugs\)/)
+  assert.match(cartSource, /bundleId: bundle\.id/)
+  assert.match(cartSource, /select\('productId,bundleId'\)/)
 })
 
 const functionBody = (sql: string) => sql.match(/create or replace function public\.clear_purchased_cart_items\(\)[\s\S]*?\$\$;/)?.[0] ?? ''
