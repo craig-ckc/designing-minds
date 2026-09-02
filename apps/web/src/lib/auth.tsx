@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false
     const applySession = (nextSession: Session | null) => {
-      if (nextSession?.user.id) void mergeSignedInCart(nextSession.user.id)
+      if (nextSession?.user.id) void mergeSignedInCart(nextSession.user.id).catch(() => undefined)
       setSession(nextSession)
       setLoading(false)
     }

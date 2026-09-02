@@ -11,6 +11,8 @@ export function CheckoutReturnPage() {
   const orderId = params.get('order')
 
   useEffect(() => {
+    // Checkout submits the whole cart, so the whole cart is done with. The
+    // account copy also loses these lines in the database once the ITN lands.
     clearCart()
   }, [])
 
