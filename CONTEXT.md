@@ -133,6 +133,7 @@ _Avoid_: Marketing page
 - A **Cart** holds each resource at most once; there are no quantities, because each resource is purchased once and then downloaded.
 - A resource a **Customer** already owns (in a paid **Order**) cannot be added to the **Cart** or purchased again.
 - A **Cart** leads to **Checkout**.
+- When an **Order** is paid, its resources leave the **Cart** — both the browser copy and the copy saved to the **Customer Account**.
 - **Checkout** requires a **Customer Account** before payment is completed.
 - An **Authentication Page** can be reached directly or from **Checkout**.
 - **Authentication Pages**, **Cart**, **Checkout**, **Customer Account**, **Order History**, and **Order Details** are **Functional Pages**.

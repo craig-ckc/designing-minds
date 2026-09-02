@@ -605,6 +605,62 @@ $$;
 revoke all on function public.create_pending_order(uuid, uuid, text, uuid, text, text, jsonb, numeric) from public, anon, authenticated;
 grant execute on function public.create_pending_order(uuid, uuid, text, uuid, text, text, jsonb, numeric) to service_role;
 
+-- A paid order takes its lines out of the customer's saved cart. The website
+-- clears the browser copy when PayFast sends the shopper back, but the ITN can
+-- land while they are still on PayFast — or they may never come back — so the
+-- account copy is cleared here, where the status actually changes, whichever
+-- path changes it. Only the purchased lines go: anything added since checkout
+-- is still wanted. Definer so the delete is not subject to the caller's
+-- cart_items policies — an administrator marking an order paid has none and
+-- would silently clear nothing. Order lines are a JSONB snapshot, so the slug
+-- is read off each line and resolved against products and bundles, which
+-- share one slug space.
+create or replace function public.clear_purchased_cart_items()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  purchased_slugs text[];
+begin
+  if new.status not in ('paid', 'fulfilled') then
+    return new;
+  end if;
+  -- Only the first move into a paid state has anything to clear; paid ->
+  -- fulfilled and re-saves of a paid order are no-ops.
+  if tg_op = 'UPDATE' and old.status in ('paid', 'fulfilled') then
+    return new;
+  end if;
+  if jsonb_typeof(new.items) <> 'array' then
+    return new;
+  end if;
+
+  select coalesce(array_agg(item ->> 'productSlug'), '{}')
+    into purchased_slugs
+    from jsonb_array_elements(new.items) as item
+    where item ->> 'productSlug' is not null;
+
+  delete from public.cart_items ci
+  using public.carts c
+  where ci."cartId" = c.id
+    and c."customerId" = new."customerId"
+    and (
+      ci."productId" in (select p.id from public.products p where p.slug = any (purchased_slugs))
+      or ci."bundleId" in (select b.id from public.bundles b where b.slug = any (purchased_slugs))
+    );
+
+  return new;
+end;
+$$;
+
+revoke execute on function public.clear_purchased_cart_items() from public, anon, authenticated;
+
+drop trigger if exists orders_clear_purchased_cart_items on public.orders;
+create trigger orders_clear_purchased_cart_items
+after insert or update of status on public.orders
+for each row execute procedure public.clear_purchased_cart_items();
+
 -- =========================================================================
 -- Row Level Security
 -- =========================================================================

@@ -13,7 +13,7 @@ This combines backend readiness, preview setup, static publishing, and launch ch
 | Form submissions | Ready | Contact + newsletter POST to `/api/forms`; functions write `form_<name>` tables and send a Resend notification. Apply `supabase/patch/2026-07-02-form-submissions.sql`. |
 | Transactional email | Config-gated | Resend send is implemented; set `RESEND_API_KEY`/`RESEND_FROM`/`FORM_NOTIFICATIONS_TO` on functions to go live. Absent config skips sending (submissions still persist). |
 | Mailchimp audience sync | Config-gated | Opt-in submitters are upserted (add or update, status `subscribed`) into a Mailchimp audience: newsletter signups always, contact enquiries only when the marketing-consent checkbox is ticked. On a successful sync we send our own branded confirmation email (via Resend) with a signed one-click unsubscribe link (`/unsubscribe` → sets the contact to `unsubscribed`). Set `MAILCHIMP_API_KEY`/`MAILCHIMP_AUDIENCE_ID` on functions to go live; the unsubscribe link also needs `SITE_URL`. Absent config skips the sync (submissions still persist). |
-| Cart | Ready | Anonymous cart is local until sign-in; signed-in cart persists in Supabase. |
+| Cart | Ready | Anonymous cart is local until sign-in; signed-in cart persists in Supabase. A paid order removes its lines from the saved cart in the database (`orders_clear_purchased_cart_items`), and the browser copy drops anything the account already owns whenever it syncs. Apply `supabase/patch/2026-09-02-clear-cart-on-paid-order.sql`. |
 | Checkout | Ready | Server re-resolves products/prices, blocks repurchases, and creates order/payment atomically. |
 | PayFast ITN | Ready | Signature, IP, amount, validation response, and idempotency are checked server-side. |
 | Downloads | Ready | Server verifies JWT ownership and paid/fulfilled status, then mints a short-lived signed URL. |
@@ -140,6 +140,7 @@ Supabase:
 - [ ] `supabase/schema.sql` and `supabase/seed.sql` have been applied.
 - [ ] Incremental patches in `supabase/patch/` are applied (incl. `2026-07-02-form-submissions.sql` for the contact/newsletter tables).
 - [ ] `2026-07-22-shop-product-redirects.sql` is applied so future slug changes preserve canonical `/shop/*` URLs.
+- [ ] `2026-09-02-clear-cart-on-paid-order.sql` is applied so a paid order clears its lines from the customer's saved cart.
 - [ ] RLS is enabled on catalogue and operational tables.
 - [ ] `public.users` rows are created for new Auth users.
 - [ ] `user_roles` creates customer role on signup and cannot be changed by browser clients.
