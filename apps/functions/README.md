@@ -28,6 +28,8 @@ The Supabase secret key is server-only — never ship it to the browser.
 To test checkout, set `PAYFAST_MODE=sandbox` (the default). `/checkout` returns a
 handoff to `sandbox.payfast.co.za`; leave the PayFast merchant ID, merchant key,
 and passphrase blank to use the public passphrase-enabled sandbox account.
+The checkout request body must include `acceptedTerms: true` alongside the
+`items` array; the API rejects payment handoffs without that explicit agreement.
 
 The ITN (`notify_url`) is built from `API_PUBLIC_ORIGIN` — the functions
 project's own public origin — falling back to `SITE_URL`. On Vercel set it to

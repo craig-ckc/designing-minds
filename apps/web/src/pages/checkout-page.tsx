@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Checkbox } from '@base-ui/react/checkbox'
 import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
@@ -44,6 +45,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const { customer, getAccessToken } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const slugs = useMemo(() => getCartSlugs(), [])
   const items = slugs
     .map((slug) => publishedProducts(snapshot).find((p) => p.slug === slug))
@@ -59,6 +61,10 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
       setError('Your cart is empty.')
       return
     }
+    if (!acceptedTerms) {
+      setError('Please agree to the Terms of Use before continuing.')
+      return
+    }
 
     setSubmitting(true)
     setError(null)
@@ -71,7 +77,10 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
           'content-type': 'application/json',
           authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ items: items.map((item) => ({ productSlug: item.slug })) }),
+        body: JSON.stringify({
+          items: items.map((item) => ({ productSlug: item.slug })),
+          acceptedTerms: true,
+        }),
       })
       const body = (await response.json()) as CheckoutResponse | { error?: string }
       if (!response.ok) throw new Error('error' in body && body.error ? body.error : 'Unable to start checkout.')
@@ -123,7 +132,13 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
           )}
 
           {/* Then the order details underneath. */}
-          <div className="grid gap-4 rounded-card border border-line bg-surface p-6">
+          <form
+            className="grid gap-4 rounded-card border border-line bg-surface p-6"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void pay()
+            }}
+          >
             <h2>Order summary</h2>
             {items.length > 0 ? (
               <ul className="grid gap-2 text-body-sm">
@@ -142,13 +157,39 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <span>{priceLabel(total)}</span>
             </div>
             {error ? (
-              <p className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p>
+              <p role="alert" className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p>
             ) : null}
-            <Button type="button" variant="solid" className="w-full" onClick={() => void pay()} disabled={submitting || items.length === 0}>
+            <div className="flex items-start gap-3 rounded-control bg-surface-alt p-4 text-body-sm text-ink-soft">
+              <Checkbox.Root
+                id="accepted-terms"
+                name="acceptedTerms"
+                checked={acceptedTerms}
+                onCheckedChange={setAcceptedTerms}
+                required
+                nativeButton
+                render={<button type="button" />}
+                className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-[0.35rem] border border-line-strong bg-canvas text-on-primary transition data-checked:border-primary data-checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <Checkbox.Indicator className="flex data-unchecked:hidden">
+                  <Icon name="check" size={16} weight="bold" />
+                </Checkbox.Indicator>
+              </Checkbox.Root>
+              <label htmlFor="accepted-terms" className="cursor-pointer">
+                I have read and agree to the{' '}
+                <Link
+                  to="/terms"
+                  className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong"
+                >
+                  Terms of Use
+                </Link>
+                .
+              </label>
+            </div>
+            <Button type="submit" variant="solid" className="w-full" disabled={submitting || items.length === 0}>
               {submitting ? 'Redirecting…' : 'Pay with PayFast'}
             </Button>
             <p className="text-label text-muted">Single payment. Downloads unlock only after PayFast confirms payment.</p>
-          </div>
+          </form>
         </div>
       </Container>
     </section>

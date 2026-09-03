@@ -8,6 +8,7 @@ import { apiOrigin, siteUrl } from '../lib/origins.ts'
 
 interface CheckoutInput {
   items: { productSlug: string }[]
+  acceptedTerms?: unknown
 }
 
 interface CustomerRow {
@@ -31,6 +32,7 @@ export const checkout: Handler = async (req) => {
   if (req.method !== 'POST') return badRequest('Use POST.')
   if (!isCheckoutInput(req.body)) return badRequest('Expected { items: [{ productSlug }] }.')
   if (req.body.items.length === 0) return badRequest('Cart is empty.')
+  if (req.body.acceptedTerms !== true) return badRequest('You must agree to the Terms of Use before checkout.')
 
   let user
   try {
