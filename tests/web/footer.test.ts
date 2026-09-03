@@ -16,3 +16,7 @@ test('footer derives the copyright year at runtime', () => {
   assert.match(footerSource, /© \{currentYear\} Designing Minds/)
   assert.doesNotMatch(footerSource, /© 2026 Designing Minds/)
 })
+
+test('footer links to the full Terms of Use', () => {
+  assert.match(footerSource, /<FooterLink to="\/terms">Terms of Use<\/FooterLink>/)
+})

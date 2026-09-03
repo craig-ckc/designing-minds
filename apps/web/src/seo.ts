@@ -72,8 +72,8 @@ const STATIC_META: Record<string, StaticMeta> = {
     description: 'How Designing Minds collects, uses, and protects your personal information.',
   },
   '/terms': {
-    title: 'Terms & Conditions | Designing Minds',
-    description: 'The terms that govern your use of Designing Minds and purchases of downloadable resources.',
+    title: 'Terms of Use | Designing Minds',
+    description: 'Copyright and licensing terms for Designing Minds downloadable educational resources.',
   },
   '/refund-policy': {
     title: 'Refund Policy | Designing Minds',
@@ -412,7 +412,7 @@ export function llmsTxt(routes: PublicRoute[], siteUrl: string): string {
     '/about': 'About Designing Minds',
     '/contact': 'Contact',
     '/privacy-policy': 'Privacy Policy',
-    '/terms': 'Terms & Conditions',
+    '/terms': 'Terms of Use',
     '/refund-policy': 'Refund Policy',
   }
 

@@ -53,6 +53,14 @@ test('a product page surfaces classroom licensing and bundle cross-sell', () => 
   assert.match(productPageSource, /inBundles\.length > 0/)
 })
 
+test('every product and bundle purchase area shows the resource licence', () => {
+  assert.match(productPageSource, /function ResourceLicenceNotice\(\)/)
+  assert.equal(productPageSource.match(/<ResourceLicenceNotice \/>/g)?.length, 2)
+  assert.match(productPageSource, /personal\/household or single-classroom use only/)
+  assert.match(productPageSource, /Each additional user\/classroom must purchase their own copy or licence/)
+  assert.match(productPageSource, /<Link to="\/terms"[\s\S]*Terms of Use/)
+})
+
 test('the product page CTA uses the shared text button, not a one-off underline', () => {
   assert.doesNotMatch(productPageSource, /border-b-\[1\.5px\] border-current/)
   assert.match(productPageSource, /<Button to=\{`\/shop\?grade=/)

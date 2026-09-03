@@ -39,7 +39,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
             <FooterLink to="/help">Help</FooterLink>
             <FooterLink to="/shop">All resources</FooterLink>
             <FooterLink to="/privacy-policy">Privacy policy</FooterLink>
-            <FooterLink to="/terms">Terms</FooterLink>
+            <FooterLink to="/terms">Terms of Use</FooterLink>
             <FooterLink to="/refund-policy">Refund policy</FooterLink>
           </FooterColumn>
 

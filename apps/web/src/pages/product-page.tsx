@@ -49,6 +49,30 @@ export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
 /* CMS bodies arrive empty or as a "." / ".." placeholder on several records. */
 const hasRealCopy = (value: string) => value.replace(/[.\s]/g, '').length > 0
 
+function ResourceLicenceNotice() {
+  return (
+    <div className="rounded-card border border-line bg-surface-alt p-4 text-body-sm text-ink-soft">
+      <div className="flex items-center gap-2 font-semibold uppercase tracking-[0.1em] text-ink">
+        <Icon name="shield" size={18} />
+        <span>Resource licence</span>
+      </div>
+      <p className="mt-3">This resource is for personal/household or single-classroom use only.</p>
+      <p className="mt-2">
+        Your purchase may not be shared, forwarded, resold, uploaded or distributed to other parents, teachers,
+        classrooms or online groups. Each additional user/classroom must purchase their own copy or licence.
+      </p>
+      <p className="mt-2">All Designing Minds resources are protected by copyright.</p>
+      <p className="mt-2">
+        By purchasing this resource, you agree to our{' '}
+        <Link to="/terms" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
+          Terms of Use
+        </Link>
+        .
+      </p>
+    </div>
+  )
+}
+
 /** Shared trailing sections: classroom licensing, then the record's FAQs. */
 function DetailFooterBlocks({ faqs, subject }: { faqs: ReturnType<typeof getFaqsByIds>; subject: string }) {
   return (
@@ -176,6 +200,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
                   {acronyms.map(({ code, meaning }) => `${code} = ${meaning}`).join(' · ')}
                 </p>
               ) : null}
+              <ResourceLicenceNotice />
               <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(product.slug)}>
                 <Icon name="cart" size={16} />
                 Add to cart
@@ -320,6 +345,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
               <SpecRow label="Subjects" value={subjects.join(', ') || '—'} />
               <SpecRow label="Delivery" value="Instant download on Order Detail" last />
             </ul>
+            <ResourceLicenceNotice />
             <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(bundle.slug)}>
               <Icon name="cart" size={16} />
               Add to cart
