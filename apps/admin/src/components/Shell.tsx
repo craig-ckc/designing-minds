@@ -19,6 +19,7 @@ import { PublishButton } from './PublishButton'
 function AdminBreadcrumb({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const { pathname } = useLocation()
   const trail = useMemo(() => {
+    if (pathname === '/diagnostics') return { title: 'Diagnostics', collection: null, record: null }
     const [, collectionId, recordId] = pathname.split('/')
     const collection = getCollection(collectionId)
     if (!collection) return { title: 'Dashboard', collection: null, record: null }

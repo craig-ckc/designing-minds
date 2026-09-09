@@ -1,7 +1,9 @@
 import type { Handler } from '../src/lib/http.ts'
+import { observeHandler } from '../src/lib/diagnostics.ts'
 
 interface VercelRequest extends AsyncIterable<Uint8Array> {
   method?: string
+  url?: string
   headers: Record<string, string | undefined>
 }
 
@@ -12,6 +14,8 @@ interface VercelResponse {
   end: () => void
 }
 
+class BodyTooLargeError extends Error {}
+
 const MAX_BODY_BYTES = 1024 * 1024
 
 const readRawBody = async (req: AsyncIterable<Uint8Array>): Promise<string> => {
@@ -19,7 +23,7 @@ const readRawBody = async (req: AsyncIterable<Uint8Array>): Promise<string> => {
   let total = 0
   for await (const chunk of req) {
     total += chunk.byteLength
-    if (total > MAX_BODY_BYTES) throw new Error('Request body is too large.')
+    if (total > MAX_BODY_BYTES) throw new BodyTooLargeError('Request body is too large.')
     chunks.push(chunk)
   }
   return Buffer.concat(chunks).toString('utf8')
@@ -52,7 +56,8 @@ const setCorsHeaders = (req: VercelRequest, res: VercelResponse) => {
   if (origin) res.setHeader('Access-Control-Allow-Origin', origin)
   res.setHeader('Vary', 'Origin')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type')
+  res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type, x-request-id, x-session-id')
+  res.setHeader('Access-Control-Expose-Headers', 'x-request-id')
   res.setHeader('Cache-Control', 'no-store')
   res.setHeader('X-Content-Type-Options', 'nosniff')
 }
@@ -67,18 +72,20 @@ export const handleVercel = async (handler: Handler, req: VercelRequest, res: Ve
 
     const rawBody = await readRawBody(req)
     const headers = req.headers
-    const response = await handler({
+    const request = {
       method: req.method ?? 'GET',
       headers,
       body: parseBody(rawBody, headers['content-type']),
       rawBody,
-    })
+    }
+    const route = (req.url ?? '/other').split('?')[0]
+    const response = route === '/api/diagnostics' ? await handler(request) : await observeHandler(handler, request, route)
 
     for (const [key, value] of Object.entries(response.headers ?? {})) {
       res.setHeader(key, value)
     }
     res.status(response.status).json(response.body)
   } catch (error) {
-    res.status(413).json({ error: error instanceof Error ? error.message : 'Unable to read request body.' })
+    res.status(error instanceof BodyTooLargeError ? 413 : 500).json({ error: error instanceof BodyTooLargeError ? 'Request body is too large.' : 'Unable to process request.' })
   }
 }

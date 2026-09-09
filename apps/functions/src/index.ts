@@ -1,3 +1,4 @@
+import { diagnostics } from './handlers/diagnostics.ts'
 import { checkout } from './handlers/checkout.ts'
 import { paymentWebhook } from './handlers/payment-webhook.ts'
 import { issueDownload } from './handlers/issue-download.ts'
@@ -13,6 +14,7 @@ import type { Handler } from './lib/http.ts'
  * files are thin adapters over this map.
  */
 export const handlers: Record<string, Handler> = {
+  '/diagnostics': diagnostics,
   '/checkout': checkout,
   '/payment-webhook': paymentWebhook,
   '/issue-download': issueDownload,

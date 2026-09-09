@@ -1,4 +1,5 @@
 import { createServer } from 'node:http'
+import { observeHandler } from './lib/diagnostics.ts'
 import { handlers } from './index.ts'
 import { notFound, type HandlerRequest } from './lib/http.ts'
 
@@ -43,8 +44,9 @@ const corsHeaders = (origin: string | undefined) => {
   return {
     ...(allowedOrigin ? { 'access-control-allow-origin': allowedOrigin } : {}),
     vary: 'Origin',
+    'access-control-expose-headers': 'x-request-id',
     'access-control-allow-methods': 'POST, OPTIONS',
-    'access-control-allow-headers': 'authorization, content-type',
+    'access-control-allow-headers': 'authorization, content-type, x-request-id, x-session-id',
   }
 }
 
@@ -66,7 +68,7 @@ const server = createServer(async (req, res) => {
     headers: req.headers as Record<string, string | undefined>,
   }
 
-  const response = handler ? await handler(request) : notFound(`No handler for ${path}`)
+  const response = handler ? (path === '/diagnostics' ? await handler(request) : await observeHandler(handler, request, `/api${path}`)) : notFound(`No handler for ${path}`)
   res.writeHead(response.status, { 'content-type': 'application/json', ...headers, ...response.headers })
   res.end(JSON.stringify(response.body))
 })

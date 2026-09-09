@@ -5,6 +5,10 @@ import type { CmsSnapshot } from '@designing-minds/cms'
 import './index.css'
 import App from './app.tsx'
 import { AuthProvider } from './lib/auth.tsx'
+import { installDiagnostics, reportRuntimeError } from './lib/diagnostics.ts'
+import { AppErrorBoundary } from './components/app-error-boundary.tsx'
+
+installDiagnostics()
 
 declare global {
   interface Window {
@@ -19,9 +23,11 @@ const bootstrap = window.__DM_PUBLIC_SNAPSHOT__ ?? null
 const tree = (
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App initialSnapshot={bootstrap} />
-      </AuthProvider>
+      <AppErrorBoundary>
+        <AuthProvider>
+          <App initialSnapshot={bootstrap} />
+        </AuthProvider>
+      </AppErrorBoundary>
     </BrowserRouter>
   </StrictMode>
 )
@@ -30,7 +36,7 @@ const tree = (
 // hydrate them. The SPA fallback Shell ships an empty root with no snapshot, so
 // we render from scratch (functional routes load their own data).
 if (bootstrap && Container.hasChildNodes()) {
-  hydrateRoot(Container, tree)
+  hydrateRoot(Container, tree, { onUncaughtError: (error) => reportRuntimeError(error), onCaughtError: (error) => reportRuntimeError(error, 'runtime.react'), onRecoverableError: (error) => reportRuntimeError(error) })
 } else {
-  createRoot(Container).render(tree)
+  createRoot(Container, { onUncaughtError: (error) => reportRuntimeError(error), onCaughtError: (error) => reportRuntimeError(error, 'runtime.react') }).render(tree)
 }

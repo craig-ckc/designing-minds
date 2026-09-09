@@ -1,3 +1,4 @@
+import { logEvent } from '../lib/diagnostics.ts'
 import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { requireAdmin } from '../lib/auth.ts'
 
@@ -25,7 +26,7 @@ export const adminRebuildWeb: Handler = async (req) => {
 
   const hookUrl = process.env.VERCEL_WEB_DEPLOY_HOOK_URL
   if (!hookUrl) {
-    console.error('VERCEL_WEB_DEPLOY_HOOK_URL is not set — cannot trigger a web rebuild.')
+    logEvent('admin.publish.failed')
     return serverError('Website publishing is not configured.')
   }
 
@@ -38,7 +39,7 @@ export const adminRebuildWeb: Handler = async (req) => {
     const response = await fetch(hookUrl, { method: 'POST' })
     const text = await response.text()
     if (!response.ok) {
-      console.error('Vercel deploy hook failed:', response.status, text)
+      logEvent('admin.publish.failed', { status: response.status })
       return serverError('Unable to trigger the website rebuild.')
     }
 
@@ -51,7 +52,7 @@ export const adminRebuildWeb: Handler = async (req) => {
     }
     return ok({ state: 'queued', jobId: job?.id ?? null, jobState: job?.state ?? null })
   } catch (error) {
-    console.error('rebuild-web failed:', error instanceof Error ? error.message : error)
+    logEvent('admin.publish.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
     return serverError('Unable to trigger the website rebuild.')
   }
 }

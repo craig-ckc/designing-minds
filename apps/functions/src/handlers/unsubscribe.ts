@@ -1,3 +1,4 @@
+import { logEvent } from '../lib/diagnostics.ts'
 import { badRequest, ok, serverError, type Handler } from '../lib/http.ts'
 import { unsubscribeContact, verifyUnsubscribeToken } from '../lib/mailchimp.ts'
 
@@ -34,7 +35,7 @@ export const unsubscribe: Handler = async (req) => {
   try {
     valid = verifyUnsubscribeToken(email, token)
   } catch (error) {
-    console.error('unsubscribe token check failed:', error instanceof Error ? error.message : error)
+    logEvent('unsubscribe.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
     return serverError('Unable to process the unsubscribe request.')
   }
   if (!valid) return badRequest('This unsubscribe link is invalid or has expired.')
@@ -43,7 +44,7 @@ export const unsubscribe: Handler = async (req) => {
     await unsubscribeContact(email)
     return ok({ unsubscribed: true })
   } catch (error) {
-    console.error('unsubscribe failed:', error instanceof Error ? error.message : error)
+    logEvent('unsubscribe.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
     return serverError('Unable to process the unsubscribe request.')
   }
 }

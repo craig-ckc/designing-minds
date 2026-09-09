@@ -33,6 +33,7 @@ export function CollectionSidebar({ snapshot }: { snapshot: CmsSnapshot }) {
       </NavLink>
 
       <ScrollArea className="min-h-0 flex-1" viewportClassName="py-1.5">
+        <div className="px-1 pb-2"><NavLink to="/diagnostics" className={rowCls}>Diagnostics</NavLink></div>
         {collectionGroups.map((group) => (
           <div key={group.group} className="flex flex-col gap-0.5 px-1 pb-1.5">
             <div className="px-1.5 py-1.5">

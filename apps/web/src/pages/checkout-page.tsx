@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Checkbox } from '@base-ui/react/checkbox'
 import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
@@ -8,6 +8,8 @@ import { Button } from '../components/ui/button'
 import { Icon } from '../components/ui/icon'
 import { useAuth } from '../lib/auth'
 import { apiUrl } from '../lib/api'
+import { requestJson, RequestError } from '../lib/request-json'
+import { trackEvent, flushDiagnostics } from '../lib/diagnostics'
 import { getCartSlugs } from '../lib/cart'
 import { useNoindex } from '../lib/use-noindex'
 
@@ -44,6 +46,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const navigate = useNavigate()
   const { customer, getAccessToken } = useAuth()
   const [error, setError] = useState<string | null>(null)
+  const submittingRef = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const slugs = useMemo(() => getCartSlugs(), [])
@@ -53,6 +56,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const total = items.reduce((sum, item) => sum + item.priceZar, 0)
 
   const pay = async () => {
+    if (submittingRef.current) return
     if (!customer) {
       navigate('/login?redirect=/checkout')
       return
@@ -66,15 +70,19 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
       return
     }
 
+    submittingRef.current = true
+    const requestId = crypto.randomUUID()
+    trackEvent('checkout.started', { requestId })
     setSubmitting(true)
     setError(null)
     try {
       const token = await getAccessToken()
       if (!token) throw new Error('Authentication required.')
-      const response = await fetch(apiUrl('/api/checkout'), {
+      const checkout = await requestJson<CheckoutResponse>(apiUrl('/api/checkout'), {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
+          'x-request-id': requestId,
           authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -82,16 +90,18 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
           acceptedTerms: true,
         }),
       })
-      const body = (await response.json()) as CheckoutResponse | { error?: string }
-      if (!response.ok) throw new Error('error' in body && body.error ? body.error : 'Unable to start checkout.')
-      const checkout = body as CheckoutResponse
-      if ('payfast' in checkout) {
+      if ('payfast' in checkout && checkout.payfast?.url && checkout.payfast.fields) {
+        trackEvent('checkout.handoff', { requestId })
+        void flushDiagnostics()
         postToPayfast(checkout.payfast)
         return
       }
       throw new Error('Checkout response did not include a payment handoff.')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to start checkout.')
+      const reference = e instanceof RequestError ? e.requestId : requestId
+      trackEvent('checkout.failed', { requestId: reference, errorKind: e instanceof Error ? e.name : 'Error' })
+      setError(`${e instanceof Error ? e.message : 'Unable to start checkout.'} Reference: ${reference}`)
+      submittingRef.current = false
       setSubmitting(false)
     }
   }

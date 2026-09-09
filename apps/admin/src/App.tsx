@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { type CmsSnapshot, type ProductFile } from '@designing-minds/cms'
 import { repository } from './repository'
 import { collectionRegistry, getCollection } from './cms/registry'
@@ -12,12 +12,14 @@ import { Shell } from './components/Shell'
 import { LoadingScreen, StatePanel } from './components/ui'
 import { ScrollArea } from './components/primitives'
 import { AdminWorkspace } from './screens/AdminWorkspace'
+import { DiagnosticsPage } from './pages/DiagnosticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { useAdminAuth } from './lib/auth'
 
 function App() {
+  const { pathname } = useLocation()
   const { session, loading: authLoading, isAdmin, recovery } = useAdminAuth()
   const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -183,6 +185,9 @@ function App() {
   // A failed load is a state to deal with, so it gets the chrome and an
   // explanation; still loading is the same wait as the auth check above, so it
   // gets the same screen rather than a second one with different words.
+  // Diagnostics remains reachable even when loading the CMS snapshot fails.
+  if (pathname === '/diagnostics') return <Shell {...shellProps} snapshot={snapshot}><DiagnosticsPage /></Shell>
+
   if (!snapshot) {
     if (!error) return <LoadingScreen />
     return (

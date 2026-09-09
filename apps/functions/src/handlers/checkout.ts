@@ -1,3 +1,4 @@
+import { logEvent } from '../lib/diagnostics.ts'
 import type { Bundle, Product } from '@designing-minds/cms/types'
 import { badRequest, created, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { createServiceClient } from '../lib/supabase.ts'
@@ -36,12 +37,18 @@ export const checkout: Handler = async (req) => {
 
   let user
   try {
+    logEvent('checkout.auth')
     user = await requireUser(req.headers)
   } catch (error) {
     return unauthorized(error instanceof Error ? error.message : 'Authentication required.')
   }
 
   try {
+    logEvent('checkout.configuration')
+    const baseUrl = siteUrl()
+    const notifyOrigin = apiOrigin()
+    const { merchantId, merchantKey } = payfastCredentials()
+    logEvent('checkout.catalogue')
     const supabase = createServiceClient()
     const slugs = [...new Set(req.body.items.map((item) => item.productSlug))]
     const { data: customer, error: customerError } = await supabase
@@ -49,7 +56,7 @@ export const checkout: Handler = async (req) => {
       .select('id,name,email')
       .eq('id', user.id)
       .single<CustomerRow>()
-    if (customerError) throw new Error(customerError.message)
+    if (customerError) throw customerError
 
     // A cart line is a slug in the shared /shop space and may name either
     // Collection, so both are resolved and the union must cover every line.
@@ -57,8 +64,8 @@ export const checkout: Handler = async (req) => {
       supabase.from('products').select('*').in('slug', slugs).eq('published', true),
       supabase.from('bundles').select('*').in('slug', slugs).eq('published', true),
     ])
-    if (productRows.error) throw new Error(productRows.error.message)
-    if (bundleRows.error) throw new Error(bundleRows.error.message)
+    if (productRows.error) throw productRows.error
+    if (bundleRows.error) throw bundleRows.error
 
     const products = (productRows.data ?? []) as Product[]
     const bundles = (bundleRows.data ?? []) as Bundle[]
@@ -66,12 +73,13 @@ export const checkout: Handler = async (req) => {
       return badRequest('One or more cart items are unavailable.')
     }
 
+    logEvent('checkout.ownership')
     const { data: paidOrders, error: paidOrdersError } = await supabase
       .from('orders')
       .select('items')
       .eq('customerId', user.id)
       .in('status', ['paid', 'fulfilled'])
-    if (paidOrdersError) throw new Error(paidOrdersError.message)
+    if (paidOrdersError) throw paidOrdersError
 
     const ownedSlugs = new Set(
       (paidOrders ?? []).flatMap((order) =>
@@ -110,6 +118,7 @@ export const checkout: Handler = async (req) => {
     const reference = orderReference()
     const totalZar = formatPayfastAmount(totalCents)
 
+    logEvent('checkout.order')
     const { error: orderCreateError } = await supabase.rpc('create_pending_order', {
       p_order_id: orderId,
       p_payment_id: paymentId,
@@ -120,17 +129,16 @@ export const checkout: Handler = async (req) => {
       p_items: items,
       p_total_zar: totalZar,
     })
-    if (orderCreateError) throw new Error(orderCreateError.message)
+    if (orderCreateError) throw orderCreateError
 
-    const baseUrl = siteUrl()
-    const { merchantId, merchantKey } = payfastCredentials()
+    logEvent('checkout.order.created', { orderId })
     const payfast = buildPayfastProcess({
       merchant_id: merchantId,
       merchant_key: merchantKey,
       return_url: `${baseUrl}/checkout/return?order=${orderId}`,
       cancel_url: `${baseUrl}/checkout/cancel?order=${orderId}`,
       // The ITN must hit the functions origin directly — see lib/origins.ts.
-      notify_url: `${apiOrigin()}/api/payment-webhook`,
+      notify_url: `${notifyOrigin}/api/payment-webhook`,
       name_first: customer.name.split(/\s+/)[0] ?? customer.name,
       email_address: customer.email,
       m_payment_id: paymentId,
@@ -141,7 +149,7 @@ export const checkout: Handler = async (req) => {
 
     return created({ orderId, paymentId, reference, payfast })
   } catch (error) {
-    console.error('checkout failed:', error instanceof Error ? error.message : error)
+    logEvent('checkout.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
     return serverError('Unable to start checkout.')
   }
 }

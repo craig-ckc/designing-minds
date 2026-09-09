@@ -1,3 +1,4 @@
+import { logEvent } from '../lib/diagnostics.ts'
 import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
 import { requireAdmin } from '../lib/auth.ts'
 import { createSupabaseStorageProvider } from '../lib/storage.ts'
@@ -78,7 +79,7 @@ export const adminUploadUrl: Handler = async (req) => {
     // create upload URL" with the actual cause (a missing bucket, a bad key,
     // a rejected service key) visible only in the function logs.
     const reason = error instanceof Error ? error.message : String(error)
-    console.error('admin-upload-url failed:', reason)
+    logEvent('admin.upload.failed', { errorKind: error instanceof Error ? error.name : 'Error' })
     return serverError(`Unable to reserve storage for this file: ${reason}`)
   }
 }

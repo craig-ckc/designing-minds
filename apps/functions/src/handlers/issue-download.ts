@@ -1,3 +1,4 @@
+import { logEvent } from '../lib/diagnostics.ts'
 import type { Grade, Product, ProductFile } from '@designing-minds/cms/types'
 import { resourceUnlockedByBundle } from '@designing-minds/cms/entitlements'
 import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
@@ -102,7 +103,7 @@ export const issueDownload: Handler = async (req) => {
     const url = await storage.getSignedDownloadUrl(file.storageKey, expiresInSeconds, file.filename)
     return ok({ url, expiresInSeconds, filename: file.filename })
   } catch (error) {
-    console.error('issue-download failed:', error instanceof Error ? error.message : error)
+    logEvent('download.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
     return serverError('Unable to issue download.')
   }
 }

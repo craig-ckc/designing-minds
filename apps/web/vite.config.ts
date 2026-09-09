@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: { 'import.meta.env.VITE_APP_RELEASE': JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA ?? '') },
   // Workspace packages ship raw TypeScript via their "exports", so bundle (don't
   // externalize) them in the SSR build — otherwise Node would try to import .ts
   // at prerender time and fail.

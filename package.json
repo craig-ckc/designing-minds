@@ -17,6 +17,7 @@
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "concurrently": "^9.2.4",
     "supabase": "^2.113.0"
   }

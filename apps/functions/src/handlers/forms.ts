@@ -1,3 +1,4 @@
+import { logEvent } from '../lib/diagnostics.ts'
 import { badRequest, created, serverError, type Handler } from '../lib/http.ts'
 import { createServiceClient } from '../lib/supabase.ts'
 import { sendFormNotification, sendSubscriptionConfirmation } from '../lib/email.ts'
@@ -157,7 +158,7 @@ export const forms: Handler = async (req) => {
     const { error } = await supabase.from(config.table).insert(row)
     if (error) throw new Error(error.message)
   } catch (error) {
-    console.error('form submission failed:', error instanceof Error ? error.message : error)
+    logEvent('forms.submission.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
     return serverError('Unable to submit the form.')
   }
 
@@ -172,7 +173,7 @@ export const forms: Handler = async (req) => {
       replyTo: fields.email,
     })
   } catch (error) {
-    console.error('form notification email failed:', error instanceof Error ? error.message : error)
+    logEvent('forms.notification.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
   }
 
   // Best-effort audience sync: when the submitter has opted in, add or update
@@ -193,7 +194,7 @@ export const forms: Handler = async (req) => {
         tags: mc.tags,
       })
     } catch (error) {
-      console.error('mailchimp contact upsert failed:', error instanceof Error ? error.message : error)
+      logEvent('forms.mailchimp.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
     }
 
     // Only confirm when a contact was actually added/updated, so we never tell
@@ -206,7 +207,7 @@ export const forms: Handler = async (req) => {
           unsubscribeUrl: unsubscribeUrlFor(fields.email),
         })
       } catch (error) {
-        console.error('subscription confirmation email failed:', error instanceof Error ? error.message : error)
+        logEvent('forms.confirmation.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
       }
     }
   }
