@@ -15,7 +15,7 @@ This combines backend readiness, preview setup, static publishing, and launch ch
 | Mailchimp audience sync | Config-gated | Opt-in submitters are upserted (add or update, status `subscribed`) into a Mailchimp audience: newsletter signups always, contact enquiries only when the marketing-consent checkbox is ticked. On a successful sync we send our own branded confirmation email (via Resend) with a signed one-click unsubscribe link (`/unsubscribe` → sets the contact to `unsubscribed`). Set `MAILCHIMP_API_KEY`/`MAILCHIMP_AUDIENCE_ID` on functions to go live; the unsubscribe link also needs `SITE_URL`. Absent config skips the sync (submissions still persist). |
 | Cart | Ready | Anonymous cart is local until sign-in; signed-in cart persists in Supabase. A paid order removes its lines from the saved cart in the database (`orders_clear_purchased_cart_items`), and the browser copy drops anything the account already owns whenever it syncs. Apply `supabase/patch/2026-09-02-clear-cart-on-paid-order.sql`. |
 | Checkout | Ready | Server re-resolves products/prices, blocks repurchases, and creates order/payment atomically. |
-| PayFast ITN | Ready | Signature, IP, amount, validation response, and idempotency are checked server-side. |
+| PayFast ITN | Ready | Signature, IP, amount, validation response, and idempotency are checked server-side. Apply `2026-09-09-atomic-payment-completion.sql` before deploying the webhook: payment/order completion now commits atomically. |
 | Downloads | Ready | Server verifies JWT ownership and paid/fulfilled status, then mints a short-lived signed URL. |
 | Admin uploads | Ready | Admin-only function returns server-chosen private storage key plus signed upload URL. |
 | Static public web | Ready | `apps/web` prerenders indexable public routes and hydrates React for interactivity. |
@@ -73,7 +73,7 @@ Web:
 | --- | --- |
 | `VITE_SUPABASE_URL` | Public Supabase URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Publishable/anon key |
-| `VITE_API_BASE_URL` | Functions origin when not using same-origin rewrites |
+| `VITE_API_BASE_URL` | Ignored by storefront; storefront always uses the same-origin `/api` proxy |
 
 Admin:
 
@@ -97,6 +97,7 @@ Functions:
 | --- | --- |
 | `SUPABASE_URL` | Supabase URL |
 | `SUPABASE_SECRET_KEY` | Server-only Supabase key |
+| `DIAGNOSTICS_ENABLED` | Set `true` after applying diagnostics storage and retention patches; see `docs/diagnostics.md` |
 | `SITE_URL` | Public storefront origin used for payment return/cancel and unsubscribe URLs |
 | `API_PUBLIC_ORIGIN` | Public origin of the functions project (`https://api.designingminds.co.za`). PayFast's `notify_url` is built from it so the ITN reaches the webhook directly; via the web project's `/api/*` proxy the webhook sees Vercel's IP instead of PayFast's and rejects the ITN, leaving paid orders pending |
 | `PAYFAST_MERCHANT_ID` | PayFast production credential |
@@ -220,3 +221,7 @@ Monitoring:
 - [ ] Email bounce/complaint monitoring is enabled if custom SMTP is used.
 - [ ] Rollback target deployment and database restore plan are known.
 - [ ] Support path is ready for payment/download issues.
+
+## Error tracking
+
+[Diagnostics and checkout troubleshooting](diagnostics.md) documents the confirmed production CORS failure, rollout steps, admin log searches, collection limits, and 30-day retention.
