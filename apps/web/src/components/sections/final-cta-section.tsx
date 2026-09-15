@@ -18,7 +18,7 @@ export function FinalCtaSection() {
               <Icon name="arrow" size={16} />
             </Button>
             <Button to="/packages" variant="soft">
-              See bundles and plans
+              See all bundles
             </Button>
           </div>
         </div>

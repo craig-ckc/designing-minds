@@ -8,6 +8,7 @@
    ------------------------------------------------------------------------- */
 
 import { Fragment, type ReactNode } from 'react'
+import { typographicApostrophes } from '@designing-minds/utils'
 
 /* ------------------------------- Inline -------------------------------- */
 
@@ -17,6 +18,11 @@ const INLINE =
 /** Remove markdown backslash-escapes (`\*` → `*`) from plain text runs. */
 const unescape = (text: string) => text.replace(/\\([\\`*_{}[\]()#+\-.!>])/g, '$1')
 
+/** A plain text run: drop the escapes, then curl apostrophes ("learner's" →
+ *  "learner’s") so copy typed with straight quotes in the CMS reads the same as
+ *  copy typed with curly ones. Code spans never pass through here. */
+const plain = (text: string) => typographicApostrophes(unescape(text))
+
 function renderInline(text: string): ReactNode {
   const parts: ReactNode[] = []
   let rest = text
@@ -25,10 +31,10 @@ function renderInline(text: string): ReactNode {
   while (rest.length > 0) {
     const match = INLINE.exec(rest)
     if (!match || match.index === undefined) {
-      parts.push(unescape(rest))
+      parts.push(plain(rest))
       break
     }
-    if (match.index > 0) parts.push(unescape(rest.slice(0, match.index)))
+    if (match.index > 0) parts.push(plain(rest.slice(0, match.index)))
     const token = match[0]
     key += 1
 
@@ -47,7 +53,7 @@ function renderInline(text: string): ReactNode {
           </a>,
         )
       } else {
-        parts.push(unescape(token))
+        parts.push(plain(token))
       }
     }
     rest = rest.slice(match.index + token.length)

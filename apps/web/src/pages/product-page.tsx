@@ -81,7 +81,11 @@ function DetailFooterBlocks({ faqs, subject }: { faqs: ReturnType<typeof getFaqs
         <h2 className="text-[1.15rem]">Buying for a class?</h2>
         <p className="mt-1.5 text-body-sm text-ink-soft">
           Classroom and multi-learner licensing is available for every resource and bundle — tell us the grade and
-          learner count and we’ll quote you.
+          learner count and we’ll quote you. A standard purchase covers one household or one classroom; the{' '}
+          <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
+            licensing FAQ
+          </Link>{' '}
+          explains what that includes.
         </p>
         <Button to="/contact" variant="text" className="mt-2">
           Ask about classroom licensing

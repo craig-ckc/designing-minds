@@ -180,7 +180,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                       </ul>
                     ) : (
                       <p className="mt-3 border-t border-line pt-3 text-label text-muted">
-                        Files for bundles and plans resolve from their included resources.
+                        Files for bundles resolve from their included resources.
                       </p>
                     )}
                   </Card>

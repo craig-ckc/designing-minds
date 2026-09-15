@@ -1,5 +1,5 @@
 import { useDeferredValue, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { publishedBundles, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
@@ -71,6 +71,15 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
         title="Buy more, save more"
         lead="Bundles group the resources for a grade into one discounted, once-off purchase. Nothing renews automatically — you own what you buy."
       >
+        {/* Schools ask about licensing from here; point them at the public answer
+            before they have to email. */}
+        <p className="mt-4 max-w-prose text-body-sm text-muted">
+          Buying for a class, grade or school? A bundle covers one household or one classroom —{' '}
+          <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
+            see classroom licensing
+          </Link>
+          .
+        </p>
         <div className="mt-6">
           <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Bundles" />
         </div>

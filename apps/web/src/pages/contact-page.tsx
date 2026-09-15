@@ -16,7 +16,7 @@ const TOPICS = [
   'General enquiry',
   'Finding the right resource',
   'Downloads & printing',
-  'Bundles & plans',
+  'Bundles',
   'Billing & payments',
   'My account',
   'Schools & bulk orders',
@@ -69,7 +69,13 @@ export function ContactPage() {
       <div className="grid items-start gap-9 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <div>
           <h1>Get in touch</h1>
-          <p className="mt-4 lead">Questions about a resource, a bundle, or classroom licensing? We’d love to help.</p>
+          <p className="mt-4 lead">
+            Questions about a resource, a bundle, or{' '}
+            <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4">
+              classroom licensing
+            </Link>
+            ? We’d love to help.
+          </p>
           <div className="mt-7">
             <ContactDetail icon="phone" label="Phone" value={CONTACT.phone} />
             <ContactDetail icon="mail" label="Email" value={CONTACT.email} />
