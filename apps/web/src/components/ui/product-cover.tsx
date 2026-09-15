@@ -60,11 +60,13 @@ function CoverFace({
   illustration,
   className = '',
   priority = false,
+  showCopy = true,
 }: {
   product: CoverItem
   illustration: SubjectIllustration
   className?: string
   priority?: boolean
+  showCopy?: boolean
 }) {
   const { band, fg, solid } = termColorway(product.term)
   // The whole face is decorative: its text and glyphs are announced once, via the
@@ -83,21 +85,29 @@ function CoverFace({
         </div>
 
         <div className={`absolute left-[7.56%] top-0 h-full w-[0.34cqw] opacity-30 ${solid}`} />
-        <span className={`product-cover-copy product-cover-brand absolute left-[13.78%] top-[4.16%] font-extrabold uppercase tracking-[0.08em] ${fg}`}>
-          Designing Minds
-        </span>
-        <p className={`product-cover-copy product-cover-meta absolute left-[13.78%] top-[11.64%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.034cqw] ${fg}`}>
-          {product.grade}
-        </p>
+        {showCopy ? (
+          <>
+            <span className={`product-cover-copy product-cover-brand absolute left-[13.78%] top-[4.16%] font-extrabold leading-[1.1] uppercase tracking-[0.04em] ${fg}`}>
+              Designing Minds
+            </span>
+            <p className={`product-cover-copy product-cover-meta absolute left-[13.78%] top-[11.64%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.034cqw] ${fg}`}>
+              {product.grade}
+            </p>
+          </>
+        ) : null}
         <div className={`absolute left-[13.78%] top-[16.87%] h-px w-[74.29%] opacity-30 ${solid}`} />
-        <p className={`product-cover-copy product-cover-title absolute left-[13.78%] top-[19.36%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.069cqw] ${fg} line-clamp-3`}>
-          {coverTitle(product)}
-        </p>
+        {showCopy ? (
+          <p className={`product-cover-copy product-cover-title absolute left-[13.78%] top-[19.36%] w-[74.29%] font-extrabold leading-[1.2] tracking-[0.069cqw] ${fg} line-clamp-3`}>
+            {coverTitle(product)}
+          </p>
+        ) : null}
         <div className="absolute left-[76.97%] top-[-5.23%] grid aspect-square w-[31.13%] place-items-center">
           <div className={`w-[117.7%] h-[30.7%] rotate-45 text-center ${solid} flex items-center justify-center`}>
-            <span className="product-cover-copy product-cover-meta w-full font-extrabold leading-[1.2] tracking-[0.034cqw] text-on-primary">
-              {product.term}
-            </span>
+            {showCopy ? (
+              <span className="product-cover-copy product-cover-term w-full font-extrabold leading-[1.2] tracking-[0.034cqw] text-on-primary">
+                {product.term}
+              </span>
+            ) : null}
           </div>
         </div>
         <img
@@ -156,6 +166,7 @@ export function ProductCover({
                 illustration={layer.illustration}
                 className="w-full"
                 priority={priority && i === layers.length - 1}
+                showCopy={i === layers.length - 1}
               />
             </div>
           </div>

@@ -236,9 +236,16 @@
    container queries — copy stays visible at every card size so shoppers
    recognise the title on small and large thumbnails alike. The ProductCover
    wrapper exposes the full product title to assistive technology. */
-.product-cover-brand { font-size: max(0.75rem, 2.5cqw); }
-.product-cover-meta { font-size: max(0.75rem, 4.36cqw); }
-.product-cover-title { font-size: max(0.75rem, 6.89cqw); }
+.product-cover-brand { font-size: max(0.45rem, 2.5cqw); }
+.product-cover-meta { font-size: max(0.5rem, 4.36cqw); }
+.product-cover-title { font-size: max(0.5rem, 6.89cqw); }
+.product-cover-term { font-size: max(0.45rem, 4.36cqw); }
+@container (min-width: 11.25rem) {
+  .product-cover-brand { font-size: max(0.75rem, 2.5cqw); }
+  .product-cover-meta,
+  .product-cover-term { font-size: max(0.75rem, 4.36cqw); }
+  .product-cover-title { font-size: max(0.75rem, 6.89cqw); }
+}
 
 /* Skip off-screen catalogue-card layout and paint work while retaining the
    cards, links and headings in the document for SEO and accessibility. The
