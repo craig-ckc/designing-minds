@@ -39,6 +39,12 @@
   --color-primary-ink: #c12c6c; /* accessible brand text on light surfaces */
   --color-primary-ink-strong: #a9235a; /* accessible text hover / pressed */
   --color-primary-tint: #feeef3; /* soft pink backgrounds & chips */
+  /* The brand pink darkened only as far as white body text needs: #f15699 under
+     white measures 3.22:1, short of WCAG AA (4.5:1) for anything below large
+     type, so it stays for large headings, icons and fills. Every solid pink band
+     that carries small white text — announcement bar, CTA banner, count badges,
+     the solid pill — sits on this instead (5.06:1). */
+  --color-primary-deep: #c9316f;
   --color-primary-edge: color-mix(in oklab, var(--color-primary-strong), black 22%); /* hairline edge on the solid button */
 
   /* Primary-button surface — subtle vertical brand-pink gradient (lighter

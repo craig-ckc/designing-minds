@@ -31,6 +31,7 @@ test('shared text and background colour pairs meet WCAG AA', () => {
   const pairs = [
     ['primary ink on canvas', token('primary-ink'), token('canvas')],
     ['primary ink on primary tint', token('primary-ink'), token('primary-tint')],
+    ['white on the deep brand surface', token('on-primary'), token('primary-deep')],
     ['muted on canvas', token('muted'), token('canvas')],
     ['muted on footer cream', token('muted'), '#fdf6f0'],
     ['amber on butter', token('amber'), token('butter')],
@@ -49,6 +50,28 @@ test('vivid primary accents meet the 3:1 non-text contrast minimum', () => {
   assert.equal(token('on-primary').toLowerCase(), '#ffffff')
   const ratio = contrast(token('primary'), token('canvas'))
   assert.ok(ratio >= 3, `primary accent on canvas is ${ratio.toFixed(2)}:1; expected at least 3:1`)
+})
+
+test('small white text sits on the deep brand surface, never on the vivid pink', () => {
+  // #f15699 under white measures 3.22:1 — fine for large headings, icons and
+  // fills, short of AA (4.5:1) for body, label and caption text. Every solid
+  // pink band that carries small white text therefore uses --color-primary-deep.
+  const files = {
+    navbar: read('components/layout/navbar.tsx'),
+    ctaBanner: read('components/sections/cta-banner.tsx'),
+    growthChart: read('components/sections/growth-chart.tsx'),
+    pill: read('components/ui/pill.tsx'),
+    filterDrawer: read('components/ui/filter-drawer.tsx'),
+    card: read('components/ui/card.tsx'),
+  }
+  for (const [name, source] of Object.entries(files)) {
+    assert.match(source, /bg-primary-deep/, `${name} uses the deep brand surface`)
+    // No class list may pair the vivid fill with white text any more.
+    assert.doesNotMatch(source, /bg-primary(?![-\w])[^"'`]*text-on-primary/, `${name} pairs bg-primary with white text`)
+  }
+  assert.match(files.navbar, /block bg-primary-deep text-on-primary transition-colors hover:bg-primary-ink-strong/)
+  assert.match(files.ctaBanner, /rounded-panel bg-primary-deep p-9 text-on-primary/)
+  assert.match(files.pill, /solid: \['bg-primary-deep text-on-primary'\]/)
 })
 
 test('text on primary surfaces and product-cover labels do not reduce contrast with opacity', () => {

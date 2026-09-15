@@ -82,7 +82,7 @@ export function FilterTrigger({
       </span>
       Filters
       {activeCount > 0 ? (
-        <span className="grid h-5 min-w-5 place-items-center rounded-pill bg-primary px-1 text-caption font-bold text-on-primary">
+        <span className="grid h-5 min-w-5 place-items-center rounded-pill bg-primary-deep px-1 text-caption font-bold text-on-primary">
           {activeCount}
         </span>
       ) : null}
@@ -116,7 +116,7 @@ export function ChipGroup({
               onClick={() => onToggle(option)}
               className={`rounded-pill border px-3.5 py-1.5 text-body-sm font-semibold transition-colors ${
                 on
-                  ? 'border-primary bg-primary text-on-primary'
+                  ? 'border-primary-deep bg-primary-deep text-on-primary'
                   : 'border-line-strong text-ink-soft hover:border-primary hover:text-primary'
               }`}
             >

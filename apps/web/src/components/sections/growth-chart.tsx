@@ -51,7 +51,7 @@ export function GrowthChart({ active = 0 }: { active?: number }) {
 
       {/* Caption pill rides along with the dot so progress is easy to follow. */}
       <span
-        className="pointer-events-none absolute z-10 whitespace-nowrap rounded-pill bg-primary px-3 py-1 text-caption font-bold text-on-primary"
+        className="pointer-events-none absolute z-10 whitespace-nowrap rounded-pill bg-primary-deep px-3 py-1 text-caption font-bold text-on-primary"
         style={{
           left: `clamp(90px, ${px}%, calc(100% - 90px))`,
           top: `${py}%`,

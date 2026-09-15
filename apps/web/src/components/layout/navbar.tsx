@@ -15,7 +15,7 @@ const navLinkCls = ({ isActive }: { isActive: boolean }) =>
 /** Full-width promo bar above the nav; scrolls away as the sticky header pins. */
 function AnnouncementBar() {
   return (
-    <Link to="/shop" className="block bg-primary text-on-primary transition-colors hover:bg-primary-strong">
+    <Link to="/shop" className="block bg-primary-deep text-on-primary transition-colors hover:bg-primary-ink-strong">
       <Container className="flex items-center justify-center gap-2 py-2.5 text-center text-label font-semibold">
         New — CAPS resources for Grades 3–7 are here
         <Icon name="arrow" size={16} />
@@ -40,7 +40,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
         <span className="relative inline-flex">
           <Icon name="cart" size={16} />
           {cartCount > 0 ? (
-            <span className="absolute -right-2.5 -top-2.5 grid min-h-4 min-w-4 place-items-center rounded-pill bg-primary px-1 text-[0.625rem] font-extrabold leading-none text-on-primary ring-2 ring-canvas">
+            <span className="absolute -right-2.5 -top-2.5 grid min-h-4 min-w-4 place-items-center rounded-pill bg-primary-deep px-1 text-[0.625rem] font-extrabold leading-none text-on-primary ring-2 ring-canvas">
               {cartCount > 99 ? '99+' : cartCount}
             </span>
           ) : null}
@@ -56,7 +56,7 @@ function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
           className="flex items-center gap-2 rounded-pill py-1 px-1 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
           title={`${customer.name} — Customer Account`}
         >
-          <span className="grid h-8 w-8 flex-none place-items-center rounded-pill bg-primary text-caption font-bold tracking-[0.02em] text-on-primary">
+          <span className="grid h-8 w-8 flex-none place-items-center rounded-pill bg-primary-deep text-caption font-bold tracking-[0.02em] text-on-primary">
             {initials(customer.name)}
           </span>
         </Link>

@@ -17,7 +17,7 @@ const cardStyles = cv({
       surfaceAlt: ['bg-surface-alt'],
       featured: ['border-2 border-primary bg-primary-tint/40'],
       interactive: ['bg-surface transition-colors hover:border-line-strong'],
-      onPrimary: ['bg-primary text-on-primary'],
+      onPrimary: ['bg-primary-deep text-on-primary'],
     },
     pad: {
       none: [],

@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 
 export function CtaBanner({title,body,children}: { title: string, body: string, children: ReactNode}) {
   return (
-    <div className="relative isolate grid items-center gap-8 overflow-hidden rounded-panel bg-primary p-9 text-on-primary lg:grid-cols-[1.4fr_1fr] lg:p-14">
+    <div className="relative isolate grid items-center gap-8 overflow-hidden rounded-panel bg-primary-deep p-9 text-on-primary lg:grid-cols-[1.4fr_1fr] lg:p-14">
       <div
         className="absolute inset-0 -z-1 bg-cover bg-center opacity-50 mix-blend-soft-light"
         style={{ backgroundImage: "url('/images/card-background-01.svg')" }}
