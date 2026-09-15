@@ -5,6 +5,7 @@ import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
 import { addCartSlug, removeCartSlug } from '../../lib/cart'
+import { productAttributeLine } from '../../lib/product-attributes'
 import { useCartSlugs } from '../../lib/use-cart'
 
 export function ProductCard({ product }: { product: Product }) {
@@ -29,6 +30,8 @@ export function ProductCard({ product }: { product: Product }) {
             {product.title}
           </h3>
         </Link>
+        {/* What the buyer gets, read off the record: file type, format, marks. */}
+        <p className="pt-1 text-body-sm text-muted">{productAttributeLine(product)}</p>
         <div className="mt-auto flex items-center justify-between gap-3 pt-3">
           <span className="text-[1.2rem] font-extrabold text-primary">{priceLabel(product.priceZar)}</span>
           {inCart ? (

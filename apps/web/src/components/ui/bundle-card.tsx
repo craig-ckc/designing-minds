@@ -6,6 +6,7 @@ import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
 import { addCartSlug, removeCartSlug } from '../../lib/cart'
+import { countLabel, perResourceZar } from '../../lib/product-attributes'
 import { useCartSlugs } from '../../lib/use-cart'
 
 /**
@@ -31,6 +32,7 @@ export function BundleCard({
   const href = `/shop/${bundle.slug}`
   const contents = bundleContents(snapshot, bundle)
   const subjects = [...new Set(contents.flatMap((product) => product.subjects))]
+  const perResource = perResourceZar(bundle.priceZar, contents.length)
 
   return (
     <Card
@@ -56,9 +58,13 @@ export function BundleCard({
           </h3>
         </Link>
 
+        {/* Size and value at a glance — counts and the effective per-resource
+            price are derived from the members, never typed in. */}
         {contents.length > 0 ? (
           <p className="pt-1 text-body-sm text-muted">
-            {contents.length} resource{contents.length === 1 ? '' : 's'}
+            {countLabel(contents.length, 'resource')}
+            {subjects.length > 0 ? ` · ${countLabel(subjects.length, 'subject')}` : ''}
+            {perResource ? ` · about ${priceLabel(perResource)} each` : ''}
           </p>
         ) : null}
 

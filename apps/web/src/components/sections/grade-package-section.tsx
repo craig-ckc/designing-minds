@@ -5,6 +5,7 @@ import { Badge } from '../ui/badge'
 import { ArrowAffordance } from '../ui/icon'
 import { LoadMoreButton } from '../ui/load-more-button'
 import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../../lib/deferred-catalog'
+import { perResourceZar } from '../../lib/product-attributes'
 
 /**
  * Bundle-first entry point for a grade, shown ABOVE the single-resource grid.
@@ -50,9 +51,8 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
                 className="catalog-card catalog-card-bundle group flex flex-col rounded-card border border-line bg-surface p-5 transition-colors hover:border-primary"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Deliberately not the `solid` tone: white on the brand pink
-                      measures 3.22:1, and this section must not add a new
-                      instance of the contrast debt it inherited. */}
+                  {/* Neutral rather than `solid`: the scope label is secondary
+                      and must not compete with the saving callout beside it. */}
                   <Badge tone="neutral">{product.bundleScope === 'Full Year' ? 'Full year' : 'Term'}</Badge>
                   {value && value.savingPercent > 0 ? (
                     <span className="text-caption font-bold uppercase tracking-[0.08em] text-primary-ink">
@@ -81,6 +81,7 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
                     {value && value.savingZar > 0 ? (
                       <span className="mt-1 block text-caption text-muted">
                         <s>{priceLabel(value.singlesTotalZar)}</s> bought singly
+                        {perResource ? ` · about ${priceLabel(perResource)} each` : ''}
                       </span>
                     ) : null}
                   </span>
