@@ -5,9 +5,11 @@ import {
   productsForGrade,
   type CmsSnapshot,
   type Faq,
+  type Product,
   type Testimonial,
 } from '@designing-minds/cms'
 import { CONTACT, GRADE_BLURB } from './content/site'
+import { gradePageMeta } from './lib/subject-labels'
 import { canonicalUrlForPath, resolveCanonicalSiteUrl } from './site-url'
 import type { PublicRoute } from './static-routes'
 
@@ -51,9 +53,9 @@ const STATIC_META: Record<string, StaticMeta> = {
       'Find CAPS-aligned learning resources organised by grade, from Grade 3 to Grade 7. CAPS is South Africa’s Curriculum and Assessment Policy Statement.',
   },
   '/packages': {
-    title: 'Bundles & Plans | Designing Minds',
+    title: 'Bundles | Designing Minds',
     description:
-      'Save with bundles and Essential or Premium plans that cover a grade for a term or the full year.',
+      'Save with term and full-year bundles that cover a grade in one discounted, once-off purchase. Nothing renews automatically.',
   },
   '/help': {
     title: 'Help & FAQs | Designing Minds',
@@ -240,6 +242,41 @@ const itemList = (siteUrl: string, name: string, itemPaths: string[]) => ({
   })),
 })
 
+/**
+ * ItemList for a grade page, one step richer than {@link itemList}: each entry
+ * carries a `Product` with price, sku and category instead of a bare URL, so
+ * the structured data itself names what is on sale, not just where it lives.
+ */
+const productItemList = (siteUrl: string, name: string, products: Product[]) => ({
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name,
+  numberOfItems: products.length,
+  itemListElement: products.map((product, index) => {
+    const url = `${siteUrl}/shop/${product.slug}`
+    return {
+      '@type': 'ListItem',
+      position: index + 1,
+      name: product.title,
+      item: {
+        '@type': 'Product',
+        name: product.title,
+        url,
+        sku: product.slug,
+        category: product.subjects.join(', ') || product.resourceFormat,
+        brand: { '@type': 'Brand', name: SITE_NAME },
+        offers: {
+          '@type': 'Offer',
+          price: product.priceZar,
+          priceCurrency: 'ZAR',
+          availability: 'https://schema.org/InStock',
+          url,
+        },
+      },
+    }
+  }),
+})
+
 /* --------------------------------- Per route --------------------------- */
 
 /**
@@ -264,10 +301,11 @@ export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: 
 
   if (route.kind === 'grade' && route.grade) {
     const grade = route.grade
-    const count = productsForGrade(snapshot, grade).length
-    const title = `${grade} CAPS resources | ${SITE_NAME}`
-    const base = GRADE_BLURB[grade] ?? `CAPS-aligned tests and summaries for ${grade}.`
-    const description = count ? `${base} ${count} resources available.` : base
+    const { title, description } = gradePageMeta({
+      grade,
+      blurb: GRADE_BLURB[grade] ?? `CAPS-aligned tests and summaries for ${grade}.`,
+      products: productsForGrade(snapshot, grade),
+    })
     return { title, description, canonical, ogType: 'website', image }
   }
 
@@ -340,7 +378,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
       ]),
     )
     if (products.length > 0) {
-      jsonLd.push(itemList(canonicalSiteUrl, `${grade} CAPS resources`, products.map((product) => `/shop/${product.slug}`)))
+      jsonLd.push(productItemList(canonicalSiteUrl, `${grade} CAPS resources`, products))
     }
   } else {
     if (route.path === '/') {
@@ -413,7 +451,7 @@ export function llmsTxt(routes: PublicRoute[], siteUrl: string): string {
     '/': 'Home',
     '/shop': 'Shop — browse and filter all resources',
     '/grades': 'Browse by grade',
-    '/packages': 'Bundles & Plans',
+    '/packages': 'Bundles',
     '/help': 'Help & FAQs',
     '/about': 'About Designing Minds',
     '/contact': 'Contact',

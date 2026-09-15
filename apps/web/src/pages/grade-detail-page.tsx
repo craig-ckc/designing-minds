@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { ALL, type CmsSnapshot, productsForGrade } from '@designing-minds/cms'
 import { GradePackageSection } from '../components/sections/grade-package-section'
 import { GRADE_BLURB, slugToGrade } from '../content/site'
+import { subjectAcronymsIn } from '../lib/subject-acronyms'
+import { subjectsForGrade } from '../lib/subject-labels'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Select } from '../components/ui/select'
@@ -23,6 +25,8 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const all = useMemo(() => (isValidGrade ? productsForGrade(snapshot, grade) : []), [snapshot, grade, isValidGrade])
   const visible = useMemo(() => (term === ALL ? all : all.filter((p) => p.term === term)), [all, term])
   const { visible: rendered, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, term)
+  const subjects = useMemo(() => (isValidGrade ? subjectsForGrade(snapshot, grade) : []), [snapshot, grade, isValidGrade])
+  const acronyms = useMemo(() => subjectAcronymsIn(subjects.join(' ')), [subjects])
 
   if (!isValidGrade) {
     return <NotFoundPage />
@@ -40,6 +44,27 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
             current={grade}
           />
         </div>
+        {subjects.length > 0 ? (
+          <nav aria-label={`Subjects in ${grade}`} className="mt-6">
+            <ul className="flex flex-wrap gap-2">
+              {subjects.map((subject) => (
+                <li key={subject}>
+                  <Link
+                    to={`/shop?grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}`}
+                    className="inline-flex min-h-6 items-center rounded-pill border border-line-strong px-3.5 py-1.5 text-body-sm font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
+                  >
+                    {subject}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {acronyms.length > 0 ? (
+              <p className="mt-3 text-label text-muted">
+                {acronyms.map(({ code, meaning }) => `${code} = ${meaning}`).join(' · ')}
+              </p>
+            ) : null}
+          </nav>
+        ) : null}
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur">

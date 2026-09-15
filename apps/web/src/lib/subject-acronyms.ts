@@ -8,6 +8,9 @@ const SUBJECT_ACRONYMS: Record<string, string> = {
   HL: 'Home Language',
   FAL: 'First Additional Language',
   SAL: 'Second Additional Language',
+  PSW: 'Personal and Social Well-being',
+  NST: 'Natural Sciences and Technology',
+  EMS: 'Economic and Management Sciences',
 }
 
 /** The acronyms used anywhere in `text`, in the order they are defined above. */

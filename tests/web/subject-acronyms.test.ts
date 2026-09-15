@@ -25,6 +25,18 @@ test('a product with no language code says nothing', () => {
   assert.deepEqual(subjectAcronymsIn('Grade 5 Mathematics Term 1 Test + Memo'), [])
 })
 
+test('Life Skills PSW is expanded', () => {
+  assert.deepEqual(subjectAcronymsIn('Grade 5 Life Skills (PSW) Term 1 Test + Memo'), [
+    { code: 'PSW', meaning: 'Personal and Social Well-being' },
+  ])
+})
+
+test('NST is expanded', () => {
+  assert.deepEqual(subjectAcronymsIn('Grade 4 NST Term 1 Test 1 + Memo'), [
+    { code: 'NST', meaning: 'Natural Sciences and Technology' },
+  ])
+})
+
 test('codes are matched as whole words, not inside ordinary copy', () => {
   // "HALF", "FALL" and "HLOKO" must not trip the HL / FAL expansions.
   assert.deepEqual(subjectAcronymsIn('HALF the marks · FALL term · HLOKO'), [])
