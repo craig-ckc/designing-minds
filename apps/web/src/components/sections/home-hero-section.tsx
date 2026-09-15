@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@designing-minds/utils'
 import { type CmsSnapshot, publishedProducts } from '@designing-minds/cms'
+import { SOCIAL_PROOF } from '../../content/site'
 import { Button } from '../ui/button'
 import { ArrowAffordance, Icon } from '../ui/icon'
 import { Placeholder } from '../ui/placeholder'
@@ -224,8 +225,8 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
           href="#parent-stories"
           className="group mt-5 inline-flex min-h-8 items-center gap-2 py-1 text-body-sm font-semibold text-ink-soft transition-colors hover:text-ink"
         >
-          <StarRating value={4.9} size="sm" />
-          <span className="underline underline-offset-4 decoration-1">4.9 stars from 500+ families</span>
+          <StarRating value={SOCIAL_PROOF.rating} size="sm" />
+          <span className="underline underline-offset-4 decoration-1">{SOCIAL_PROOF.ratingClaim}</span>
         </a>
       ) : null}
       {snapshot && snapshot.valueLists.grades.length > 0 ? <HeroShowcase snapshot={snapshot} /> : null}

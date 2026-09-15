@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { SOCIAL_PROOF } from '../../content/site'
 import { StatsSection, type Stat } from './stats-section'
 
 /**
@@ -9,10 +10,11 @@ import { StatsSection, type Stat } from './stats-section'
  * These are curated brand figures (Amy's catalogue feedback), not derived from
  * the live catalogue — the public snapshot never carries customer counts, and
  * the headline numbers are marketing claims that should read the same on every
- * page regardless of what is currently published.
+ * page regardless of what is currently published. The customer count comes from
+ * SOCIAL_PROOF so this band and the hero claim can never disagree.
  */
 const HOMEPAGE_STATS: Stat[] = [
-  { value: '750+', label: 'Customers', icon: 'user' },
+  { value: SOCIAL_PROOF.customers, label: 'Customers', icon: 'user' },
   { value: '360', label: 'Resources', icon: 'doc' },
   { value: '11', label: 'Subjects covered', icon: 'palette' },
   { value: '5', label: 'Grades currently supported', icon: 'book' },
