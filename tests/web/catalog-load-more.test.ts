@@ -64,8 +64,11 @@ test('catalog cards use content-visibility:auto for rendering performance', () =
   assert.match(productCard, /catalog-card-product/, 'product-card opts into content-visibility')
   assert.match(bundleCard, /catalog-card-bundle/, 'bundle-card opts into content-visibility')
   const css = read('index.css')
-  assert.match(css, /\.catalog-card \{[\s\S]*content-visibility:\s*auto;[\s\S]*contain-intrinsic-size:/)
-  assert.match(css, /\.catalog-card-bundle \{ contain-intrinsic-size:/)
+  assert.match(css, /\.catalog-card \{[\s\S]*content-visibility:\s*auto;[\s\S]*contain-intrinsic-block-size:/)
+  assert.match(css, /\.catalog-card-bundle \{ contain-intrinsic-block-size:/)
+  // Never the shorthand: it also reserves an inline size, which lets a skipped
+  // card widen an auto-sized mobile grid track past the viewport.
+  assert.doesNotMatch(css, /contain-intrinsic-size:/)
 })
 
 test('catalog cards retain their SEO and accessibility markup alongside content-visibility', () => {

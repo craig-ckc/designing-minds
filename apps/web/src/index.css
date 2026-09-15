@@ -248,13 +248,16 @@
 }
 
 /* Skip off-screen catalogue-card layout and paint work while retaining the
-   cards, links and headings in the document for SEO and accessibility. The
-   intrinsic sizes keep the grid geometry stable before a card is measured. */
+   cards, links and headings in the document for SEO and accessibility. Only
+   the BLOCK size is reserved: a card's width always comes from its grid
+   track, and reserving an inline size too made a skipped card claim 20rem of
+   min-content, which blew an implicit single-column grid out past a 375px
+   viewport once the cards sat below the fold. */
 .catalog-card {
   content-visibility: auto;
-  contain-intrinsic-size: auto 24rem;
+  contain-intrinsic-block-size: auto 24rem;
 }
-.catalog-card-bundle { contain-intrinsic-size: auto 20rem; }
+.catalog-card-bundle { contain-intrinsic-block-size: auto 20rem; }
 
 /* Edge-to-edge testimonial marquee with a seamless duplicated track. */
 @keyframes testimonial-scroll {

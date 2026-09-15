@@ -142,7 +142,13 @@ function GalleryTrack({
               goTo(active + 1)
             }
           }}
-          className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-card [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-4 [&::-webkit-scrollbar]:hidden"
+          /* `relative` matters: each slide carries an absolutely positioned
+             sr-only caption, and an absolutely positioned box is clipped by a
+             scroll container only when its containing block is inside it. With
+             the track unpositioned those captions resolved against the wrapper,
+             escaped the clip, and widened the page by one slide per upload — a
+             490px horizontal scroll at 375px on any product with three images. */
+          className="relative flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-card [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-4 [&::-webkit-scrollbar]:hidden"
         >
           <div className="w-full flex-none snap-center">
             <ProductCover product={item} stacked={stacked} className="w-full" priority />
@@ -199,7 +205,9 @@ function GalleryTrack({
         </Button>
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-1">
+      {/* Wraps: a bundle with sixteen uploads has sixteen dots, and one
+          non-wrapping row of 24px targets is wider than a phone. */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-1">
         {Array.from({ length: total }, (_, index) => (
           <button
             key={index}

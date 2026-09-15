@@ -39,9 +39,10 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
           </Link>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rendered.map((product) => {
             const value = bundleValue(snapshot, product)
+            const perResource = value ? perResourceZar(product.priceZar, value.itemCount) : null
             return (
               <Link
                 key={product.id}

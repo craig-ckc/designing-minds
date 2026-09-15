@@ -156,8 +156,11 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
           />
           <h1 className="sr-only">{product.title}</h1>
 
+          {/* min-w-0 on both columns: a grid item's default minimum is its
+              min-content, so one non-wrapping row inside a column could widen
+              the whole page instead of wrapping or scrolling within it. */}
           <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
-            <div>
+            <div className="min-w-0">
               <ProductGallery item={product} images={product.galleryImages ?? []} />
 
               {/* An "About this resource" heading over nothing reads worse than
@@ -174,7 +177,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
               <DetailFooterBlocks faqs={faqs} subject="resource" />
             </div>
 
-            <aside className="grid gap-[18px] rounded-card border border-line p-7 lg:sticky lg:top-[var(--sticky-offset)]">
+            <aside className="grid min-w-0 gap-[18px] rounded-card border border-line p-7 lg:sticky lg:top-[var(--sticky-offset)]">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="neutral">{product.resourceFormat}</Badge>
                 <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
@@ -275,7 +278,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
         <h1 className="sr-only">{bundle.title}</h1>
 
         <div className="grid items-start gap-9 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
-          <div>
+          <div className="min-w-0">
             <ProductGallery
               item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
               images={bundle.galleryImages ?? []}
@@ -323,7 +326,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
             <DetailFooterBlocks faqs={faqs} subject="bundle" />
           </div>
 
-          <aside className="grid gap-[18px] rounded-card border border-line p-7 lg:sticky lg:top-[var(--sticky-offset)]">
+          <aside className="grid min-w-0 gap-[18px] rounded-card border border-line p-7 lg:sticky lg:top-[var(--sticky-offset)]">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="solid">Bundle</Badge>
               <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
