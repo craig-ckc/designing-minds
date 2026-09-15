@@ -21,7 +21,6 @@ const staticDir = path.join(outputDir, 'static')
 const isVercel = process.env.VERCEL === '1' || Boolean(process.env.VERCEL)
 const allowEmpty = process.env.ALLOW_EMPTY_PRERENDER === 'true'
 
-const siteUrl = (process.env.VITE_SITE_URL || 'http://localhost:5173').replace(/\/$/, '')
 const functionsOrigin = (process.env.WEB_FUNCTIONS_ORIGIN || '').replace(/\/$/, '')
 
 const fail = (message) => {
@@ -33,6 +32,7 @@ if (!existsSync(serverEntry)) fail(`SSR bundle not found at ${serverEntry}. Did 
 if (!existsSync(path.join(distDir, 'index.html'))) fail(`Client build not found at ${distDir}/index.html.`)
 
 const server = await import(pathToFileURL(serverEntry).href)
+const siteUrl = server.resolveCanonicalSiteUrl(process.env.VITE_SITE_URL)
 
 /* ------------------------------ Load CMS data -------------------------- */
 

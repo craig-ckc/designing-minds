@@ -8,6 +8,7 @@ import {
   type Testimonial,
 } from '@designing-minds/cms'
 import { CONTACT, GRADE_BLURB } from './content/site'
+import { canonicalUrlForPath, resolveCanonicalSiteUrl } from './site-url'
 import type { PublicRoute } from './static-routes'
 
 /* -------------------------------------------------------------------------
@@ -247,8 +248,9 @@ const itemList = (siteUrl: string, name: string, itemPaths: string[]) => ({
  * navigation to keep the tab title + share tags in sync with the build output.
  */
 export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: string): PageMeta {
-  const canonical = `${siteUrl}${route.path === '/' ? '/' : route.path}`
-  const image = `${siteUrl}${DEFAULT_OG_IMAGE}`
+  const canonicalSiteUrl = resolveCanonicalSiteUrl(siteUrl)
+  const canonical = canonicalUrlForPath(route.path, siteUrl)
+  const image = `${canonicalSiteUrl}${DEFAULT_OG_IMAGE}`
 
   if (route.kind === 'product' && route.productSlug) {
     // A /shop slug names either Collection; both carry the same SEO fields.
@@ -275,7 +277,8 @@ export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: 
 
 /** Generate the full <head> Tag block for a prerendered route. */
 export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: string): string {
-  const meta = pageMetaFor(route, snapshot, siteUrl)
+  const canonicalSiteUrl = resolveCanonicalSiteUrl(siteUrl)
+  const meta = pageMetaFor(route, snapshot, canonicalSiteUrl)
   const { canonical, image } = meta
   const jsonLd: unknown[] = []
 
@@ -318,7 +321,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
       }),
     )
     jsonLd.push(
-      breadcrumbList(siteUrl, [
+      breadcrumbList(canonicalSiteUrl, [
         { name: 'Home', path: '/' },
         { name: 'Shop', path: '/shop' },
         { name: product.title, path: route.path },
@@ -330,23 +333,23 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     const grade = route.grade
     const products = productsForGrade(snapshot, grade).filter((product) => product.published)
     jsonLd.push(
-      breadcrumbList(siteUrl, [
+      breadcrumbList(canonicalSiteUrl, [
         { name: 'Home', path: '/' },
         { name: 'Grades', path: '/grades' },
         { name: grade, path: route.path },
       ]),
     )
     if (products.length > 0) {
-      jsonLd.push(itemList(siteUrl, `${grade} CAPS resources`, products.map((product) => `/shop/${product.slug}`)))
+      jsonLd.push(itemList(canonicalSiteUrl, `${grade} CAPS resources`, products.map((product) => `/shop/${product.slug}`)))
     }
   } else {
     if (route.path === '/') {
-      jsonLd.push(organization(siteUrl, snapshot.testimonials.filter((testimonial) => testimonial.published)), website(siteUrl))
+      jsonLd.push(organization(canonicalSiteUrl, snapshot.testimonials.filter((testimonial) => testimonial.published)), website(canonicalSiteUrl))
     }
     if (route.path === '/shop') {
       const products = snapshot.products.filter((product) => product.published)
       if (products.length > 0) {
-        jsonLd.push(itemList(siteUrl, 'CAPS-aligned resources', products.map((product) => `/shop/${product.slug}`)))
+        jsonLd.push(itemList(canonicalSiteUrl, 'CAPS-aligned resources', products.map((product) => `/shop/${product.slug}`)))
       }
     }
     if (route.path === '/help') {
@@ -356,7 +359,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     // breadcrumbs on browse, support, and legal pages (everything but home).
     if (route.path !== '/') {
       jsonLd.push(
-        breadcrumbList(siteUrl, [
+        breadcrumbList(canonicalSiteUrl, [
           { name: 'Home', path: '/' },
           { name: meta.title.split('|')[0].split('—')[0].trim(), path: route.path },
         ]),
@@ -373,10 +376,11 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
 export function sitemapXml(routes: PublicRoute[], siteUrl: string, lastmod?: string): string {
   // A single build-wide lastmod (the snapshot's generatedAt) is honest: every
   // page is regenerated from the same snapshot on each deploy.
+  const canonicalSiteUrl = resolveCanonicalSiteUrl(siteUrl)
   const day = lastmod ? lastmod.slice(0, 10) : undefined
   const urls = routes
     .map((route) => {
-      const loc = `${siteUrl}${route.path === '/' ? '/' : route.path}`
+      const loc = `${canonicalSiteUrl}${route.path === '/' ? '/' : route.path}`
       const lastmodtag = day ? `\n    <lastmod>${day}</lastmod>` : ''
       return `  <url>\n    <loc>${escapeHtml(loc)}</loc>${lastmodtag}\n  </url>`
     })
@@ -386,7 +390,8 @@ export function sitemapXml(routes: PublicRoute[], siteUrl: string, lastmod?: str
 
 /** robots.txt allowing public pages and disallowing functional routes. */
 export function robotsTxt(disallowPaths: readonly string[], siteUrl: string): string {
-  const lines = ['User-agent: *', 'Allow: /', ...disallowPaths.map((path) => `Disallow: ${path}`), '', `Sitemap: ${siteUrl}/sitemap.xml`, '']
+  const canonicalSiteUrl = resolveCanonicalSiteUrl(siteUrl)
+  const lines = ['User-agent: *', 'Allow: /', ...disallowPaths.map((path) => `Disallow: ${path}`), '', `Sitemap: ${canonicalSiteUrl}/sitemap.xml`, '']
   return lines.join('\n')
 }
 
@@ -397,7 +402,8 @@ export function robotsTxt(disallowPaths: readonly string[], siteUrl: string): st
  * omitted for the same reason they are kept out of the sitemap.
  */
 export function llmsTxt(routes: PublicRoute[], siteUrl: string): string {
-  const link = (path: string, label: string) => `- [${label}](${siteUrl}${path === '/' ? '/' : path})`
+  const canonicalSiteUrl = resolveCanonicalSiteUrl(siteUrl)
+  const link = (path: string, label: string) => `- [${label}](${canonicalSiteUrl}${path === '/' ? '/' : path})`
 
   const staticRoutes = routes.filter((route) => route.kind === 'static')
   const gradeRoutes = routes.filter((route) => route.kind === 'grade')

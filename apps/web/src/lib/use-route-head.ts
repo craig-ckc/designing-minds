@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import type { CmsSnapshot } from '@designing-minds/cms'
 import { matchPath } from '../static-routes'
 import { pageMetaFor, SITE_NAME } from '../seo'
+import { CANONICAL_SITE_URL } from '../site-url'
 
 /* -------------------------------------------------------------------------
    Client-side <head> sync.
@@ -93,7 +94,7 @@ export function useRouteHead(snapshot: CmsSnapshot | null) {
     // the invariant explicit for TypeScript and future refactors.
     if (!snapshot) return
 
-    const meta = pageMetaFor(route, snapshot, window.location.origin)
+    const meta = pageMetaFor(route, snapshot, CANONICAL_SITE_URL)
     document.title = meta.title
     upsertMeta('name', 'robots', 'index,follow')
     upsertMeta('name', 'description', meta.description)

@@ -32,4 +32,5 @@ export function render({ url, snapshot }: { url: string; snapshot: CmsSnapshot }
 export { loadPublicBuildData } from './build/load-public-data.ts'
 export { getPublicRoutes, FUNCTIONAL_NOINDEX_PATHS, FUNCTIONAL_SPA_PREFIXES } from './static-routes.ts'
 export { renderHead, sitemapXml, robotsTxt, llmsTxt } from './seo.ts'
+export { CANONICAL_SITE_URL, resolveCanonicalSiteUrl } from './site-url.ts'
 export { redirectRoutes, validateRedirects } from './redirects.ts'
