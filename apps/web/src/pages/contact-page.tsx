@@ -84,8 +84,21 @@ export function ContactPage() {
           </p>
         </div>
 
-        <form className="card grid gap-[18px] p-7" onSubmit={handleSubmit}>
+        <form action={apiUrl('/api/forms')} method="post" className="card grid gap-[18px] p-7" onSubmit={handleSubmit}>
           <h2>Send us a message</h2>
+          {/* Progressive-enhancement fallback: CSS-only, shown via the
+              :target pseudo-class when the browser lands on the matching
+              fragment after a native form POST (no JS ran, or it hadn't
+              hydrated yet). Once JS is up, submission is intercepted below
+              and these never come into play. */}
+          <p id="contact-sent" className="hidden target:block text-label text-ink-soft">
+            Thanks — your message is on its way. We usually reply within one business day.
+          </p>
+          <p id="contact-failed" className="hidden target:block text-label text-danger">
+            Something went wrong and your message wasn’t sent. Please try again or email us directly.
+          </p>
+          <input type="hidden" name="form" value="contact" />
+          <input type="hidden" name="_return" value="/contact" />
           {/* Honeypot: hidden from humans, catches bots that fill every Field. */}
           <input
             type="text"
@@ -101,6 +114,7 @@ export function ContactPage() {
             <Field label={<>First name<Required /></>}>
               <input
                 className="field"
+                name="firstName"
                 placeholder="Your first name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -111,6 +125,7 @@ export function ContactPage() {
             <Field label="Last name">
               <input
                 className="field"
+                name="lastName"
                 placeholder="Your last name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -122,6 +137,7 @@ export function ContactPage() {
             <input
               className="field"
               type="email"
+              name="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -129,10 +145,11 @@ export function ContactPage() {
               disabled={sent}
             />
           </Field>
-          <Select label="What can we help with?" value={topic} options={TOPICS} onChange={setTopic} />
+          <Select label="What can we help with?" name="topic" value={topic} options={TOPICS} onChange={setTopic} />
           <Field label="Message">
             <textarea
               className="field min-h-[130px] resize-y"
+              name="message"
               placeholder="How can we help?"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -144,6 +161,7 @@ export function ContactPage() {
             <label className="flex items-start gap-2.5 text-body-sm text-ink-soft">
               <input
                 type="checkbox"
+                name="marketing"
                 className="h-6 w-6 flex-none accent-primary"
                 checked={marketing}
                 onChange={(e) => setMarketing(e.target.checked)}

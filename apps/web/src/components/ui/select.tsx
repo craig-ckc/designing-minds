@@ -13,11 +13,17 @@ function disableHiddenInputHitTarget(input: HTMLInputElement | null) {
  *  stays visually identical to text inputs. */
 export function Select({
   label,
+  name,
   value,
   options,
   onChange,
 }: {
   label: string
+  /** Native form field name. When set, Base UI renders a hidden input that
+   *  carries the current value, so the select posts through a plain HTML
+   *  form the same way a native <select> would (see newsletter/contact
+   *  progressive-enhancement fallbacks). */
+  name?: string
   value: string
   options: string[]
   onChange: (value: string) => void
@@ -25,6 +31,7 @@ export function Select({
   return (
     <Field label={label}>
       <BaseSelect.Root
+        name={name}
         value={value}
         onValueChange={(next) => onChange(next as string)}
         inputRef={disableHiddenInputHitTarget}

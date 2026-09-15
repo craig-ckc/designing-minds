@@ -1,5 +1,5 @@
 import { logEvent } from '../lib/diagnostics.ts'
-import { badRequest, created, serverError, type Handler } from '../lib/http.ts'
+import { badRequest, created, serverError, type Handler, type HandlerResponse } from '../lib/http.ts'
 import { createServiceClient } from '../lib/supabase.ts'
 import { sendFormNotification, sendSubscriptionConfirmation } from '../lib/email.ts'
 import { unsubscribeToken, upsertContact, type MailchimpStatus } from '../lib/mailchimp.ts'
@@ -109,7 +109,108 @@ const header = (headers: Record<string, string | undefined>, name: string) => {
   return typeof value === 'string' && value ? value : null
 }
 
-export const forms: Handler = async (req) => {
+// Headers arrive lower-cased from a real HTTP server, but tests (and some
+// proxies) may hand us either casing — check both rather than picking one.
+const headerAny = (headers: Record<string, string | undefined>, ...names: string[]): string | null => {
+  for (const name of names) {
+    const value = header(headers, name)
+    if (value) return value
+  }
+  return null
+}
+
+/*
+ * A native <form method="post"> submission arrives urlencoded and flat:
+ * { form, website?, _return?, ...fields }. The JS client instead posts
+ * JSON shaped as { form, fields, website? }. Recognise the flat shape (a
+ * string `form` with no object `fields`) and lift every remaining key into
+ * `fields`, mirroring what the JS client already sends — so the rest of the
+ * handler only ever has to deal with one shape.
+ */
+function normalizeFormBody(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value
+  const record = value as Record<string, unknown>
+  if (typeof record.form !== 'string') return value
+
+  const hasObjectFields = typeof record.fields === 'object' && record.fields !== null && !Array.isArray(record.fields)
+  if (hasObjectFields) return value
+
+  const { form, website, _return, ...rest } = record
+  const fields: Record<string, unknown> = { ...rest }
+  if (fields.name === undefined) {
+    // Mirrors the JS client, which composes `name` from first + last itself.
+    const composedName = [rest.firstName, rest.lastName]
+      .map((part) => (typeof part === 'string' ? part.trim() : ''))
+      .filter(Boolean)
+      .join(' ')
+    if (composedName) fields.name = composedName
+  }
+
+  return {
+    form,
+    fields,
+    ...(website !== undefined ? { website } : {}),
+    ...(typeof _return === 'string' ? { _return } : {}),
+  }
+}
+
+// A single-slash-rooted, same-origin path with no query/hash and no
+// protocol-relative trick (`//evil.example`) — anything else falls back to a
+// safe default rather than redirecting off-site.
+const RETURN_PATH_RE = /^\/(?!\/)[^\s?#]*$/
+
+function resolveReturnPath(value: unknown, fallback: string): string {
+  return typeof value === 'string' && RETURN_PATH_RE.test(value) ? value : fallback
+}
+
+function safeOrigin(value: string | null): string | null {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null
+  } catch {
+    return null
+  }
+}
+
+function normaliseSiteUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, '')
+  return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
+}
+
+function resolveOrigin(headers: Record<string, string | undefined>): string {
+  const fromOrigin = safeOrigin(headerAny(headers, 'origin', 'Origin'))
+  if (fromOrigin) return fromOrigin
+
+  const fromReferer = safeOrigin(headerAny(headers, 'referer', 'Referer'))
+  if (fromReferer) return fromReferer
+
+  const configured = process.env.SITE_URL
+  return configured ? normaliseSiteUrl(configured) : ''
+}
+
+/*
+ * A urlencoded content-type means the browser did a real navigation POST (no
+ * JS intercepted it), so every outcome must be a redirect back to the page
+ * instead of a JSON body the browser would otherwise render raw.
+ */
+function navigationResponse(headers: Record<string, string | undefined>, body: unknown, response: HandlerResponse): HandlerResponse {
+  const record = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {}
+  const formName = typeof record.form === 'string' ? record.form : undefined
+  const formKey = formName && formName in FORMS ? formName : 'form'
+  const defaultPath = formName === 'contact' ? '/contact' : '/'
+  const returnPath = resolveReturnPath(record._return, defaultPath)
+  const origin = resolveOrigin(headers)
+  const succeeded = response.status >= 200 && response.status < 300
+
+  return {
+    status: 303,
+    headers: { ...response.headers, location: `${origin}${returnPath}#${formKey}-${succeeded ? 'sent' : 'failed'}` },
+    body: { ok: succeeded },
+  }
+}
+
+const handleForm: Handler = async (req) => {
   if (req.method !== 'POST') return badRequest('Use POST.')
   if (!isFormBody(req.body)) return badRequest('Expected { form, fields }.')
 
@@ -213,4 +314,17 @@ export const forms: Handler = async (req) => {
   }
 
   return created({ ok: true })
+}
+
+export const forms: Handler = async (req) => {
+  const normalizedBody = normalizeFormBody(req.body)
+  const response = await handleForm(normalizedBody === req.body ? req : { ...req, body: normalizedBody })
+
+  // A urlencoded body means a real browser navigation (no JS submitted it via
+  // fetch), so this must resolve to a redirect the browser can follow — a raw
+  // JSON response would otherwise just render as text in the tab.
+  const contentType = headerAny(req.headers, 'content-type', 'Content-Type') ?? ''
+  if (!contentType.toLowerCase().includes('application/x-www-form-urlencoded')) return response
+
+  return navigationResponse(req.headers, normalizedBody, response)
 }
