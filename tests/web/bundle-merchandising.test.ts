@@ -35,7 +35,8 @@ test('the shop catalogue lists bundles ahead of individual resources', () => {
   // list must be built bundles-first, not sorted after the fact.
   assert.match(shop, /\.\.\.matchingBundles\.map[\s\S]*\.\.\.matchingProducts\.map/)
   assert.match(shop, /Bundles first/)
-  // The catalogue stays lazily expanded so static HTML is bounded.
-  assert.match(shop, /useDeferredCatalog\(visible\)/)
+  // The catalogue uses an explicit "Load more" control instead of automatic
+  // expansion, so static HTML is bounded and accessibility is improved.
+  assert.match(shop, /useCatalogLoadMore\(visible/)
   assert.doesNotMatch(shop, /Sorted by catalogue order/)
 })

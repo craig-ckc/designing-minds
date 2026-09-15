@@ -6,9 +6,10 @@ import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Card } from '../components/ui/card'
 import { BundleCard } from '../components/ui/bundle-card'
 import { PageHeader } from '../components/ui/headings'
+import { LoadMoreButton } from '../components/ui/load-more-button'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
-import { useDeferredCatalog } from '../lib/deferred-catalog'
+import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
 
 // The "Offer" dimension replaces the old tabs, and reads the same as the Shop's
 // chips. Access plans are retired, so scope is the only axis left.
@@ -51,7 +52,8 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
     if (q && !`${bundle.title} ${bundle.shortDescription}`.toLowerCase().includes(q)) return false
     return true
   })
-  const renderedPackages = useDeferredCatalog(visible)
+  const catalogResetKey = JSON.stringify([offerSel, grades, terms, q])
+  const { visible: renderedPackages, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, catalogResetKey)
 
   const activeCount = offerSel.length + grades.length + terms.length
   const toggle = (key: string) => (value: string) => {
@@ -111,6 +113,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <p className="mt-2 text-muted">Try clearing a filter or choosing a different grade.</p>
             </Card>
           )}
+        <LoadMoreButton remaining={visible.length - renderedPackages.length} itemLabel="bundles" onLoadMore={loadMore} />
         </Container>
       </section>
     </>

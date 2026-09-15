@@ -10,6 +10,8 @@ import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
+import { LoadMoreButton } from '../components/ui/load-more-button'
+import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
 import { NotFoundPage } from './not-found-page'
 
 export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
@@ -19,7 +21,8 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
   const [term, setTerm] = useState<string>(ALL)
   const all = useMemo(() => (isValidGrade ? productsForGrade(snapshot, grade) : []), [snapshot, grade, isValidGrade])
-  const visible = term === ALL ? all : all.filter((p) => p.term === term)
+  const visible = useMemo(() => (term === ALL ? all : all.filter((p) => p.term === term)), [all, term])
+  const { visible: rendered, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, term)
 
   if (!isValidGrade) {
     return <NotFoundPage />
@@ -61,7 +64,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
           </div>
           {visible.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {visible.map((product) => (
+              {rendered.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
@@ -71,6 +74,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <p className="mt-2 text-muted">No published resources match this term for {grade}.</p>
             </Card>
           )}
+          <LoadMoreButton remaining={visible.length - rendered.length} itemLabel="resources" onLoadMore={loadMore} />
         </Container>
       </section>
 

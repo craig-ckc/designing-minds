@@ -3,6 +3,8 @@ import { bundleValue, bundlesForGrade, priceLabel, type CmsSnapshot } from '@des
 import { Container } from '../ui/container'
 import { Badge } from '../ui/badge'
 import { ArrowAffordance } from '../ui/icon'
+import { LoadMoreButton } from '../ui/load-more-button'
+import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../../lib/deferred-catalog'
 
 /**
  * Bundle-first entry point for a grade, shown ABOVE the single-resource grid.
@@ -15,6 +17,7 @@ import { ArrowAffordance } from '../ui/icon'
  */
 export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot; grade: string }) {
   const packages = bundlesForGrade(snapshot, grade)
+  const { visible: rendered, loadMore } = useCatalogLoadMore(packages, CATALOG_INITIAL_LIMIT, grade)
   if (packages.length === 0) return null
 
   return (
@@ -37,13 +40,13 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {packages.map((product) => {
+          {rendered.map((product) => {
             const value = bundleValue(snapshot, product)
             return (
               <Link
                 key={product.id}
                 to={`/shop/${product.slug}`}
-                className="group flex flex-col rounded-card border border-line bg-surface p-5 transition-colors hover:border-primary"
+                className="catalog-card catalog-card-bundle group flex flex-col rounded-card border border-line bg-surface p-5 transition-colors hover:border-primary"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Deliberately not the `solid` tone: white on the brand pink
@@ -89,6 +92,7 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
             )
           })}
         </div>
+        <LoadMoreButton remaining={packages.length - rendered.length} itemLabel="bundles" onLoadMore={loadMore} />
       </Container>
     </section>
   )

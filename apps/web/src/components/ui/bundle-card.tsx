@@ -38,7 +38,7 @@ export function BundleCard({
       variant="surface"
       pad="none"
       className={cn(
-        'group flex flex-row rounded-lg transition-colors duration-200 hover:border-primary/40',
+        'catalog-card catalog-card-bundle group flex flex-row rounded-lg transition-colors duration-200 hover:border-primary/40',
         className,
       )}
     >

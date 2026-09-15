@@ -4,7 +4,7 @@ import test from 'node:test'
 
 const read = (path: string) => readFileSync(new URL(`../../apps/web/src/${path}`, import.meta.url), 'utf8')
 
-test('product-cover copy stays readable or is omitted on compact decorative covers', () => {
+test('product-cover copy scales via container queries and stays visible at all card sizes', () => {
   const cover = read('components/ui/product-cover.tsx')
   const css = read('index.css')
 
@@ -14,7 +14,7 @@ test('product-cover copy stays readable or is omitted on compact decorative cove
   assert.match(css, /\.product-cover-brand \{ font-size: max\(0\.75rem, 2\.5cqw\); \}/)
   assert.match(css, /\.product-cover-meta \{ font-size: max\(0\.75rem, 4\.36cqw\); \}/)
   assert.match(css, /\.product-cover-title \{ font-size: max\(0\.75rem, 6\.89cqw\); \}/)
-  assert.match(css, /@container \(max-width: 11\.25rem\)[\s\S]*\.product-cover-copy \{ display: none; \}/)
+  assert.doesNotMatch(css, /\.product-cover-copy \{ display: none; \}/)
 })
 
 test('the mobile grade selector uses fixed compact tabs and spacing', () => {

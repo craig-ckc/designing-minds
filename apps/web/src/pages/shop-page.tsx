@@ -7,9 +7,10 @@ import { Card } from '../components/ui/card'
 import { BundleCard } from '../components/ui/bundle-card'
 import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
+import { LoadMoreButton } from '../components/ui/load-more-button'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
-import { useDeferredCatalog } from '../lib/deferred-catalog'
+import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
 
 const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format'] as const
 
@@ -68,8 +69,8 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
     ]
   }, [snapshot, grades, terms, subjects, formats, q])
 
-  // Static HTML stays bounded; the rest of the grid arrives once React hydrates.
-  const rendered = useDeferredCatalog(visible)
+  const catalogResetKey = JSON.stringify([grades, terms, subjects, formats, q])
+  const { visible: rendered, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, catalogResetKey)
 
   const activeCount = grades.length + terms.length + subjects.length + formats.length
   const toggle = (key: string) => (value: string) => setSearchParams(toggleQueryValue(searchParams, key, value))
@@ -130,6 +131,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <p className="mt-2 text-muted">Try clearing a filter or searching for a different grade or subject.</p>
             </Card>
           )}
+      <LoadMoreButton remaining={visible.length - rendered.length} itemLabel="resources" onLoadMore={loadMore} />
         </Container>
       </section>
     </>

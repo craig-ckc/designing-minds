@@ -16,7 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
       as="article"
       variant="surface"
       pad="none"
-      className="group flex flex-col rounded-lg transition-colors duration-200 hover:border-primary/40"
+      className="catalog-card catalog-card-product group flex flex-col rounded-lg transition-colors duration-200 hover:border-primary/40"
     >
       <Link to={href} aria-label={`View ${product.title}`} className="block">
         <ProductCover product={product} />
