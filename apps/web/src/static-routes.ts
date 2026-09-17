@@ -1,5 +1,6 @@
 import type { CmsSnapshot } from '@designing-minds/cms'
 import { gradeToSlug, slugToGrade } from './content/site'
+import { PASSWORD_RESET_PATH } from './site-url'
 
 /* -------------------------------------------------------------------------
    Route classification + public route generation.
@@ -41,7 +42,7 @@ export const FUNCTIONAL_NOINDEX_PATHS = [
   '/sign-up',
   '/login',
   '/forgot-password',
-  '/reset-password',
+  PASSWORD_RESET_PATH,
   '/account',
   '/account/orders',
   '/cart',
@@ -62,7 +63,7 @@ export const FUNCTIONAL_SPA_PREFIXES = [
   '/sign-up',
   '/login',
   '/forgot-password',
-  '/reset-password',
+  PASSWORD_RESET_PATH,
   '/cart',
   '/account',
   '/checkout',

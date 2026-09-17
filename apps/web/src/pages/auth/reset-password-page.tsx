@@ -11,9 +11,14 @@ import { AuthLayout } from './auth-layout'
  * token from the URL on load and establishes a temporary session, so
  * updatePassword() (supabase.auth.updateUser) can set the new password. On
  * success the recovery session becomes a normal session — send them to Account.
+ *
+ * Until auth finishes initializing we don't know whether the link produced a
+ * recovery session, so show a checking state instead of the form. Without a
+ * session the link is expired, invalid, or already used — explain that instead
+ * of offering a form that cannot succeed.
  */
 export function ResetPasswordPage() {
-  const { updatePassword } = useAuth()
+  const { updatePassword, session, loading } = useAuth()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -43,6 +48,47 @@ export function ResetPasswordPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <AuthLayout
+        title="Choose a new password"
+        intro="Checking your reset link…"
+        footer={
+          <>
+            Need a new link?{' '}
+            <Link to="/forgot-password" className="text-ink underline underline-offset-4">
+              Request another
+            </Link>
+          </>
+        }
+      >
+        <Notice tone="info">Checking your reset link…</Notice>
+      </AuthLayout>
+    )
+  }
+
+  if (!session) {
+    return (
+      <AuthLayout
+        title="This reset link is no longer valid"
+        intro="Your link may have expired, is invalid, or was already used."
+        footer={
+          <>
+            Remembered it?{' '}
+            <Link to="/login" className="text-ink underline underline-offset-4">
+              Back to log in
+            </Link>
+          </>
+        }
+      >
+        <Notice tone="error">This password-reset link has expired or is invalid.</Notice>
+        <Button to="/forgot-password" variant="solid" className="w-full">
+          Request a new link
+        </Button>
+      </AuthLayout>
+    )
   }
 
   return (

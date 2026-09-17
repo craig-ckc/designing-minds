@@ -4,6 +4,7 @@ import type { Customer } from '@designing-minds/cms'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { clearLocalCart, mergeSignedInCart } from './cart'
+import { resolvePasswordResetRedirectUrl } from '../site-url'
 
 interface AuthValue {
   customer: Customer | null
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = useCallback(async (email: string) => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: resolvePasswordResetRedirectUrl(window.location.origin),
     })
     if (error) throw new Error(error.message)
   }, [])
