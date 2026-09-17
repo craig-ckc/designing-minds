@@ -16,6 +16,7 @@ export {
   getCatalogItemBySlug,
   getFaqsByIds,
   getProductsBySlugs,
+  resolveCartItems,
   filterProducts,
   filterBundles,
   defaultProductFilters,

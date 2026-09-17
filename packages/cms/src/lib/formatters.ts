@@ -49,6 +49,30 @@ export const getCatalogItemBySlug = (snapshot: CmsSnapshot, slug: string): Catal
   return undefined
 }
 
+/**
+ * Resolve local cart slugs to their published catalogue records, in cart order.
+ *
+ * The cart holds slugs in the shared /shop/<slug> space, which names both
+ * Collections — so a products-only lookup silently drops every bundle and the
+ * cart reads empty. Unknown slugs and unpublished records are skipped rather
+ * than resolved, so a stale or draft slug can never surface at checkout.
+ */
+export const resolveCartItems = (snapshot: CmsSnapshot, slugs: string[]): CatalogItem[] => {
+  const products = new Map(publishedProducts(snapshot).map((entry) => [entry.slug, entry]))
+  const bundles = new Map(publishedBundles(snapshot).map((entry) => [entry.slug, entry]))
+  const items: CatalogItem[] = []
+  for (const slug of slugs) {
+    const product = products.get(slug)
+    if (product) {
+      items.push({ kind: 'product', product })
+      continue
+    }
+    const bundle = bundles.get(slug)
+    if (bundle) items.push({ kind: 'bundle', bundle })
+  }
+  return items
+}
+
 export const getFaqsByIds = (snapshot: CmsSnapshot, ids: string[]): Faq[] =>
   ids
     .map((id) => snapshot.faqs.find((faq) => faq.id === id))

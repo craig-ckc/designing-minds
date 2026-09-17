@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
+import { type CmsSnapshot, bundleContents, priceLabel, resolveCartItems } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
@@ -13,12 +13,14 @@ import { useCartSlugs } from '../lib/use-cart'
 export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
   useNoindex()
   const slugs = useCartSlugs()
-  const published = publishedProducts(snapshot)
+  // Slugs name both Collections in the shared /shop space, so bundles must
+  // resolve here too — a products-only lookup drops them and the cart reads empty.
+  const items = resolveCartItems(snapshot, slugs)
 
-  const items = slugs
-    .map((slug) => published.find((p) => p.slug === slug))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-  const subtotal = items.reduce((sum, item) => sum + item.priceZar, 0)
+  const subtotal = items.reduce(
+    (sum, item) => sum + (item.kind === 'product' ? item.product.priceZar : item.bundle.priceZar),
+    0,
+  )
   const remove = (slug: string) => removeCartSlug(slug)
 
   return (
@@ -40,35 +42,53 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
         ) : (
           <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             <ul className="grid gap-4">
-              {items.map((item) => (
-                <li key={item.slug} className="flex items-center gap-4 rounded-card bg-surface p-4">
-                  <Link to={`/shop/${item.slug}`} className="w-20 flex-none sm:w-[88px]">
-                    <ProductCover product={item} />
-                  </Link>
-                  <div className="flex flex-1 flex-col gap-1">
-                    <Link
-                      to={`/shop/${item.slug}`}
-                      className="font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 hover:text-primary-ink"
-                    >
-                      {item.title}
+              {items.map((item) => {
+                // A bundle carries no subjects of its own — the cover and the
+                // detail line read them off its published members instead.
+                const contents = item.kind === 'bundle' ? bundleContents(snapshot, item.bundle) : []
+                const subjects =
+                  item.kind === 'product'
+                    ? item.product.subjects
+                    : [...new Set(contents.flatMap((entry) => entry.subjects))]
+                const record = item.kind === 'product' ? item.product : item.bundle
+                const detail =
+                  item.kind === 'product'
+                    ? `${record.grade} · ${record.term}`
+                    : `Bundle · ${record.grade} · ${record.term}${contents.length > 0 ? ` · ${contents.length} resource${contents.length === 1 ? '' : 's'}` : ''}`
+                return (
+                  <li key={record.slug} className="flex items-center gap-4 rounded-card bg-surface p-4">
+                    <Link to={`/shop/${record.slug}`} className="w-20 flex-none sm:w-[88px]">
+                      <ProductCover
+                        product={{ title: record.title, grade: record.grade, term: record.term, subjects }}
+                        stacked={item.kind === 'bundle'}
+                      />
                     </Link>
-                    <strong className="mt-0.5 text-[1.15rem] font-extrabold text-primary-ink">
-                      {priceLabel(item.priceZar)}
-                    </strong>
-                  </div>
-                  <Button
-                    type="button"
-                    size="icon"
-                    shape="circle"
-                    variant="solid-light"
-                    onClick={() => remove(item.slug)}
-                    aria-label={`Remove ${item.title} from cart`}
-                    className="flex-none self-start transition-colors hover:border-danger hover:bg-danger hover:text-on-primary"
-                  >
-                    <Icon name="trash" size={16} />
-                  </Button>
-                </li>
-              ))}
+                    <div className="flex flex-1 flex-col gap-1">
+                      <Link
+                        to={`/shop/${record.slug}`}
+                        className="font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 hover:text-primary-ink"
+                      >
+                        {record.title}
+                      </Link>
+                      <span className="text-body-sm text-muted">{detail}</span>
+                      <strong className="mt-0.5 text-[1.15rem] font-extrabold text-primary-ink">
+                        {priceLabel(record.priceZar)}
+                      </strong>
+                    </div>
+                    <Button
+                      type="button"
+                      size="icon"
+                      shape="circle"
+                      variant="solid-light"
+                      onClick={() => remove(record.slug)}
+                      aria-label={`Remove ${record.title} from cart`}
+                      className="flex-none self-start transition-colors hover:border-danger hover:bg-danger hover:text-on-primary"
+                    >
+                      <Icon name="trash" size={16} />
+                    </Button>
+                  </li>
+                )
+              })}
             </ul>
 
             <aside className="grid gap-4 rounded-card border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">

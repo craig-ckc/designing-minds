@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Checkbox } from '@base-ui/react/checkbox'
-import { type CmsSnapshot, priceLabel, publishedProducts } from '@designing-minds/cms'
+import { type CmsSnapshot, priceLabel, resolveCartItems } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
@@ -50,10 +50,13 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const [submitting, setSubmitting] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const slugs = useMemo(() => getCartSlugs(), [])
-  const items = slugs
-    .map((slug) => publishedProducts(snapshot).find((p) => p.slug === slug))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-  const total = items.reduce((sum, item) => sum + item.priceZar, 0)
+  // Same shared /shop space as the cart: bundle slugs must resolve here too,
+  // and they travel to the payment flow as productSlug lines like everything else.
+  const items = resolveCartItems(snapshot, slugs)
+  const total = items.reduce(
+    (sum, item) => sum + (item.kind === 'product' ? item.product.priceZar : item.bundle.priceZar),
+    0,
+  )
 
   const pay = async () => {
     if (submittingRef.current) return
@@ -86,7 +89,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
           authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          items: items.map((item) => ({ productSlug: item.slug })),
+          items: items.map((item) => ({ productSlug: item.kind === 'product' ? item.product.slug : item.bundle.slug })),
           acceptedTerms: true,
         }),
       })
@@ -152,12 +155,15 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
             <h2>Order summary</h2>
             {items.length > 0 ? (
               <ul className="grid gap-2 text-body-sm">
-                {items.map((item) => (
-                  <li key={item.slug} className="flex justify-between gap-3">
-                    <span className="text-ink-soft">{item.title}</span>
-                    <span>{priceLabel(item.priceZar)}</span>
-                  </li>
-                ))}
+                {items.map((item) => {
+                  const record = item.kind === 'product' ? item.product : item.bundle
+                  return (
+                    <li key={record.slug} className="flex justify-between gap-3">
+                      <span className="text-ink-soft">{record.title}</span>
+                      <span>{priceLabel(record.priceZar)}</span>
+                    </li>
+                  )
+                })}
               </ul>
             ) : (
               <p className="text-body-sm text-muted">Your cart is empty.</p>
