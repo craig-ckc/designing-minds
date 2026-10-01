@@ -201,7 +201,12 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
                 .
               </label>
             </div>
-            <Button type="submit" variant="solid" className="w-full" disabled={submitting || items.length === 0}>
+            <Button
+              type="submit"
+              variant="solid"
+              className="w-full"
+              disabled={submitting || items.length === 0 || !acceptedTerms}
+            >
               {submitting ? 'Redirecting…' : 'Pay with PayFast'}
             </Button>
             <p className="text-label text-muted">Single payment. Downloads unlock only after PayFast confirms payment.</p>
