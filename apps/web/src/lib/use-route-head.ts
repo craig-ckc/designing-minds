@@ -64,18 +64,8 @@ const functionalTitle = (pathname: string): string => {
 export function useRouteHead(snapshot: CmsSnapshot | null) {
   const { pathname } = useLocation()
 
-  // The storefront is an SPA after the first prerendered page. Send an
-  // explicit GA4 page_view for every client-side route change because the
-  // global config disables the automatic initial page_view to avoid a
-  // duplicate when React Router mounts.
-  useEffect(() => {
-    const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag
-    gtag?.('event', 'page_view', {
-      page_path: pathname,
-      page_location: window.location.href,
-      page_title: document.title,
-    })
-  }, [pathname])
+  // GTM's Google tag handles initial and history-change page views through
+  // GA4 enhanced measurement; sending them here would duplicate those events.
 
   useEffect(() => {
     const route = snapshot ? matchPath(pathname, snapshot) : null
