@@ -122,6 +122,8 @@ export type ListValueType =
   /** When the record's live copy last changed. */
   | 'publishedAt'
   | 'visibility'
+  /** A toggle field, shown as Yes / No. */
+  | 'boolean'
   | 'orderStatus'
   | 'paymentStatus'
   | 'count'

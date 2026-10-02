@@ -100,3 +100,25 @@ test('without edits, re-saving the current status (or re-queueing a Published re
   assert.equal(canSaveAs('queued', record({ status: 'archived' }), false), true)
   assert.equal(canSaveAs('archived', record({ status: 'published' }), false), true)
 })
+
+/* Featured is a toggle, not a status: it gets its own column and never rides
+   along in the Status cell. */
+
+test('the Status cell renders the status alone — no Featured tag folded in', async () => {
+  const { readFileSync } = await import('node:fs')
+  const table = readFileSync(new URL('../../apps/admin/src/components/workspace/RecordTable.tsx', import.meta.url), 'utf8')
+  const start = table.indexOf("case 'publish': {")
+  const end = table.indexOf('case ', start + 10)
+  assert.ok(start >= 0 && end > start)
+  assert.doesNotMatch(table.slice(start, end), /featured/i)
+})
+
+test('every collection with a featured toggle lists it as its own column, and only those', async () => {
+  const { collectionRegistry } = await import('../../apps/admin/src/cms/registry.ts')
+  for (const collection of collectionRegistry) {
+    const hasToggle = collection.fields.some((field) => field.key === 'featured')
+    const column = collection.listColumns.find((col) => col.key === 'featured')
+    assert.equal(Boolean(column), hasToggle, `${collection.id}: Featured column should exist iff the record has the toggle`)
+    if (column) assert.equal(column.valueType, 'boolean')
+  }
+})

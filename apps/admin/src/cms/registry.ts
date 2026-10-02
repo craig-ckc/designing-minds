@@ -23,6 +23,8 @@ const STATUS_OPTIONS: FieldOption[] = [
 ]
 const STATUS_FIELD = { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS } as const
 const STATUS_FILTER = { key: 'status', label: 'Status', options: STATUS_OPTIONS }
+/** Featured is a toggle, not a status — its own column, never part of the Status cell. */
+const FEATURED_COLUMN = { key: 'featured', label: 'Featured', width: '100px', valueType: 'boolean' } as const
 
 const boolOptions = (on: string, off: string): FieldOption[] => [
   { label: on, value: 'true' },
@@ -104,6 +106,7 @@ const products: AdminCollection = {
     { key: 'term', label: 'Term', width: '110px' },
     { key: 'resourceFormat', label: 'Format', width: '160px' },
     { key: 'priceZar', label: 'Price', width: '120px', align: 'right', valueType: 'currency' },
+    FEATURED_COLUMN,
     { key: 'publishedAt', label: 'Live since', width: '150px', valueType: 'publishedAt' },
     { key: 'status', label: 'Status', width: '170px', valueType: 'publish' },
   ],
@@ -205,6 +208,7 @@ const bundles: AdminCollection = {
     { key: 'term', label: 'Term', width: '110px' },
     { key: 'includedProductIds', label: 'Items', width: '90px', valueType: 'count' },
     { key: 'priceZar', label: 'Price', width: '120px', align: 'right', valueType: 'currency' },
+    FEATURED_COLUMN,
     { key: 'publishedAt', label: 'Live since', width: '150px', valueType: 'publishedAt' },
     { key: 'status', label: 'Status', width: '170px', valueType: 'publish' },
   ],
@@ -281,6 +285,7 @@ const testimonials: AdminCollection = {
     { key: 'customerName', label: 'Customer', width: 'minmax(180px, 1fr)' },
     { key: 'quote', label: 'Quote', width: 'minmax(240px, 2fr)' },
     { key: 'learnerGrade', label: 'Grade', width: '110px' },
+    FEATURED_COLUMN,
     { key: 'publishedAt', label: 'Live since', width: '150px', valueType: 'publishedAt' },
     { key: 'status', label: 'Status', width: '170px', valueType: 'publish' },
   ],

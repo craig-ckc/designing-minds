@@ -159,12 +159,9 @@ function renderCell(record: AdminRecord, column: ListColumn, site: SiteStatus): 
     case 'publish': {
       const state = publishState(record, site)
       return (
-        <span className="flex gap-2">
-          <Pill tone={PUBLISH_STATE_TONE[state]} title={publishStateHint(record, site)}>
-            {PUBLISH_STATE_LABEL[state]}
-          </Pill>
-          {record.featured ? <Pill tone="outline">Featured</Pill> : null}
-        </span>
+        <Pill tone={PUBLISH_STATE_TONE[state]} title={publishStateHint(record, site)}>
+          {PUBLISH_STATE_LABEL[state]}
+        </Pill>
       )
     }
 
@@ -174,6 +171,11 @@ function renderCell(record: AdminRecord, column: ListColumn, site: SiteStatus): 
       if (!isLive(record)) return <span className="text-muted">Not on site</span>
       return text(formatStamp(typeof value === 'string' ? value : undefined))
     }
+
+    /* A toggle field. Its own column, never folded into another cell: Featured
+       is not a status, and a cell should answer one question. */
+    case 'boolean':
+      return value ? text('Yes') : <span className="text-muted">No</span>
 
     case 'visibility': {
       const on = Boolean(value)
