@@ -1,9 +1,11 @@
+import { promotionValidation } from '../lib/promotions.ts'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type {
   Bundle,
   CmsRepository,
   CmsSnapshot,
   ContactSubmission,
+  Coupon,
   Customer,
   DeletableCollection,
   Faq,
@@ -41,6 +43,7 @@ const TABLES = {
   formContact: 'form_contact',
   formNewsletter: 'form_newsletter',
   valueLists: 'value_lists',
+  coupons: 'coupons',
   slugRedirects: 'active_slug_redirects',
 } as const
 
@@ -101,16 +104,19 @@ const rowsToValueLists = (rows: ValueListRow[] | null): ValueLists =>
     DEFAULT_VALUE_LISTS,
   ) as ValueLists
 
-const numberizeProduct = (product: Product): Product => ({ ...product, priceZar: Number(product.priceZar) })
+const numberizeProduct = (product: Product): Product => ({ ...product, priceZar: Number(product.priceZar), salePriceZar: product.salePriceZar == null ? null : Number(product.salePriceZar) })
 const numberizeBundle = (bundle: Bundle): Bundle => ({
   ...bundle,
   priceZar: Number(bundle.priceZar),
+  salePriceZar: bundle.salePriceZar == null ? null : Number(bundle.salePriceZar),
   includedProductIds: bundle.includedProductIds ?? [],
   includedProductSlugs: bundle.includedProductSlugs ?? [],
 })
 const numberizeOrder = (order: Order): Order => ({
   ...order,
   totalZar: Number(order.totalZar),
+  subtotalZar: order.subtotalZar == null ? null : Number(order.subtotalZar),
+  discountZar: Number(order.discountZar ?? 0),
   items: order.items.map((item) => ({ ...item, priceZar: Number(item.priceZar) })),
 })
 const numberizePayment = (payment: Payment): Payment => ({ ...payment, amountZar: Number(payment.amountZar) })
@@ -212,7 +218,7 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
     mode: 'supabase',
     canWrite: audience === 'admin',
     async getSnapshot() {
-      const [products, bundles, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists] =
+      const [products, bundles, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists, coupons] =
         await Promise.all([
           client.from(productReadTable).select('*'),
           client.from(bundleReadTable).select(bundleSelect),
@@ -225,10 +231,11 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
           client.from(TABLES.formContact).select('*'),
           client.from(TABLES.formNewsletter).select('*'),
           client.from(TABLES.valueLists).select('*'),
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.coupons).select('*'),
         ])
 
       // Core tables must exist; any error is fatal.
-      const firstError = [products, bundles, faqs, testimonials, customers, orders, payments, valueLists].find((r) => r.error)
+      const firstError = [products, bundles, faqs, testimonials, customers, orders, payments, valueLists, coupons].find((r) => r.error)
       if (firstError?.error) {
         throw new Error(firstError.error.message)
       }
@@ -236,6 +243,7 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
       const base = {
         generatedAt: new Date().toISOString(),
         source: 'supabase',
+        ...(isPublic ? {} : { coupons: ((coupons.data as Coupon[] | null) ?? []).map((row) => ({ ...row, value: Number(row.value) })) }),
         valueLists: rowsToValueLists(valueLists.data as ValueListRow[] | null),
         products: ((products.data as Product[] | null) ?? []).map((row) => numberizeProduct(withoutLive(row))),
         bundles: (bundles.data ?? []).map((row) => numberizeBundle(toBundle(withoutLive(row as unknown as BundleRow)))),
@@ -289,6 +297,8 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
     },
 
     async saveProduct(product: Product) {
+      const problem = promotionValidation('products', product as unknown as Record<string, unknown>)
+      if (problem) throw new Error(problem)
       const res = await client.from(TABLES.products).upsert(writable(product)).select().single()
       if (res.error) throw new Error(res.error.message)
       return withoutLive(res.data as Product)
@@ -301,6 +311,8 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
      * Derived read-only fields never go back to the server.
      */
     async saveBundle(bundle: Bundle) {
+      const problem = promotionValidation('bundles', bundle as unknown as Record<string, unknown>)
+      if (problem) throw new Error(problem)
       const { includedProductIds, includedProductSlugs, ...row } = bundle
       const res = await client.from(TABLES.bundles).upsert(writable(row as Bundle)).select().single()
       if (res.error) throw new Error(res.error.message)
@@ -316,6 +328,14 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
         includedProductIds: includedProductIds ?? [],
         includedProductSlugs: includedProductSlugs ?? [],
       })
+    },
+    async saveCoupon(coupon: Coupon) {
+      const problem = promotionValidation('coupons', coupon as unknown as Record<string, unknown>)
+      if (problem) throw new Error(problem)
+      const row = stamped({ ...coupon, code: coupon.code.trim().toUpperCase() })
+      const res = await client.from(TABLES.coupons).upsert(row).select().single()
+      if (res.error) throw new Error(res.error.message)
+      return { ...res.data, value: Number(res.data.value) } as Coupon
     },
     async saveFaq(faq: Faq) {
       const res = await client.from(TABLES.faqs).upsert(writable(faq)).select().single()

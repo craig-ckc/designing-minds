@@ -154,6 +154,9 @@ export interface Product extends Publishable {
   shortDescription: string
   fullDescription: string
   priceZar: number
+  salePriceZar?: number | null
+  saleStartsAt?: string | null
+  saleEndsAt?: string | null
   grade: Grade
   term: Term
   year: string
@@ -192,6 +195,9 @@ export interface Bundle extends Publishable {
   shortDescription: string
   fullDescription: string
   priceZar: number
+  salePriceZar?: number | null
+  saleStartsAt?: string | null
+  saleEndsAt?: string | null
   grade: Grade
   term: Term
   year: string
@@ -210,6 +216,18 @@ export interface Bundle extends Publishable {
   includedProductIds: string[]
   /** Member product slugs, in the same order — the public snapshot keys on slug. */
   includedProductSlugs: string[]
+}
+
+export interface Coupon {
+  id: string
+  code: string
+  discountType: 'percentage' | 'fixed'
+  value: number
+  enabled: boolean
+  allowSaleItems: boolean
+  startsAt: string | null
+  expiresAt: string | null
+  updatedAt: string
 }
 
 export interface Faq extends Publishable {
@@ -285,6 +303,9 @@ export interface Order {
   status: OrderStatus
   items: OrderItem[]
   totalZar: number
+  subtotalZar?: number | null
+  discountZar?: number
+  couponCode?: string | null
   paymentId: string
   placedAt: string
 }
@@ -361,6 +382,8 @@ export interface CmsSnapshot {
   /** Newsletter signups (admin-only; empty in the public snapshot). */
   formNewsletter: NewsletterSubmission[]
   stats: CmsStats
+  /** Admin only: discount codes never enter public build data. */
+  coupons?: Coupon[]
 }
 
 /* -------------------------------- Repository --------------------------- */
@@ -387,6 +410,7 @@ export interface CmsRepository {
    * — the browser admin has no transaction of its own.
    */
   saveBundle: (bundle: Bundle) => Promise<Bundle>
+  saveCoupon: (coupon: Coupon) => Promise<Coupon>
   saveFaq: (faq: Faq) => Promise<Faq>
   saveTestimonial: (testimonial: Testimonial) => Promise<Testimonial>
   /**

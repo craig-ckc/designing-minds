@@ -30,3 +30,5 @@ export const createCmsRepository = ({
     audience,
   })
 }
+
+export * from './lib/promotions'

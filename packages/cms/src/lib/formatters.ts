@@ -1,3 +1,4 @@
+import { promotionPrice } from './promotions.ts'
 import type {
   Bundle,
   CmsSnapshot,
@@ -13,7 +14,8 @@ export const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-ZA', {
     style: 'currency',
     currency: 'ZAR',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(amount)
 
 export const priceLabel = (amount: number) => formatCurrency(amount)
@@ -126,7 +128,7 @@ export const bundleTiers = (snapshot: CmsSnapshot): BundleTier[] => {
       title,
       // The real cheapest, not a hardcoded marketing number — the fallback
       // only covers a tier whose bundles are all unpriced.
-      fromPriceZar: Math.min(...subset.map((bundle) => bundle.priceZar)) || fallbackPriceZar,
+      fromPriceZar: Math.min(...subset.map((bundle) => promotionPrice(bundle))) || fallbackPriceZar,
       gradeCount: new Set(subset.map((bundle) => bundle.grade)).size,
       featured: scope === 'Full Year',
     })
@@ -143,13 +145,13 @@ export const productsForGrade = (snapshot: CmsSnapshot, grade: string) =>
 export const bundlesForGrade = (snapshot: CmsSnapshot, grade: string) =>
   publishedBundles(snapshot)
     .filter((bundle) => bundle.grade === grade)
-    .sort((a, b) => a.priceZar - b.priceZar)
+    .sort((a, b) => promotionPrice(a) - promotionPrice(b))
 
 /** The published bundles that include a given resource, cheapest first. */
 export const bundlesContaining = (snapshot: CmsSnapshot, product: Product) =>
   publishedBundles(snapshot)
     .filter((bundle) => bundle.includedProductSlugs.includes(product.slug))
-    .sort((a, b) => a.priceZar - b.priceZar)
+    .sort((a, b) => promotionPrice(a) - promotionPrice(b))
 
 export interface BundleValue {
   /** Included resources that are published and priced. */
@@ -177,8 +179,8 @@ export interface BundleValue {
 export const bundleValue = (snapshot: CmsSnapshot, bundle: Bundle): BundleValue | null => {
   const included = getProductsBySlugs(snapshot, bundle.includedProductSlugs).filter((p) => p.published)
   if (included.length === 0) return null
-  const singlesTotalZar = included.reduce((total, entry) => total + entry.priceZar, 0)
-  const savingZar = Math.max(0, singlesTotalZar - bundle.priceZar)
+  const singlesTotalZar = included.reduce((total, entry) => total + promotionPrice(entry), 0)
+  const savingZar = Math.max(0, singlesTotalZar - promotionPrice(bundle))
   return {
     itemCount: included.length,
     singlesTotalZar,
