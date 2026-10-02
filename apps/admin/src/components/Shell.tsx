@@ -10,7 +10,6 @@ import { useAdminAuth } from '../lib/auth'
 import { useUnsavedChanges } from '../lib/unsaved'
 import { CollectionSidebar } from './workspace/CollectionSidebar'
 import { ErrorBoundary } from './ErrorBoundary'
-import { Icon } from './ui'
 import { Avatar, Button, ConfirmDialog, Menu, MenuItem, MenuLabel, MenuSeparator } from './primitives'
 import { PublishButton } from './PublishButton'
 
@@ -54,7 +53,7 @@ function AdminBreadcrumb({ snapshot }: { snapshot: CmsSnapshot | null }) {
   )
 }
 
-function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
+function TopBar({ snapshot, onPublished }: { snapshot: CmsSnapshot | null; onPublished: () => void }) {
   const { session, logout } = useAdminAuth()
   const unsaved = useUnsavedChanges()
   const [confirmLogout, setConfirmLogout] = useState(false)
@@ -88,21 +87,7 @@ function TopBar({ snapshot }: { snapshot: CmsSnapshot | null }) {
           <span className={cn(CHIP_DASHED, 'hidden sm:inline-flex')}>Read only</span>
         ) : null}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          nativeButton={false}
-          render={
-            <a href={import.meta.env.VITE_WEB_URL ?? 'http://localhost:5173'} target="_blank" rel="noreferrer" />
-          }
-        >
-          Preview
-          <span className="size-4">
-            <Icon name="external" />
-          </span>
-        </Button>
-
-        {repository.canWrite ? <PublishButton snapshot={snapshot} /> : null}
+        {repository.canWrite ? <PublishButton snapshot={snapshot} onPublished={onPublished} /> : null}
 
         <Menu
           trigger={
@@ -147,15 +132,18 @@ export function Shell({
   snapshot,
   message,
   error,
+  onPublished,
 }: {
   children: ReactNode
   snapshot: CmsSnapshot | null
   message: string | null
   error: string | null
+  /** Publishing changes record statuses server-side; the caller reloads them. */
+  onPublished: () => void
 }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <TopBar snapshot={snapshot} />
+      <TopBar snapshot={snapshot} onPublished={onPublished} />
       <div className="flex min-h-0 flex-1">
         <aside className="hidden w-pane flex-none border-r border-line bg-surface lg:block">
           {snapshot ? <CollectionSidebar snapshot={snapshot} /> : null}

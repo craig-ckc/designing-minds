@@ -289,8 +289,7 @@ test('while selecting, Cancel is reachable with nothing selected, and Export/Del
   // Everything destructive or export-like lives inside the gated block...
   assert.match(gatedBlock, /onClick=\{onExport\}/)
   assert.match(gatedBlock, /onClick=\{onDelete\}/)
-  assert.match(gatedBlock, /onBulkStatus\(true\)/)
-  assert.match(gatedBlock, /onBulkStatus\(false\)/)
+  assert.match(gatedBlock, /onBulkStatus\(choice\.status\)/)
 
   // ...while Cancel sits outside it, in the remainder of the selecting branch,
   // so it renders no matter how many rows are selected.

@@ -212,9 +212,9 @@ export function LoadingScreen({ label = 'Loading the workspace' }: { label?: str
 }
 
 /** Indeterminate progress ring. Static for anyone who asked for less motion. */
-export function Spinner({ className = 'size-6' }: { className?: string }) {
+export function Spinner({ className = 'size-6 text-primary' }: { className?: string }) {
   return (
-    <svg aria-hidden viewBox="0 0 24 24" className={`animate-spin text-primary motion-reduce:animate-none ${className}`}>
+    <svg aria-hidden viewBox="0 0 24 24" className={`animate-spin motion-reduce:animate-none ${className}`}>
       <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2.5" />
       <path
         d="M21.5 12A9.5 9.5 0 0 0 12 2.5"

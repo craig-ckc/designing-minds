@@ -15,6 +15,7 @@ import { RecordTable } from '../components/workspace/RecordTable'
 import { ImportDialog } from '../components/workspace/ImportDialog'
 import { RecordEditor } from '../components/editor/RecordEditor'
 import { cn, STATUSBAR } from '../design'
+import { recordStatus, type SaveStatus } from '../cms/publish-state'
 
 type SaveFn = (collection: AdminCollection, record: AdminRecord) => Promise<AdminRecord | null>
 
@@ -59,7 +60,7 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
   // Deleting needs more than write access: the repository only has tables for
   // the four content collections, and operational records are history.
   const deletable = editable && isDeletable(collection.id)
-  const bulkStatusAvailable = Boolean(editable && collection.statusField && collection.statusLabels)
+  const bulkStatusAvailable = Boolean(editable && collection.statusField)
 
   /**
    * The bar's heading while selecting. It replaces the collection name, so it
@@ -117,15 +118,17 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
       return next
     })
 
-  const bulkSetStatus = async (on: boolean) => {
+  const bulkSetStatus = async (status: SaveStatus) => {
     const statusField = collection.statusField
     if (!statusField) return
     setBulkBusy(true)
     try {
       for (const record of records) {
         if (!selected.has(record.id)) continue
-        if (Boolean(getPath(record, statusField)) === on) continue
-        await onSave(collection, setPath(record, statusField, on))
+        const current = recordStatus(record)
+        // Queueing something already Published (unchanged) would publish nothing.
+        if (current === status || (status === 'queued' && current === 'published')) continue
+        await onSave(collection, setPath(record, statusField, status))
       }
     } finally {
       setBulkBusy(false)
@@ -198,8 +201,7 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
           onCancelSelecting={cancelSelecting}
           onExport={exportCsv}
           onDelete={deletable ? () => setConfirmDelete(true) : undefined}
-          onBulkStatus={bulkStatusAvailable ? (on) => void bulkSetStatus(on) : undefined}
-          statusLabels={bulkStatusAvailable ? collection.statusLabels : undefined}
+          onBulkStatus={bulkStatusAvailable ? (status) => void bulkSetStatus(status) : undefined}
           busy={bulkBusy}
           onImport={editable ? () => setImportOpen(true) : undefined}
           onNew={editable ? createNew : undefined}
@@ -265,6 +267,7 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
             initial={initial}
             isNew={recordId === 'new'}
             records={records}
+            stored={recordId === 'new' ? undefined : records.find((record) => record.id === recordId)}
             ctx={ctx}
             saving={saving}
             onSave={onSave}
@@ -287,6 +290,7 @@ function RecordEditorPane({
   initial,
   isNew,
   records,
+  stored,
   ctx,
   saving,
   onSave,
@@ -299,6 +303,8 @@ function RecordEditorPane({
   /** Straight from the URL: `/collection/new` has nothing on the server yet. */
   isNew: boolean
   records: AdminRecord[]
+  /** The record as currently stored (snapshot), which can change underneath — e.g. a publish. */
+  stored: AdminRecord | undefined
   ctx: ReturnType<typeof buildFieldContext>
   saving: boolean
   onSave: SaveFn
@@ -314,6 +320,19 @@ function RecordEditorPane({
   const [justSaved, setJustSaved] = useState(false)
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(baseline)
+  // A publish (or a background upload) can change the stored record while it
+  // is open. With no edits in progress, follow it — otherwise the header would
+  // keep saying "Queued" about a record that is now Published. With edits in
+  // progress, keep them; the next save decides.
+  const [followed, setFollowed] = useState(stored)
+  if (stored && stored !== followed) {
+    setFollowed(stored)
+    if (!dirty) {
+      setDraft({ ...stored })
+      setBaseline({ ...stored })
+    }
+  }
+
   // Ref mirror so the navigation blocker sees post-save state immediately,
   // before React re-renders (persist() resets it right before navigating).
   const dirtyRef = useRef(false)
@@ -420,15 +439,14 @@ function RecordEditorPane({
   }, [justSaved])
 
   /**
-   * Status changes edit the draft like any other field instead of writing
-   * immediately. The old behaviour saved the *entire* draft on toggle, quietly
-   * committing unrelated edits the user hadn't chosen to save yet.
+   * Every save names a status, so "saved" can never be mistaken for "live":
+   * Queue for publish, Save as draft, or Archive. The status is written with
+   * the edits in one save — it is the save.
    */
-  const handleSetStatus = (next: boolean) => {
+  const saveAs = (status: SaveStatus) => {
     if (!collection.statusField) return
-    if (Boolean(getPath(draft, collection.statusField)) === next) return
     setJustSaved(false)
-    setDraft((current) => setPath(current, collection.statusField as string, next))
+    void persist(setPath(draft, collection.statusField, status))
   }
 
   /**
@@ -444,7 +462,7 @@ function RecordEditorPane({
     copy = setPath(copy, collection.titleField, title)
     // Never goes live on its own — a duplicate is a starting point to edit,
     // not a second publish of the original.
-    if (collection.statusField) copy = setPath(copy, collection.statusField, false)
+    if (collection.statusField) copy = setPath(copy, collection.statusField, 'draft')
     if (slugKey) copy = setPath(copy, slugKey, uniqueSlug(title, slugKey, records, copy.id))
     void persist(copy)
   }
@@ -464,7 +482,7 @@ function RecordEditorPane({
         ctx={ctx}
         onUpdate={updateValue}
         onSave={() => void persist(draft)}
-        onSetStatus={handleSetStatus}
+        onSaveAs={saveAs}
         onDuplicate={duplicateRecord}
         onDelete={deleteThisRecord}
         isNew={isNew}

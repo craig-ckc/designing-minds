@@ -117,9 +117,9 @@ export type ListValueType =
   | 'text'
   | 'currency'
   | 'date'
-  /** Publish state: the record's flag combined with whether the site is current. */
+  /** Publish state: the record's status combined with whether the site is current. */
   | 'publish'
-  /** When the live site last carried this record's current content. */
+  /** When the record's live copy last changed. */
   | 'publishedAt'
   | 'visibility'
   | 'orderStatus'
@@ -177,10 +177,12 @@ export type AdminCollection = {
   titleField: string
   /** Field key shown as the secondary label in the record list pane. */
   subtitleField?: string
-  /** Boolean field that drives the Published/Draft (or Visible/Hidden) status. */
+  /**
+   * Field holding the publish-workflow status (draft / queued / published /
+   * archived — see cms/publish-state.ts). Collections with one save through
+   * the header's status choices instead of a plain Save.
+   */
   statusField?: string
-  /** Two-state status vocabulary for the header pill + toggle. */
-  statusLabels?: { on: string; off: string; verbOn: string; verbOff: string }
   /** Read-only collections (operations) have no create/save/upload. */
   readOnly?: boolean
   /** Field keys searched by the toolbar search box. */

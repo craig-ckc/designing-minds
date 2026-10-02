@@ -28,6 +28,11 @@ function App() {
 
   const adapter = useMemo(() => createAdminAdapter(repository), [])
 
+  // Bumped after a publish: the server moved records Queued → Published, so
+  // the snapshot is re-read rather than patched locally.
+  const [reloadKey, setReloadKey] = useState(0)
+  const reloadSnapshot = useCallback(() => setReloadKey((key) => key + 1), [])
+
   useEffect(() => {
     if (!session || !isAdmin) return
     let cancelled = false
@@ -46,7 +51,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [isAdmin, session])
+  }, [isAdmin, session, reloadKey])
 
   const saveRecord = useCallback(
     async (collection: AdminCollection, record: AdminRecord): Promise<AdminRecord | null> => {
@@ -160,7 +165,7 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [message])
 
-  const shellProps = { message, error }
+  const shellProps = { message, error, onPublished: reloadSnapshot }
 
   // Checking the session and loading the content are two requests but one wait,
   // so they share one screen — see the `!snapshot` branch below.

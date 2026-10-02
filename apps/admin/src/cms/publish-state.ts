@@ -1,60 +1,50 @@
 /* -------------------------------------------------------------------------
    Publish state — the one place that decides what a record's status word is.
 
-   Three statuses, and only ONE of them is a choice:
+   Every editable record carries `status`, the editor's intent, and the
+   database keeps a separate LIVE copy that the website, cart and checkout
+   serve (see supabase/patch/2026-10-01-publish-workflow.sql):
 
-     Published    the record is on the deployed site, and what the admin shows
-                  is what the site is serving
-     Draft        it has been saved since the site was last built, so the admin
-                  and the site currently disagree — derived, never set by hand
-     Unpublished  deliberately not on the site. If it was live, the next site
-                  publish removes it
+     Draft      being worked on. The site keeps serving the live copy, if any,
+                and never picks this version up.
+     Queued     ready. The next Publish makes this the live copy.
+     Published  the live copy is this content. Only Publish sets it.
+     Archived   kept, but off the site. The next Publish removes the live copy.
 
-   `published` (the record's own flag) picks between Published and Unpublished.
-   Draft is what you get when a published record has changes the site hasn't
-   picked up yet, which is why it can't be chosen: it describes a fact about the
-   deployment, not an intention.
+   Saving always picks one of Draft / Queued / Archived — there is no plain
+   "Save". Publishing (the top-bar button) is the only thing that changes
+   what's live, so "is it on the site?" never depends on remembering to press
+   two buttons in the right order.
 
-   There is deliberately no "hold these changes back" state. Doing that
-   honestly would mean storing the currently-live copy of every record so the
-   build had something older to publish, and we don't keep one — the site is
-   always rebuilt from current CMS data. So a saved change always goes out on
-   the next publish, and Draft is simply "not out yet".
+   One derived word on top: Publishing — Published in the database (so already
+   live in the cart and checkout) but the static pages haven't been rebuilt
+   with it yet. That's the window while a build runs, or after a failed one.
 
-   Consumed by RecordTable (Status column), RecordEditor (header) and
-   PublishButton (how many changes are waiting), so all three always agree.
+   Consumed by RecordTable, RecordEditor and PublishButton so all three agree.
    ------------------------------------------------------------------------- */
 
+import type { ContentStatus } from '@designing-minds/cms'
 import type { SiteBuild } from '../lib/site-build'
-import type { AdminCollection, AdminRecord } from './types'
-import { getPath } from './record'
+import type { AdminRecord } from './types'
+import { getPath } from './record.ts'
 
-/** Field every editable collection stamps on save. */
-export const UPDATED_AT_KEY = 'updatedAt'
+/** The record key every editable collection keeps its status in. */
+export const STATUS_KEY = 'status'
 
-export type PublishState =
-  /** On the deployed site, and current with it. */
-  | 'published'
-  /** Saved since the site was last built — the change is not live yet. */
-  | 'draft'
-  /** Not on the site; a publish removes it if it was. */
-  | 'unpublished'
-  /**
-   * Published, but the site's build stamp couldn't be read, so we can't tell
-   * Published from Draft. Shown as Published with the caveat in its tooltip —
-   * never as a fourth status the user has to learn.
-   */
-  | 'unverified'
+export const CONTENT_STATUSES: readonly ContentStatus[] = ['draft', 'queued', 'published', 'archived']
+
+/** The status an editor can save with. Published is reached by publishing, never chosen. */
+export type SaveStatus = Exclude<ContentStatus, 'published'>
+
+export type PublishState = ContentStatus | 'publishing'
 
 /** What the admin knows about the deployed website right now. */
 export interface SiteStatus {
   /** The live site's own build stamp, or null when it couldn't be read. */
   build: SiteBuild | null
-  /** When a rebuild was last requested from this session (ISO), if still in flight. */
-  publishRequestedAt: string | null
 }
 
-export const UNKNOWN_SITE: SiteStatus = { build: null, publishRequestedAt: null }
+export const UNKNOWN_SITE: SiteStatus = { build: null }
 
 /** Parse an ISO timestamp to millis. Blank/invalid values return null, never NaN. */
 function time(value: unknown): number | null {
@@ -63,57 +53,121 @@ function time(value: unknown): number | null {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+/** The record's stored status. Anything unrecognised reads as Draft — the safe guess. */
+export function recordStatus(record: AdminRecord): ContentStatus {
+  const value = getPath(record, STATUS_KEY)
+  return CONTENT_STATUSES.includes(value as ContentStatus) ? (value as ContentStatus) : 'draft'
+}
+
+/** True while the record has a live copy on the site (maintained by publishing). */
+export function isLive(record: AdminRecord): boolean {
+  return Boolean(getPath(record, 'published'))
+}
+
+/** The next Publish would change this record on the site. */
+export function needsPublish(record: AdminRecord): boolean {
+  const status = recordStatus(record)
+  return status === 'queued' || (status === 'archived' && isLive(record))
+}
+
 /**
- * True when the record has been saved since the deployed build read the CMS —
- * i.e. a publish is needed for the site to match the CMS.
- *
- * Deliberately ignores the status flag: *unpublishing* an item also needs a
- * rebuild before it disappears from the site, and that's the case where being
- * wrong leaves stale content public.
+ * The live copy changed after the deployed site read the CMS: the cart and
+ * checkout already have it, the static pages don't. Unknown site stamp → false;
+ * we only claim a rebuild is needed on evidence.
  */
-export function needsPublish(record: AdminRecord, site: SiteStatus): boolean {
-  const updated = time(getPath(record, UPDATED_AT_KEY))
+export function needsRebuild(record: AdminRecord, site: SiteStatus): boolean {
+  const changed = time(getPath(record, 'publishedAt'))
   const content = time(site.build?.contentAt)
-  if (updated === null || content === null) return false
-  return updated > content
+  if (changed === null || content === null) return false
+  return changed > content
 }
 
 /** The status word for one record, given what we know about the live site. */
-export function publishState(collection: AdminCollection, record: AdminRecord, site: SiteStatus): PublishState {
-  if (collection.statusField && !getPath(record, collection.statusField)) return 'unpublished'
-
-  const updated = time(getPath(record, UPDATED_AT_KEY))
-  const content = time(site.build?.contentAt)
-  // No stamp on either side — we can only vouch for the record, not the site.
-  if (updated === null || content === null) return 'unverified'
-  return updated <= content ? 'published' : 'draft'
+export function publishState(record: AdminRecord, site: SiteStatus): PublishState {
+  const status = recordStatus(record)
+  if (status === 'published' && needsRebuild(record, site)) return 'publishing'
+  return status
 }
 
 export type StateTone = 'solid' | 'outline' | 'muted' | 'warn' | 'info' | 'success'
 
 export const PUBLISH_STATE_LABEL: Record<PublishState, string> = {
-  published: 'Published',
   draft: 'Draft',
-  unpublished: 'Unpublished',
-  unverified: 'Published',
+  queued: 'Queued',
+  publishing: 'Publishing',
+  published: 'Published',
+  archived: 'Archived',
 }
 
 export const PUBLISH_STATE_TONE: Record<PublishState, StateTone> = {
+  draft: 'outline',
+  queued: 'warn',
+  publishing: 'info',
   published: 'success',
-  draft: 'warn',
-  unpublished: 'muted',
-  unverified: 'outline',
+  archived: 'muted',
 }
 
-/** Longer explanation, used as the title/tooltip on the status. */
-export const PUBLISH_STATE_HINT: Record<PublishState, string> = {
-  published: 'Live on the website.',
-  draft: 'Saved, but not on the website yet — publish the site to push it live.',
-  unpublished: 'Not on the website. The next site publish removes it if it was live.',
-  unverified: "Published in the CMS. The website's build stamp couldn't be read, so freshness is unconfirmed.",
+/** Longer explanation, used as the tooltip on the status. Depends on whether a live copy exists. */
+export function publishStateHint(record: AdminRecord, site: SiteStatus): string {
+  const live = isLive(record)
+  switch (publishState(record, site)) {
+    case 'draft':
+      return live
+        ? 'Draft. The website keeps showing the last published version until you queue this one and publish.'
+        : 'Draft. Not on the website.'
+    case 'queued':
+      return live
+        ? 'Queued. Replaces the version on the website at the next publish.'
+        : 'Queued. Goes on the website at the next publish.'
+    case 'publishing':
+      return 'Live in the shop; the website pages are still being rebuilt with it.'
+    case 'published':
+      return 'Published. The website shows exactly this.'
+    case 'archived':
+      return live ? 'Archived. Still on the website until the next publish removes it.' : 'Archived. Not on the website.'
+  }
 }
 
-/** How many of these records are waiting for a site publish. */
-export function countPendingPublish(records: AdminRecord[], site: SiteStatus): number {
-  return records.reduce((count, record) => (needsPublish(record, site) ? count + 1 : count), 0)
+/** How many of these records the next Publish would change. */
+export function countPendingPublish(records: AdminRecord[]): number {
+  return records.reduce((count, record) => (needsPublish(record) ? count + 1 : count), 0)
+}
+
+/* ------------------------------ Save choices --------------------------- */
+
+export interface SaveChoice {
+  status: SaveStatus
+  label: string
+  description: string
+}
+
+/** The three ways to save, in menu order. Queue is first: it's the common case. */
+export const SAVE_CHOICES: readonly SaveChoice[] = [
+  {
+    status: 'queued',
+    label: 'Queue for publish',
+    description: 'Save, and include it in the next publish.',
+  },
+  {
+    status: 'draft',
+    label: 'Save as draft',
+    description: 'Save, but keep it off the website. Anything already live stays as it is.',
+  },
+  {
+    status: 'archived',
+    label: 'Archive',
+    description: 'Save, and take it off the website at the next publish. Nothing is deleted.',
+  },
+]
+
+/**
+ * Whether saving with `status` would do anything. With no edits, choosing the
+ * status the record already has is a no-op, and queueing an unchanged
+ * Published record would publish nothing.
+ */
+export function canSaveAs(status: SaveStatus, record: AdminRecord, dirty: boolean): boolean {
+  if (dirty) return true
+  const current = recordStatus(record)
+  if (status === 'queued') return current !== 'queued' && current !== 'published'
+  return current !== status
 }

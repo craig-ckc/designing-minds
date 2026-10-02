@@ -11,13 +11,18 @@
 import type { AdminCollection, FieldOption } from './types'
 
 /**
- * Status vocabulary for the header control.
- *
- * `off` is "Unpublished", NOT "Draft": Draft is the derived state of a
- * published record whose saved changes the site hasn't picked up yet, so using
- * it for the off-state would make two different things share one word.
+ * The publish-workflow status (see cms/publish-state.ts). The editor header
+ * owns it — saving always picks one — so it appears in `fields` (for filters
+ * and CSV import/export) but in no section.
  */
-const PUBLISH_LABELS = { on: 'Published', off: 'Unpublished', verbOn: 'Publish', verbOff: 'Unpublish' }
+const STATUS_OPTIONS: FieldOption[] = [
+  { label: 'Draft', value: 'draft' },
+  { label: 'Queued', value: 'queued' },
+  { label: 'Published', value: 'published' },
+  { label: 'Archived', value: 'archived' },
+]
+const STATUS_FIELD = { key: 'status', label: 'Status', type: 'select', options: STATUS_OPTIONS } as const
+const STATUS_FILTER = { key: 'status', label: 'Status', options: STATUS_OPTIONS }
 
 const boolOptions = (on: string, off: string): FieldOption[] => [
   { label: on, value: 'true' },
@@ -34,14 +39,13 @@ const products: AdminCollection = {
   group: 'Catalogue',
   titleField: 'title',
   subtitleField: 'resourceFormat',
-  statusField: 'published',
-  statusLabels: PUBLISH_LABELS,
+  statusField: 'status',
   searchFields: ['title'],
   filters: [
     { key: 'grade', label: 'Grade', valueList: 'grades' },
     { key: 'term', label: 'Term', valueList: 'terms' },
     { key: 'resourceFormat', label: 'Format', valueList: 'resourceFormats' },
-    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
+    STATUS_FILTER,
   ],
   fields: [
     { key: 'title', label: 'Name', type: 'text', required: true },
@@ -51,7 +55,7 @@ const products: AdminCollection = {
 
     { key: 'priceZar', label: 'Price (ZAR)', type: 'number' },
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
-    { key: 'published', label: 'Published', type: 'boolean' },
+    STATUS_FIELD,
     { key: 'featured', label: 'Featured', type: 'boolean' },
 
     { key: 'resourceFormat', label: 'Resource format', type: 'select', valueList: 'resourceFormats', required: true },
@@ -72,9 +76,8 @@ const products: AdminCollection = {
   ],
   sections: [
     { title: 'Basic info', fields: ['title', 'slug', 'shortDescription', 'fullDescription'] },
-    /* `published` is deliberately absent from every section below: the editor
-       header owns it via the status menu. It stays in `fields` because filters
-       and CSV import/export still address it by key. */
+    /* `status` is deliberately absent from every section below: the editor
+       header owns it — every save picks one. */
     { title: 'Pricing & visibility', fields: ['priceZar', 'sortOrder', 'featured'] },
     { title: 'Classification', fields: ['resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects'] },
     {
@@ -101,8 +104,8 @@ const products: AdminCollection = {
     { key: 'term', label: 'Term', width: '110px' },
     { key: 'resourceFormat', label: 'Format', width: '160px' },
     { key: 'priceZar', label: 'Price', width: '120px', align: 'right', valueType: 'currency' },
-    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
-    { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
+    { key: 'publishedAt', label: 'Live since', width: '150px', valueType: 'publishedAt' },
+    { key: 'status', label: 'Status', width: '170px', valueType: 'publish' },
   ],
 }
 
@@ -120,8 +123,7 @@ const bundles: AdminCollection = {
   group: 'Catalogue',
   titleField: 'title',
   subtitleField: 'bundleScope',
-  statusField: 'published',
-  statusLabels: PUBLISH_LABELS,
+  statusField: 'status',
   searchFields: ['title'],
   filters: [
     { key: 'grade', label: 'Grade', valueList: 'grades' },
@@ -134,7 +136,7 @@ const bundles: AdminCollection = {
         { label: 'Full Year', value: 'Full Year' },
       ],
     },
-    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
+    STATUS_FILTER,
   ],
   fields: [
     { key: 'title', label: 'Name', type: 'text', required: true },
@@ -144,6 +146,7 @@ const bundles: AdminCollection = {
 
     { key: 'priceZar', label: 'Price (ZAR)', type: 'number' },
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
+    STATUS_FIELD,
     { key: 'featured', label: 'Featured', type: 'boolean' },
 
     {
@@ -202,8 +205,8 @@ const bundles: AdminCollection = {
     { key: 'term', label: 'Term', width: '110px' },
     { key: 'includedProductIds', label: 'Items', width: '90px', valueType: 'count' },
     { key: 'priceZar', label: 'Price', width: '120px', align: 'right', valueType: 'currency' },
-    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
-    { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
+    { key: 'publishedAt', label: 'Live since', width: '150px', valueType: 'publishedAt' },
+    { key: 'status', label: 'Status', width: '170px', valueType: 'publish' },
   ],
 }
 
@@ -222,27 +225,26 @@ const faqs: AdminCollection = {
   group: 'Catalogue',
   titleField: 'question',
   subtitleField: 'category',
-  statusField: 'published',
-  statusLabels: PUBLISH_LABELS,
+  statusField: 'status',
   searchFields: ['question'],
   filters: [
     { key: 'category', label: 'Category' },
-    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
+    STATUS_FILTER,
   ],
   fields: [
     { key: 'question', label: 'Question', type: 'text', required: true },
     { key: 'answer', label: 'Answer', type: 'textarea', required: true },
     { key: 'category', label: 'Category', type: 'text' },
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
-    { key: 'published', label: 'Published', type: 'boolean' },
+    STATUS_FIELD,
   ],
   sections: [{ title: 'Details', fields: ['question', 'answer', 'category', 'sortOrder'] }],
   listColumns: [
     { key: 'question', label: 'Question', width: 'minmax(280px, 2fr)' },
     { key: 'category', label: 'Category', width: '160px' },
     { key: 'sortOrder', label: 'Order', width: '90px' },
-    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
-    { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
+    { key: 'publishedAt', label: 'Live since', width: '150px', valueType: 'publishedAt' },
+    { key: 'status', label: 'Status', width: '170px', valueType: 'publish' },
   ],
 }
 
@@ -255,11 +257,10 @@ const testimonials: AdminCollection = {
   group: 'Catalogue',
   titleField: 'customerName',
   subtitleField: 'context',
-  statusField: 'published',
-  statusLabels: PUBLISH_LABELS,
+  statusField: 'status',
   searchFields: ['customerName'],
   filters: [
-    { key: 'published', label: 'Status', options: boolOptions('Published', 'Unpublished') },
+    STATUS_FILTER,
     { key: 'featured', label: 'Featured', options: boolOptions('Featured', 'Not featured') },
     { key: 'learnerGrade', label: 'Grade', valueList: 'grades' },
   ],
@@ -270,7 +271,7 @@ const testimonials: AdminCollection = {
     { key: 'learnerGrade', label: 'Learner grade', type: 'select', valueList: 'grades', allowEmpty: true, emptyLabel: 'Not specified', emptyValue: null },
     { key: 'sourceDate', label: 'Source date', type: 'date' },
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
-    { key: 'published', label: 'Published', type: 'boolean' },
+    STATUS_FIELD,
     { key: 'featured', label: 'Featured', type: 'boolean' },
   ],
   sections: [
@@ -280,8 +281,8 @@ const testimonials: AdminCollection = {
     { key: 'customerName', label: 'Customer', width: 'minmax(180px, 1fr)' },
     { key: 'quote', label: 'Quote', width: 'minmax(240px, 2fr)' },
     { key: 'learnerGrade', label: 'Grade', width: '110px' },
-    { key: 'updatedAt', label: 'Published', width: '150px', valueType: 'publishedAt' },
-    { key: 'published', label: 'Status', width: '170px', valueType: 'publish' },
+    { key: 'publishedAt', label: 'Live since', width: '150px', valueType: 'publishedAt' },
+    { key: 'status', label: 'Status', width: '170px', valueType: 'publish' },
   ],
 }
 

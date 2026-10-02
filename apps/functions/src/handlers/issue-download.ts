@@ -22,7 +22,7 @@ interface OrderRow {
 interface BundleRow {
   id: string
   slug: string
-  bundle_products: { products: Product | null }[] | null
+  bundle_products: { products: ProductRow | null }[] | null
 }
 
 function isDownloadInput(value: unknown): value is DownloadInput {
@@ -30,9 +30,20 @@ function isDownloadInput(value: unknown): value is DownloadInput {
   return typeof value === 'object' && value !== null && typeof v.orderId === 'string' && typeof v.fileId === 'string'
 }
 
-const findFile = (products: Product[], fileId: string): ProductFile | null => {
+/** A product row as read with the service key: the working copy plus its live copy. */
+type ProductRow = Product & { live?: { purchasedFiles?: ProductFile[] } | null }
+
+/**
+ * The files a buyer is served: the PUBLISHED ones. An editor replacing a file
+ * in a Draft must not hand that unpublished file to existing buyers. A product
+ * with no live copy (archived after purchase) falls back to its working files
+ * — retired products still owe their buyers downloads.
+ */
+const servedFiles = (product: ProductRow): ProductFile[] => product.live?.purchasedFiles ?? product.purchasedFiles
+
+const findFile = (products: ProductRow[], fileId: string): ProductFile | null => {
   for (const product of products) {
-    const file = product.purchasedFiles.find((entry) => entry.id === fileId)
+    const file = servedFiles(product).find((entry) => entry.id === fileId)
     if (file) return file
   }
   return null
@@ -75,8 +86,8 @@ export const issueDownload: Handler = async (req) => {
     if (purchasedProducts.error) throw new Error(purchasedProducts.error.message)
     if (purchasedBundles.error) throw new Error(purchasedBundles.error.message)
 
-    const entitled = new Map<string, Product>()
-    for (const product of (purchasedProducts.data ?? []) as Product[]) {
+    const entitled = new Map<string, ProductRow>()
+    for (const product of (purchasedProducts.data ?? []) as ProductRow[]) {
       entitled.set(product.slug, product)
     }
 
@@ -84,7 +95,7 @@ export const issueDownload: Handler = async (req) => {
     for (const row of (purchasedBundles.data ?? []) as unknown as BundleRow[]) {
       const members = (row.bundle_products ?? [])
         .map((member) => member.products)
-        .filter((product): product is Product => Boolean(product))
+        .filter((product): product is ProductRow => Boolean(product))
 
       // Route through the shared rule rather than trusting the join directly,
       // so the account UI and this endpoint can never drift apart.

@@ -170,6 +170,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         previewPdfs: [],
         featured: false,
         published: false,
+        status: 'draft',
         sortOrder: snapshot.products.length + 1,
         seo: { title: '', description: '' },
         faqs: [],
@@ -193,6 +194,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         previewPdfs: [],
         featured: false,
         published: false,
+        status: 'draft',
         sortOrder: snapshot.bundles.length + 1,
         seo: { title: '', description: '' },
         faqs: [],
@@ -209,7 +211,8 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         answer: '',
         category: 'General',
         sortOrder: snapshot.faqs.length + 1,
-        published: true,
+        published: false,
+        status: 'draft',
         updatedAt: '',
       }
       return faq as unknown as AdminRecord
@@ -224,7 +227,8 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         sourceDate: '2026-01-01',
         featured: false,
         sortOrder: snapshot.testimonials.length + 1,
-        published: true,
+        published: false,
+        status: 'draft',
         updatedAt: '',
       }
       return testimonial as unknown as AdminRecord

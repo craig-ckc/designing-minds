@@ -1,6 +1,7 @@
 import { Icon } from '../ui'
 import { Button, Input } from '../primitives'
 import { cn, BAR } from '../../design'
+import { SAVE_CHOICES, type SaveStatus } from '../../cms/publish-state'
 import { FilterPopover, type FilterState, type ResolvedFacet } from './FilterPopover'
 
 /**
@@ -43,7 +44,6 @@ export function RecordsToolbar({
   onExport,
   onDelete,
   onBulkStatus,
-  statusLabels,
   busy,
   onImport,
   onNew,
@@ -66,9 +66,8 @@ export function RecordsToolbar({
   onExport: () => void
   /** Omitted when the collection is read-only, or the account cannot write. */
   onDelete?: () => void
-  /** Bulk publish / unpublish. Omitted when the collection has no status field. */
-  onBulkStatus?: (on: boolean) => void
-  statusLabels?: { verbOn: string; verbOff: string }
+  /** Bulk save-as (queue / draft / archive). Omitted when the collection has no status field. */
+  onBulkStatus?: (status: SaveStatus) => void
   /** A bulk write is in flight — every action that writes is held. */
   busy?: boolean
   onImport?: () => void
@@ -122,16 +121,21 @@ export function RecordsToolbar({
               the way back. The actions appear the moment a row is ticked. */}
           {selectedCount > 0 ? (
             <>
-              {onBulkStatus && statusLabels ? (
-                <>
-                  <Button variant="outline" size="sm" disabled={busy} onClick={() => onBulkStatus(true)}>
-                    {statusLabels.verbOn}
-                  </Button>
-                  <Button variant="outline" size="sm" disabled={busy} onClick={() => onBulkStatus(false)}>
-                    {statusLabels.verbOff}
-                  </Button>
-                </>
-              ) : null}
+              {/* Same three choices as the editor's save menu, same words. */}
+              {onBulkStatus
+                ? SAVE_CHOICES.map((choice) => (
+                    <Button
+                      key={choice.status}
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      title={choice.description}
+                      onClick={() => onBulkStatus(choice.status)}
+                    >
+                      {choice.label}
+                    </Button>
+                  ))
+                : null}
 
               <Button
                 variant="outline"

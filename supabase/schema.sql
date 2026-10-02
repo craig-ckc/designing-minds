@@ -98,7 +98,12 @@ create table if not exists public.products (
   -- the function would compile against only one of them. This constraint
   -- governs the TAIL order (galleryImages, then previewPdfs), not one
   -- specific column: whatever is appended next goes after previewPdfs.
-  "previewPdfs" jsonb not null default '[]'
+  "previewPdfs" jsonb not null default '[]',
+  -- Publish workflow (see the "Publish workflow" section): the editor's
+  -- intent, the copy the website serves, and when that copy last changed.
+  status text not null default 'draft' check (status in ('draft', 'queued', 'published', 'archived')),
+  live jsonb,
+  "publishedAt" timestamptz
 );
 
 -- A priced package of individual resources. Subjects, terms, file count and
@@ -129,7 +134,10 @@ create table if not exists public.bundles (
   -- inline. published_bundles() declares its own return row type (not `setof
   -- public.bundles`), so unlike products this position is free — kept last
   -- here to match how ALTER TABLE appends it on an already-migrated database.
-  "previewPdfs" jsonb not null default '[]'
+  "previewPdfs" jsonb not null default '[]',
+  status text not null default 'draft' check (status in ('draft', 'queued', 'published', 'archived')),
+  live jsonb,
+  "publishedAt" timestamptz
 );
 
 -- Membership as real foreign keys: deleting a resource removes it from every
@@ -177,168 +185,12 @@ create trigger bundles_slug_unique_across_catalog
 before insert or update of slug on public.bundles
 for each row execute procedure public.assert_catalog_slug_unique();
 
--- Replacing a bundle's membership from the browser admin, which has no
--- transaction of its own, in one call rather than row by row.
-create or replace function public.set_bundle_products(p_bundle_id uuid, p_product_ids uuid[])
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if not public.is_admin() then
-    raise exception 'Administrator access is required.' using errcode = 'insufficient_privilege';
-  end if;
+-- set_bundle_products() (membership writes from the admin) lives in the
+-- "Publish workflow" section: a membership change re-queues a Published bundle.
 
-  delete from public.bundle_products
-  where "bundleId" = p_bundle_id
-    and "productId" <> all (coalesce(p_product_ids, '{}'::uuid[]));
-
-  insert into public.bundle_products ("bundleId", "productId", "sortOrder")
-  select p_bundle_id, ids.id, ids.ord::int
-  from unnest(coalesce(p_product_ids, '{}'::uuid[])) with ordinality as ids(id, ord)
-  on conflict ("bundleId", "productId") do update set "sortOrder" = excluded."sortOrder";
-end;
-$$;
-
-revoke execute on function public.set_bundle_products(uuid, uuid[]) from public, anon;
-grant execute on function public.set_bundle_products(uuid, uuid[]) to authenticated;
-
--- Public catalogue. The view is security_invoker, so the row filtering and
--- storage-key stripping live in this SECURITY DEFINER function. It sits in the
--- private schema (not exposed over REST), which lets anon/authenticated read
--- the sanitized, published catalogue without granting them any access to the
--- products table itself.
-create or replace function private.published_products()
-returns setof public.products
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select
-    p.id,
-    p.slug,
-    p.title,
-    p."shortDescription",
-    p."fullDescription",
-    p."priceZar",
-    p.grade,
-    p.term,
-    p.year,
-    p."resourceFormat",
-    p.subjects,
-    p.marks,
-    coalesce(
-      (
-        select jsonb_agg(
-          jsonb_build_object(
-            'id', file ->> 'id',
-            'label', file ->> 'label',
-            'filename', file ->> 'filename'
-          )
-          order by file ->> 'id'
-        )
-        from jsonb_array_elements(p."purchasedFiles") as file
-      ),
-      '[]'::jsonb
-    ),
-    p.featured,
-    p.published,
-    p."sortOrder",
-    p.seo,
-    p.faqs,
-    p."updatedAt",
-    -- Passed through whole, unlike purchasedFiles above: a gallery image is
-    -- public marketing, so withholding its url would only break the page.
-    p."galleryImages",
-    -- Same treatment, same reasoning — and now this one is last, matching the
-    -- column's position in the table (see the note there).
-    p."previewPdfs"
-  from public.products p
-  where p.published = true;
-$$;
-
-revoke execute on function private.published_products() from public;
-grant usage on schema private to anon, authenticated;
-grant execute on function private.published_products() to anon, authenticated;
-
-create or replace view public.catalog_products
-with (security_invoker = on) as
-  select * from private.published_products();
-
--- Public bundle catalogue, same pattern. Only PUBLISHED members are listed: an
--- unpublished resource isn't purchasable or downloadable, so counting it as
--- bundle contents would overstate the value. Server-side entitlement checks
--- read bundle_products directly.
-create or replace function private.published_bundles()
-returns table (
-  id uuid,
-  slug text,
-  title text,
-  "shortDescription" text,
-  "fullDescription" text,
-  "priceZar" numeric(10,2),
-  grade text,
-  term text,
-  year text,
-  "bundleScope" text,
-  "galleryImages" jsonb,
-  "previewPdfs" jsonb,
-  featured boolean,
-  published boolean,
-  "sortOrder" integer,
-  seo jsonb,
-  faqs text[],
-  "updatedAt" timestamptz,
-  "includedProductIds" uuid[],
-  "includedProductSlugs" text[]
-)
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select
-    b.id,
-    b.slug,
-    b.title,
-    b."shortDescription",
-    b."fullDescription",
-    b."priceZar",
-    b.grade,
-    b.term,
-    b.year,
-    b."bundleScope",
-    b."galleryImages",
-    b."previewPdfs",
-    b.featured,
-    b.published,
-    b."sortOrder",
-    b.seo,
-    b.faqs,
-    b."updatedAt",
-    coalesce(members.ids, '{}'::uuid[])   as "includedProductIds",
-    coalesce(members.slugs, '{}'::text[]) as "includedProductSlugs"
-  from public.bundles b
-  left join lateral (
-    select
-      array_agg(p.id order by bp."sortOrder", p."sortOrder", p.title)   as ids,
-      array_agg(p.slug order by bp."sortOrder", p."sortOrder", p.title) as slugs
-    from public.bundle_products bp
-    join public.products p on p.id = bp."productId"
-    where bp."bundleId" = b.id
-      and p.published = true
-  ) members on true
-  where b.published = true;
-$$;
-
-revoke execute on function private.published_bundles() from public;
-grant execute on function private.published_bundles() to anon, authenticated;
-
-create or replace view public.catalog_bundles
-with (security_invoker = on) as
-  select * from private.published_bundles();
+-- The public catalogue views (catalog_products, catalog_bundles, catalog_faqs,
+-- catalog_testimonials) read each record's LIVE copy and are defined in the
+-- "Publish workflow" section below, once every table they read exists.
 
 -- Subjects are a controlled value list (value_lists.subjects), not a table.
 -- products.subjects / includedSubjects store subject display names directly,
@@ -350,8 +202,11 @@ create table if not exists public.faqs (
   answer text not null default '',
   category text not null default 'General',
   "sortOrder" integer not null default 0,
-  published boolean not null default true,
-  "updatedAt" timestamptz not null default now()
+  published boolean not null default false,
+  "updatedAt" timestamptz not null default now(),
+  status text not null default 'draft' check (status in ('draft', 'queued', 'published', 'archived')),
+  live jsonb,
+  "publishedAt" timestamptz
 );
 
 create table if not exists public.testimonials (
@@ -363,8 +218,11 @@ create table if not exists public.testimonials (
   "sourceDate" date,
   featured boolean not null default false,
   "sortOrder" integer not null default 0,
-  published boolean not null default true,
-  "updatedAt" timestamptz not null default now()
+  published boolean not null default false,
+  "updatedAt" timestamptz not null default now(),
+  status text not null default 'draft' check (status in ('draft', 'queued', 'published', 'archived')),
+  live jsonb,
+  "publishedAt" timestamptz
 );
 
 create table if not exists public.value_lists (
@@ -465,6 +323,10 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  -- Publishing must not look like an edit: "updatedAt" stays the editor's time.
+  if coalesce(current_setting('app.publishing', true), '') = 'on' then
+    return new;
+  end if;
   new."updatedAt" = now();
   return new;
 end;
@@ -662,6 +524,453 @@ after insert or update of status on public.orders
 for each row execute procedure public.clear_purchased_cart_items();
 
 -- =========================================================================
+-- Publish workflow
+-- =========================================================================
+--
+-- Every editable catalogue record (products, bundles, faqs, testimonials)
+-- carries its editor's intent in `status` — draft | queued | published |
+-- archived — and the copy the website, cart and checkout serve in `live`.
+-- Saving only ever touches the working columns; public.publish_site_content()
+-- promotes Queued records to live and removes Archived ones, and is the only
+-- writer of live / published / "publishedAt". `published` therefore means "has
+-- a live copy". See supabase/patch/2026-10-01-publish-workflow.sql.
+
+-- Helpers --------------------------------------------------------------
+
+-- The live copy of a row: everything except the publish bookkeeping itself.
+create or replace function private.live_copy(row_data jsonb)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select row_data - 'status' - 'live' - 'published' - 'publishedAt';
+$$;
+
+-- What counts as "the content changed": the live copy minus the edit stamp and
+-- the bundle membership snapshot (membership has its own check in
+-- set_bundle_products).
+create or replace function private.content_of(row_data jsonb)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select private.live_copy(row_data) - 'updatedAt' - 'includedProductIds';
+$$;
+
+-- A bundle's live copy also freezes its membership, in display order.
+create or replace function private.bundle_live_copy(b public.bundles)
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  select private.live_copy(to_jsonb(b)) || jsonb_build_object(
+    'includedProductIds',
+    coalesce(
+      (
+        select jsonb_agg(bp."productId" order by bp."sortOrder", p."sortOrder", p.title)
+        from public.bundle_products bp
+        join public.products p on p.id = bp."productId"
+        where bp."bundleId" = b.id
+      ),
+      '[]'::jsonb
+    )
+  );
+$$;
+
+-- Guard: editors can't write the live copy, or claim "published" -------
+--
+-- The admin sends whole records back on save, including whatever `status` it
+-- last read. Without this, a CSV import or a background upload could leave a
+-- changed row reading Published while the live copy is older.
+
+create or replace function private.guard_publish_columns()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if coalesce(current_setting('app.publishing', true), '') = 'on' then
+    return new;
+  end if;
+
+  if tg_op = 'INSERT' then
+    new.live := null;
+    new.published := false;
+    new."publishedAt" := null;
+    if new.status = 'published' then
+      new.status := 'queued';
+    end if;
+    return new;
+  end if;
+
+  new.live := old.live;
+  new.published := old.published;
+  new."publishedAt" := old."publishedAt";
+  if new.status = 'published'
+     and (old.status <> 'published'
+          or old.live is null
+          or private.content_of(to_jsonb(new)) is distinct from private.content_of(old.live)) then
+    new.status := 'queued';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists products_guard_publish on public.products;
+create trigger products_guard_publish
+before insert or update on public.products
+for each row execute procedure private.guard_publish_columns();
+
+drop trigger if exists bundles_guard_publish on public.bundles;
+create trigger bundles_guard_publish
+before insert or update on public.bundles
+for each row execute procedure private.guard_publish_columns();
+
+drop trigger if exists faqs_guard_publish on public.faqs;
+create trigger faqs_guard_publish
+before insert or update on public.faqs
+for each row execute procedure private.guard_publish_columns();
+
+drop trigger if exists testimonials_guard_publish on public.testimonials;
+create trigger testimonials_guard_publish
+before insert or update on public.testimonials
+for each row execute procedure private.guard_publish_columns();
+
+-- A membership change on a Published bundle is a content change too.
+create or replace function public.set_bundle_products(p_bundle_id uuid, p_product_ids uuid[])
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  before_ids uuid[];
+  after_ids uuid[];
+begin
+  if not public.is_admin() then
+    raise exception 'Administrator access is required.' using errcode = 'insufficient_privilege';
+  end if;
+
+  select array_agg("productId" order by "sortOrder") into before_ids
+  from public.bundle_products where "bundleId" = p_bundle_id;
+
+  delete from public.bundle_products
+  where "bundleId" = p_bundle_id
+    and "productId" <> all (coalesce(p_product_ids, '{}'::uuid[]));
+
+  insert into public.bundle_products ("bundleId", "productId", "sortOrder")
+  select p_bundle_id, ids.id, ids.ord::int
+  from unnest(coalesce(p_product_ids, '{}'::uuid[])) with ordinality as ids(id, ord)
+  on conflict ("bundleId", "productId") do update set "sortOrder" = excluded."sortOrder";
+
+  select array_agg("productId" order by "sortOrder") into after_ids
+  from public.bundle_products where "bundleId" = p_bundle_id;
+
+  if before_ids is distinct from after_ids then
+    update public.bundles set status = 'queued' where id = p_bundle_id and status = 'published';
+  end if;
+end;
+$$;
+
+revoke execute on function public.set_bundle_products(uuid, uuid[]) from public, anon;
+grant execute on function public.set_bundle_products(uuid, uuid[]) to authenticated;
+
+-- Publish ---------------------------------------------------------------
+
+create or replace function public.publish_site_content()
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  at timestamptz := now();
+  promoted integer := 0;
+  removed integer := 0;
+  n integer;
+begin
+  perform set_config('app.publishing', 'on', true);
+
+  update public.products p
+  set live = private.live_copy(to_jsonb(p)), published = true, status = 'published', "publishedAt" = at
+  where p.status = 'queued';
+  get diagnostics n = row_count; promoted := promoted + n;
+
+  update public.bundles b
+  set live = private.bundle_live_copy(b), published = true, status = 'published', "publishedAt" = at
+  where b.status = 'queued';
+  get diagnostics n = row_count; promoted := promoted + n;
+
+  update public.faqs f
+  set live = private.live_copy(to_jsonb(f)), published = true, status = 'published', "publishedAt" = at
+  where f.status = 'queued';
+  get diagnostics n = row_count; promoted := promoted + n;
+
+  update public.testimonials t
+  set live = private.live_copy(to_jsonb(t)), published = true, status = 'published', "publishedAt" = at
+  where t.status = 'queued';
+  get diagnostics n = row_count; promoted := promoted + n;
+
+  update public.products set live = null, published = false, "publishedAt" = at
+  where status = 'archived' and live is not null;
+  get diagnostics n = row_count; removed := removed + n;
+
+  update public.bundles set live = null, published = false, "publishedAt" = at
+  where status = 'archived' and live is not null;
+  get diagnostics n = row_count; removed := removed + n;
+
+  update public.faqs set live = null, published = false, "publishedAt" = at
+  where status = 'archived' and live is not null;
+  get diagnostics n = row_count; removed := removed + n;
+
+  update public.testimonials set live = null, published = false, "publishedAt" = at
+  where status = 'archived' and live is not null;
+  get diagnostics n = row_count; removed := removed + n;
+
+  perform set_config('app.publishing', 'off', true);
+  return jsonb_build_object('promoted', promoted, 'removed', removed, 'publishedAt', at);
+end;
+$$;
+
+revoke execute on function public.publish_site_content() from public, anon, authenticated;
+grant execute on function public.publish_site_content() to service_role;
+
+-- Public catalogue reads the live copy ----------------------------------
+--
+-- Both functions now declare their row type, so the old "column position must
+-- match public.products" constraint is gone. CREATE OR REPLACE cannot change a
+-- return type, hence drop + create (cascade takes the views with it).
+
+drop function if exists private.published_products() cascade;
+create function private.published_products()
+returns table (
+  id uuid,
+  slug text,
+  title text,
+  "shortDescription" text,
+  "fullDescription" text,
+  "priceZar" numeric(10,2),
+  grade text,
+  term text,
+  year text,
+  "resourceFormat" text,
+  subjects text[],
+  marks integer,
+  "purchasedFiles" jsonb,
+  featured boolean,
+  published boolean,
+  "sortOrder" integer,
+  seo jsonb,
+  faqs text[],
+  "updatedAt" timestamptz,
+  "galleryImages" jsonb,
+  "previewPdfs" jsonb,
+  status text,
+  "publishedAt" timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    l.id,
+    l.slug,
+    l.title,
+    l."shortDescription",
+    l."fullDescription",
+    l."priceZar",
+    l.grade,
+    l.term,
+    l.year,
+    l."resourceFormat",
+    l.subjects,
+    l.marks,
+    -- Storage keys never leave the database: the public copy names the file
+    -- but carries nothing to sign.
+    coalesce(
+      (
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', file ->> 'id',
+            'label', file ->> 'label',
+            'filename', file ->> 'filename'
+          )
+          order by file ->> 'id'
+        )
+        from jsonb_array_elements(coalesce(l."purchasedFiles", '[]'::jsonb)) as file
+      ),
+      '[]'::jsonb
+    ),
+    l.featured,
+    true,
+    l."sortOrder",
+    l.seo,
+    l.faqs,
+    l."updatedAt",
+    coalesce(l."galleryImages", '[]'::jsonb),
+    coalesce(l."previewPdfs", '[]'::jsonb),
+    'published'::text,
+    p."publishedAt"
+  from public.products p
+  cross join lateral jsonb_populate_record(null::public.products, p.live) l
+  where p.live is not null;
+$$;
+
+drop function if exists private.published_bundles() cascade;
+create function private.published_bundles()
+returns table (
+  id uuid,
+  slug text,
+  title text,
+  "shortDescription" text,
+  "fullDescription" text,
+  "priceZar" numeric(10,2),
+  grade text,
+  term text,
+  year text,
+  "bundleScope" text,
+  "galleryImages" jsonb,
+  "previewPdfs" jsonb,
+  featured boolean,
+  published boolean,
+  "sortOrder" integer,
+  seo jsonb,
+  faqs text[],
+  "updatedAt" timestamptz,
+  "includedProductIds" uuid[],
+  "includedProductSlugs" text[],
+  status text,
+  "publishedAt" timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    l.id,
+    l.slug,
+    l.title,
+    l."shortDescription",
+    l."fullDescription",
+    l."priceZar",
+    l.grade,
+    l.term,
+    l.year,
+    l."bundleScope",
+    coalesce(l."galleryImages", '[]'::jsonb),
+    coalesce(l."previewPdfs", '[]'::jsonb),
+    l.featured,
+    true,
+    l."sortOrder",
+    l.seo,
+    l.faqs,
+    l."updatedAt",
+    coalesce(members.ids, '{}'::uuid[]),
+    coalesce(members.slugs, '{}'::text[]),
+    'published'::text,
+    b."publishedAt"
+  from public.bundles b
+  cross join lateral jsonb_populate_record(null::public.bundles, b.live) l
+  -- Membership as frozen at publish, narrowed to resources that are live
+  -- themselves: a resource that isn't on the site isn't bundle contents.
+  left join lateral (
+    select
+      array_agg(p.id order by m.ord)               as ids,
+      array_agg(p.live ->> 'slug' order by m.ord)  as slugs
+    from jsonb_array_elements_text(coalesce(b.live -> 'includedProductIds', '[]'::jsonb)) with ordinality as m(product_id, ord)
+    join public.products p on p.id = m.product_id::uuid
+    where p.live is not null
+  ) members on true
+  where b.live is not null;
+$$;
+
+create or replace function private.published_faqs()
+returns table (
+  id uuid,
+  question text,
+  answer text,
+  category text,
+  "sortOrder" integer,
+  published boolean,
+  "updatedAt" timestamptz,
+  status text,
+  "publishedAt" timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select l.id, l.question, l.answer, l.category, l."sortOrder", true, l."updatedAt", 'published'::text, f."publishedAt"
+  from public.faqs f
+  cross join lateral jsonb_populate_record(null::public.faqs, f.live) l
+  where f.live is not null;
+$$;
+
+create or replace function private.published_testimonials()
+returns table (
+  id uuid,
+  "customerName" text,
+  quote text,
+  context text,
+  "learnerGrade" text,
+  "sourceDate" date,
+  featured boolean,
+  "sortOrder" integer,
+  published boolean,
+  "updatedAt" timestamptz,
+  status text,
+  "publishedAt" timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select l.id, l."customerName", l.quote, l.context, l."learnerGrade", l."sourceDate", l.featured, l."sortOrder",
+    true, l."updatedAt", 'published'::text, t."publishedAt"
+  from public.testimonials t
+  cross join lateral jsonb_populate_record(null::public.testimonials, t.live) l
+  where t.live is not null;
+$$;
+
+revoke execute on function private.published_products() from public;
+revoke execute on function private.published_bundles() from public;
+revoke execute on function private.published_faqs() from public;
+revoke execute on function private.published_testimonials() from public;
+grant usage on schema private to anon, authenticated, service_role;
+grant execute on function private.published_products() to anon, authenticated, service_role;
+grant execute on function private.published_bundles() to anon, authenticated, service_role;
+grant execute on function private.published_faqs() to anon, authenticated, service_role;
+grant execute on function private.published_testimonials() to anon, authenticated, service_role;
+
+create or replace view public.catalog_products
+with (security_invoker = on) as
+  select * from private.published_products();
+
+create or replace view public.catalog_bundles
+with (security_invoker = on) as
+  select * from private.published_bundles();
+
+create or replace view public.catalog_faqs
+with (security_invoker = on) as
+  select * from private.published_faqs();
+
+create or replace view public.catalog_testimonials
+with (security_invoker = on) as
+  select * from private.published_testimonials();
+
+grant select on public.catalog_products to anon, authenticated, service_role;
+grant select on public.catalog_bundles to anon, authenticated, service_role;
+grant select on public.catalog_faqs to anon, authenticated, service_role;
+grant select on public.catalog_testimonials to anon, authenticated, service_role;
+
+-- =========================================================================
 -- Row Level Security
 -- =========================================================================
 
@@ -697,12 +1006,8 @@ create policy "User reads own role" on public.user_roles
   for select to authenticated using ("userId" = auth.uid());
 
 -- Catalogue collections and value lists: public reads go through sanitized views; admin-only writes.
-create policy "Public read faqs" on public.faqs for select to anon, authenticated using (true);
-create policy "Public read testimonials" on public.testimonials for select to anon, authenticated using (true);
 create policy "Public read value lists" on public.value_lists for select to anon, authenticated using (true);
 
-grant select on public.catalog_products to anon, authenticated;
-grant select on public.catalog_bundles to anon, authenticated;
 
 create policy "Admin write products" on public.products for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "Admin write bundles" on public.bundles for all to authenticated using (public.is_admin()) with check (public.is_admin());
@@ -843,14 +1148,14 @@ as $$
   where exists (
       select 1
       from public.products p
-      where p.published = true
-        and ('/shop/' || p.slug) = sr."toPath"
+      where p.live is not null
+        and ('/shop/' || (p.live ->> 'slug')) = sr."toPath"
     )
      or exists (
       select 1
       from public.bundles b
-      where b.published = true
-        and ('/shop/' || b.slug) = sr."toPath"
+      where b.live is not null
+        and ('/shop/' || (b.live ->> 'slug')) = sr."toPath"
     );
 $$;
 

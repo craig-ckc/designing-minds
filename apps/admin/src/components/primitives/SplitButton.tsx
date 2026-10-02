@@ -22,6 +22,7 @@ export function SplitButton({
   menu,
   variant = 'solid',
   disabled,
+  actionDisabled,
   className,
   menuLabel = 'More options',
   ...props
@@ -32,6 +33,11 @@ export function SplitButton({
   menu: ReactNode
   variant?: ButtonVariant
   menuLabel?: string
+  /**
+   * Disables only the main half. The caret stays usable, for when the default
+   * action has nothing to do but the alternatives in the menu still do.
+   */
+  actionDisabled?: boolean
 }) {
   return (
     <span className={cn('inline-flex isolate', className)}>
@@ -39,7 +45,7 @@ export function SplitButton({
         variant={variant}
         size="sm"
         onClick={onClick}
-        disabled={disabled}
+        disabled={disabled || actionDisabled}
         // Square off the inner edge so the two halves read as one control.
         className="rounded-r-none"
         {...props}
@@ -82,21 +88,24 @@ export function MenuChoice({
   label,
   description,
   selected,
+  disabled,
   onClick,
   trailing,
 }: {
   label: ReactNode
   description?: string
   selected?: boolean
+  disabled?: boolean
   onClick?: () => void
   trailing?: ReactElement
 }) {
   return (
     <BaseMenu.Item
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         'grid cursor-default gap-0.5 px-2.5 py-1.5 outline-none',
-        'data-[highlighted]:bg-surface-alt',
+        'data-[highlighted]:bg-surface-alt data-[disabled]:opacity-50',
         selected && 'bg-surface-alt',
       )}
     >

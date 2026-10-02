@@ -3,42 +3,50 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 /* -------------------------------------------------------------------------
-   private.published_products() is declared `returns setof public.products`,
-   which Postgres matches by column INDEX, not by name. Its select list must
-   therefore line up with the table position for position, and ALTER TABLE can
-   only ever APPEND — so a column that reads naturally in the middle of the
-   table sits at a different index on a migrated database than on a fresh one.
+   The public catalogue functions (private.published_products / _bundles /
+   _faqs / _testimonials) each declare an explicit `returns table (...)` and
+   build their rows from the record's LIVE copy. Postgres matches the select
+   list to that declaration by POSITION, so the two must line up entry for
+   entry — a swap compiles if the types happen to agree and then serves, say,
+   the price under the wrong column.
 
-   Getting this wrong does not fail quietly: the patch is rejected outright with
-   "return type mismatch ... returns jsonb instead of boolean". These tests pin
-   the invariant in the repo instead of in the SQL editor.
+   (They used to return `setof public.products`, which tied the select list to
+   the physical table order instead. The 2026-10-01 publish-workflow patch
+   moved every one of them to a declared row type, which removed that trap.)
    ------------------------------------------------------------------------- */
 
 const read = (path: string) => readFileSync(new URL(`../../supabase/${path}`, import.meta.url), 'utf8')
 
-/** Column names of a `create table` block, in declared order. */
-function tableColumns(sql: string, table: string): string[] {
-  const start = sql.indexOf(`create table if not exists ${table} (`)
-  assert.notEqual(start, -1, `expected a create table for ${table}`)
-  const body = sql.slice(sql.indexOf('(', start) + 1, sql.indexOf('\n);', start))
-  return body
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('--'))
-    .map((line) => /^"?([A-Za-z_][A-Za-z0-9_]*)"?\s/.exec(line)?.[1])
-    .filter((name): name is string => Boolean(name))
-}
+const LATEST_REBUILD_PATCH = 'patch/2026-10-01-publish-workflow.sql'
 
-/** Top-level entries of the select list in a `published_*` function body. */
-function selectEntries(sql: string, fn: string, from: string): string[] {
-  // Either creation form: the patch must DROP and re-CREATE published_bundles(),
-  // because CREATE OR REPLACE cannot change a `returns table` row type (42P13).
+const FUNCTIONS = [
+  { fn: 'private.published_products()', from: 'from public.products p' },
+  { fn: 'private.published_bundles()', from: 'from public.bundles b' },
+  { fn: 'private.published_faqs()', from: 'from public.faqs f' },
+  { fn: 'private.published_testimonials()', from: 'from public.testimonials t' },
+]
+
+function functionAt(sql: string, fn: string): number {
+  // Either creation form: a changed `returns table` row type needs DROP + CREATE.
   const at = Math.max(sql.indexOf(`create or replace function ${fn}`), sql.indexOf(`create function ${fn}`))
   assert.notEqual(at, -1, `expected ${fn} in this file`)
-  const raw = sql.slice(sql.indexOf('  select\n', at) + '  select\n'.length, sql.indexOf(from, at))
+  return at
+}
+
+/** Column names of the declared `returns table (...)`, in order. */
+function declaredColumns(sql: string, fn: string): string[] {
+  const at = functionAt(sql, fn)
+  const body = sql.slice(sql.indexOf('returns table (', at), sql.indexOf(')\nlanguage sql', at))
+  return [...body.matchAll(/^\s+"?([A-Za-z_][A-Za-z0-9_]*)"?\s+[a-z]/gm)].map((m) => m[1])
+}
+
+/** Top-level entries of the function's select list. */
+function selectEntries(sql: string, fn: string, from: string): string[] {
+  const at = functionAt(sql, fn)
+  const start = sql.indexOf('select', sql.indexOf('as $$', at)) + 'select'.length
   // Comments come out FIRST: prose contains commas and parens, and both would
   // otherwise be read as SQL structure by the splitter below.
-  const body = raw.replace(/--[^\n]*/g, '')
+  const body = sql.slice(start, sql.indexOf(from, at)).replace(/--[^\n]*/g, '')
 
   // Split on commas at paren depth 0, so a multi-line coalesce(...) counts once.
   const entries: string[] = []
@@ -58,76 +66,49 @@ function selectEntries(sql: string, fn: string, from: string): string[] {
   return entries.map((entry) => entry.split('\n').map((line) => line.trim()).filter(Boolean).join(' '))
 }
 
-/* The patch under test is the NEWEST one that rebuilds these functions: an
-   older patch's select list is frozen at the schema of its day and stops
-   lining up the moment a later patch appends another column, so only the
-   latest rebuild and schema.sql have to agree. */
-const LATEST_REBUILD_PATCH = 'patch/2026-08-31-preview-pdfs.sql'
+/** The column an entry reads, when it names one: `l."priceZar"`, `coalesce(l."galleryImages", …)`. */
+function namedColumn(entry: string): string | null {
+  const direct = /^[a-z]\."?([A-Za-z_][A-Za-z0-9_]*)"?$/.exec(entry)?.[1]
+  if (direct) return direct
+  const wrapped = /^coalesce\(\s*[a-z]\."?([A-Za-z_][A-Za-z0-9_]*)"?\s*,/.exec(entry)?.[1]
+  return wrapped ?? null
+}
 
 for (const file of ['schema.sql', LATEST_REBUILD_PATCH]) {
-  test(`${file}: published_products() lines up with public.products position for position`, () => {
-    const schema = read('schema.sql')
-    const sql = read(file)
-    const columns = tableColumns(schema, 'public.products')
-    const entries = selectEntries(sql, 'private.published_products()', 'from public.products p')
-
-    assert.equal(
-      entries.length,
-      columns.length,
-      `select list has ${entries.length} entries but public.products has ${columns.length} columns`,
-    )
-
-    // Every entry that names its column must name the one at its own index.
-    entries.forEach((entry, index) => {
-      const named = /^p\."?([A-Za-z_][A-Za-z0-9_]*)"?$/.exec(entry)?.[1]
-      if (!named) return // a computed entry (the purchasedFiles rebuild) has no name
-      assert.equal(named, columns[index], `select entry ${index} is ${named}, but column ${index} is ${columns[index]}`)
+  for (const { fn, from } of FUNCTIONS) {
+    test(`${file}: ${fn} select list lines up with its declared columns`, () => {
+      const sql = read(file)
+      const declared = declaredColumns(sql, fn)
+      const entries = selectEntries(sql, fn, from)
+      assert.equal(entries.length, declared.length, `${fn}: ${entries.length} select entries for ${declared.length} declared columns`)
+      entries.forEach((entry, index) => {
+        const named = namedColumn(entry)
+        // Computed entries (the purchasedFiles rebuild, `true`, membership
+        // arrays) carry no name to check.
+        if (!named) return
+        assert.equal(named, declared[index], `${fn}: entry ${index} reads ${named}, but column ${index} is ${declared[index]}`)
+      })
     })
+  }
+
+  test(`${file}: the public catalogue reads only the live copy`, () => {
+    const sql = read(file)
+    for (const { fn, from } of FUNCTIONS) {
+      const at = functionAt(sql, fn)
+      const body = sql.slice(at, sql.indexOf('$$;', sql.indexOf('as $$', at)))
+      assert.match(body, /jsonb_populate_record\(null::public\.[a-z_]+, [a-z]\.live\)/, `${fn} should build rows from the live copy`)
+      assert.match(body, /where [a-z]\.live is not null/, `${fn} should list only records with a live copy`)
+      assert.ok(body.includes(from), `${fn} should read ${from}`)
+    }
   })
 }
 
-test('the appended tail is galleryImages then previewPdfs, because ALTER TABLE can only append', () => {
-  // A fresh database (schema.sql) and a migrated one (the patches' ALTERs) must
-  // end up with the SAME column order, or one of them gets a function compiled
-  // against the wrong indexes. The tail is the full append history, in order.
-  const columns = tableColumns(read('schema.sql'), 'public.products')
-  assert.deepEqual(
-    columns.slice(-2),
-    ['galleryImages', 'previewPdfs'],
-    'public.products must end with galleryImages then previewPdfs, in append order',
-  )
-
-  const patch = read(LATEST_REBUILD_PATCH)
-  assert.match(patch, /alter table public\.products\s*\n\s*add column if not exists "previewPdfs"/)
-
-  for (const file of ['schema.sql', LATEST_REBUILD_PATCH]) {
-    const entries = selectEntries(read(file), 'private.published_products()', 'from public.products p')
-    assert.equal(entries.at(-1), 'p."previewPdfs"', `${file}: previewPdfs must be last in the select list`)
-  }
-})
-
-test('published_bundles() is matched by name, so its order only has to match itself', () => {
-  // This one declares an explicit `returns table (...)`, so the risk is
-  // different: the return table and the select list must agree with each other,
-  // but neither depends on the physical column order of public.bundles.
+test('purchased-file storage keys never reach the public product view', () => {
   for (const file of ['schema.sql', LATEST_REBUILD_PATCH]) {
     const sql = read(file)
-    const at = Math.max(
-      sql.indexOf('create or replace function private.published_bundles()'),
-      sql.indexOf('create function private.published_bundles()'),
-    )
-    const returnTable = sql.slice(sql.indexOf('returns table (', at), sql.indexOf(')\nlanguage sql', at))
-    const declared = [...returnTable.matchAll(/^\s+"?([A-Za-z_][A-Za-z0-9_]*)"?\s+[a-z]/gm)].map((m) => m[1])
-    const entries = selectEntries(sql, 'private.published_bundles()', 'from public.bundles b')
-
-    assert.equal(declared.length, entries.length, `${file}: bundle return table and select list differ in length`)
-    for (const column of ['galleryImages', 'previewPdfs']) {
-      assert.ok(declared.includes(column), `${file}: bundles should return ${column}`)
-      assert.equal(
-        declared.indexOf(column),
-        entries.findIndex((entry) => entry.includes(`"${column}"`)),
-        `${file}: ${column} sits at different indexes in the bundle return table and select list`,
-      )
-    }
+    const at = functionAt(sql, 'private.published_products()')
+    const body = sql.slice(at, sql.indexOf('$$;', sql.indexOf('as $$', at)))
+    assert.doesNotMatch(body, /storageKey/, `${file}: published_products() must rebuild purchasedFiles without storageKey`)
+    assert.match(body, /'filename', file ->> 'filename'/)
   }
 })

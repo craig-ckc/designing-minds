@@ -30,7 +30,9 @@ const TABLES = {
   catalogBundles: 'catalog_bundles',
   bundleProducts: 'bundle_products',
   faqs: 'faqs',
+  catalogFaqs: 'catalog_faqs',
   testimonials: 'testimonials',
+  catalogTestimonials: 'catalog_testimonials',
   // Account profiles live in the `users` table (see docs/decisions.md).
   // The snapshot still exposes them under `customers` as the operational Customer list.
   customers: 'users',
@@ -62,6 +64,28 @@ const stamped = <T extends { updatedAt: string }>(record: T): T => ({
   ...record,
   updatedAt: new Date().toISOString(),
 })
+
+/**
+ * What a save may send. The live copy and the flags derived from it belong to
+ * public.publish_site_content() alone — the database guard ignores them on
+ * write anyway, so leaving them out just keeps a save from shipping a second,
+ * stale copy of the record back to the server.
+ */
+const writable = <T extends { updatedAt: string }>(record: T): T => {
+  const { live: _live, published: _published, publishedAt: _publishedAt, ...rest } = record as T & {
+    live?: unknown
+    published?: unknown
+    publishedAt?: unknown
+  }
+  return stamped(rest as T)
+}
+
+/** Admin rows arrive with their live copy attached; nothing downstream reads it. */
+const withoutLive = <T>(row: T): T => {
+  if (!row || typeof row !== 'object' || !('live' in row)) return row
+  const { live: _live, ...rest } = row as T & { live?: unknown }
+  return rest as T
+}
 
 interface ValueListRow {
   key: keyof ValueLists
@@ -179,6 +203,10 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
   // base table and embeds the join rows.
   const bundleReadTable = isPublic ? TABLES.catalogBundles : TABLES.bundles
   const bundleSelect = isPublic ? '*' : `*, ${TABLES.bundleProducts}(sortOrder, products(id, slug))`
+  // FAQs and testimonials have no public table policy any more: visitors read
+  // the live copies through their catalog views, like products and bundles.
+  const faqReadTable = isPublic ? TABLES.catalogFaqs : TABLES.faqs
+  const testimonialReadTable = isPublic ? TABLES.catalogTestimonials : TABLES.testimonials
 
   return {
     mode: 'supabase',
@@ -188,8 +216,8 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
         await Promise.all([
           client.from(productReadTable).select('*'),
           client.from(bundleReadTable).select(bundleSelect),
-          client.from(TABLES.faqs).select('*'),
-          client.from(TABLES.testimonials).select('*'),
+          client.from(faqReadTable).select('*'),
+          client.from(testimonialReadTable).select('*'),
           client.from(TABLES.customers).select('*'),
           client.from(TABLES.orders).select('*'),
           client.from(TABLES.payments).select('*'),
@@ -209,10 +237,10 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
         generatedAt: new Date().toISOString(),
         source: 'supabase',
         valueLists: rowsToValueLists(valueLists.data as ValueListRow[] | null),
-        products: ((products.data as Product[] | null) ?? []).map(numberizeProduct),
-        bundles: (bundles.data ?? []).map((row) => numberizeBundle(toBundle(row as unknown as BundleRow))),
-        faqs: (faqs.data as Faq[] | null) ?? [],
-        testimonials: (testimonials.data as Testimonial[] | null) ?? [],
+        products: ((products.data as Product[] | null) ?? []).map((row) => numberizeProduct(withoutLive(row))),
+        bundles: (bundles.data ?? []).map((row) => numberizeBundle(toBundle(withoutLive(row as unknown as BundleRow)))),
+        faqs: ((faqs.data as Faq[] | null) ?? []).map(withoutLive),
+        testimonials: ((testimonials.data as Testimonial[] | null) ?? []).map(withoutLive),
         customers: (customers.data as Customer[] | null) ?? [],
         orders: ((orders.data as Order[] | null) ?? []).map(numberizeOrder),
         payments: ((payments.data as Payment[] | null) ?? []).map(numberizePayment),
@@ -261,9 +289,9 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
     },
 
     async saveProduct(product: Product) {
-      const res = await client.from(TABLES.products).upsert(stamped(product)).select().single()
+      const res = await client.from(TABLES.products).upsert(writable(product)).select().single()
       if (res.error) throw new Error(res.error.message)
-      return res.data as Product
+      return withoutLive(res.data as Product)
     },
 
     /**
@@ -274,7 +302,7 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
      */
     async saveBundle(bundle: Bundle) {
       const { includedProductIds, includedProductSlugs, ...row } = bundle
-      const res = await client.from(TABLES.bundles).upsert(stamped(row as Bundle)).select().single()
+      const res = await client.from(TABLES.bundles).upsert(writable(row as Bundle)).select().single()
       if (res.error) throw new Error(res.error.message)
 
       const { error: membershipError } = await client.rpc('set_bundle_products', {
@@ -284,20 +312,20 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
       if (membershipError) throw new Error(membershipError.message)
 
       return numberizeBundle({
-        ...(res.data as Bundle),
+        ...withoutLive(res.data as Bundle),
         includedProductIds: includedProductIds ?? [],
         includedProductSlugs: includedProductSlugs ?? [],
       })
     },
     async saveFaq(faq: Faq) {
-      const res = await client.from(TABLES.faqs).upsert(stamped(faq)).select().single()
+      const res = await client.from(TABLES.faqs).upsert(writable(faq)).select().single()
       if (res.error) throw new Error(res.error.message)
-      return res.data as Faq
+      return withoutLive(res.data as Faq)
     },
     async saveTestimonial(testimonial: Testimonial) {
-      const res = await client.from(TABLES.testimonials).upsert(stamped(testimonial)).select().single()
+      const res = await client.from(TABLES.testimonials).upsert(writable(testimonial)).select().single()
       if (res.error) throw new Error(res.error.message)
-      return res.data as Testimonial
+      return withoutLive(res.data as Testimonial)
     },
   }
 }

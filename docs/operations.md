@@ -81,7 +81,7 @@ Admin:
 | --- | --- |
 | `VITE_SUPABASE_URL` | Public Supabase URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Publishable/anon key |
-| `VITE_WEB_URL` | Deployed storefront origin, used by Preview links and by the live/unpublished check. Must be the origin actually serving the built site (it is polled for `/build-info.json`); pointing it at a hostname still served by something else makes every record's publish state read as unknown. |
+| `VITE_WEB_URL` | Deployed storefront origin, used by the live/unpublished check. Must be the origin actually serving the built site (it is polled for `/build-info.json`); pointing it at a hostname still served by something else makes every record's publish state read as unknown. |
 | `VITE_API_BASE_URL` | Functions origin when not using same-origin rewrites |
 
 Web static generation:
@@ -109,6 +109,9 @@ Functions:
 | `PUBLIC_MEDIA_BUCKET` | Public bucket for catalogue preview-gallery images (`public_media`). Gallery uploads fail without it; purchased files are unaffected |
 | `ALLOWED_ORIGINS` | Comma-separated origins allowed to call the API cross-origin. The admin is the only such caller — the web project proxies `/api/*` server-side, so it needs no entry. Every hostname the admin is opened from must be listed, including the project's `*.vercel.app` alias; a missing one surfaces in the browser as an opaque "Failed to fetch" on the preflight, not as a server error |
 | `VERCEL_WEB_DEPLOY_HOOK_URL` | Secret Deploy Hook for the web project |
+| `VERCEL_API_TOKEN` | Secret Vercel token (team-scoped) used to read the web build's status for the admin's Publish feedback. Blank: the admin can still confirm "live", but not "building" or "failed" |
+| `VERCEL_WEB_PROJECT_ID` | Web project id (`prj_…`) whose production deployments are watched |
+| `VERCEL_TEAM_ID` | Team id (`team_…`) that owns the web project |
 | `RESEND_API_KEY` | Resend API key (blank disables sending) |
 | `RESEND_FROM` | Verified sender, e.g. `Designing Minds <noreply@designingminds.co.za>` |
 | `FORM_NOTIFICATIONS_TO` | Inbox that receives contact + newsletter submissions |
@@ -119,11 +122,14 @@ Use one canonical storefront origin everywhere. Attach it to the web project, re
 
 ## Static Publish Flow
 
-1. Admin saves CMS records to Supabase.
-2. Product slug changes record old URL to new URL in `slug_redirects`.
-3. Admin clicks publish.
-4. Functions validates admin access and calls `VERCEL_WEB_DEPLOY_HOOK_URL`.
+Every catalogue record (products, bundles, FAQs, testimonials) has a status — **Draft**, **Queued**, **Published** or **Archived** — and a separate live copy. The website, cart and checkout only ever read the live copy.
+
+1. Admin saves a record by choosing *Queue for publish*, *Save as draft* or *Archive*. There is no plain Save. Saving never changes what's live.
+2. Product slug changes record old URL to new URL in `slug_redirects`; a redirect only activates once the new slug is live.
+3. The top-bar **Publish** button appears when something is Queued or Archived-but-live (or a previous publish's build never landed), and the admin clicks it.
+4. Functions validates admin access, runs `public.publish_site_content()` (Queued → live, Archived → removed, one transaction), then calls `VERCEL_WEB_DEPLOY_HOOK_URL`.
 5. Web rebuild fetches the public CMS snapshot, prerenders indexable routes, emits sitemap/robots/redirects, and deploys.
+6. The admin polls `POST /api/admin/publish-status` (Vercel REST API) and the site's `build-info.json`, showing Queued → Building → Live, or Failed with a link to the build log.
 
 Local web build:
 

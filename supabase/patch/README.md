@@ -19,4 +19,6 @@ Rules:
 
 Diagnostics: apply `2026-09-09-diagnostics.sql`, then run `2026-09-09-diagnostics-retention.sql` as `postgres` in the Supabase SQL editor. The retention patch enables Supabase Cron if needed. Apply both before enabling `DIAGNOSTICS_ENABLED` on functions. See [operations guide](../../docs/diagnostics.md).
 
+Publish workflow: apply `2026-10-01-publish-workflow.sql`, then deploy functions, web and admin straight away (don't publish from the old admin in between). It adds Draft/Queued/Published/Archived and the live copy the site, cart and checkout read. Add `VERCEL_API_TOKEN`, `VERCEL_WEB_PROJECT_ID` and `VERCEL_TEAM_ID` to the functions project for build-status feedback.
+
 Payment completion: apply `2026-09-09-atomic-payment-completion.sql` before deploying the updated payment webhook. It completes payment/order updates in one transaction and makes verified duplicate notifications safe.

@@ -60,9 +60,12 @@ export const checkout: Handler = async (req) => {
 
     // A cart line is a slug in the shared /shop space and may name either
     // Collection, so both are resolved and the union must cover every line.
+    // Read from the LIVE catalogue views, never the tables: the tables hold the
+    // editors' working copies, and a Draft or Queued price must not be charged
+    // before it is published — the customer was shown the live one.
     const [productRows, bundleRows] = await Promise.all([
-      supabase.from('products').select('*').in('slug', slugs).eq('published', true),
-      supabase.from('bundles').select('*').in('slug', slugs).eq('published', true),
+      supabase.from('catalog_products').select('*').in('slug', slugs),
+      supabase.from('catalog_bundles').select('*').in('slug', slugs),
     ])
     if (productRows.error) throw productRows.error
     if (bundleRows.error) throw bundleRows.error

@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import type { AdminCollection, AdminRecord, FieldContext, EditorSection as EditorSectionDef } from '../../cms/types'
 import { isDeletable } from '../../cms/adapter'
-import { fieldIsVisible, findField, getPath, getRecordTitle } from '../../cms/record'
+import { fieldIsVisible, findField, getRecordTitle } from '../../cms/record'
 import {
+  canSaveAs,
   publishState,
-  PUBLISH_STATE_HINT,
+  publishStateHint,
   PUBLISH_STATE_LABEL,
   PUBLISH_STATE_TONE,
-  type PublishState,
+  recordStatus,
+  SAVE_CHOICES,
+  type SaveStatus,
 } from '../../cms/publish-state'
 import { useSite } from '../../lib/site-status'
 import { BAR, CHIP_DASHED, cn } from '../../design'
@@ -22,9 +25,14 @@ type Props = {
   record: AdminRecord
   ctx: FieldContext
   onUpdate: (key: string, value: unknown) => void
+  /** Plain save, for an editable collection without a publish status. */
   onSave: () => void
-  /** Change the record's status flag. Edits the draft only — Save commits it. */
-  onSetStatus: (next: boolean) => void
+  /**
+   * Save the draft with this status — the ONLY way to save a record that has
+   * one. There is no status-less Save: every save says what should happen to
+   * the change on the website.
+   */
+  onSaveAs: (status: SaveStatus) => void
   /** Duplicate this record (the saved baseline, not the live draft) and navigate to the copy. */
   onDuplicate: () => void
   /**
@@ -52,7 +60,7 @@ export function RecordEditor({
   ctx,
   onUpdate,
   onSave,
-  onSetStatus,
+  onSaveAs,
   onDuplicate,
   onDelete,
   isNew,
@@ -65,8 +73,7 @@ export function RecordEditor({
 }: Props) {
   const site = useSite()
   const editable = !collection.readOnly && canWrite
-  const statusOn = collection.statusField ? Boolean(getPath(record, collection.statusField)) : false
-  const labels = collection.statusLabels
+  const hasStatus = Boolean(collection.statusField)
   // Deleting needs more than write access — mirrors AdminWorkspace's own
   // `deletable`, so the editor never offers a Delete that the list wouldn't.
   const deletable = editable && isDeletable(collection.id)
@@ -80,9 +87,8 @@ export function RecordEditor({
     if (await onDelete()) onBack()
   }
 
-  // The record's own flag says whether it *should* be on the site; this says
-  // whether the site actually has it — the two only agree after a publish.
-  const state = publishState(collection, record, site)
+  // The stored status plus whether the website pages have caught up with it.
+  const state = publishState(record, site)
 
   const visibleSections = collection.sections.filter((section) => (section.visibleWhen ? section.visibleWhen(record) : true))
 
@@ -116,16 +122,15 @@ export function RecordEditor({
         <div className="ml-auto flex flex-none items-center gap-2">
           {error ? <span className="text-ui text-danger">{error}</span> : null}
 
-          {/* Publish state, always shown: it's the answer to "is my change live?" */}
-          {collection.statusField && !error ? (
-            <Pill tone={PUBLISH_STATE_TONE[state]} title={PUBLISH_STATE_HINT[state]} className="text-ui">
+          {/* The stored status — the answer to "is my change live?". It
+              describes what's SAVED, so unsaved edits are called out beside it
+              rather than changing it. */}
+          {hasStatus && !error ? (
+            <Pill tone={PUBLISH_STATE_TONE[state]} title={publishStateHint(record, site)} className="text-ui">
               {PUBLISH_STATE_LABEL[state]}
             </Pill>
           ) : null}
 
-          {/* Save feedback, distinct from publish state: "written to the CMS"
-              vs "live on the site". Both can be true at once, and usually the
-              first is true while the second isn't. */}
           {editable && !error ? (
             dirty ? (
               <span className="text-ui text-muted">Unsaved changes</span>
@@ -134,11 +139,9 @@ export function RecordEditor({
             ) : null
           ) : null}
 
-          {editable && collection.statusField && labels ? (
-            <StatusSplitButton on={statusOn} labels={labels} state={state} onSelect={onSetStatus} />
-          ) : null}
-
-          {editable ? (
+          {editable && hasStatus ? (
+            <SaveAsButton record={record} dirty={dirty} saving={saving} onSaveAs={onSaveAs} />
+          ) : editable ? (
             <Button variant="solid" size="sm" onClick={onSave} disabled={saving || !dirty}>
               {saving ? 'Saving…' : 'Save'}
             </Button>
@@ -180,17 +183,6 @@ export function RecordEditor({
                 Duplicate
               </Button>
 
-              {collection.statusField && labels ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onSetStatus(false)}
-                  disabled={!statusOn}
-                >
-                  {labels.verbOff}
-                </Button>
-              ) : null}
-
               {/* Destructive, and pushed away from the two buttons pressed
                   routinely — same reasoning as the gallery card's Remove
                   button. */}
@@ -231,57 +223,44 @@ export function RecordEditor({
 }
 
 /**
- * The record's status: the primary action plus every status it could be, with
- * what each one means.
+ * How a record is saved: the primary half queues the change for the next
+ * publish (the common case, one click); the caret offers saving as a draft or
+ * archiving, each with what it does to the website written next to it.
  *
- * The main half performs the one transition that makes sense from here, so the
- * common case is a single click. The caret exists because "what does Draft
- * actually mean?" was previously something you had to work out from a tooltip —
- * now the choices are written down where the decision is made.
- *
- * Nothing here deploys. Publishing the *site* is the topbar's job; this only
- * decides whether the record is meant to be on it, which the next site publish
- * then acts on.
+ * Nothing here deploys. Publishing the *site* is the topbar's job.
  */
-function StatusSplitButton({
-  on,
-  labels,
-  state,
-  onSelect,
+function SaveAsButton({
+  record,
+  dirty,
+  saving,
+  onSaveAs,
 }: {
-  on: boolean
-  labels: NonNullable<AdminCollection['statusLabels']>
-  state: PublishState
-  onSelect: (next: boolean) => void
+  record: AdminRecord
+  dirty: boolean
+  saving: boolean
+  onSaveAs: (status: SaveStatus) => void
 }) {
+  const current = recordStatus(record)
+  const [primary, ...rest] = SAVE_CHOICES
   return (
     <SplitButton
-      variant={on ? 'soft' : 'solid'}
-      onClick={() => onSelect(!on)}
-      menuLabel="Change status"
-      menu={
-        <>
-          <MenuChoice
-            label={labels.on}
-            description="Meant to be on the website. It goes live at the next site publish."
-            selected={on}
-            onClick={() => onSelect(true)}
-          />
-          <MenuChoice
-            label={labels.off}
-            description="Kept out of the website. The next site publish removes it if it was live."
-            selected={!on}
-            onClick={() => onSelect(false)}
-          />
-          <div className="mt-1 border-t border-line px-2.5 pb-1 pt-1.5 text-ui text-muted">
-            {state === 'draft'
-              ? 'This record currently reads Draft: it has saved changes the website hasn’t picked up yet. Publishing the site clears that.'
-              : 'A record reads Draft on its own whenever it has saved changes the website hasn’t picked up yet.'}
-          </div>
-        </>
-      }
+      variant="solid"
+      onClick={() => onSaveAs(primary.status)}
+      disabled={saving}
+      actionDisabled={!canSaveAs(primary.status, record, dirty)}
+      menuLabel="More ways to save"
+      menu={[primary, ...rest].map((choice) => (
+        <MenuChoice
+          key={choice.status}
+          label={choice.label}
+          description={choice.description}
+          selected={!dirty && current === choice.status}
+          disabled={!canSaveAs(choice.status, record, dirty)}
+          onClick={() => onSaveAs(choice.status)}
+        />
+      ))}
     >
-      {on ? labels.verbOff : labels.verbOn}
+      {saving ? 'Saving…' : primary.label}
     </SplitButton>
   )
 }

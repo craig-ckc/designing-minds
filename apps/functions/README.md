@@ -13,7 +13,8 @@ the web and admin front-ends call the **same** logic rather than duplicating it.
 | `POST /api/forms` | `POST /forms` | Validates and stores contact/newsletter submissions, then performs best-effort email and audience sync. |
 | `POST /api/unsubscribe` | `POST /unsubscribe` | Verifies a signed unsubscribe token and marks the Mailchimp contact unsubscribed. |
 | `POST /api/admin/upload-url` | `POST /admin/upload-url` | Creates an admin-only signed upload URL and returns the provider-neutral storage key. |
-| `POST /api/admin/rebuild-web` | `POST /admin/rebuild-web` | Verifies admin access and triggers the configured web Deploy Hook. |
+| `POST /api/admin/rebuild-web` | `POST /admin/rebuild-web` | Verifies admin access, makes Queued records live (`publish_site_content()`), then triggers the configured web Deploy Hook. |
+| `POST /api/admin/publish-status` | `POST /admin/publish-status` | `{ since }` → the web build's state (pending/queued/building/ready/error/canceled) from the Vercel API; `unconfigured` without `VERCEL_API_TOKEN`. |
 
 ## Local dev
 

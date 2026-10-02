@@ -123,8 +123,31 @@ export interface ProductFile {
 
 export type BundleScope = 'Term' | 'Full Year'
 
+/**
+ * Where an editable record sits in the publish workflow — the editor's intent.
+ *
+ *   draft      being worked on; the site keeps serving its live copy, if any
+ *   queued     ready; the next site publish makes this the live copy
+ *   published  the live copy IS this content (set by publishing, never by hand)
+ *   archived   kept, but off the site; the next publish removes its live copy
+ */
+export type ContentStatus = 'draft' | 'queued' | 'published' | 'archived'
+
+/**
+ * Publish bookkeeping shared by every editable collection. Only
+ * public.publish_site_content() writes `published` and `publishedAt`; saving a
+ * record changes `status` and the working content, never what is live.
+ */
+interface Publishable {
+  /** True while the record has a live copy on the site (and in cart/checkout). */
+  published: boolean
+  status: ContentStatus
+  /** When the live copy last changed — promoted or removed. Null if never live. */
+  publishedAt?: string | null
+}
+
 /** An individual resource. Bundles are a separate Collection — see `Bundle`. */
-export interface Product {
+export interface Product extends Publishable {
   id: string
   slug: string
   title: string
@@ -144,7 +167,6 @@ export interface Product {
   /** Free downloadable PDF previews; the Product Detail hides the section when empty. */
   previewPdfs: PreviewPdf[]
   featured: boolean
-  published: boolean
   sortOrder: number
   seo: SeoMeta
   /** FAQ ids referenced by this product. */
@@ -163,7 +185,7 @@ export interface Product {
  * Subjects, terms, file count and monetary value are DERIVED from the members
  * (see `bundleValue`), never stored, so a bundle can't disagree with itself.
  */
-export interface Bundle {
+export interface Bundle extends Publishable {
   id: string
   slug: string
   title: string
@@ -179,7 +201,6 @@ export interface Bundle {
   /** Free downloadable PDF previews; the Product Detail hides the section when empty. */
   previewPdfs: PreviewPdf[]
   featured: boolean
-  published: boolean
   sortOrder: number
   seo: SeoMeta
   /** FAQ ids referenced by this bundle. */
@@ -191,17 +212,16 @@ export interface Bundle {
   includedProductSlugs: string[]
 }
 
-export interface Faq {
+export interface Faq extends Publishable {
   id: string
   question: string
   answer: string
   category: string
   sortOrder: number
-  published: boolean
   updatedAt: string
 }
 
-export interface Testimonial {
+export interface Testimonial extends Publishable {
   id: string
   customerName: string
   quote: string
@@ -210,7 +230,6 @@ export interface Testimonial {
   sourceDate: string
   featured: boolean
   sortOrder: number
-  published: boolean
   updatedAt: string
 }
 

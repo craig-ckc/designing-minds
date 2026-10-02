@@ -3,8 +3,9 @@ import { formatCurrency, type OrderStatus, type PaymentStatus } from '@designing
 import type { AdminCollection, AdminRecord, ListColumn } from '../../cms/types'
 import { getPath } from '../../cms/record'
 import {
+  isLive,
   publishState,
-  PUBLISH_STATE_HINT,
+  publishStateHint,
   PUBLISH_STATE_LABEL,
   PUBLISH_STATE_TONE,
   type SiteStatus,
@@ -107,7 +108,7 @@ export function RecordTable({
                     column.key === collection.titleField && 'font-medium',
                   )}
                 >
-                  {renderCell(record, column, collection, site)}
+                  {renderCell(record, column, site)}
                 </td>
               ))}
             </tr>
@@ -139,7 +140,7 @@ function columnStyle(column: ListColumn): { width?: string; minWidth?: string } 
   return { width: column.width, minWidth: column.width }
 }
 
-function renderCell(record: AdminRecord, column: ListColumn, collection: AdminCollection, site: SiteStatus): ReactNode {
+function renderCell(record: AdminRecord, column: ListColumn, site: SiteStatus): ReactNode {
   const value = getPath(record, column.key)
   const text = (content: string) => <span className="block truncate">{content}</span>
 
@@ -152,14 +153,14 @@ function renderCell(record: AdminRecord, column: ListColumn, collection: AdminCo
     case 'count':
       return text(String(Array.isArray(value) ? value.length : (value ?? 0)))
 
-    /* The record's own flag combined with whether the site has been rebuilt
-       since — so a saved-but-unpublished change reads "Changes in draft"
-       instead of claiming to be live. */
+    /* The stored status, plus "Publishing" while the pages catch up with a
+       publish. A Draft/Queued record that also has a live copy says so — the
+       site is still showing an older version of it. */
     case 'publish': {
-      const state = publishState(collection, record, site)
+      const state = publishState(record, site)
       return (
         <span className="flex gap-2">
-          <Pill tone={PUBLISH_STATE_TONE[state]} title={PUBLISH_STATE_HINT[state]}>
+          <Pill tone={PUBLISH_STATE_TONE[state]} title={publishStateHint(record, site)}>
             {PUBLISH_STATE_LABEL[state]}
           </Pill>
           {record.featured ? <Pill tone="outline">Featured</Pill> : null}
@@ -167,13 +168,11 @@ function renderCell(record: AdminRecord, column: ListColumn, collection: AdminCo
       )
     }
 
-    /* When the site last carried this record's current content. Only a record
-       the site is actually serving has a date to show. */
+    /* When the version on the website went live. Only a record with a live
+       copy has one — a Draft of a live record still shows the live date. */
     case 'publishedAt': {
-      const state = publishState(collection, record, site)
-      if (state === 'unpublished') return <span className="text-muted">Not published</span>
-      if (state === 'draft') return <span className="text-muted">Pending publish</span>
-      return text(formatStamp(site.build?.contentAt))
+      if (!isLive(record)) return <span className="text-muted">Not on site</span>
+      return text(formatStamp(typeof value === 'string' ? value : undefined))
     }
 
     case 'visibility': {

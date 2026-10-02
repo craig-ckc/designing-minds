@@ -87,18 +87,22 @@ test('RecordEditor computes `deletable` the same way AdminWorkspace already does
 })
 
 /* =========================================================================
-   Duplicate and Unpublish on the left; Delete pushed right — same reasoning
-   as the gallery card's Remove button.
+   Duplicate on the left; Delete pushed right — same reasoning as the gallery
+   card's Remove button. There is no Unpublish here any more: status lives in
+   one control, the header's save menu (Archive replaces Unpublish).
    ========================================================================= */
 
-test('Duplicate and Unpublish come first; Delete is last and carries ml-auto', () => {
+test('Duplicate comes first; Delete is last and carries ml-auto', () => {
   const block = actionsBlock()
   const duplicateIdx = block.indexOf('onClick={onDuplicate}')
-  const unpublishIdx = block.indexOf('labels.verbOff')
   const deleteMlAutoIdx = block.indexOf('ml-auto')
-  assert.ok(duplicateIdx >= 0 && unpublishIdx >= 0 && deleteMlAutoIdx >= 0)
-  assert.ok(duplicateIdx < unpublishIdx, 'Duplicate should come before Unpublish')
-  assert.ok(unpublishIdx < deleteMlAutoIdx, 'Unpublish should come before the ml-auto Delete button')
+  assert.ok(duplicateIdx >= 0 && deleteMlAutoIdx >= 0)
+  assert.ok(duplicateIdx < deleteMlAutoIdx, 'Duplicate should come before the ml-auto Delete button')
+})
+
+test('the action block offers no status change of its own', () => {
+  const block = actionsBlock()
+  assert.doesNotMatch(block, /onSaveAs|statusLabels|verbOff|Unpublish/)
 })
 
 test('Delete is styled exactly like RecordsToolbar\'s Delete, so the two agree', () => {
@@ -179,7 +183,8 @@ function duplicateRecordFn(): string {
 test('duplicating copies the saved baseline, not the live draft', () => {
   const fn = duplicateRecordFn()
   assert.match(fn, /\{ \.\.\.baseline, id: crypto\.randomUUID\(\) \}/)
-  assert.doesNotMatch(fn, /draft/, 'duplicateRecord should never read the live draft — only baseline')
+  // The `'draft'` STATUS literal is fine; the `draft` VARIABLE is not.
+  assert.doesNotMatch(fn, /(?<!')\bdraft\b(?!')/, 'duplicateRecord should never read the live draft — only baseline')
 })
 
 test('duplicating gets its id the same way a brand new record does', () => {
@@ -200,55 +205,39 @@ test('the duplicate\'s title gets " (copy)" appended and its slug is made unique
   assert.match(fn, /if \(slugKey\)/)
 })
 
-test('duplicating clears the status field so a copy never goes live on its own', () => {
+test('duplicating resets the status to Draft so a copy never goes live on its own', () => {
   const fn = duplicateRecordFn()
-  assert.match(fn, /setPath\(copy, collection\.statusField, false\)/)
+  assert.match(fn, /setPath\(copy, collection\.statusField, 'draft'\)/)
 })
 
-test('every duplicable collection\'s status field really is `published`, so clearing it means published: false in practice', () => {
+test('every editable catalogue collection keys its status as the four-state `status` field', () => {
   const registry = read('cms/registry.ts')
-  const matches = [...registry.matchAll(/statusField: 'published'/g)]
-  assert.equal(matches.length, 4, 'expected products, bundles, faqs and testimonials to all key status as `published`')
+  const matches = [...registry.matchAll(/statusField: 'status'/g)]
+  assert.equal(matches.length, 4, 'expected products, bundles, faqs and testimonials to all key status as `status`')
+  assert.doesNotMatch(registry, /statusField: 'published'/)
 })
 
 /* =========================================================================
-   Unpublish — reuses onSetStatus, edits the draft, never saves on its own.
+   Saving — there is no status-less Save for a record with a status. Every
+   save names what should happen on the website.
    ========================================================================= */
 
-test('Unpublish is only offered when the collection has a status field and labels', () => {
-  const block = actionsBlock()
-  assert.match(block, /\{collection\.statusField && labels \? \(/)
+test('the header saves through the save-as split button, never a plain Save, when the collection has a status', () => {
+  assert.match(editor, /editable && hasStatus \? \(\s*<SaveAsButton/)
+  assert.match(editor, /function SaveAsButton/)
+  assert.match(editor, /SAVE_CHOICES/)
 })
 
-test('Unpublish routes through the existing onSetStatus(false) — it does not call a save directly', () => {
-  const block = actionsBlock()
-  assert.match(block, /onClick=\{\(\) => onSetStatus\(false\)\}/)
-  // No save-shaped call anywhere in this block — Unpublish, like the header's
-  // status control, edits the draft only. Save is a separate, explicit click.
-  assert.doesNotMatch(block, /onSave/)
-  assert.doesNotMatch(block, /persist\(/)
-})
-
-test('Unpublish is disabled once the record is already unpublished', () => {
-  const block = actionsBlock()
-  assert.match(block, /disabled=\{!statusOn\}/)
-})
-
-test('Unpublish is labelled from statusLabels.verbOff, not a hardcoded string', () => {
-  const block = actionsBlock()
-  assert.match(block, /\{labels\.verbOff\}/)
-  assert.doesNotMatch(block, /'Unpublish'/, 'the label should come from statusLabels, not a literal')
-})
-
-test('handleSetStatus (behind onSetStatus) edits the draft in place — it never calls onSave', () => {
-  // This is the decision the whole feature leans on: a status change is a
-  // field edit like any other, and Save is what commits it.
-  const start = workspace.indexOf('const handleSetStatus = (next: boolean) => {')
+test('saveAs writes the chosen status and the edits in ONE save', () => {
+  const start = workspace.indexOf('const saveAs = (status: SaveStatus) => {')
   const end = workspace.indexOf('const duplicateRecord')
   assert.ok(start >= 0 && end > start)
   const fn = workspace.slice(start, end)
-  assert.match(fn, /setDraft\(/)
-  assert.doesNotMatch(fn, /onSave/)
+  assert.match(fn, /persist\(setPath\(draft, collection\.statusField, status\)\)/)
+})
+
+test('the header no longer carries a Preview link', () => {
+  assert.doesNotMatch(readCode('components/Shell.tsx'), /Preview/)
 })
 
 /* -------------------------------------------------------------------------
