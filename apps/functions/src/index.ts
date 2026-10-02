@@ -1,3 +1,4 @@
+import { promotionsCron } from './handlers/promotions-cron.ts'
 import { diagnostics } from './handlers/diagnostics.ts'
 import { checkout, checkoutQuote } from './handlers/checkout.ts'
 import { paymentWebhook } from './handlers/payment-webhook.ts'
@@ -18,6 +19,7 @@ export const handlers: Record<string, Handler> = {
   '/diagnostics': diagnostics,
   '/checkout': checkout,
   '/checkout-quote': checkoutQuote,
+  '/cron/promotions': promotionsCron,
   '/payment-webhook': paymentWebhook,
   '/issue-download': issueDownload,
   '/forms': forms,
