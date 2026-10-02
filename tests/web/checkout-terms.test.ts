@@ -13,5 +13,5 @@ test('checkout requires explicit agreement and submits it to the API', () => {
   assert.match(checkoutPage, /<Link[\s\S]*to="\/terms"[\s\S]*Terms of Use/)
   assert.match(checkoutPage, /acceptedTerms: true/)
   assert.match(checkoutPage, /Please agree to the Terms of Use before continuing\./)
-  assert.match(checkoutPage, /disabled=\{submitting \|\| items\.length === 0 \|\| !acceptedTerms\}/)
+  assert.match(checkoutPage, /disabled=\{submitting \|\| quoting \|\| \(Boolean\(customer\) && !quoteValid\) \|\| items\.length === 0 \|\| !acceptedTerms\}/)
 })

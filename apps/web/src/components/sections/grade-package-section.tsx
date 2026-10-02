@@ -1,5 +1,6 @@
+import { CatalogPrice } from '../ui/catalog-price'
 import { Link } from 'react-router-dom'
-import { bundleValue, bundlesForGrade, priceLabel, type CmsSnapshot } from '@designing-minds/cms'
+import { bundleValue, bundlesForGrade, priceLabel, promotionPrice, type CmsSnapshot } from '@designing-minds/cms'
 import { Container } from '../ui/container'
 import { Badge } from '../ui/badge'
 import { ArrowAffordance } from '../ui/icon'
@@ -43,7 +44,7 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rendered.map((product) => {
             const value = bundleValue(snapshot, product)
-            const perResource = value ? perResourceZar(product.priceZar, value.itemCount) : null
+            const perResource = value ? perResourceZar(promotionPrice(product), value.itemCount) : null
             return (
               <Link
                 key={product.id}
@@ -76,7 +77,7 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
                 <div className="mt-auto flex items-end justify-between gap-3 pt-5">
                   <span>
                     <span className="block text-[1.4rem] font-extrabold leading-none tracking-[-0.02em]">
-                      {priceLabel(product.priceZar)}
+                      <CatalogPrice record={product} />
                     </span>
                     {value && value.savingZar > 0 ? (
                       <span className="mt-1 block text-caption text-muted">

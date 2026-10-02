@@ -1,3 +1,4 @@
+import { CatalogPrice } from '../components/ui/catalog-price'
 import { Link, useParams } from 'react-router-dom'
 import {
   bundleContents,
@@ -189,7 +190,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
                 </span>
               </div>
               <div className="text-[1.7rem] font-bold leading-tight tracking-[-0.02em]">{product.title}</div>
-              <div className="text-[2.4rem] font-semibold tracking-[-0.03em]">{priceLabel(product.priceZar)}</div>
+              <div className="text-[2.4rem] font-semibold tracking-[-0.03em]"><CatalogPrice record={product} /></div>
               <ul className="grid gap-3">
                 <SpecRow label="Grade" value={product.grade} />
                 <SpecRow label="Term" value={product.term} />
@@ -223,7 +224,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
                           className="group flex items-baseline justify-between gap-3 text-body-sm hover:text-primary-ink"
                         >
                           <span className="font-semibold">{entry.title}</span>
-                          <span className="whitespace-nowrap text-muted">{priceLabel(entry.priceZar)}</span>
+                          <span className="whitespace-nowrap text-muted"><CatalogPrice record={entry} /></span>
                         </Link>
                       </li>
                     ))}
@@ -338,7 +339,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
               </span>
             </div>
             <div className="text-[1.7rem] font-bold leading-tight tracking-[-0.02em]">{bundle.title}</div>
-            <div className="text-[2.4rem] font-semibold tracking-[-0.03em]">{priceLabel(bundle.priceZar)}</div>
+            <div className="text-[2.4rem] font-semibold tracking-[-0.03em]"><CatalogPrice record={bundle} /></div>
             {value && value.savingZar > 0 ? (
               <p className="text-body-sm font-semibold text-primary-ink">
                 Saves {priceLabel(value.savingZar)} against buying these separately

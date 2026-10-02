@@ -1,5 +1,6 @@
 import {
   bundleContents,
+  promotionPrice,
   getCatalogItemBySlug,
   getFaqsByIds,
   productsForGrade,
@@ -267,7 +268,7 @@ const productItemList = (siteUrl: string, name: string, products: Product[]) => 
         brand: { '@type': 'Brand', name: SITE_NAME },
         offers: {
           '@type': 'Offer',
-          price: product.priceZar,
+          price: promotionPrice(product),
           priceCurrency: 'ZAR',
           availability: 'https://schema.org/InStock',
           url,
@@ -340,7 +341,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
       brand: { '@type': 'Brand', name: SITE_NAME },
       offers: {
         '@type': 'Offer',
-        price: product.priceZar,
+        price: promotionPrice(product),
         priceCurrency: 'ZAR',
         availability: 'https://schema.org/InStock',
         url: canonical,

@@ -1,5 +1,5 @@
 import { diagnostics } from './handlers/diagnostics.ts'
-import { checkout } from './handlers/checkout.ts'
+import { checkout, checkoutQuote } from './handlers/checkout.ts'
 import { paymentWebhook } from './handlers/payment-webhook.ts'
 import { issueDownload } from './handlers/issue-download.ts'
 import { adminUploadUrl } from './handlers/admin-upload-url.ts'
@@ -17,6 +17,7 @@ import type { Handler } from './lib/http.ts'
 export const handlers: Record<string, Handler> = {
   '/diagnostics': diagnostics,
   '/checkout': checkout,
+  '/checkout-quote': checkoutQuote,
   '/payment-webhook': paymentWebhook,
   '/issue-download': issueDownload,
   '/forms': forms,

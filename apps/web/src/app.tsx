@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { type CmsSnapshot } from '@designing-minds/cms'
+import { withPricingTime, type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from './repository'
 import { useAuth } from './lib/auth'
 import { ScrollToTop } from './lib/scroll-to-top'
@@ -52,8 +52,25 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
   // catalogue…". The effect below still refreshes — and for signed-in users it
   // pulls in their operational data (orders/payments), which the public
   // snapshot never carries.
-  const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(initialSnapshot)
+  const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(() => initialSnapshot ? withPricingTime(initialSnapshot, Date.parse(initialSnapshot.generatedAt)) : null)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!snapshot) return
+    const now = Date.now()
+    // The first hydrated render uses the build clock, then switches to now.
+    const hasOldClock = [...snapshot.products, ...snapshot.bundles].some((record) => 'priceAsOf' in record && Number(record.priceAsOf) < now - 1000)
+    const boundaries = [...snapshot.products, ...snapshot.bundles]
+      .flatMap((record) => [record.saleStartsAt, record.saleEndsAt])
+      .filter((date): date is string => Boolean(date))
+      .map((date) => Date.parse(date)).filter((time) => time > now)
+    if (boundaries.length === 0 && !hasOldClock) return
+    const timer = window.setTimeout(() => setSnapshot((current) => current ? withPricingTime(current, Date.now()) : current), hasOldClock ? 0 : Math.min(Math.min(...boundaries) - now + 25, 2147483647))
+    // Refresh scheduled displays after a sleeping tab becomes visible again.
+    const resume = () => { if (document.visibilityState === 'visible') setSnapshot((current) => current ? withPricingTime(current, Date.now()) : current) }
+    document.addEventListener('visibilitychange', resume)
+    return () => { window.clearTimeout(timer); document.removeEventListener('visibilitychange', resume) }
+  }, [snapshot])
 
   // Keep the tab title + share tags in sync as the user navigates the SPA.
   useRouteHead(snapshot)
@@ -61,7 +78,7 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
   const refreshSnapshot = useCallback(async () => {
     try {
       const next = await repository.getSnapshot()
-      setSnapshot(next)
+      setSnapshot(withPricingTime(next, Date.now()))
       setError(null)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load content.')

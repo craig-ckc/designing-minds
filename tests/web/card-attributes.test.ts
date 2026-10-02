@@ -50,15 +50,15 @@ test('catalogue cards and grade bundle tiles render the derived attribute copy',
 
   // The line sits between the title and the price row, in the muted meta style.
   assert.match(productCard, /<p className="pt-1 text-body-sm text-muted">\{productAttributeLine\(product\)\}<\/p>/)
-  assert.ok(productCard.indexOf('productAttributeLine(product)') < productCard.indexOf('priceLabel(product.priceZar)'))
+  assert.ok(productCard.indexOf('productAttributeLine(product)') < productCard.indexOf('<CatalogPrice record={product}'))
 
   // Bundle cards: resources · subjects · about R x each, all derived from members.
-  assert.match(bundleCard, /const perResource = perResourceZar\(bundle\.priceZar, contents\.length\)/)
+  assert.match(bundleCard, /const perResource = perResourceZar\(promotionPrice\(bundle\), contents\.length\)/)
   assert.match(bundleCard, /countLabel\(contents\.length, 'resource'\)/)
   assert.match(bundleCard, /countLabel\(subjects\.length, 'subject'\)/)
   assert.match(bundleCard, /about \$\{priceLabel\(perResource\)\} each/)
 
   // Grade bundle tiles put the per-resource price beside the "bought singly" comparison.
-  assert.match(gradePackages, /perResourceZar\(product\.priceZar, value\.itemCount\)/)
+  assert.match(gradePackages, /perResourceZar\(promotionPrice\(product\), value\.itemCount\)/)
   assert.match(gradePackages, /bought singly\s*\{perResource \? ` · about \$\{priceLabel\(perResource\)\} each` : ''\}/)
 })

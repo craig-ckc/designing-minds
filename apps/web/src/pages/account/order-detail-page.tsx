@@ -127,6 +127,10 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
             <Row label="Order reference" value={order.reference} />
             <Row label="Account" value={`${order.customerName} · ${order.customerEmail}`} />
             {payment ? <Row label="Payment" value={`${payment.provider} · ${payment.reference} · ${payment.status}`} /> : null}
+            {order.couponCode ? <>
+              <Row label="Subtotal" value={priceLabel(order.subtotalZar ?? order.totalZar + (order.discountZar ?? 0))} />
+              <Row label={`Discount (${order.couponCode})`} value={`−${priceLabel(order.discountZar ?? 0)}`} />
+            </> : null}
             <Row label="Total" value={priceLabel(order.totalZar)} strong />
           </div>
         </Card>

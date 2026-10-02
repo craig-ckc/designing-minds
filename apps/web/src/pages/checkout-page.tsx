@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Checkbox } from '@base-ui/react/checkbox'
-import { type CmsSnapshot, priceLabel, resolveCartItems } from '@designing-minds/cms'
+import { type CmsSnapshot, priceLabel, promotionPrice, resolveCartItems } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
@@ -10,8 +10,20 @@ import { useAuth } from '../lib/auth'
 import { apiUrl } from '../lib/api'
 import { requestJson, RequestError } from '../lib/request-json'
 import { trackEvent, flushDiagnostics } from '../lib/diagnostics'
-import { getCartSlugs } from '../lib/cart'
+import { useCartSlugs } from '../lib/use-cart'
 import { useNoindex } from '../lib/use-noindex'
+
+interface PriceQuote {
+  items: { productSlug: string; title: string; priceZar: number; originalPriceZar: number; onSale: boolean }[]
+  subtotalZar: number
+  discountZar: number
+  totalZar: number
+  couponCode: string | null
+  orderId?: string
+  basketKey?: string
+  customerId?: string
+  requestedCode?: string
+}
 
 interface CheckoutBaseResponse {
   orderId: string
@@ -49,12 +61,51 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const submittingRef = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
-  const slugs = useMemo(() => getCartSlugs(), [])
+  const slugs = useCartSlugs()
+  const basketKey = JSON.stringify(slugs)
+  const customerId = customer?.id
+  const [codeInput, setCodeInput] = useState('')
+  const [appliedCode, setAppliedCode] = useState('')
+  const [quote, setQuote] = useState<PriceQuote | null>(null)
+  const [quoting, setQuoting] = useState(false)
+  const quoteVersion = useRef(0)
+  const quoteValid = quote?.basketKey === basketKey && quote?.customerId === customer?.id && quote?.requestedCode === appliedCode
+  const loadQuote = useCallback(async (code: string, clearError = true, signal?: AbortSignal) => {
+    const version = ++quoteVersion.current
+    if (!customerId || slugs.length === 0) return
+    try {
+      const token = await getAccessToken()
+      if (signal?.aborted || version !== quoteVersion.current) return
+      setQuoting(true)
+      setQuote(null)
+      if (clearError) setError(null)
+      if (!token) throw new Error('Please sign in again to check prices.')
+      const result = await requestJson<PriceQuote>(apiUrl('/api/checkout-quote'), {
+        method: 'POST',
+        signal,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+        body: JSON.stringify({ items: slugs.map((productSlug) => ({ productSlug })), couponCode: code }),
+      })
+      if (version === quoteVersion.current && !signal?.aborted) setQuote({ ...result, basketKey, customerId, requestedCode: code })
+    } catch (failure) {
+      if (version === quoteVersion.current && !signal?.aborted) setError(failure instanceof Error ? failure.message : 'Unable to check prices.')
+    } finally {
+      if (version === quoteVersion.current && !signal?.aborted) setQuoting(false)
+    }
+  }, [customerId, getAccessToken, slugs, basketKey])
+  useEffect(() => {
+    const controller = new AbortController()
+    // Start external work after commit; an aborted effect never starts a request.
+    void Promise.resolve().then(() => {
+      if (!controller.signal.aborted) return loadQuote(appliedCode, true, controller.signal)
+    })
+    return () => controller.abort()
+  }, [loadQuote, appliedCode, snapshot])
   // Same shared /shop space as the cart: bundle slugs must resolve here too,
   // and they travel to the payment flow as productSlug lines like everything else.
   const items = resolveCartItems(snapshot, slugs)
   const total = items.reduce(
-    (sum, item) => sum + (item.kind === 'product' ? item.product.priceZar : item.bundle.priceZar),
+    (sum, item) => sum + promotionPrice(item.kind === 'product' ? item.product : item.bundle),
     0,
   )
 
@@ -73,6 +124,10 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
       return
     }
 
+    if (!quoteValid || !quote || quoting) {
+      setError('Please check the order total before paying.')
+      return
+    }
     submittingRef.current = true
     const requestId = crypto.randomUUID()
     trackEvent('checkout.started', { requestId })
@@ -91,6 +146,8 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
         body: JSON.stringify({
           items: items.map((item) => ({ productSlug: item.kind === 'product' ? item.product.slug : item.bundle.slug })),
           acceptedTerms: true,
+          couponCode: appliedCode,
+          expectedTotalZar: quote.totalZar,
         }),
       })
       if ('payfast' in checkout && checkout.payfast?.url && checkout.payfast.fields) {
@@ -106,6 +163,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
       setError(`${e instanceof Error ? e.message : 'Unable to start checkout.'} Reference: ${reference}`)
       submittingRef.current = false
       setSubmitting(false)
+      void loadQuote(appliedCode, false)
     }
   }
 
@@ -160,7 +218,14 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   return (
                     <li key={record.slug} className="flex justify-between gap-3">
                       <span className="text-ink-soft">{record.title}</span>
-                      <span>{priceLabel(record.priceZar)}</span>
+                      <span>
+                        {(() => {
+                          const line = quoteValid ? quote?.items.find((entry) => entry.productSlug === record.slug) : null
+                          const price = line?.priceZar ?? promotionPrice(record)
+                          const original = line?.originalPriceZar ?? record.priceZar
+                          return <>{price < original ? <s className="mr-2 text-muted">{priceLabel(original)}</s> : null}{priceLabel(price)}</>
+                        })()}
+                      </span>
                     </li>
                   )
                 })}
@@ -168,9 +233,36 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
             ) : (
               <p className="text-body-sm text-muted">Your cart is empty.</p>
             )}
+            <div className="grid gap-2 border-t border-line pt-3">
+              <label htmlFor="discount-code" className="text-body-sm font-semibold">Discount code</label>
+              <div className="flex flex-wrap gap-2">
+                <input id="discount-code" value={codeInput} maxLength={40} autoComplete="off" spellCheck={false}
+                  onChange={(event) => setCodeInput(event.target.value)} disabled={submitting || quoting}
+                  className="min-w-0 flex-1 rounded-control border border-line bg-surface px-3 py-2 text-body-sm" />
+                <Button type="button" variant="outline" disabled={!customer || !codeInput.trim() || submitting || quoting}
+                  onClick={() => {
+                    const code = codeInput.trim().toUpperCase()
+                    if (code === appliedCode) void loadQuote(code)
+                    else setAppliedCode(code)
+                  }}>Apply</Button>
+                {appliedCode ? <Button type="button" variant="text" disabled={submitting || quoting}
+                  onClick={() => { setCodeInput(''); setAppliedCode('') }}>Remove</Button> : null}
+              </div>
+              <p className="text-label text-muted">Each code can be used once per customer.{!customer ? ' Sign in to apply a code.' : ''}</p>
+            </div>
+            {customer && !quoteValid && !quoting ? <Button type="button" variant="outline" disabled={submitting}
+              onClick={() => void loadQuote(appliedCode)}>Check prices again</Button> : null}
+            {quoting ? <p role="status" className="text-body-sm text-muted">Checking prices…</p> : null}
+            {quoteValid && quote && quote.discountZar > 0 ? (
+              <div className="grid gap-2 text-body-sm" aria-live="polite">
+                <div className="flex justify-between"><span>Subtotal</span><span>{priceLabel(quote.subtotalZar)}</span></div>
+                <div className="flex justify-between"><span>Discount ({quote.couponCode})</span><span>−{priceLabel(quote.discountZar)}</span></div>
+              </div>
+            ) : null}
+            {quoteValid && quote?.orderId ? <p className="text-label text-muted">This resumes your pending payment at its original total.</p> : null}
             <div className="flex justify-between border-t border-line pt-3 text-[1.1rem] font-semibold">
               <span>Total</span>
-              <span>{priceLabel(total)}</span>
+              <span>{priceLabel(quoteValid && quote ? quote.totalZar : total)}</span>
             </div>
             {error ? (
               <p role="alert" className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p>
@@ -205,7 +297,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
               type="submit"
               variant="solid"
               className="w-full"
-              disabled={submitting || items.length === 0 || !acceptedTerms}
+              disabled={submitting || quoting || (Boolean(customer) && !quoteValid) || items.length === 0 || !acceptedTerms}
             >
               {submitting ? 'Redirecting…' : 'Pay with PayFast'}
             </Button>

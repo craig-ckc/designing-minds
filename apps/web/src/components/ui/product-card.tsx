@@ -1,5 +1,6 @@
+import { CatalogPrice } from './catalog-price'
 import { Link } from 'react-router-dom'
-import { type Product, priceLabel } from '@designing-minds/cms'
+import { type Product } from '@designing-minds/cms'
 import { Button } from './button'
 import { Card } from './card'
 import { Icon } from './icon'
@@ -33,7 +34,7 @@ export function ProductCard({ product }: { product: Product }) {
         {/* What the buyer gets, read off the record: file type, format, marks. */}
         <p className="pt-1 text-body-sm text-muted">{productAttributeLine(product)}</p>
         <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <span className="text-[1.2rem] font-extrabold text-primary">{priceLabel(product.priceZar)}</span>
+          <span className="text-[1.2rem] font-extrabold text-primary"><CatalogPrice record={product} /></span>
           {inCart ? (
             <Button
               size="icon"

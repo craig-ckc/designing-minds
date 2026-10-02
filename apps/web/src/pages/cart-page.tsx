@@ -1,5 +1,6 @@
+import { CatalogPrice } from '../components/ui/catalog-price'
 import { Link } from 'react-router-dom'
-import { type CmsSnapshot, bundleContents, priceLabel, resolveCartItems } from '@designing-minds/cms'
+import { type CmsSnapshot, bundleContents, priceLabel, promotionPrice, resolveCartItems } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
@@ -18,7 +19,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const items = resolveCartItems(snapshot, slugs)
 
   const subtotal = items.reduce(
-    (sum, item) => sum + (item.kind === 'product' ? item.product.priceZar : item.bundle.priceZar),
+    (sum, item) => sum + promotionPrice(item.kind === 'product' ? item.product : item.bundle),
     0,
   )
   const remove = (slug: string) => removeCartSlug(slug)
@@ -72,7 +73,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
                       </Link>
                       <span className="text-body-sm text-muted">{detail}</span>
                       <strong className="mt-0.5 text-[1.15rem] font-extrabold text-primary-ink">
-                        {priceLabel(record.priceZar)}
+                        <CatalogPrice record={record} />
                       </strong>
                     </div>
                     <Button

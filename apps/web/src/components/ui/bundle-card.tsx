@@ -1,5 +1,6 @@
+import { CatalogPrice } from './catalog-price'
 import { Link } from 'react-router-dom'
-import { bundleContents, priceLabel, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
+import { bundleContents, priceLabel, promotionPrice, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
 import { cn } from '@designing-minds/utils'
 import { Button } from './button'
 import { Card } from './card'
@@ -32,7 +33,7 @@ export function BundleCard({
   const href = `/shop/${bundle.slug}`
   const contents = bundleContents(snapshot, bundle)
   const subjects = [...new Set(contents.flatMap((product) => product.subjects))]
-  const perResource = perResourceZar(bundle.priceZar, contents.length)
+  const perResource = perResourceZar(promotionPrice(bundle), contents.length)
 
   return (
     <Card
@@ -69,7 +70,7 @@ export function BundleCard({
         ) : null}
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <span className="text-[1.2rem] font-extrabold text-primary">{priceLabel(bundle.priceZar)}</span>
+          <span className="text-[1.2rem] font-extrabold text-primary"><CatalogPrice record={bundle} /></span>
           {inCart ? (
             <Button
               size="icon"
