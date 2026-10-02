@@ -40,7 +40,7 @@ function sliceBalanced(source: string, openParenIndex: number): string {
    DeletableCollection — derived from the registry, not hardcoded here.
    ========================================================================= */
 
-test('DeletableCollection is exactly the registry\'s non-read-only collections', () => {
+test('DeletableCollection includes editable content; coupon usage history is retained', () => {
   // If this test hardcoded ['products', 'bundles', 'faqs', 'testimonials'] it
   // would stay green forever, including the day someone adds a new editable
   // collection and forgets to make it deletable (or, worse, marks a read-only
@@ -52,7 +52,7 @@ test('DeletableCollection is exactly the registry\'s non-read-only collections',
   const declared = [...declaration[1].matchAll(/'([^']+)'/g)].map(([, name]) => name).sort()
 
   const editableIds = collectionRegistry
-    .filter((collection) => !collection.readOnly)
+    .filter((collection) => !collection.readOnly && collection.id !== 'coupons')
     .map((collection) => collection.id)
     .sort()
 
@@ -60,7 +60,7 @@ test('DeletableCollection is exactly the registry\'s non-read-only collections',
 
   // Named explicitly so a failure here says *which* operational collection
   // leaked in, rather than just "arrays differ".
-  for (const id of ['orders', 'customers', 'payments', 'formContact', 'formNewsletter']) {
+  for (const id of ['orders', 'customers', 'payments', 'formContact', 'formNewsletter', 'coupons']) {
     assert.ok(!declared.includes(id), `${id} is operational history, not deletable content`)
   }
 })

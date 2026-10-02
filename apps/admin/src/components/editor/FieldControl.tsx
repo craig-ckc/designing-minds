@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { fromJohannesburgInput, toJohannesburgInput } from '@designing-minds/cms'
 import type { PreviewPdf, ProductFile, ProductImage } from '@designing-minds/cms'
 import type { AdminField, AdminRecord, FieldContext, MultiReferenceField, SelectField, SingleReferenceField } from '../../cms/types'
 import { getPath } from '../../cms/record'
@@ -86,6 +87,7 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
           <Input
             id={inputId}
             type="number"
+            step={['priceZar', 'salePriceZar', 'value'].includes(field.key) ? '0.01' : '1'}
             value={value === null || value === undefined || value === '' ? '' : Number(value)}
             disabled={disabled}
             onChange={(e) => {
@@ -101,9 +103,9 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
           <Input
             id={inputId}
             type={field.type === 'date' ? 'date' : 'datetime-local'}
-            value={String(value ?? '')}
+            value={field.timezone ? toJohannesburgInput(value as string | null) : String(value ?? '')}
             disabled={disabled}
-            onChange={(e) => onUpdate(field.key, e.target.value)}
+            onChange={(e) => onUpdate(field.key, field.timezone ? fromJohannesburgInput(e.target.value) : e.target.value || null)}
           />
         )
 

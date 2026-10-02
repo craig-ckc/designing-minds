@@ -22,6 +22,7 @@ import {
   updateTestimonialInSnapshot,
   type DeletableCollection,
   type Bundle,
+  type Coupon,
   type CmsRepository,
   type CmsSnapshot,
   type Faq,
@@ -58,6 +59,8 @@ function mapOrder(snapshot: CmsSnapshot, order: CmsSnapshot['orders'][number]): 
     itemCount: order.items.length,
     total: order.totalZar,
     totalLabel: formatCurrency(order.totalZar),
+    couponSummary: order.couponCode ? `${order.couponCode} · ${formatCurrency(order.discountZar ?? 0)} off` : 'No discount code',
+    subtotalLabel: formatCurrency(order.subtotalZar ?? order.totalZar),
     itemsSummary,
     paymentSummary,
   }
@@ -114,6 +117,8 @@ function mapNewsletterSubmission(submission: CmsSnapshot['formNewsletter'][numbe
 
 export function selectRecords(snapshot: CmsSnapshot, collectionId: string): AdminRecord[] {
   switch (collectionId) {
+    case 'coupons':
+      return (snapshot.coupons ?? []) as unknown as AdminRecord[]
     case 'products':
       return snapshot.products as unknown as AdminRecord[]
     case 'bundles':
@@ -151,6 +156,8 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
   const vl = snapshot.valueLists
   const id = crypto.randomUUID()
   switch (collectionId) {
+    case 'coupons':
+      return { id, code: '', discountType: 'percentage', value: 10, enabled: false, allowSaleItems: false, startsAt: null, expiresAt: null, updatedAt: '' }
     case 'products': {
       const product: Product = {
         id,
@@ -159,6 +166,9 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         shortDescription: '',
         fullDescription: '',
         priceZar: 0,
+        salePriceZar: null,
+        saleStartsAt: null,
+        saleEndsAt: null,
         grade: vl.grades[0],
         term: vl.terms[0],
         year: currentYear(),
@@ -186,6 +196,9 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         shortDescription: '',
         fullDescription: '',
         priceZar: 0,
+        salePriceZar: null,
+        saleStartsAt: null,
+        saleEndsAt: null,
         grade: vl.grades[0],
         term: vl.terms[0],
         year: currentYear(),
@@ -359,6 +372,10 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
 
     async save(collectionId, record) {
       switch (collectionId) {
+        case 'coupons': {
+          const saved = await repository.saveCoupon(record as unknown as Coupon)
+          return { saved: saved as unknown as AdminRecord, apply: (s) => ({ ...s, coupons: [...(s.coupons ?? []).filter((c) => c.id !== saved.id), saved] }) }
+        }
         case 'products': {
           const saved = await repository.saveProduct(record as unknown as Product)
           return { saved: saved as unknown as AdminRecord, apply: (s) => updateProductInSnapshot(s, saved) }

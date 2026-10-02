@@ -56,6 +56,9 @@ const products: AdminCollection = {
     { key: 'fullDescription', label: 'Full description', type: 'richText', helpText: 'Rich text, stored as Markdown and rendered on the product page.' },
 
     { key: 'priceZar', label: 'Price (ZAR)', type: 'number' },
+    { key: 'salePriceZar', label: 'Sale price (ZAR)', type: 'number', nullable: true, helpText: 'Leave empty for no sale. Must be lower than the regular price.' },
+    { key: 'saleStartsAt', label: 'Sale starts (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg', helpText: 'Optional. Leave empty to start when published.' },
+    { key: 'saleEndsAt', label: 'Sale ends (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg', helpText: 'Optional. The regular price returns at this time.' },
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
     STATUS_FIELD,
     { key: 'featured', label: 'Featured', type: 'boolean' },
@@ -80,7 +83,7 @@ const products: AdminCollection = {
     { title: 'Basic info', fields: ['title', 'slug', 'shortDescription', 'fullDescription'] },
     /* `status` is deliberately absent from every section below: the editor
        header owns it — every save picks one. */
-    { title: 'Pricing & visibility', fields: ['priceZar', 'sortOrder', 'featured'] },
+    { title: 'Pricing & visibility', fields: ['priceZar', 'salePriceZar', 'saleStartsAt', 'saleEndsAt', 'sortOrder', 'featured'] },
     { title: 'Classification', fields: ['resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects'] },
     {
       title: 'Files',
@@ -148,6 +151,9 @@ const bundles: AdminCollection = {
     { key: 'fullDescription', label: 'Full description', type: 'richText', helpText: 'Rich text, stored as Markdown and rendered on the bundle page.' },
 
     { key: 'priceZar', label: 'Price (ZAR)', type: 'number' },
+    { key: 'salePriceZar', label: 'Sale price (ZAR)', type: 'number', nullable: true, helpText: 'Leave empty for no sale. Must be lower than the regular price.' },
+    { key: 'saleStartsAt', label: 'Sale starts (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg', helpText: 'Optional. Leave empty to start when published.' },
+    { key: 'saleEndsAt', label: 'Sale ends (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg', helpText: 'Optional. The regular price returns at this time.' },
     { key: 'sortOrder', label: 'Sort order', type: 'number' },
     STATUS_FIELD,
     { key: 'featured', label: 'Featured', type: 'boolean' },
@@ -185,7 +191,7 @@ const bundles: AdminCollection = {
   ],
   sections: [
     { title: 'Basic info', fields: ['title', 'slug', 'shortDescription', 'fullDescription'] },
-    { title: 'Pricing & visibility', fields: ['priceZar', 'sortOrder', 'featured'] },
+    { title: 'Pricing & visibility', fields: ['priceZar', 'salePriceZar', 'saleStartsAt', 'saleEndsAt', 'sortOrder', 'featured'] },
     { title: 'Classification', fields: ['bundleScope', 'grade', 'term', 'year'] },
     { title: 'Contents', hint: 'The resources this bundle unlocks.', fields: ['includedProductIds'] },
     {
@@ -312,11 +318,13 @@ const orders: AdminCollection = {
     { key: 'customerName', label: 'Customer', type: 'readonly' },
     { key: 'customerEmail', label: 'Email', type: 'readonly' },
     { key: 'totalLabel', label: 'Total', type: 'readonly' },
+    { key: 'subtotalLabel', label: 'Subtotal', type: 'readonly' },
+    { key: 'couponSummary', label: 'Discount code', type: 'readonly' },
     { key: 'itemsSummary', label: 'Items', type: 'readonly' },
     { key: 'paymentSummary', label: 'Payment', type: 'readonly' },
   ],
   sections: [
-    { title: 'Order', fields: ['reference', 'status', 'date', 'customerName', 'customerEmail', 'totalLabel'] },
+    { title: 'Order', fields: ['reference', 'status', 'date', 'customerName', 'customerEmail', 'subtotalLabel', 'couponSummary', 'totalLabel'] },
     { title: 'Items', fields: ['itemsSummary'] },
     { title: 'Payment', fields: ['paymentSummary'] },
   ],
@@ -445,9 +453,34 @@ const formNewsletter: AdminCollection = {
   ],
 }
 
+const coupons: AdminCollection = {
+  id: 'coupons', label: 'Discount codes', singular: 'Discount code', group: 'Promotions',
+  titleField: 'code', searchFields: ['code'],
+  filters: [{ key: 'enabled', label: 'Enabled', options: boolOptions('Enabled', 'Disabled') }],
+  fields: [
+    { key: 'code', label: 'Code', type: 'text', required: true, helpText: 'Letters, numbers, underscores and hyphens. Codes ignore letter case. Each customer can use a code once.' },
+    { key: 'discountType', label: 'Discount type', type: 'select', options: [{ label: 'Percentage', value: 'percentage' }, { label: 'Fixed amount (ZAR)', value: 'fixed' }], required: true },
+    { key: 'value', label: 'Discount value', type: 'number', required: true, helpText: 'Percentage (up to 100) or rand amount. Orders must retain a positive payment total.' },
+    { key: 'enabled', label: 'Enabled', type: 'boolean', helpText: 'Changes take effect when saved. Disable old codes to retain their usage history.' },
+    { key: 'allowSaleItems', label: 'Allow on sale items', type: 'boolean', helpText: 'Off: only regular-price items get the code discount. On: sale items get the extra discount too.' },
+    { key: 'startsAt', label: 'Starts (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg' },
+    { key: 'expiresAt', label: 'Expires (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg', helpText: 'Optional. New checkouts cannot use the code at or after this time.' },
+  ],
+  sections: [{ title: 'Discount code', fields: ['code','discountType','value','enabled','allowSaleItems','startsAt','expiresAt'] }],
+  listColumns: [
+    { key: 'code', label: 'Code', width: 'minmax(180px, 1fr)' },
+    { key: 'discountType', label: 'Type', width: '130px' },
+    { key: 'value', label: 'Value', width: '100px' },
+    { key: 'enabled', label: 'Enabled', width: '100px', valueType: 'boolean' },
+    { key: 'allowSaleItems', label: 'Sale items', width: '100px', valueType: 'boolean' },
+    { key: 'expiresAt', label: 'Expires (UTC)', width: '200px' },
+  ],
+}
+
 export const collectionRegistry: AdminCollection[] = [
   products,
   bundles,
+  coupons,
   faqs,
   testimonials,
   orders,

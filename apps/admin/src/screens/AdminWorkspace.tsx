@@ -1,3 +1,4 @@
+import { duplicateCouponCode, promotionValidation } from '@designing-minds/cms'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import type { CmsSnapshot } from '@designing-minds/cms'
@@ -406,7 +407,7 @@ function RecordEditorPane({
       const clash = records.some((other) => other.id !== record.id && String(getPath(other, field.key) ?? '').trim() === slug)
       if (clash) return `Another ${collection.singular.toLowerCase()} already uses this ${field.label.toLowerCase()}.`
     }
-    return null
+    return promotionValidation(collection.id, record)
   }
 
   const persist = async (record: AdminRecord): Promise<void> => {
@@ -463,6 +464,7 @@ function RecordEditorPane({
     // Never goes live on its own — a duplicate is a starting point to edit,
     // not a second publish of the original.
     if (collection.statusField) copy = setPath(copy, collection.statusField, 'draft')
+    if (collection.id === 'coupons') copy = { ...copy, code: duplicateCouponCode(String(baseline.code ?? ''), copy.id), enabled: false }
     if (slugKey) copy = setPath(copy, slugKey, uniqueSlug(title, slugKey, records, copy.id))
     void persist(copy)
   }

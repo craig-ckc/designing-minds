@@ -17,7 +17,7 @@ import type { ValueLists } from '@designing-minds/cms'
 export type AdminRecord = Record<string, unknown> & { id: string }
 
 /** Sidebar grouping for collections. */
-export type CollectionGroupName = 'Catalogue' | 'Operations' | 'Submissions'
+export type CollectionGroupName = 'Catalogue' | 'Promotions' | 'Operations' | 'Submissions'
 
 /* --------------------------------- Fields ------------------------------ */
 
@@ -68,6 +68,8 @@ export type PrimitiveField = FieldBase & {
   type: 'text' | 'textarea' | 'richText' | 'number' | 'boolean' | 'date' | 'datetime' | 'readonly' | 'keyValue'
   /** number only: an empty input stores null instead of 0 (e.g. marks). */
   nullable?: boolean
+  /** Schedule inputs use explicit South African time. */
+  timezone?: 'Africa/Johannesburg'
 }
 
 export type SlugField = FieldBase & {
