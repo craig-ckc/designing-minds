@@ -1,95 +1,51 @@
 import { describe, expect, it } from 'vitest'
-import type { Grade, Product, ProductKind, Term } from '@designing-minds/cms/types'
-import { resourceUnlockedByPlan } from '@designing-minds/cms/entitlements'
+import type { Bundle, Grade, Product, Term } from '@designing-minds/cms/types'
+import { resourceUnlockedByBundle } from '@designing-minds/cms/entitlements'
 
-const product = (overrides: Partial<Product> & Pick<Product, 'slug' | 'productKind'>): Product => ({
-  id: overrides.slug,
-  title: overrides.slug,
-  shortDescription: '',
-  fullDescription: '',
-  priceZar: 0,
-  grade: 'Grade 4' as Grade,
-  term: 'Term 1' as Term,
-  year: '2026',
-  resourceFormat: 'Test / Assessment',
-  subjects: ['mathematics'],
-  marks: null,
-  purchasedFiles: [],
-  galleryImages: [],
-  featured: false,
-  published: true,
-  sortOrder: 0,
-  seo: { title: '', description: '' },
-  faqs: [],
-  updatedAt: '2026-01-01',
-  ...overrides,
+/* -------------------------------------------------------------------------
+   Download entitlement for a purchased bundle: membership is the whole
+   answer. Bundles used to grant by rule too (grade + includedSubjects +
+   includedTerms, via the retired resourceUnlockedByPlan); the 2026-08-09
+   bundles migration resolved every rule into explicit bundle_products rows
+   and retired Access Plans, so these tests pin that NOTHING is granted by
+   resemblance any more — only by being listed.
+   ------------------------------------------------------------------------- */
+
+const resource = (slug: string, grade: Grade = 'Grade 4', term: Term = 'Term 1', subjects = ['Mathematics']): Pick<Product, 'slug' | 'grade' | 'term' | 'subjects'> => ({
+  slug,
+  grade,
+  term,
+  subjects,
 })
 
-const resource = (slug: string, grade: Grade, term: Term, subjects: string[] = ['mathematics']): Product =>
-  product({ slug, productKind: 'Single' as ProductKind, grade, term, subjects })
+const bundle = (includedProductSlugs: string[]): Pick<Bundle, 'includedProductSlugs'> => ({ includedProductSlugs })
 
-describe('resourceUnlockedByPlan', () => {
-  it('scopes an Essential Access plan to its own grade and term', () => {
-    const plan = product({
-      slug: 'essential-access-grade-5-term-1',
-      productKind: 'Access Plan',
-      grade: 'Grade 5',
-      accessPeriod: 'Term',
-      includedSubjects: ['mathematics'],
-      includedTerms: ['Term 1'],
-    })
-    expect(resourceUnlockedByPlan(plan, resource('g5-math-t1', 'Grade 5', 'Term 1'))).toBe(true)
-    // A different grade must NOT leak in.
-    expect(resourceUnlockedByPlan(plan, resource('g7-math-t1', 'Grade 7', 'Term 1'))).toBe(false)
-    // A different term must NOT leak in — Essential covers one term.
-    expect(resourceUnlockedByPlan(plan, resource('g5-math-t2', 'Grade 5', 'Term 2'))).toBe(false)
-    // A subject outside the plan is excluded even at the right grade and term.
-    expect(resourceUnlockedByPlan(plan, resource('g5-art-t1', 'Grade 5', 'Term 1', ['art']))).toBe(false)
+describe('resourceUnlockedByBundle', () => {
+  it('grants every listed member', () => {
+    const owned = bundle(['g4-maths-t1', 'g4-english-t1'])
+    expect(resourceUnlockedByBundle(owned, resource('g4-maths-t1'))).toBe(true)
+    expect(resourceUnlockedByBundle(owned, resource('g4-english-t1'))).toBe(true)
   })
 
-  it('grants every term for a Premium Access plan (no term filter)', () => {
-    const plan = product({
-      slug: 'premium-access-grade-4',
-      productKind: 'Access Plan',
-      grade: 'Grade 4',
-      accessPeriod: 'Year',
-      includedSubjects: ['mathematics'],
-      // includedTerms omitted → all terms for the grade
-    })
-    expect(resourceUnlockedByPlan(plan, resource('g4-t1', 'Grade 4', 'Term 1'))).toBe(true)
-    expect(resourceUnlockedByPlan(plan, resource('g4-t4', 'Grade 4', 'Term 4'))).toBe(true)
-    expect(resourceUnlockedByPlan(plan, resource('g4-any', 'Grade 4', 'Any Term' as Term))).toBe(true)
-    expect(resourceUnlockedByPlan(plan, resource('g7-t1', 'Grade 7', 'Term 1'))).toBe(false)
+  it('does not grant an unlisted resource that merely matches the bundle’s grade, term and subject', () => {
+    // The old rule-based grant would have unlocked this; membership does not.
+    const owned = bundle(['g4-maths-t1'])
+    expect(resourceUnlockedByBundle(owned, resource('g4-maths-t1-test-2', 'Grade 4', 'Term 1', ['Mathematics']))).toBe(false)
   })
 
-  it('scopes a Bundle to its own grade and term', () => {
-    const bundle = product({
-      slug: 'g7-term1-bundle',
-      productKind: 'Bundle',
-      grade: 'Grade 7',
-      includedSubjects: ['mathematics'],
-      includedTerms: ['Term 1'],
-    })
-    expect(resourceUnlockedByPlan(bundle, resource('g7-math-t1', 'Grade 7', 'Term 1'))).toBe(true)
-    expect(resourceUnlockedByPlan(bundle, resource('g4-math-t1', 'Grade 4', 'Term 1'))).toBe(false)
-    expect(resourceUnlockedByPlan(bundle, resource('g7-math-t2', 'Grade 7', 'Term 2'))).toBe(false)
+  it('grants a listed member regardless of its own grade or term', () => {
+    const owned = bundle(['g7-maths-t3'])
+    expect(resourceUnlockedByBundle(owned, resource('g7-maths-t3', 'Grade 7', 'Term 3'))).toBe(true)
   })
 
-  it('always grants explicitly listed resources and nothing else for a list-only plan', () => {
-    const plan = product({
-      slug: 'curated-bundle',
-      productKind: 'Bundle',
-      grade: 'Grade 4',
-      includedProductSlugs: ['picked'],
-    })
-    expect(resourceUnlockedByPlan(plan, resource('picked', 'Grade 7', 'Term 3'))).toBe(true)
-    // Same grade, but not on the list and the plan defines no rules → not granted.
-    expect(resourceUnlockedByPlan(plan, resource('other', 'Grade 4', 'Term 1'))).toBe(false)
+  it('grants nothing from an empty bundle', () => {
+    expect(resourceUnlockedByBundle(bundle([]), resource('anything'))).toBe(false)
   })
 
-  it('never unlocks non-resources or composites', () => {
-    const plan = product({ slug: 'plan', productKind: 'Access Plan', grade: 'Grade 4', includedSubjects: ['mathematics'] })
-    const otherBundle = product({ slug: 'b', productKind: 'Bundle', grade: 'Grade 4' })
-    expect(resourceUnlockedByPlan(plan, otherBundle)).toBe(false)
+  it('matches slugs exactly, never by prefix or case', () => {
+    const owned = bundle(['g4-maths-t1'])
+    expect(resourceUnlockedByBundle(owned, resource('g4-maths'))).toBe(false)
+    expect(resourceUnlockedByBundle(owned, resource('g4-maths-t1-extra'))).toBe(false)
+    expect(resourceUnlockedByBundle(owned, resource('G4-MATHS-T1'))).toBe(false)
   })
 })

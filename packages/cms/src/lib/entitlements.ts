@@ -9,9 +9,11 @@ import type { Bundle, Product } from '../types'
  * catalogue changed. The 2026-08-09 migration resolved every rule into real
  * membership rows, so a bundle now grants exactly what its page lists.
  *
- * This is the single source of truth for download entitlements: the account UI
- * (which files to show) and the issue-download function (which files to
- * authorise) both call it, so they can never disagree. Keep it pure — no I/O.
+ * The issue-download function authorises files with this, against the full
+ * membership in bundle_products. The account Order Detail lists files from the
+ * PUBLIC snapshot instead (bundleContents), which only carries live members —
+ * so a member that is unpublished or archived after purchase is still
+ * downloadable but no longer listed there. Keep this pure — no I/O.
  */
 export const resourceUnlockedByBundle = (
   bundle: Pick<Bundle, 'includedProductSlugs'>,
