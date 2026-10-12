@@ -1,0 +1,6 @@
+{
+  "asset": "public/images/hero-learning-landscape.avif",
+  "generator": "Built-in image_gen tool",
+  "prompt": "Use case: illustration-story. Asset type: wide website hero background for a friendly South African primary-school printable learning resources shop. Create one original refined children's storybook landscape, wide horizontal 3:2 composition. Soft painterly gouache and coloured-pencil texture, delicate dreamy blue sky, pale peach fluffy clouds, rolling sage green and butter yellow hills, tiny daisies and leafy trees only along the lower edges, warm sunlight, welcoming and calm. Upper half and centre must be very light, quiet and spacious so dark website headline and product book cards can sit clearly above it. Nature rather than classroom objects. Sophisticated muted pastel palette with tiny pink details, tactile paper grain, charming rather than babyish, no people, no text, no lettering, no logos, no books or products, no UI, no borders. Ground and leafy details mostly along bottom quarter; gentle cloudy sky mostly empty at top. This is a background illustration asset, not a screenshot or web design.",
+  "encoding": { "format": "AVIF", "quality": 55, "effort": 5, "maxWidth": 1800, "withoutEnlargement": true }
+}

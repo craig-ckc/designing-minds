@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { withPricingTime, type CmsSnapshot } from '@designing-minds/cms'
 import { repository } from './repository'
@@ -30,6 +30,8 @@ import { CheckoutReturnPage } from './pages/checkout-return-page'
 import { CheckoutCancelPage } from './pages/checkout-cancel-page'
 import { UnsubscribePage } from './pages/unsubscribe-page'
 import { NotFoundPage } from './pages/not-found-page'
+
+const HeroDemoPage = lazy(() => import('./pages/hero-demo-page'))
 
 function SnapshotGate({
   snapshot,
@@ -105,6 +107,7 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
   const body: ReactNode = (
     <Routes>
       <Route path="/" element={<HomePage snapshot={snapshot} loadError={error} />} />
+      <Route path="/hero-demo" element={<Suspense fallback={<StatePanel title="Preparing hero previews…" />}><HeroDemoPage snapshot={snapshot} /></Suspense>} />
 
       {/* Browse */}
       <Route path="/shop" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <ShopPage snapshot={ready} />}</SnapshotGate>} />

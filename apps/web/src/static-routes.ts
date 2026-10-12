@@ -39,6 +39,7 @@ export const STATIC_INDEXABLE_PATHS = [
 
 /** Functional routes that must never appear in sitemap.xml and stay noindex. */
 export const FUNCTIONAL_NOINDEX_PATHS = [
+  '/hero-demo',
   '/sign-up',
   '/login',
   '/forgot-password',
@@ -60,6 +61,7 @@ export const FUNCTIONAL_NOINDEX_PATHS = [
  * other unknown URL falls through to a genuine 404 instead of a soft 404.
  */
 export const FUNCTIONAL_SPA_PREFIXES = [
+  '/hero-demo',
   '/sign-up',
   '/login',
   '/forgot-password',

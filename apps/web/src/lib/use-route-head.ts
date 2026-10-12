@@ -47,6 +47,7 @@ function removeMeta(attr: 'name' | 'property', key: string) {
 }
 
 const functionalTitle = (pathname: string): string => {
+  if (pathname === '/hero-demo') return `Hero playground | ${SITE_NAME}`
   if (pathname === '/sign-up') return `Create account | ${SITE_NAME}`
   if (pathname === '/login') return `Log in | ${SITE_NAME}`
   if (pathname === '/forgot-password') return `Forgot password | ${SITE_NAME}`

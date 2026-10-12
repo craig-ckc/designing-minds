@@ -1,0 +1,282 @@
+.hero-demo-page { padding-bottom: 96px; }
+.hero-study { --study-accent: #bd2c6a; position: relative; isolation: isolate; overflow: hidden; padding: 32px 40px 30px; color: #302c38; background: #fffaf3; }
+.study-layout { position: relative; z-index: 1; display: grid; max-width: 1376px; margin: auto; gap: 16px; }
+.study-copy { width: 100%; max-width: 900px; margin: auto; text-align: center; }
+.study-eyebrow { display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 12px; font-size: 12px; font-weight: 750; letter-spacing: .06em; }
+.study-copy h1 { max-width: 24ch; margin: auto; font-size: clamp(38px, 4.1vw, 60px); line-height: 1.07; letter-spacing: -.045em; font-weight: 800; }
+.study-copy h1 span { display: block; color: var(--study-accent); }
+.study-lead { max-width: 620px; margin: 14px auto 0; font-size: 15px; line-height: 1.65; color: #615766; }
+.study-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px; margin-top: 18px; }
+.study-proof { display: flex; justify-content: center; align-items: center; gap: 9px; margin-top: 16px; }
+.study-proof-flower { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #fbe08c; color: #754306; }
+.study-proof > div { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+.study-proof p { font-size: 12px; font-weight: 600; }
+.study-grade-picker { grid-row: 2; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; }
+.study-grade-label { font-size: 12px; font-weight: 700; }
+.study-grade-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.study-grade-buttons button { min-height: 36px; padding: 7px 13px; border: 1px solid #d7cfc9; border-radius: 999px; background: #fff9; color: #554958; font-size: 12px; font-weight: 700; }
+.study-grade-buttons button[aria-pressed="true"] { background: #302c38; color: white; border-color: #302c38; }
+.study-grade-buttons button:hover { border-color: var(--study-accent); }
+.hero-demo-page button:focus-visible, .hero-demo-page select:focus-visible, .study-book:focus-visible { outline: 3px solid var(--study-accent, #bd2c6a); outline-offset: 5px; }
+.study-caption { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 9px; font-size: 12px; color: #615766; }
+.study-caption > span { opacity: .5; }
+.study-scene { position: relative; min-width: 0; height: 286px; display: grid; place-items: center; }
+.study-books { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+.study-book { position: relative; flex: 0 0 auto; width: clamp(140px, 15vw, 210px); margin: 0 -10px; transform: translateY(var(--lift)) rotate(var(--tilt)); transition: transform .2s; z-index: calc(5 - var(--book-index)); }
+.study-book:nth-child(3) { z-index: 6; }
+.study-book:hover { transform: translateY(calc(var(--lift) - 8px)) rotate(0); z-index: 10; }
+.study-note { position: absolute; z-index: 12; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 10px; background: #cdefa4; color: #244838; transform: rotate(-7deg); }
+.study-note-one { top: 18px; left: 13%; }
+.study-note-two { right: 9%; bottom: 16px; background: #fbd2ea; color: #752c53; transform: rotate(5deg); }
+.study-doodle { position: absolute; color: var(--study-accent); }
+.study-doodle-one { left: 7%; top: 45%; transform: rotate(15deg); }
+.study-doodle-two { right: 7%; top: 15%; transform: rotate(-12deg); }
+.study-orbit { position: absolute; width: 680px; max-width: 90%; height: 160px; bottom: 10px; border-radius: 50%; background: #f4dfc5; opacity: .5; }
+.study-background { position: absolute; z-index: -1; inset: 0; pointer-events: none; }
+.hero-study--parade .study-background { background: radial-gradient(ellipse at 0% 85%, #fbd2ea99, transparent 35%), radial-gradient(ellipse at 95% 35%, #cdefa477, transparent 30%); }
+.hero-study--parade .study-layout { grid-template-columns: 1fr 1fr; text-align: center; }
+.hero-study--parade .study-copy { display: contents; }
+.hero-study--parade .study-eyebrow { grid-column: 1 / -1; grid-row: 1; margin: 0; }
+.hero-study--parade h1 { grid-column: 1 / -1; grid-row: 2; }
+.hero-study--parade .study-lead { grid-column: 1 / -1; grid-row: 3; margin-block: 0; }
+.hero-study--parade .study-scene { grid-column: 1 / -1; grid-row: 4; padding-bottom: 20px; }
+.hero-study--parade .study-actions { grid-column: 1; grid-row: 5; justify-content: flex-end; margin: 0; }
+.hero-study--parade .study-proof { grid-column: 2; grid-row: 5; justify-content: flex-start; margin: 0; }
+.hero-study--parade .study-grade-picker { grid-column: 1 / -1; grid-row: 6; }
+.hero-study--parade .study-caption { grid-column: 1 / -1; grid-row: 7; }
+.study-follow-on { display: flex; justify-content: center; flex-wrap: wrap; align-items: center; gap: 24px 50px; padding: 26px 24px; border-block: 1px solid #eee6dc; color: #615766; background: #fffcf8; font-size: 13px; }
+.study-follow-on > span { display: flex; align-items: center; gap: 8px; }
+.study-follow-on > span:first-child { color: #302c38; font-weight: 800; }
+
+/* 02 — A painted scene, soft enough for the copy and covers to stay crisp. */
+.hero-study--landscape { --study-accent: #246148; background: #edf5ed; }
+.study-landscape { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 65%; }
+.hero-study--landscape .study-background { background: linear-gradient(#f7faf3eb 0%, #f7faf38c 35%, transparent 70%); }
+.hero-study--landscape .study-lead { color: #3e574b; }
+.hero-study--landscape .study-scene { height: 288px; }
+.hero-study--landscape .study-orbit { background: #edf5c9; opacity: .65; }
+.hero-study--landscape .study-note { background: #fff6df; color: #375647; }
+.hero-study--landscape .study-doodle { color: #377259; }
+.hero-study--landscape .study-caption { color: #294d39; font-weight: 700; }
+
+/* 03 — Resource windows and copy share the first screen. */
+.hero-study--bright { background: #fff4f9; padding-block: 54px; }
+.hero-study--bright .study-layout, .hero-study--shelf .study-layout, .hero-study--sunshine .study-layout, .hero-study--notebook .study-layout, .hero-study--wonder .study-layout { grid-template-columns: 1fr 1fr; gap: 20px 60px; align-items: center; }
+.hero-study--bright .study-copy, .hero-study--shelf .study-copy, .hero-study--sunshine .study-copy, .hero-study--notebook .study-copy, .hero-study--wonder .study-copy { text-align: left; margin: 0; }
+.hero-study--bright .study-copy h1, .hero-study--shelf .study-copy h1, .hero-study--sunshine .study-copy h1, .hero-study--notebook .study-copy h1, .hero-study--wonder .study-copy h1 { margin: 0; }
+.hero-study--bright .study-eyebrow, .hero-study--shelf .study-eyebrow, .hero-study--sunshine .study-eyebrow, .hero-study--notebook .study-eyebrow, .hero-study--wonder .study-eyebrow,
+.hero-study--bright .study-actions, .hero-study--shelf .study-actions, .hero-study--sunshine .study-actions, .hero-study--notebook .study-actions, .hero-study--wonder .study-actions,
+.hero-study--bright .study-proof, .hero-study--shelf .study-proof, .hero-study--sunshine .study-proof, .hero-study--notebook .study-proof, .hero-study--wonder .study-proof { justify-content: flex-start; }
+.hero-study--bright .study-grade-picker, .hero-study--shelf .study-grade-picker, .hero-study--sunshine .study-grade-picker, .hero-study--notebook .study-grade-picker, .hero-study--wonder .study-grade-picker { grid-column: 1; grid-row: 2; justify-content: flex-start; align-self: start; }
+.hero-study--bright .study-scene, .hero-study--shelf .study-scene, .hero-study--sunshine .study-scene, .hero-study--notebook .study-scene, .hero-study--wonder .study-scene { grid-column: 2; grid-row: 1 / 3; height: 425px; }
+.hero-study--bright .study-caption, .hero-study--shelf .study-caption, .hero-study--sunshine .study-caption, .hero-study--notebook .study-caption, .hero-study--wonder .study-caption { grid-column: 1 / -1; margin-top: 14px; }
+.hero-study--bright .study-books { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 490px; }
+.hero-study--bright .study-book { width: 100%; margin: 0; padding: 10px; border-radius: 28px; background: #f8dd9b; transform: rotate(-4deg); }
+.hero-study--bright .study-book:nth-child(2) { background: #d0e9bb; transform: translateY(24px) rotate(3deg); }
+.hero-study--bright .study-book:nth-child(3) { background: #cdd6f8; transform: rotate(2deg); }
+.hero-study--bright .study-book:nth-child(4) { background: #f7c6de; transform: translateY(24px) rotate(-3deg); }
+.hero-study--bright .study-book:nth-child(n+5) { display: none; }
+.hero-study--bright .study-book > div { max-width: 144px; margin: auto; }
+.hero-study--bright .study-scene { height: 510px; }
+.hero-study--bright .study-note, .hero-study--bright .study-orbit { display: none; }
+.hero-study--bright .study-doodle-one { left: -7%; top: 8%; }
+.hero-study--bright .study-doodle-two { right: -2%; top: 92%; }
+
+/* 04 — A restrained mint shelf with a strong pink headline. */
+.hero-study--shelf { --study-accent: #ad3461; background: #eef3ed; padding-block: 62px; }
+.hero-study--shelf .study-copy h1 { font-size: clamp(40px, 4.4vw, 64px); }
+.hero-study--shelf .study-scene { border-bottom: 12px solid #b5c6b0; height: 365px; }
+.hero-study--shelf .study-books { align-items: flex-end; }
+.hero-study--shelf .study-book { width: 36%; margin: 0 -12px; transform: rotate(calc(var(--tilt) * .5)); }
+.hero-study--shelf .study-book:nth-child(n+4) { display: none; }
+.hero-study--shelf .study-note { top: 0; left: auto; right: 5%; bottom: auto; background: #fffaf1; }
+.hero-study--shelf .study-note-two, .hero-study--shelf .study-orbit, .hero-study--shelf .study-doodle-two { display: none; }
+.hero-study--shelf .study-doodle-one { left: 0; top: 15%; color: #647d58; }
+
+/* 05 — Reverse the split and make the books the sunny first impression. */
+.hero-study--sunshine { --study-accent: #a7460c; background: #fff3d0; padding-block: 60px; }
+.hero-study--sunshine .study-copy { grid-column: 2; grid-row: 1; }
+.hero-study--sunshine .study-grade-picker { grid-column: 2; }
+.hero-study--sunshine .study-scene { grid-column: 1; }
+.hero-study--sunshine .study-orbit { width: 380px; max-width: 92%; height: 380px; top: 10px; opacity: 1; background: repeating-conic-gradient(from 0deg, #fbe08c 0deg 10deg, #f8d577 10deg 20deg); }
+.hero-study--sunshine .study-book { width: 38%; margin: 0 -18px; }
+.hero-study--sunshine .study-book:nth-child(n+4) { display: none; }
+.hero-study--sunshine .study-note-one { left: 2%; top: 25px; background: #cdefa4; }
+.hero-study--sunshine .study-note-two { right: 0; bottom: 20px; }
+.hero-study--sunshine .study-doodle-one { left: -1%; color: #9e5b16; }
+.hero-study--sunshine .study-doodle-two { right: 1%; top: 3%; color: #9e5b16; }
+
+/* 06 — A notebook spread; the rules are texture, never over the headline. */
+.hero-study--notebook { --study-accent: #25635c; background: #faf7ed; padding-block: 54px; }
+.hero-study--notebook .study-background { background-image: linear-gradient(#86b3bb18 1px, transparent 1px), linear-gradient(90deg, #86b3bb18 1px, transparent 1px); background-size: 26px 26px; }
+.hero-study--notebook .study-copy { padding: 24px 0; }
+.hero-study--notebook .study-copy h1 span { text-decoration: underline; text-decoration-color: #f1c653; text-decoration-thickness: 7px; text-underline-offset: 8px; }
+.hero-study--notebook .study-books { position: relative; height: 410px; max-width: 500px; }
+.hero-study--notebook .study-book { position: absolute; width: 43%; margin: 0; background: #fffdf8; border: 8px solid #fffdf8; box-shadow: 0 9px 24px #38493e18; }
+.hero-study--notebook .study-book:nth-child(1) { left: 4%; top: 2%; transform: rotate(-11deg); }
+.hero-study--notebook .study-book:nth-child(2) { right: 4%; top: 4%; transform: rotate(8deg); }
+.hero-study--notebook .study-book:nth-child(3) { left: 27%; bottom: -8%; transform: rotate(-2deg); }
+.hero-study--notebook .study-book:nth-child(n+4) { display: none; }
+.hero-study--notebook .study-note-one { top: -8px; left: 4%; background: #fbe08c; }
+.hero-study--notebook .study-note-two { bottom: -15px; }
+.hero-study--notebook .study-orbit { display: none; }
+
+/* 07 — The grade choices become oversized, tactile cards. */
+.hero-study--chapters { --study-accent: #6a4194; background: #f6f0fc; }
+.hero-study--chapters .study-copy { max-width: 980px; }
+.hero-study--chapters .study-copy h1 span { display: inline; }
+.hero-study--chapters .study-proof { margin-top: 12px; }
+.study-chapters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; max-width: 1120px; width: 100%; margin: 8px auto; }
+.study-chapter { display: flex; flex-direction: column; min-width: 0; padding: 14px; border-radius: 22px; border: 2px solid transparent; text-align: left; color: #343343; background: #f7dfa0; transition: transform .2s; }
+.study-chapter:nth-child(2) { background: #fad4e6; }
+.study-chapter:nth-child(3) { background: #d0eab2; }
+.study-chapter:nth-child(4) { background: #cdd6f8; }
+.study-chapter:nth-child(5) { background: #c7eee5; }
+.study-chapter[aria-pressed="true"] { border-color: #674385; transform: translateY(-7px); }
+.study-chapter-top { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 800; }
+.study-chapter-cover { display: block; width: 100%; max-width: 155px; margin: 5px auto; }
+.study-chapter-label { font-size: 11px; font-weight: 700; text-align: center; }
+
+/* 08 — An evening sky, with colourful books orbiting a gentle lilac moon. */
+.hero-study--wonder { --study-accent: #f8dc8b; background: #202a50; color: #fff9ec; padding-block: 58px; }
+.hero-study--wonder .study-background { background-image: radial-gradient(#d8dfff88 1px, transparent 1px), radial-gradient(ellipse at 85% 70%, #765b9166, transparent 50%); background-size: 48px 48px, 100% 100%; }
+.hero-study--wonder .study-lead, .hero-study--wonder .study-caption { color: #e0dfed; }
+.hero-study--wonder .study-proof [role="img"] { color: #f8dc8b; }
+.hero-study--wonder .study-actions a:last-child { color: #f8dc8b; }
+.hero-study--wonder .study-orbit { height: 350px; width: 350px; top: 30px; background: #b6a2dc; opacity: 1; }
+.hero-study--wonder .study-book { width: 37%; margin: 0 -16px; }
+.hero-study--wonder .study-book:nth-child(n+4) { display: none; }
+.hero-study--wonder .study-note { background: #fbd2ea; }
+.hero-study--wonder .study-note-two { background: #d0efc2; color: #254e36; }
+.hero-study--wonder .study-grade-buttons button { background: #fff1; border-color: #ffffff70; color: #fff9ec; }
+.hero-study--wonder .study-grade-buttons button[aria-pressed="true"] { background: #f8dc8b; border-color: #f8dc8b; color: #253350; }
+
+/* Review controls stay out of the hero composition and can be hidden. */
+.hero-demo-controls { --study-accent: #bd2c6a; position: fixed; z-index: 40; left: 24px; right: 24px; bottom: 14px; display: flex; align-items: center; gap: 24px; max-width: 1140px; margin: auto; padding: 12px 18px; border: 1px solid #ded7ce; border-radius: 16px; background: #fffdf5f5; backdrop-filter: blur(16px); box-shadow: 0 4px 30px #33223218; color: #302c38; }
+.hero-demo-control-title { display: grid; flex: none; gap: 2px; }
+.hero-demo-control-title strong { font-size: 13px; }
+.hero-demo-control-title span { font-size: 10px; color: #615766; }
+.hero-demo-choice { flex: 1; min-width: 0; }
+.hero-demo-choice select { width: 100%; min-height: 30px; font-size: 13px; font-weight: 750; background: transparent; color: #302c38; cursor: pointer; }
+.hero-demo-choice p { font-size: 11px; color: #615766; margin-top: 2px; }
+.hero-demo-step-controls { display: flex; align-items: center; gap: 12px; flex: none; }
+.hero-demo-step-controls button { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #ded7ce; border-radius: 50%; background: white; }
+.hero-demo-step-controls button:hover { background: #feeef3; }
+.hero-demo-step-controls span { font-size: 12px; min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
+.hero-demo-hide { font-size: 11px; text-decoration: underline; flex: none; }
+.hero-demo-hide svg { display: none; }
+.hero-demo-show { position: fixed; z-index: 40; bottom: 20px; right: 20px; padding: 12px 16px; background: #fffaf1; color: #302c38; border: 1px solid #d7cfc9; border-radius: 999px; font-size: 12px; font-weight: 700; }
+
+@media (min-width: 1000px) and (max-height: 800px) {
+  .hero-study { padding-block: 24px; }
+  .study-copy h1, .hero-study--shelf .study-copy h1 { font-size: 48px; }
+  .hero-study--parade .study-copy h1, .hero-study--landscape .study-copy h1 { max-width: 32ch; }
+  .hero-study--parade .study-copy h1 span, .hero-study--landscape .study-copy h1 span { display: inline; }
+  .study-lead { margin-top: 10px; }
+  .study-actions { margin-top: 12px; }
+  .study-proof { margin-top: 10px; }
+  .study-layout { gap: 12px; }
+  .study-scene, .hero-study--landscape .study-scene { height: 252px; }
+  .study-book { width: 184px; }
+  .hero-study--bright .study-scene, .hero-study--sunshine .study-scene, .hero-study--wonder .study-scene, .hero-study--notebook .study-scene { height: 350px; }
+  .hero-study--bright .study-scene { height: 460px; }
+  .hero-study--bright .study-book > div { max-width: 128px; }
+  .hero-study--shelf .study-scene { height: 320px; }
+  .hero-study--sunshine .study-orbit, .hero-study--wonder .study-orbit { width: 310px; height: 310px; }
+  .hero-study--notebook .study-books { height: 340px; max-width: 470px; }
+  .study-chapter-cover { max-width: 128px; }
+}
+
+@media (max-width: 999px) {
+  .hero-study { padding: 30px 24px; }
+  .study-layout { gap: 18px; }
+  .hero-study--bright .study-layout, .hero-study--shelf .study-layout, .hero-study--sunshine .study-layout, .hero-study--notebook .study-layout, .hero-study--wonder .study-layout { gap: 20px 24px; }
+  .study-copy h1, .hero-study--shelf .study-copy h1 { font-size: 40px; }
+  .study-lead { font-size: 14px; }
+  .study-book { width: 19%; }
+  .study-scene { height: 240px; }
+  .study-note { font-size: 10px; }
+  .hero-study--bright .study-scene, .hero-study--shelf .study-scene, .hero-study--sunshine .study-scene, .hero-study--notebook .study-scene, .hero-study--wonder .study-scene { height: 320px; }
+  .hero-study--sunshine .study-orbit, .hero-study--wonder .study-orbit { height: 270px; width: 270px; }
+  .hero-study--notebook .study-books { height: 300px; }
+  .hero-demo-control-title, .hero-demo-hide span { display: none; }
+  .hero-demo-hide { display: grid; place-items: center; width: 32px; height: 32px; }
+  .hero-demo-hide svg { display: block; }
+  .hero-study--bright .study-scene { height: 420px; }
+  .hero-study--bright .study-book > div { max-width: 108px; }
+  .study-chapters { gap: 8px; }
+  .study-chapter { padding: 10px; border-radius: 16px; }
+  .study-chapter-top { font-size: 14px; }
+  .study-chapter-top svg { width: 14px; }
+}
+
+@media (max-width: 640px) {
+  .hero-demo-page { padding-bottom: 76px; }
+  .hero-study { padding: 26px 20px 20px; }
+  .study-copy h1, .hero-study--shelf .study-copy h1 { font-size: 38px; }
+  .study-eyebrow { font-size: 10px; letter-spacing: .03em; }
+  .study-lead { margin-top: 12px; font-size: 14px; line-height: 1.55; }
+  .study-actions { gap: 10px; margin-top: 16px; }
+  .study-actions a { font-size: 12px; }
+  .study-proof { margin-top: 14px; }
+  .study-proof > div { display: block; text-align: left; }
+  .study-proof p { font-size: 10px; }
+  .hero-study--parade .study-layout { grid-template-columns: minmax(0, 1fr); }
+  .hero-study--parade .study-actions { grid-column: 1; grid-row: 5; justify-content: center; }
+  .hero-study--parade .study-proof { grid-column: 1; grid-row: 6; justify-content: center; }
+  .hero-study--parade .study-grade-picker { grid-row: 7; }
+  .hero-study--parade .study-caption { grid-row: 8; }
+  .study-grade-picker { gap: 6px; }
+  .study-grade-label { width: 100%; text-align: center; font-size: 11px; }
+  .study-grade-buttons { gap: 4px; }
+  .study-grade-buttons button { padding: 7px 9px; min-height: 38px; font-size: 11px; }
+  .study-scene, .hero-study--landscape .study-scene { height: 230px; }
+  .study-book { width: 38%; margin: 0 -10px; }
+  .study-book:nth-child(n+4) { display: none; }
+  .study-note-one { top: 0; left: 0; }
+  .study-note-two { right: 0; bottom: -5px; }
+  .study-note { padding: 6px 8px; font-size: 9px; }
+  .study-doodle-one { left: -1%; top: 30%; }
+  .study-doodle-two { right: 0; top: 5%; }
+  .study-doodle svg { width: 27px; height: 27px; }
+  .study-caption { gap: 6px; font-size: 10px; }
+  .study-follow-on { gap: 16px; padding: 20px; font-size: 11px; }
+  .study-follow-on > span:first-child { width: 100%; justify-content: center; }
+  .hero-study--bright .study-layout, .hero-study--shelf .study-layout, .hero-study--sunshine .study-layout, .hero-study--notebook .study-layout, .hero-study--wonder .study-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .hero-study--bright .study-copy, .hero-study--shelf .study-copy, .hero-study--sunshine .study-copy, .hero-study--notebook .study-copy, .hero-study--wonder .study-copy { grid-column: 1; grid-row: 1; text-align: center; }
+  .hero-study--bright .study-eyebrow, .hero-study--shelf .study-eyebrow, .hero-study--sunshine .study-eyebrow, .hero-study--notebook .study-eyebrow, .hero-study--wonder .study-eyebrow,
+  .hero-study--bright .study-actions, .hero-study--shelf .study-actions, .hero-study--sunshine .study-actions, .hero-study--notebook .study-actions, .hero-study--wonder .study-actions,
+  .hero-study--bright .study-proof, .hero-study--shelf .study-proof, .hero-study--sunshine .study-proof, .hero-study--notebook .study-proof, .hero-study--wonder .study-proof { justify-content: center; }
+  .hero-study--bright .study-grade-picker, .hero-study--shelf .study-grade-picker, .hero-study--sunshine .study-grade-picker, .hero-study--notebook .study-grade-picker, .hero-study--wonder .study-grade-picker { grid-column: 1; grid-row: 2; justify-content: center; }
+  .hero-study--bright .study-scene, .hero-study--shelf .study-scene, .hero-study--sunshine .study-scene, .hero-study--notebook .study-scene, .hero-study--wonder .study-scene { grid-column: 1; grid-row: 3; height: 270px; }
+  .hero-study--bright .study-books { max-width: 320px; gap: 8px; }
+  .hero-study--bright .study-book { padding: 5px; border-radius: 20px; }
+  .hero-study--bright .study-book > div { max-width: 100px; }
+  .hero-study--bright .study-book:nth-child(4) { display: block; }
+  .hero-study--shelf .study-scene { height: 230px; }
+  .hero-study--shelf .study-book { width: 39%; }
+  .hero-study--sunshine .study-orbit, .hero-study--wonder .study-orbit { height: 245px; width: 245px; top: 5px; }
+  .hero-study--sunshine .study-book, .hero-study--wonder .study-book { width: 42%; }
+  .hero-study--sunshine .study-note-one { top: 0; }
+  .hero-study--notebook .study-books { height: 255px; max-width: 320px; }
+  .hero-study--notebook .study-book { width: 43%; border-width: 5px; }
+  .hero-study--notebook .study-book:nth-child(3) { bottom: -5%; }
+  .hero-study--notebook .study-copy h1 span { text-decoration-thickness: 5px; }
+  .hero-study--chapters .study-copy h1 span { display: block; }
+  .study-chapters { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+  .study-chapter { padding: 8px 5px; border-radius: 14px; }
+  .study-chapter:nth-child(n+4) .study-chapter-cover { max-width: 70px; }
+  .study-chapter-top { font-size: 12px; gap: 2px; }
+  .study-chapter-label { font-size: 9px; }
+  .study-chapter-cover { max-width: 92px; }
+  .hero-demo-controls { left: 10px; right: 10px; bottom: 10px; gap: 8px; padding: 8px 10px; border-radius: 12px; }
+  .hero-demo-choice select { font-size: 11px; min-height: 36px; }
+  .hero-demo-choice p { display: none; }
+  .hero-demo-step-controls { gap: 6px; }
+  .hero-demo-step-controls button { width: 32px; height: 32px; }
+  .hero-demo-step-controls span { font-size: 10px; min-width: 27px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-book, .study-chapter { transition: none; }
+}
