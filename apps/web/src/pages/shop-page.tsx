@@ -81,6 +81,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   return (
     <>
       <PageHeader
+        width="full"
         title="All resources"
         lead={`Browse ${snapshot.stats.productCount} CAPS-aligned resources across grades, terms, subjects and formats — or start with a bundle.`}
       >
@@ -90,7 +91,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur-md">
-        <Container className="flex items-center gap-3 py-4">
+        <Container width="full" className="flex items-center gap-3 py-4">
           <input
             className="field w-full max-w-md"
             value={query}
@@ -109,17 +110,17 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <ChipGroup label="Format" options={snapshot.valueLists.resourceFormats} selected={formats} onToggle={toggle('format')} />
       </FilterDrawer>
 
-      <section className="section">
-        <Container>
+      <section className="section-tight">
+        <Container width="full">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h2>{visible.length} results</h2>
+            <h2 className="text-body-lg font-semibold tracking-normal">{visible.length} results</h2>
             {bundleCount > 0 ? <span className="text-muted">Bundles first</span> : null}
           </div>
           {visible.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="catalog-grid">
               {rendered.map((entry) =>
                 entry.kind === 'bundle' ? (
-                  <BundleCard key={entry.bundle.id} bundle={entry.bundle} snapshot={snapshot} className="col-span-2" />
+                  <BundleCard key={entry.bundle.id} bundle={entry.bundle} snapshot={snapshot} />
                 ) : (
                   <ProductCard key={entry.product.id} product={entry.product} />
                 ),
@@ -131,7 +132,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <p className="mt-2 text-muted">Try clearing a filter or searching for a different grade or subject.</p>
             </Card>
           )}
-      <LoadMoreButton remaining={visible.length - rendered.length} itemLabel="resources" onLoadMore={loadMore} />
+          <LoadMoreButton remaining={visible.length - rendered.length} itemLabel="resources" onLoadMore={loadMore} />
         </Container>
       </section>
     </>

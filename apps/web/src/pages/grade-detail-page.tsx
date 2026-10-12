@@ -34,7 +34,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
 
   return (
     <>
-      <PageHeader title={grade} lead={GRADE_BLURB[grade] ?? 'CAPS-aligned tests and summaries for this grade.'}>
+      <PageHeader width="full" title={grade} lead={GRADE_BLURB[grade] ?? 'CAPS-aligned tests and summaries for this grade.'}>
         <div className="mt-6">
           <Breadcrumb
             trail={[
@@ -68,7 +68,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur">
-        <Container className="flex flex-wrap items-end gap-3 py-4">
+        <Container width="full" className="flex flex-wrap items-end gap-3 py-4">
           <div className="min-w-[160px]">
             <Select label="Term" value={term} options={[ALL, ...snapshot.valueLists.terms]} onChange={setTerm} />
           </div>
@@ -82,13 +82,13 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
           cheaper way to buy the same resources before the R50 test wall. */}
       <GradePackageSection snapshot={snapshot} grade={grade} />
 
-      <section className="section">
-        <Container>
+      <section className="section-tight">
+        <Container width="full">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <h2>{visible.length} single resources</h2>
+            <h2 className="text-body-lg font-semibold tracking-normal">{visible.length} single resources</h2>
           </div>
           {visible.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="catalog-grid">
               {rendered.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -99,7 +99,7 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <p className="mt-2 text-muted">No published resources match this term for {grade}.</p>
             </Card>
           )}
-          <LoadMoreButton remaining={visible.length - rendered.length} itemLabel="resources" onLoadMore={loadMore} />
+              <LoadMoreButton remaining={visible.length - rendered.length} itemLabel="resources" onLoadMore={loadMore} />
         </Container>
       </section>
 

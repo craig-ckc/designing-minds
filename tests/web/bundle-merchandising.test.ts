@@ -20,12 +20,14 @@ test('a grade page leads with its packages and labels the grid as singles', () =
 
 test('the grade package section only claims value it can derive', () => {
   const section = read('components/sections/grade-package-section.tsx')
+  const card = read('components/ui/bundle-card.tsx')
 
-  assert.match(section, /bundleValue\(snapshot, product\)/)
+  assert.match(section, /<BundleCard[^>]*bundle=\{bundle\} snapshot=\{snapshot\}/)
+  assert.match(card, /bundleValue\(snapshot, bundle\)/)
   // A saving is only rendered behind a positive check, never as a bare R0.
-  assert.match(section, /value && value\.savingPercent > 0/)
-  assert.match(section, /value && value\.savingZar > 0/)
-  assert.match(section, /Included resources are being finalised/)
+  assert.match(card, /value && value\.savingPercent > 0/)
+  assert.match(card, /value\.savingZar > 0 \?/)
+  assert.match(card, /Included resources are being finalised/)
 })
 
 test('the shop catalogue lists bundles ahead of individual resources', () => {

@@ -68,6 +68,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
   return (
     <>
       <PageHeader
+        width="full"
         title="Buy more, save more"
         lead="Bundles group the resources for a grade into one discounted, once-off purchase. Nothing renews automatically — you own what you buy."
       >
@@ -86,7 +87,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur">
-        <Container className="flex items-center gap-3 py-4">
+        <Container width="full" className="flex items-center gap-3 py-4">
           <input
             className="field w-full max-w-md"
             value={query}
@@ -104,16 +105,16 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <ChipGroup label="Term" options={snapshot.valueLists.terms} selected={terms} onToggle={toggle('term')} />
       </FilterDrawer>
 
-      <section className="section">
-        <Container>
+      <section className="section-tight">
+        <Container width="full">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h2>{visible.length} results</h2>
+            <h2 className="text-body-lg font-semibold tracking-normal">{visible.length} results</h2>
             <span className="text-muted">Sorted by catalogue order</span>
           </div>
           {visible.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="catalog-grid">
               {renderedPackages.map((bundle) => (
-                <BundleCard key={bundle.id} bundle={bundle} snapshot={snapshot} className="col-span-2" />
+                <BundleCard key={bundle.id} bundle={bundle} snapshot={snapshot} />
               ))}
             </div>
           ) : (
@@ -122,7 +123,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
               <p className="mt-2 text-muted">Try clearing a filter or choosing a different grade.</p>
             </Card>
           )}
-        <LoadMoreButton remaining={visible.length - renderedPackages.length} itemLabel="bundles" onLoadMore={loadMore} />
+          <LoadMoreButton remaining={visible.length - renderedPackages.length} itemLabel="bundles" onLoadMore={loadMore} />
         </Container>
       </section>
     </>

@@ -8,6 +8,7 @@ export function GradesPage({ snapshot }: { snapshot: CmsSnapshot }) {
   return (
     <>
       <PageHeader
+        width="full"
         title="Grades 3 to 7"
         lead="Pick a grade to see its CAPS-aligned resources and bundles. CAPS stands for Curriculum and Assessment Policy Statement, South Africa’s national curriculum policy."
       >
@@ -16,10 +17,10 @@ export function GradesPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
       </PageHeader>
 
-      <section className="section">
-        <Container>
+      <section className="section-tight">
+        <Container width="full">
           <h2 className="sr-only">Browse resources by grade</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="catalog-grid">
             {snapshot.valueLists.grades.map((grade) => (
               <GradeCard key={grade} grade={grade} count={productsForGrade(snapshot, grade).length} />
             ))}
