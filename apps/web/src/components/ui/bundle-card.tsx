@@ -1,13 +1,13 @@
 import { CatalogPrice } from './catalog-price'
 import { Link } from 'react-router-dom'
-import { bundleContents, bundleValue, priceLabel, promotionPrice, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
+import { bundleContents, bundleValue, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
 import { cn } from '@designing-minds/utils'
 import { Button } from './button'
 import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
 import { addCartSlug, removeCartSlug } from '../../lib/cart'
-import { catalogDescription, countLabel, perResourceZar } from '../../lib/product-attributes'
+import { catalogDescription } from '../../lib/product-attributes'
 import { useCartSlugs } from '../../lib/use-cart'
 
 /**
@@ -32,10 +32,9 @@ export function BundleCard({
   const href = `/shop/${bundle.slug}`
   const contents = bundleContents(snapshot, bundle)
   const subjects = [...new Set(contents.flatMap((product) => product.subjects))]
-  const perResource = perResourceZar(promotionPrice(bundle), contents.length)
   const value = bundleValue(snapshot, bundle)
-  const attributes = contents.length > 0
-    ? `${countLabel(contents.length, 'resource')}${subjects.length > 0 ? ` · ${countLabel(subjects.length, 'subject')}` : ''}`
+  const descriptionFallback = contents.length > 0
+    ? 'Browse the resources included in this bundle.'
     : 'Included resources are being finalised.'
 
   return (
@@ -69,13 +68,10 @@ export function BundleCard({
           </h3>
         </Link>
 
-        <p className="catalog-card-description">{catalogDescription(bundle.shortDescription, attributes)}</p>
-        {bundle.shortDescription.trim() ? (
-          <p className="mt-3 text-caption text-muted">{attributes}</p>
-        ) : null}
+        <p className="catalog-card-description">{catalogDescription(bundle.shortDescription, descriptionFallback)}</p>
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-6">
-          <span className="catalog-card-price"><CatalogPrice record={bundle} /></span>
+          <span className="catalog-card-price"><CatalogPrice record={bundle} compareAtPriceZar={value?.singlesTotalZar} /></span>
           {inCart ? (
             <Button
               size="icon"
@@ -100,12 +96,6 @@ export function BundleCard({
             </Button>
           )}
         </div>
-        {value && (value.savingZar > 0 || perResource) ? (
-          <p className="mt-2 text-caption text-muted">
-            {value.savingZar > 0 ? <><s>{priceLabel(value.singlesTotalZar)}</s> bought singly</> : null}
-            {perResource ? `${value.savingZar > 0 ? ' · ' : ''}about ${priceLabel(perResource)} each` : ''}
-          </p>
-        ) : null}
       </div>
     </Card>
   )

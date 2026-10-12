@@ -69,18 +69,23 @@ test('sale prices keep the original and sale labels in the redesigned price row'
   assert.match(html, /<s[^>]*>R 60<\/s>/)
   assert.match(html, /Sale price/)
   assert.match(html, /R 45/)
+  assert.ok(html.indexOf('<s ') < html.indexOf('R 45'))
+  assert.doesNotMatch(html, /about R|bought singly/)
 })
 
-test('bundles show descriptions and only derive counts and savings from published members', () => {
+test('bundles show mini descriptions and inline prices without count notes or per-resource pricing', () => {
   const html = render(createElement(BundleCard, {
     bundle: { ...bundle, includedProductSlugs: [product.slug, 'draft'] },
     snapshot: snapshot([product, { ...product, slug: 'draft', published: false }]),
   }))
   assert.match(html, /Prepare for the term with resources in one place/)
-  assert.match(html, /1 resource · 1 subject/)
+  assert.doesNotMatch(html, /\d+ resources? ·|\d+ subjects?/)
   assert.match(html, /Save 33%/)
-  assert.match(html, /R 60<\/s> bought singly/)
-  assert.match(html, /about R 40 each/)
+  const priceRow = html.slice(html.indexOf('class="catalog-card-price"'), html.indexOf('<button'))
+  assert.match(priceRow, /<s[^>]*>R 60<\/s>/)
+  assert.match(priceRow, /R 40/)
+  assert.ok(priceRow.indexOf('R 60') < priceRow.indexOf('R 40'))
+  assert.doesNotMatch(html, /bought singly|about R/)
   assert.match(html, /aria-label="Add Grade 4 Term 1 Bundle to cart"/)
 })
 
@@ -90,19 +95,45 @@ test('empty bundles keep a useful fallback without fabricated savings or zero co
   assert.doesNotMatch(html, /Save \d|bought singly|about R|0 resources/)
 })
 
-test('a bundle without a saving still shows its per-resource price without a saving badge', () => {
-  const html = render(createElement(BundleCard, { bundle: { ...bundle, priceZar: 70 }, snapshot: snapshot([product]) }))
-  assert.match(html, /about R 70 each/)
-  assert.doesNotMatch(html, /Save \d|bought singly/)
+test('a bundle without a mini description has useful copy without resource or subject count notes', () => {
+  const html = render(createElement(BundleCard, { bundle: { ...bundle, shortDescription: '' }, snapshot: snapshot([product]) }))
+  assert.match(html, /Browse the resources included in this bundle/)
+  assert.doesNotMatch(html, /\d+ resources?|\d+ subjects?|bought singly|about R/)
 })
 
-test('grade cards link to the grade, pluralise counts and keep Browse when no count is supplied', () => {
-  const single = render(createElement(GradeCard, { grade: 'Grade 4', count: 1 }))
-  assert.match(single, /href="\/grades\/grade-4"/)
-  assert.match(single, /1 resource<\/span>/)
+test('a bundle without a saving shows only its current price', () => {
+  const html = render(createElement(BundleCard, { bundle: { ...bundle, priceZar: 70 }, snapshot: snapshot([product]) }))
+  assert.match(html, /R 70/)
+  assert.doesNotMatch(html, /<s[\s>]|Save \d|bought singly|about R/)
+})
+
+test('a bundle sale compares its own regular price and sale price inline without a third price', () => {
+  const html = render(createElement(BundleCard, { bundle: { ...bundle, salePriceZar: 30 }, snapshot: snapshot([product]) }))
+  const priceRow = html.slice(html.indexOf('class="catalog-card-price"'), html.indexOf('<button'))
+  assert.match(priceRow, /<s[^>]*>R 40<\/s>/)
+  assert.match(priceRow, /R 30/)
+  assert.doesNotMatch(priceRow, /R 60/)
+  assert.doesNotMatch(html, /bought singly|about R/)
+})
+
+test('a bundle priced the same as its members has no crossed-out comparison price', () => {
+  const html = render(createElement(BundleCard, { bundle: { ...bundle, priceZar: 60 }, snapshot: snapshot([product]) }))
+  assert.match(html, /R 60/)
+  assert.doesNotMatch(html, /<s[\s>]|Save \d|bought singly|about R/)
+})
+
+test('grade cards retain their original compact design, description, count and browse action', () => {
+  const grade = render(createElement(GradeCard, { grade: 'Grade 4', count: 89 }))
+  assert.match(grade, /href="\/grades\/grade-4"/)
+  assert.match(grade, /min-h-56/)
+  assert.match(grade, /bg-blossom/)
+  assert.match(grade, /89 resources/)
+  assert.match(grade, /Intermediate-phase tests across all core subjects/)
+  assert.match(grade, /Browse/)
+  assert.doesNotMatch(grade, /catalog-card-body|aspect-\[4\/3\]/)
   assert.match(render(createElement(GradeCard, { grade: 'Grade 4', count: 0 })), /0 resources/)
   const unknown = render(createElement(GradeCard, { grade: 'Grade 8' }))
   assert.match(unknown, /CAPS-aligned tests and summaries/)
-  assert.match(unknown, /Browse/)
+  assert.doesNotMatch(unknown, /Browse/)
   assert.doesNotMatch(unknown, /undefined|NaN/)
 })

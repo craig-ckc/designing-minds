@@ -26,7 +26,7 @@ test('the grade package section only claims value it can derive', () => {
   assert.match(card, /bundleValue\(snapshot, bundle\)/)
   // A saving is only rendered behind a positive check, never as a bare R0.
   assert.match(card, /value && value\.savingPercent > 0/)
-  assert.match(card, /value\.savingZar > 0 \?/)
+  assert.match(card, /compareAtPriceZar=\{value\?\.singlesTotalZar\}/)
   assert.match(card, /Included resources are being finalised/)
 })
 
