@@ -8,6 +8,7 @@ import {
   getFaqsByIds,
   priceLabel,
   relatedProducts,
+  relatedBundles,
   type Bundle,
   type CmsSnapshot,
   type PreviewPdf,
@@ -25,6 +26,7 @@ import { DetailDisclosure } from '../components/ui/detail-disclosure'
 import { FaqAccordion } from '../components/ui/faq-accordion'
 import { IncludedProduct } from '../components/ui/included-product'
 import { ProductCard } from '../components/ui/product-card'
+import { BundleCard } from '../components/ui/bundle-card'
 import { ProductGallery } from '../components/ui/product-gallery'
 import { SpecRow } from '../components/ui/spec-row'
 import { addCartSlug } from '../lib/cart'
@@ -261,101 +263,122 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
   const value = bundleValue(snapshot, bundle)
   const subjects = [...new Set(contents.flatMap((product) => product.subjects))]
   const previewPdfs = bundle.previewPdfs ?? []
+  const related = relatedBundles(snapshot, bundle, 4)
 
   return (
-    <section className="product-detail py-8 sm:py-10 lg:py-12">
-      <Container width="full">
-        <Breadcrumb
-          trail={[
-            { to: '/', label: 'Home' },
-            { to: '/shop', label: 'Shop' },
-          ]}
-          current={bundle.title}
-        />
+    <>
+      <section className="product-detail py-8 sm:py-10 lg:py-12">
+        <Container width="full">
+          <Breadcrumb
+            trail={[
+              { to: '/', label: 'Home' },
+              { to: '/shop', label: 'Shop' },
+            ]}
+            current={bundle.title}
+          />
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
-          <div className="min-w-0 lg:sticky lg:top-[var(--sticky-offset)]">
-            <ProductGallery
-              item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
-              images={bundle.galleryImages ?? []}
-              stacked
-            />
-          </div>
-
-          <aside className="order-first grid min-w-0 gap-4 rounded-card border border-line p-5 sm:p-6 lg:order-none lg:p-7">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="solid">Bundle</Badge>
-              <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
-                {bundle.grade} · {bundle.term}
-              </span>
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
+            <div className="min-w-0 lg:sticky lg:top-[var(--sticky-offset)]">
+              <ProductGallery
+                item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
+                images={bundle.galleryImages ?? []}
+                stacked
+              />
             </div>
-            <h1 className="text-2xl font-bold leading-snug tracking-[-0.02em]">{bundle.title}</h1>
-            {bundle.shortDescription.trim() ? <p className="text-sm leading-relaxed text-ink-soft">{bundle.shortDescription}</p> : null}
-            <div className="text-[1.75rem] font-semibold leading-snug tracking-[-0.03em]"><CatalogPrice record={bundle} compareAtPriceZar={value?.singlesTotalZar} /></div>
-            <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(bundle.slug)}>
-              <Icon name="cart" size={16} />
-              Add to cart
-            </Button>
-            <p className="text-sm text-muted">CAPS-aligned · Download after payment · Print at home</p>
-            <div className="border-t border-line">
-              <DetailDisclosure title="Bundle details">
-                {value && value.savingZar > 0 ? (
-                  <p className="mb-4 text-sm font-semibold text-primary-ink">
-                    Saves {priceLabel(value.savingZar)} against buying these separately
-                  </p>
-                ) : null}
-                <ul className="grid gap-3">
-                  <SpecRow label="Grade" value={bundle.grade} />
-                  <SpecRow label="Covers" value={bundle.bundleScope === 'Full Year' ? 'Full year' : bundle.term} />
-                  <SpecRow label="Year" value={bundle.year} />
-                  <SpecRow label="Resources" value={contents.length > 0 ? String(contents.length) : '—'} />
-                  <SpecRow label="Subjects" value={subjects.join(', ') || '—'} />
-                  <SpecRow label="Delivery" value="Instant download on Order Detail" last />
-                </ul>
-              </DetailDisclosure>
-              {hasRealCopy(bundle.fullDescription) ? (
-                <DetailDisclosure title="About this bundle">
-                  <Markdown source={bundle.fullDescription} className="text-sm" />
-                </DetailDisclosure>
-              ) : null}
 
-              <DetailDisclosure title={`What’s included${contents.length > 0 ? ` (${countLabel(contents.length, 'resource')})` : ''}`}>
-                {value ? (
-                  <ul className="mb-4 grid gap-3">
-                    <SpecRow label="Resources" value={`${value.itemCount} downloadable ${value.itemCount === 1 ? 'item' : 'items'}`} />
-                    {value.subjects.length > 0 ? <SpecRow label="Subjects" value={value.subjects.join(', ')} /> : null}
-                    {value.terms.length > 0 ? <SpecRow label="Covers" value={value.terms.join(', ')} /> : null}
-                    <SpecRow
-                      label="Bought singly"
-                      value={
-                        value.savingZar > 0
-                          ? `${priceLabel(value.singlesTotalZar)} — this bundle saves ${priceLabel(value.savingZar)} (${value.savingPercent}%)`
-                          : priceLabel(value.singlesTotalZar)
-                      }
-                      last
-                    />
+            <aside className="order-first grid min-w-0 gap-4 rounded-card border border-line p-5 sm:p-6 lg:order-none lg:p-7">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="solid">Bundle</Badge>
+                <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
+                  {bundle.grade} · {bundle.term}
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold leading-snug tracking-[-0.02em]">{bundle.title}</h1>
+              {bundle.shortDescription.trim() ? <p className="text-sm leading-relaxed text-ink-soft">{bundle.shortDescription}</p> : null}
+              <div className="text-[1.75rem] font-semibold leading-snug tracking-[-0.03em]"><CatalogPrice record={bundle} compareAtPriceZar={value?.singlesTotalZar} /></div>
+              <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(bundle.slug)}>
+                <Icon name="cart" size={16} />
+                Add to cart
+              </Button>
+              <p className="text-sm text-muted">CAPS-aligned · Download after payment · Print at home</p>
+              <div className="border-t border-line">
+                <DetailDisclosure title="Bundle details">
+                  {value && value.savingZar > 0 ? (
+                    <p className="mb-4 text-sm font-semibold text-primary-ink">
+                      Saves {priceLabel(value.savingZar)} against buying these separately
+                    </p>
+                  ) : null}
+                  <ul className="grid gap-3">
+                    <SpecRow label="Grade" value={bundle.grade} />
+                    <SpecRow label="Covers" value={bundle.bundleScope === 'Full Year' ? 'Full year' : bundle.term} />
+                    <SpecRow label="Year" value={bundle.year} />
+                    <SpecRow label="Resources" value={contents.length > 0 ? String(contents.length) : '—'} />
+                    <SpecRow label="Subjects" value={subjects.join(', ') || '—'} />
+                    <SpecRow label="Delivery" value="Instant download on Order Detail" last />
                   </ul>
+                </DetailDisclosure>
+                {hasRealCopy(bundle.fullDescription) ? (
+                  <DetailDisclosure title="About this bundle">
+                    <Markdown source={bundle.fullDescription} className="text-sm" />
+                  </DetailDisclosure>
                 ) : null}
-                {contents.length > 0 ? (
-                  <div className="space-y-2">
-                    {contents.map((entry) => (
-                      <IncludedProduct key={entry.id} product={entry} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted">Included resources are being finalised.</p>
-                )}
-              </DetailDisclosure>
 
-              {previewPdfs.length > 0 ? <PreviewPdfSection pdfs={previewPdfs} subject="bundle" /> : null}
-              <DetailDisclosure title="Resource licence">
-                <ResourceLicenceNotice />
-              </DetailDisclosure>
-              <DetailFooterBlocks faqs={faqs} subject="bundle" />
+                <DetailDisclosure title={`What’s included${contents.length > 0 ? ` (${countLabel(contents.length, 'resource')})` : ''}`}>
+                  {value ? (
+                    <ul className="mb-4 grid gap-3">
+                      <SpecRow label="Resources" value={`${value.itemCount} downloadable ${value.itemCount === 1 ? 'item' : 'items'}`} />
+                      {value.subjects.length > 0 ? <SpecRow label="Subjects" value={value.subjects.join(', ')} /> : null}
+                      {value.terms.length > 0 ? <SpecRow label="Covers" value={value.terms.join(', ')} /> : null}
+                      <SpecRow
+                        label="Bought singly"
+                        value={
+                          value.savingZar > 0
+                            ? `${priceLabel(value.singlesTotalZar)} — this bundle saves ${priceLabel(value.savingZar)} (${value.savingPercent}%)`
+                            : priceLabel(value.singlesTotalZar)
+                        }
+                        last
+                      />
+                    </ul>
+                  ) : null}
+                  {contents.length > 0 ? (
+                    <div className="space-y-2">
+                      {contents.map((entry) => (
+                        <IncludedProduct key={entry.id} product={entry} />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted">Included resources are being finalised.</p>
+                  )}
+                </DetailDisclosure>
+
+                {previewPdfs.length > 0 ? <PreviewPdfSection pdfs={previewPdfs} subject="bundle" /> : null}
+                <DetailDisclosure title="Resource licence">
+                  <ResourceLicenceNotice />
+                </DetailDisclosure>
+                <DetailFooterBlocks faqs={faqs} subject="bundle" />
+              </div>
+            </aside>
+          </div>
+        </Container>
+      </section>
+      {related.length > 0 ? (
+        <section className="product-detail py-8 sm:py-10 lg:py-12">
+          <Container width="full">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+              <h2 className="text-xl font-bold leading-snug tracking-normal">More bundles to explore</h2>
+              <Button to={`/packages?grade=${encodeURIComponent(bundle.grade)}`} variant="text">
+                See all bundles
+                <ArrowAffordance size="md" />
+              </Button>
             </div>
-          </aside>
-        </div>
-      </Container>
-    </section>
+            <div className="catalog-grid">
+              {related.map((entry) => (
+                <BundleCard key={entry.id} bundle={entry} snapshot={snapshot} />
+              ))}
+            </div>
+          </Container>
+        </section>
+      ) : null}
+    </>
   )
 }

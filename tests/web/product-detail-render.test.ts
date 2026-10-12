@@ -126,3 +126,20 @@ test('gallery thumbnails represent the cover and every upload, with controls out
   assert.match(thumbnails, /rounded-\[6px\]/)
   assert.doesNotMatch(thumbnails, /overflow-x-auto/)
 })
+
+test('bundle detail pages render other relevant bundles using catalogue cards', () => {
+  const data = snapshot()
+  data.bundles.push({ ...bundle, id: 'other', slug: 'other', title: 'Another Grade 4 bundle' })
+  const html = renderPage(bundle.slug, data)
+  const suggestions = html.slice(html.indexOf('More bundles to explore'))
+  assert.match(suggestions, /Another Grade 4 bundle/)
+  assert.match(suggestions, /catalog-card-bundle/)
+  assert.match(suggestions, /href="\/shop\/other"/)
+  assert.match(suggestions, /href="\/packages\?grade=Grade%204"/)
+  assert.doesNotMatch(suggestions, /href="\/shop\/bundle"/)
+})
+
+test('bundle recommendations are omitted when no other same-grade bundle is published', () => {
+  const html = renderPage(bundle.slug)
+  assert.doesNotMatch(html, /More bundles to explore/)
+})

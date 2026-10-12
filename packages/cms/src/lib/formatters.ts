@@ -201,6 +201,17 @@ export const relatedProducts = (snapshot: CmsSnapshot, product: Product, limit =
     .filter((p) => p.slug !== product.slug && p.subjects.some((s) => product.subjects.includes(s)))
     .slice(0, limit)
 
+/** Other bundles for this grade, with the current term first and stable catalogue ordering. */
+export const relatedBundles = (snapshot: CmsSnapshot, bundle: Bundle, limit = 4) =>
+  publishedBundles(snapshot)
+    .filter((entry) => entry.slug !== bundle.slug && entry.grade === bundle.grade)
+    .sort((a, b) =>
+      Number(b.term === bundle.term) - Number(a.term === bundle.term)
+      || a.sortOrder - b.sortOrder
+      || a.title.localeCompare(b.title),
+    )
+    .slice(0, Math.max(0, limit))
+
 /* --------------------------------- Filters ----------------------------- */
 
 export interface ProductFilterState {
