@@ -1,20 +1,19 @@
 import { CatalogPrice } from './catalog-price'
 import { Link } from 'react-router-dom'
-import { bundleContents, priceLabel, promotionPrice, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
+import { bundleContents, bundleValue, priceLabel, promotionPrice, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
 import { cn } from '@designing-minds/utils'
 import { Button } from './button'
 import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
 import { addCartSlug, removeCartSlug } from '../../lib/cart'
-import { countLabel, perResourceZar } from '../../lib/product-attributes'
+import { catalogDescription, countLabel, perResourceZar } from '../../lib/product-attributes'
 import { useCartSlugs } from '../../lib/use-cart'
 
 /**
  * Catalogue card for a bundle. Deliberately the same shape and rhythm as
  * ProductCard — a shopper scanning the grid shouldn't have to learn a second
- * card — with two additions that only a bundle can carry: a stacked cover and
- * how many resources are inside.
+ * card — with a stacked cover and value derived from its included resources.
  *
  * A bundle has no subjects of its own; they come from its members, which is
  * also what drives the cover art.
@@ -26,7 +25,7 @@ export function BundleCard({
 }: {
   bundle: Bundle
   snapshot: CmsSnapshot
-  /** Forwarded to the card so a caller can place it in a grid (e.g. col-span-2). */
+  /** Optional placement or sizing supplied by the caller. */
   className?: string
 }) {
   const inCart = useCartSlugs().includes(bundle.slug)
@@ -34,6 +33,10 @@ export function BundleCard({
   const contents = bundleContents(snapshot, bundle)
   const subjects = [...new Set(contents.flatMap((product) => product.subjects))]
   const perResource = perResourceZar(promotionPrice(bundle), contents.length)
+  const value = bundleValue(snapshot, bundle)
+  const attributes = contents.length > 0
+    ? `${countLabel(contents.length, 'resource')}${subjects.length > 0 ? ` · ${countLabel(subjects.length, 'subject')}` : ''}`
+    : 'Included resources are being finalised.'
 
   return (
     <Card
@@ -41,36 +44,38 @@ export function BundleCard({
       variant="surface"
       pad="none"
       className={cn(
-        'catalog-card catalog-card-bundle group flex flex-row rounded-lg transition-colors duration-200 hover:border-primary/40',
+        'catalog-card catalog-card-bundle group flex min-w-0 flex-col',
         className,
       )}
     >
-      <Link to={href} aria-label={`View ${bundle.title}`} className="block w-2/5 flex-none">
-        <ProductCover
-          product={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
-          stacked
-        />
+      <Link to={href} aria-label={`View ${bundle.title}`} className="catalog-card-media">
+        <div className="w-3/5 max-w-64 motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]">
+          <ProductCover
+            product={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
+            stacked
+          />
+        </div>
+        {value && value.savingPercent > 0 ? (
+          <span className="absolute left-4 top-4 rounded-pill bg-canvas px-3 py-1 text-caption font-semibold text-primary-ink">
+            Save {value.savingPercent}%
+          </span>
+        ) : null}
       </Link>
 
-      <div className="flex min-w-0 flex-1 flex-col p-3">
+      <div className="catalog-card-body">
         <Link to={href} className="inline-flex min-h-6 items-center py-0.5">
-          <h3 className="text-body-lg font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary-ink">
+          <h3 className="catalog-card-title transition-colors group-hover:text-primary-ink">
             {bundle.title}
           </h3>
         </Link>
 
-        {/* Size and value at a glance — counts and the effective per-resource
-            price are derived from the members, never typed in. */}
-        {contents.length > 0 ? (
-          <p className="pt-1 text-body-sm text-muted">
-            {countLabel(contents.length, 'resource')}
-            {subjects.length > 0 ? ` · ${countLabel(subjects.length, 'subject')}` : ''}
-            {perResource ? ` · about ${priceLabel(perResource)} each` : ''}
-          </p>
+        <p className="catalog-card-description">{catalogDescription(bundle.shortDescription, attributes)}</p>
+        {bundle.shortDescription.trim() ? (
+          <p className="mt-3 text-caption text-muted">{attributes}</p>
         ) : null}
 
-        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <span className="text-[1.2rem] font-extrabold text-primary"><CatalogPrice record={bundle} /></span>
+        <div className="mt-auto flex items-center justify-between gap-3 pt-6">
+          <span className="catalog-card-price"><CatalogPrice record={bundle} /></span>
           {inCart ? (
             <Button
               size="icon"
@@ -95,6 +100,12 @@ export function BundleCard({
             </Button>
           )}
         </div>
+        {value && (value.savingZar > 0 || perResource) ? (
+          <p className="mt-2 text-caption text-muted">
+            {value.savingZar > 0 ? <><s>{priceLabel(value.singlesTotalZar)}</s> bought singly</> : null}
+            {perResource ? `${value.savingZar > 0 ? ' · ' : ''}about ${priceLabel(perResource)} each` : ''}
+          </p>
+        ) : null}
       </div>
     </Card>
   )

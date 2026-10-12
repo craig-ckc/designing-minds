@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { countLabel, perResourceZar, productAttributeLine } from '../../apps/web/src/lib/product-attributes.ts'
-
-const read = (path: string) => readFileSync(new URL(`../../apps/web/src/${path}`, import.meta.url), 'utf8')
+import { catalogDescription, countLabel, perResourceZar, productAttributeLine } from '../../apps/web/src/lib/product-attributes.ts'
 
 const pdf = (name: string) => ({ id: name, label: name, filename: `${name}.pdf` })
 
@@ -43,22 +40,9 @@ test('count labels pluralise', () => {
   assert.equal(countLabel(8, 'subject'), '8 subjects')
 })
 
-test('catalogue cards and grade bundle tiles render the derived attribute copy', () => {
-  const productCard = read('components/ui/product-card.tsx')
-  const bundleCard = read('components/ui/bundle-card.tsx')
-  const gradePackages = read('components/sections/grade-package-section.tsx')
-
-  // The line sits between the title and the price row, in the muted meta style.
-  assert.match(productCard, /<p className="pt-1 text-body-sm text-muted">\{productAttributeLine\(product\)\}<\/p>/)
-  assert.ok(productCard.indexOf('productAttributeLine(product)') < productCard.indexOf('<CatalogPrice record={product}'))
-
-  // Bundle cards: resources · subjects · about R x each, all derived from members.
-  assert.match(bundleCard, /const perResource = perResourceZar\(promotionPrice\(bundle\), contents\.length\)/)
-  assert.match(bundleCard, /countLabel\(contents\.length, 'resource'\)/)
-  assert.match(bundleCard, /countLabel\(subjects\.length, 'subject'\)/)
-  assert.match(bundleCard, /about \$\{priceLabel\(perResource\)\} each/)
-
-  // Grade bundle tiles put the per-resource price beside the "bought singly" comparison.
-  assert.match(gradePackages, /perResourceZar\(promotionPrice\(product\), value\.itemCount\)/)
-  assert.match(gradePackages, /bought singly\s*\{perResource \? ` · about \$\{priceLabel\(perResource\)\} each` : ''\}/)
+test('mini descriptions use CMS copy and fall back only when it is blank', () => {
+  assert.equal(catalogDescription('Practice with confidence.', 'PDF · Summary'), 'Practice with confidence.')
+  assert.equal(catalogDescription('  Practice\n with   confidence.  ', 'PDF · Summary'), 'Practice with confidence.')
+  assert.equal(catalogDescription('', 'PDF · Summary'), 'PDF · Summary')
+  assert.equal(catalogDescription(' \n\t ', 'Included resources are being finalised.'), 'Included resources are being finalised.')
 })

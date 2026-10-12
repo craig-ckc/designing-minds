@@ -7,6 +7,10 @@ import type { Product } from '@designing-minds/cms'
 /** "1 resource" / "8 subjects". */
 export const countLabel = (count: number, noun: string): string => `${count} ${noun}${count === 1 ? '' : 's'}`
 
+/** Prefer the CMS mini description; older records still have useful factual copy. */
+export const catalogDescription = (description: string, fallback: string): string =>
+  description.trim().replace(/\s+/g, ' ') || fallback
+
 /** Whole-rand effective price per included resource, or null when there is
  *  nothing to divide by — callers omit the line rather than showing "R 0". */
 export const perResourceZar = (priceZar: number, itemCount: number): number | null =>

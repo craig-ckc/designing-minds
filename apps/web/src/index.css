@@ -136,7 +136,7 @@
 
   /* ---- Content widths (Container + prose columns) ----------------------
      Generates max-w-page / max-w-prose / … utilities. */
-  --container-page: 1240px; /* page shell — single source of truth */
+  --container-page: 1440px; /* page shell — catalogue pages use the full viewport */
   --container-wide: 980px; /* media-forward showcase rows */
   --container-readable: 820px; /* long-form: FAQ, legal */
   --container-prose: 680px; /* section headings & standard prose */
@@ -223,6 +223,30 @@
     @apply w-full min-h-[var(--control-h)] rounded-control border border-line-strong bg-canvas px-3.5 py-2.5 text-body
            transition placeholder:text-muted
            focus:border-primary focus:outline focus:outline-2 focus:outline-primary/25 focus:-outline-offset-1;
+  }
+
+  .catalog-grid {
+    @apply grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .catalog-card-media {
+    @apply relative flex aspect-square items-center justify-center overflow-hidden rounded-card bg-surface-alt;
+  }
+
+  .catalog-card-body {
+    @apply flex min-w-0 flex-1 flex-col px-4 pb-5 pt-5 sm:px-5;
+  }
+
+  .catalog-card-title {
+    @apply text-[1.125rem] font-bold leading-snug tracking-[-0.02em] line-clamp-2;
+  }
+
+  .catalog-card-description {
+    @apply mt-2 text-body-sm leading-relaxed text-ink-soft line-clamp-3;
+  }
+
+  .catalog-card-price {
+    @apply min-w-0 text-[1.125rem] font-semibold leading-snug tracking-[-0.02em] text-ink;
   }
 }
 

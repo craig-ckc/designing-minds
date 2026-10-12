@@ -12,8 +12,8 @@ const GRADE_BACKGROUNDS: Record<string, string> = {
 }
 
 /**
- * One grade tile, shared by the homepage carousel and the Grades page grid.
- * Compact, grade-coloured tile with a shared decorative line illustration.
+ * One grade tile, shared by the homepage and the Grades page grid.
+ * Grade-coloured artwork sits above the description, like catalogue covers.
  * Width is controlled by the parent via `className`.
  */
 export function GradeCard({ grade, count, className = '' }: { grade: string; count?: number; className?: string }) {
@@ -22,28 +22,30 @@ export function GradeCard({ grade, count, className = '' }: { grade: string; cou
     <Link
       to={`/grades/${gradeToSlug(grade)}`}
       data-card
-      className={`group relative flex min-h-56 flex-col overflow-hidden rounded-card ${band} transition-transform duration-200 ${className}`}
+      className={`group flex min-w-0 flex-col overflow-hidden rounded-card bg-surface ${className}`}
     >
-      <div
-        className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-40"
-        style={{ backgroundImage: `url(${GRADE_BACKGROUNDS[grade] ?? '/images/card-background-01.svg'})` }}
-        aria-hidden="true"
-      />
+      <div className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-card ${band}`} aria-hidden="true">
+        <div
+          className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-40"
+          style={{ backgroundImage: `url(${GRADE_BACKGROUNDS[grade] ?? '/images/card-background-01.svg'})` }}
+        />
+        <span className={`relative text-[6rem] font-extrabold leading-none tracking-[-0.06em] ${fg} motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-105`}>
+          {grade.replace(/^Grade\s+/i, '')}
+        </span>
+      </div>
 
-      <div className="relative z-10 flex flex-1 flex-col p-6">
-        <h3 className={`text-[1.5rem] ${fg}`}>{grade}</h3>
-        <p className={`mt-1.5 max-w-[30ch] text-body-sm line-clamp-2 ${fg}`}>
+      <div className="catalog-card-body">
+        <h3 className="catalog-card-title transition-colors group-hover:text-primary-ink">{grade}</h3>
+        <p className="catalog-card-description">
           {GRADE_BLURB[grade] ?? 'CAPS-aligned tests and summaries.'}
         </p>
-        {typeof count === 'number' ? (
-          <div className="mt-auto flex items-center justify-between gap-4 pt-6 text-body-sm">
-            <span className={fg}>{count} resources</span>
-            <span className={`inline-flex items-center gap-1.5 font-bold ${fg}`}>
-              Browse
-              <ArrowAffordance />
-            </span>
-          </div>
-        ) : null}
+        <div className="mt-auto flex items-center justify-between gap-4 pt-6 text-body-sm">
+          {typeof count === 'number' ? <span className="text-muted">{count} {count === 1 ? 'resource' : 'resources'}</span> : null}
+          <span className="ml-auto inline-flex items-center gap-1.5 font-semibold text-primary-ink">
+            Browse
+            <ArrowAffordance />
+          </span>
+        </div>
       </div>
     </Link>
   )

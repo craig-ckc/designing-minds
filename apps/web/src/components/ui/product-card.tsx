@@ -6,7 +6,7 @@ import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
 import { addCartSlug, removeCartSlug } from '../../lib/cart'
-import { productAttributeLine } from '../../lib/product-attributes'
+import { catalogDescription, productAttributeLine } from '../../lib/product-attributes'
 import { useCartSlugs } from '../../lib/use-cart'
 
 export function ProductCard({ product }: { product: Product }) {
@@ -18,23 +18,25 @@ export function ProductCard({ product }: { product: Product }) {
       as="article"
       variant="surface"
       pad="none"
-      className="catalog-card catalog-card-product group flex flex-col rounded-lg transition-colors duration-200 hover:border-primary/40"
+      className="catalog-card catalog-card-product group flex min-w-0 flex-col"
     >
-      <Link to={href} aria-label={`View ${product.title}`} className="block">
-        <ProductCover product={product} />
+      <Link to={href} aria-label={`View ${product.title}`} className="catalog-card-media">
+        <div className="w-3/5 max-w-64 motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]">
+          <ProductCover product={product} />
+        </div>
       </Link>
 
-      {/* Title + price */}
-      <div className="flex flex-1 flex-col p-3 pt-0">
+      <div className="catalog-card-body">
         <Link to={href} className="inline-flex min-h-6 items-center py-0.5">
-          <h3 className="text-body-lg font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 group-hover:text-primary-ink">
+          <h3 className="catalog-card-title transition-colors group-hover:text-primary-ink">
             {product.title}
           </h3>
         </Link>
-        {/* What the buyer gets, read off the record: file type, format, marks. */}
-        <p className="pt-1 text-body-sm text-muted">{productAttributeLine(product)}</p>
-        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <span className="text-[1.2rem] font-extrabold text-primary"><CatalogPrice record={product} /></span>
+        <p className="catalog-card-description">
+          {catalogDescription(product.shortDescription, productAttributeLine(product))}
+        </p>
+        <div className="mt-auto flex items-center justify-between gap-3 pt-6">
+          <span className="catalog-card-price"><CatalogPrice record={product} /></span>
           {inCart ? (
             <Button
               size="icon"
