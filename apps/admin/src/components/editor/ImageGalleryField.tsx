@@ -188,6 +188,7 @@ export function ImageGalleryField({
                   zone in particular, since a PDF dropped here used to be stored
                   as an image and shown as one on the website. */}
               <span className="text-ui text-muted">{uploadHint('gallery')} each</span>
+              <span className="text-ui text-muted">Images are compressed to AVIF before uploading. Animated images use the first frame.</span>
             </label>
           )}
         />
@@ -315,7 +316,7 @@ function UploadProgress({ job }: { job: UploadJob }) {
     <div className="rounded-control border border-line bg-surface-alt px-2.5 py-1.5">
       <div className="flex items-center gap-2">
         <span className="min-w-0 flex-1 truncate text-ui font-medium text-ink">{job.filename}</span>
-        <span className="flex-none text-ui tabular-nums text-muted">{percent}%</span>
+        <span className="flex-none text-ui tabular-nums text-muted">{job.compressing ? 'Compressing…' : `${percent}%`}</span>
         <Button variant="ghost" size="sm" onClick={() => cancel(job.id)}>
           Cancel
         </Button>
@@ -333,7 +334,9 @@ function UploadProgress({ job }: { job: UploadJob }) {
       </div>
 
       <p className="mt-1 text-ui text-muted">
-        {percent < 100
+        {job.compressing
+          ? 'Compressing image — you can keep working, but don’t refresh or close this tab.'
+          : percent < 100
           ? 'Uploading — you can keep working, but don’t refresh or close this tab.'
           : 'Finishing up…'}
       </p>

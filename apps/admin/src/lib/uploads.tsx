@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { PreviewPdf, ProductFile, ProductImage } from '@designing-minds/cms'
 import { UploadAbortedError, UploadFailedError, type UploadPurpose } from './upload-transport'
 import { rejectUpload } from './upload-rules'
+import { needsImageCompression, prepareUpload } from './image-compression'
 
 /* -------------------------------------------------------------------------
    Background uploads.
@@ -21,8 +22,8 @@ import { rejectUpload } from './upload-rules'
    a purchased file (private bucket, signed on demand), a gallery image, or a
    preview PDF (both public bucket, permanent url) — so the artefact is typed
    as the union and the field that started the job is the thing that knows
-   which arm it is. The queue itself only moves bytes and reports progress, so
-   it has no reason to care.
+   which arm it is. Gallery images are prepared locally before the existing
+   uploader moves the bytes and reports progress.
 
    Where a finished file lands depends on who is listening:
      * the editor for that record is open  → it receives the file and folds it
@@ -51,6 +52,8 @@ export interface UploadJob {
   /** 0–1. */
   progress: number
   status: UploadStatus
+  /** Image conversion precedes the ordinary upload, while staying cancellable. */
+  compressing?: boolean
   /** What to tell the editor, in plain English. */
   error?: string
   /** Storage's own code and message, kept for the cases our sentences don't cover. */
@@ -171,15 +174,32 @@ export function UploadsProvider({
     jobs = [...jobs, job]
     emit()
 
+    const controller = new AbortController()
+    let uploadAbort: (() => void) | undefined
+    aborts.set(id, () => {
+      controller.abort()
+      uploadAbort?.()
+    })
+
     void (async () => {
       try {
+        patch(id, { compressing: needsImageCompression(input.file, input.purpose) })
+        const prepared = await prepareUpload(input.file, input.purpose, controller.signal)
+        if (controller.signal.aborted) throw new UploadAbortedError()
+        const preparedRefusal = rejectUpload(input.purpose, prepared)
+        if (preparedRefusal) throw new Error(preparedRefusal)
+        patch(id, { compressing: false, filename: prepared.name, sizeBytes: prepared.size })
         const file = await live.current.upload(
           input.recordId,
-          input.file,
+          prepared,
           input.purpose,
           (fraction) => patch(id, { progress: fraction }),
-          (abort) => aborts.set(id, abort),
+          (abort) => {
+            uploadAbort = abort
+            if (controller.signal.aborted) abort()
+          },
         )
+        if (controller.signal.aborted) throw new UploadAbortedError()
         patch(id, { progress: 1, status: 'done' })
 
         const handler = targets.get(targetKey(input.collectionId, input.recordId, input.fieldKey))
@@ -197,7 +217,7 @@ export function UploadsProvider({
         jobs = jobs.filter((entry) => entry.id !== id)
         emit()
       } catch (error) {
-        if (error instanceof UploadAbortedError) {
+        if (controller.signal.aborted || error instanceof UploadAbortedError) {
           jobs = jobs.filter((entry) => entry.id !== id)
           emit()
           return
