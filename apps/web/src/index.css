@@ -230,7 +230,7 @@
   }
 
   .catalog-card-media {
-    @apply relative flex aspect-square items-center justify-center overflow-hidden rounded-card bg-surface-alt;
+    @apply relative flex aspect-square items-center justify-center overflow-hidden bg-surface-alt;
   }
 
   .catalog-card-body {
