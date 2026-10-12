@@ -248,6 +248,18 @@
   .catalog-card-price {
     @apply min-w-0 text-[1.125rem] font-semibold leading-snug tracking-[-0.02em] text-ink;
   }
+
+  .product-gallery-stage {
+    height: clamp(18rem, 38vw, 34rem);
+  }
+
+  .product-detail {
+    --text-body: 0.875rem;
+    --text-body-sm: 0.875rem;
+    --text-body-lg: 0.875rem;
+    --text-label: 0.875rem;
+    @apply text-sm;
+  }
 }
 
 /* Hero grade selector — gentle fade as the auto-advancing panel swaps. */
@@ -360,3 +372,6 @@
 .rich-text a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
 .rich-text > :first-child { margin-top: 0; }
 .rich-text > :last-child { margin-bottom: 0; }
+
+.product-detail .rich-text :is(h1, h2) { font-size: 1.125rem; line-height: 1.4; }
+.product-detail .rich-text :is(h3, h4, h5, h6) { font-size: 1rem; line-height: 1.4; }

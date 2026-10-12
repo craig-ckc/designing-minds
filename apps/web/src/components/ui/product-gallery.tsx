@@ -14,10 +14,9 @@ import { ProductCover, type CoverItem } from './product-cover'
  * component composes the cover rather than receiving it as a picture.
  *
  * WITH NO UPLOADS THERE IS NOTHING TO PAGE THROUGH, so the arrows and the
- * indicator are absent — not disabled. A control that can't do anything is
+ * thumbnail strip are absent — not disabled. A control that can't do anything is
  * still a promise that something exists behind it, and here nothing does. The
- * no-images branch renders the same centred cover the page showed before this
- * component existed.
+ * no-images branch renders a centred cover in the same media frame.
  *
  * Paging is a scroll-snap track rather than an index-and-transform carousel:
  *  - it works before any JavaScript runs, which matters because this site
@@ -42,12 +41,14 @@ export function ProductGallery({
 }) {
   if (images.length === 0) {
     return (
-      <div className={`flex justify-center px-8 py-4 sm:px-12 ${className}`}>
-        <ProductCover product={item} stacked={stacked} className="max-w-[22rem]" priority />
+      <div className={`product-gallery-stage flex items-center justify-center rounded-card bg-surface-alt ${className}`}>
+        <div className="w-3/5 max-w-72">
+          <ProductCover product={item} stacked={stacked} priority />
+        </div>
       </div>
     )
   }
-  return <GalleryTrack item={item} images={images} stacked={stacked} className={className} />
+  return <GalleryTrack key={item.title} item={item} images={images} stacked={stacked} className={className} />
 }
 
 function GalleryTrack({
@@ -62,10 +63,23 @@ function GalleryTrack({
   className: string
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
+  const thumbnailsRef = useRef<HTMLDivElement>(null)
   // Starts at 0 so the prerendered markup describes the cover, which is what the
   // static HTML actually shows. The scroll listener corrects it once mounted.
   const [active, setActive] = useState(0)
   const total = images.length + 1
+
+  useEffect(() => {
+    const strip = thumbnailsRef.current
+    const thumbnail = strip?.children[active] as HTMLElement | undefined
+    if (!strip || !thumbnail) return
+    const left = thumbnail.offsetLeft
+    const right = left + thumbnail.offsetWidth
+    if (left < strip.scrollLeft) strip.scrollTo({ left, behavior: 'instant' })
+    else if (right > strip.scrollLeft + strip.clientWidth) {
+      strip.scrollTo({ left: right - strip.clientWidth, behavior: 'instant' })
+    }
+  }, [active])
 
   /* Which slide is showing is derived from the scroll position rather than
      tracked alongside it: a swipe never goes through the buttons, so a separate
@@ -99,8 +113,11 @@ function GalleryTrack({
     }
     measure()
     track.addEventListener('scroll', onScroll, { passive: true })
+    const observer = new ResizeObserver(onScroll)
+    observer.observe(track)
     return () => {
       track.removeEventListener('scroll', onScroll)
+      observer.disconnect()
       if (frame !== 0) window.cancelAnimationFrame(frame)
     }
   }, [total])
@@ -113,7 +130,7 @@ function GalleryTrack({
     // scrollTo on the container, not slide.scrollIntoView(): the latter also
     // scrolls the PAGE to bring the track into view, which yanks the layout
     // when someone pages through the gallery from further down the page.
-    track.scrollTo({ left: slide.offsetLeft, behavior: 'smooth' })
+    track.scrollTo({ left: slide.offsetLeft, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
   }, [])
 
   const atStart = active === 0
@@ -121,111 +138,97 @@ function GalleryTrack({
 
   return (
     <div
-      className={`px-8 py-4 sm:px-12 ${className}`}
+      className={className}
       role="group"
       aria-roledescription="carousel"
       aria-label={`${item.title} — ${total} images`}
     >
-      <div className="relative mx-auto w-full max-w-[22rem]">
-        <div
-          ref={trackRef}
-          tabIndex={0}
-          onKeyDown={(event) => {
-            // Snap points make the browser's own arrow-key scrolling crawl a few
-            // pixels at a time, so the keys are mapped to whole slides — the
-            // same move the buttons make.
-            if (event.key === 'ArrowLeft' && !atStart) {
-              event.preventDefault()
-              goTo(active - 1)
-            } else if (event.key === 'ArrowRight' && !atEnd) {
-              event.preventDefault()
-              goTo(active + 1)
-            }
-          }}
-          /* `relative` matters: each slide carries an absolutely positioned
-             sr-only caption, and an absolutely positioned box is clipped by a
-             scroll container only when its containing block is inside it. With
-             the track unpositioned those captions resolved against the wrapper,
-             escaped the clip, and widened the page by one slide per upload — a
-             490px horizontal scroll at 375px on any product with three images. */
-          className="relative flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-card [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-4 [&::-webkit-scrollbar]:hidden"
-        >
-          <div className="w-full flex-none snap-center">
-            <ProductCover product={item} stacked={stacked} className="w-full" priority />
+      <div
+        ref={trackRef}
+        tabIndex={0}
+        aria-label="Product images. Use the left and right arrow keys to browse."
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft' && !atStart) {
+            event.preventDefault()
+            goTo(active - 1)
+          } else if (event.key === 'ArrowRight' && !atEnd) {
+            event.preventDefault()
+            goTo(active + 1)
+          } else if (event.key === 'Home' || event.key === 'End') {
+            event.preventDefault()
+            goTo(event.key === 'Home' ? 0 : total - 1)
+          }
+        }}
+        className="product-gallery-stage relative flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-card bg-surface-alt [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-primary-ink focus-visible:outline-offset-4 [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="flex h-full w-full flex-none snap-center items-center justify-center p-6 sm:p-8">
+          <div className="w-3/5 max-w-72">
+            <ProductCover product={item} stacked={stacked} priority />
           </div>
-
-          {images.map((image, index) => (
-            <div key={image.id} className="w-full flex-none snap-center">
-              {/* Every slide is boxed to the cover's A4 proportions rather than
-                  the photo's own. Uploads arrive in any shape, and sizing each
-                  slide to its content would resize the whole media column as the
-                  visitor pages — so the box is fixed and the image is contained
-                  within it. width/height are still set so the intrinsic ratio is
-                  known before the bytes arrive. */}
-              <div className="flex aspect-[595/842] w-full items-center justify-center">
-                <img
-                  src={image.url}
-                  alt={image.alt}
-                  width={image.width}
-                  height={image.height}
-                  loading="lazy"
-                  decoding="async"
-                  className="max-h-full max-w-full rounded-card object-contain"
-                />
-              </div>
-              <span className="sr-only">{`Image ${index + 2} of ${total}`}</span>
-            </div>
-          ))}
         </div>
 
-        {/* Outside the scroll container, so they don't scroll away with it. */}
-        <Button
-          type="button"
-          variant="solid-light"
-          size="icon"
-          shape="circle"
-          aria-label="Previous image"
-          disabled={atStart}
-          onClick={() => goTo(active - 1)}
-          className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 shadow-[0_2px_10px_-2px_rgba(41,25,10,0.25)]"
-        >
-          <Icon name="arrow" size={16} className="rotate-180" />
-        </Button>
-        <Button
-          type="button"
-          variant="solid-light"
-          size="icon"
-          shape="circle"
-          aria-label="Next image"
-          disabled={atEnd}
-          onClick={() => goTo(active + 1)}
-          className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 shadow-[0_2px_10px_-2px_rgba(41,25,10,0.25)]"
-        >
-          <Icon name="arrow" size={16} />
-        </Button>
+        {images.map((image, index) => (
+          <div key={image.id} className="relative flex h-full w-full flex-none snap-center items-center justify-center p-6 sm:p-8">
+            <img
+              src={image.url}
+              alt={image.alt}
+              width={image.width}
+              height={image.height}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-contain"
+            />
+            <span className="sr-only">{`Image ${index + 2} of ${total}`}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Wraps: a bundle with sixteen uploads has sixteen dots, and one
-          non-wrapping row of 24px targets is wider than a phone. */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-1">
+      {/* Controls sit below the media rather than overlapping the artwork. */}
+      <div className="mt-3 flex items-center justify-between gap-4">
+        <p className="text-sm text-muted" aria-live="polite" aria-atomic="true">Image {active + 1} of {total}</p>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="solid-light"
+            size="icon"
+            shape="circle"
+            aria-label="Previous image"
+            disabled={atStart}
+            onClick={() => goTo(active - 1)}
+          >
+            <Icon name="arrow" size={16} className="rotate-180" />
+          </Button>
+          <Button
+            type="button"
+            variant="solid-light"
+            size="icon"
+            shape="circle"
+            aria-label="Next image"
+            disabled={atEnd}
+            onClick={() => goTo(active + 1)}
+          >
+            <Icon name="arrow" size={16} />
+          </Button>
+        </div>
+      </div>
+
+      <div ref={thumbnailsRef} className="relative mt-3 flex gap-2 overflow-x-auto overscroll-x-contain pb-2" role="group" aria-label="Image thumbnails">
         {Array.from({ length: total }, (_, index) => (
           <button
-            key={index}
+            key={index === 0 ? 'cover' : images[index - 1].id}
             type="button"
             onClick={() => goTo(index)}
             aria-label={index === 0 ? 'Show the cover' : `Show image ${index + 1}`}
             aria-current={index === active}
-            /* A dot reads as 8px but is hit as 24px: the visible mark is the
-               affordance, the padding is the target. */
-            className="grid h-6 w-6 place-items-center rounded-pill focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className={`flex h-20 w-16 flex-none items-center justify-center overflow-hidden rounded-control border-2 bg-surface-alt p-1 focus-visible:outline-2 focus-visible:outline-primary-ink focus-visible:outline-offset-2 ${index === active ? 'border-primary-ink' : 'border-transparent hover:border-line-strong'}`}
           >
-            <span
-              className={
-                index === active
-                  ? 'h-2 w-2 rounded-pill bg-primary transition-colors'
-                  : 'h-2 w-2 rounded-pill bg-line-strong transition-colors'
-              }
-            />
+            {index === 0 ? (
+              <span className="block w-full" aria-hidden="true">
+                <ProductCover product={item} stacked={stacked} />
+              </span>
+            ) : (
+              <img src={images[index - 1].url} alt="" loading="lazy" decoding="async" className="h-full w-full object-contain" />
+            )}
           </button>
         ))}
       </div>

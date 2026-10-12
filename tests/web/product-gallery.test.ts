@@ -4,15 +4,15 @@ import test from 'node:test'
 
 const gallerySource = readFileSync(new URL('../../apps/web/src/components/ui/product-gallery.tsx', import.meta.url), 'utf8')
 
-test('a record with no uploads renders the bare cover — no arrows, no indicator', () => {
+test('a record with no uploads renders the cover in its media frame without navigation controls', () => {
   // The empty case returns BEFORE the track exists, so there is no path on which
-  // a lone cover can acquire a disabled arrow or a single-dot indicator.
+  // a lone cover can acquire redundant paging controls.
   const emptyBranch = gallerySource.slice(
     gallerySource.indexOf('if (images.length === 0)'),
     gallerySource.indexOf('return <GalleryTrack'),
   )
   assert.ok(emptyBranch.length > 0, 'expected an early return for the no-images case')
-  assert.match(emptyBranch, /<ProductCover product=\{item\} stacked=\{stacked\} className="max-w-\[22rem\]" priority \/>/)
+  assert.match(emptyBranch, /<ProductCover product=\{item\} stacked=\{stacked\} priority \/>/)
   assert.doesNotMatch(emptyBranch, /aria-label="(Previous|Next) image"/)
   assert.doesNotMatch(emptyBranch, /aria-current/)
 })
@@ -44,7 +44,8 @@ test('paging works without JavaScript and agrees with itself once it runs', () =
   // gallery; the buttons only ask the browser to scroll.
   assert.match(gallerySource, /snap-x snap-mandatory overflow-x-auto/)
   assert.match(gallerySource, /snap-center/)
-  assert.match(gallerySource, /track\.scrollTo\(\{ left: slide\.offsetLeft, behavior: 'smooth' \}\)/)
+  assert.match(gallerySource, /track\.scrollTo\(\{ left: slide\.offsetLeft, behavior:/)
+  assert.match(gallerySource, /prefers-reduced-motion: reduce/)
   // The active slide is derived from scroll position, so a swipe and a button
   // press cannot disagree about where we are.
   assert.match(gallerySource, /track\.addEventListener\('scroll', onScroll, \{ passive: true \}\)/)
@@ -62,10 +63,10 @@ test('the arrows tell the truth at the ends and are reachable by keyboard', () =
   assert.match(gallerySource, /tabIndex=\{0\}/)
 })
 
-test('arrow and dot controls meet the mobile tap-target minimum', () => {
-  // size="icon" is h-10 w-10; the dots are 8px marks inside a 24px button.
+test('arrow and thumbnail controls meet the mobile tap-target minimum', () => {
+  // Arrows are 40px targets; visible thumbnails are 64px by 80px targets.
   assert.match(gallerySource, /size="icon"[\s\S]*shape="circle"[\s\S]*aria-label="Previous image"/)
-  assert.match(gallerySource, /className="grid h-6 w-6 place-items-center rounded-pill/)
+  assert.match(gallerySource, /h-20 w-16 flex-none/)
 })
 
 test('uploaded images carry their own alt text and reserve their box', () => {
@@ -79,9 +80,10 @@ test('uploaded images carry their own alt text and reserve their box', () => {
   assert.match(gallerySource, /priority/)
 })
 
-test('every slide is boxed to the cover ratio so paging never resizes the column', () => {
-  // Uploads arrive in any shape. Sizing a slide to its content would reflow the
-  // media column mid-swipe, so the box is fixed and the image is contained.
-  assert.match(gallerySource, /aspect-\[595\/842\]/)
+test('every slide fills the same fixed stage so paging never resizes the column', () => {
+  // Uploads arrive in any shape; the shared stage keeps the height stable.
+  assert.match(gallerySource, /h-full w-full flex-none snap-center/)
+  const css = readFileSync(new URL('../../apps/web/src/index.css', import.meta.url), 'utf8')
+  assert.match(css, /\.product-gallery-stage\s*{[^}]*height: clamp\(18rem, 38vw, 34rem\)/)
   assert.match(gallerySource, /object-contain/)
 })

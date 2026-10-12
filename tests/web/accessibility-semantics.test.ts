@@ -64,8 +64,9 @@ test('catalogue pages establish sequential heading levels', () => {
   const product = read('pages/product-page.tsx')
 
   assert.match(grades, /<h2 className="sr-only">Browse resources by grade<\/h2>/)
-  assert.match(product, /<h1 className="sr-only">\{product\.title\}<\/h1>/)
-  assert.match(product, /<h2 className="mb-4">About this/)
+  assert.match(product, /<h1 className="text-2xl[^"]*">\{product\.title\}<\/h1>/)
+  assert.match(product, /<DetailDisclosure title="About this/)
+  assert.match(read('components/ui/detail-disclosure.tsx'), /<h2[^>]*>\{title\}<\/h2>/)
   assert.doesNotMatch(product, /<h3/)
 })
 

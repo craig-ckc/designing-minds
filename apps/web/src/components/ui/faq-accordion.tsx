@@ -7,7 +7,7 @@ import { Icon } from './icon'
  * dividers instead of per-item cards, and a leading marker that is a `+` when
  * closed and rotates 45° into a `×` when open — no right-hand chevron.
  */
-export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
+export function FaqAccordion({ faqs, keepMounted = false }: { faqs: Faq[]; keepMounted?: boolean }) {
   if (faqs.length === 0) {
     return <p className="text-muted">No questions have been added yet.</p>
   }
@@ -25,7 +25,7 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
               </span>
             </Accordion.Trigger>
           </Accordion.Header>
-          <Accordion.Panel className="h-[var(--accordion-panel-height)] overflow-hidden transition-[height] duration-200 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0">
+          <Accordion.Panel keepMounted={keepMounted} className="h-[var(--accordion-panel-height)] overflow-hidden transition-[height] duration-200 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0">
             <p className="pb-5 pl-10 pr-4 text-body leading-[1.55] text-muted">{faq.answer}</p>
           </Accordion.Panel>
         </Accordion.Item>
