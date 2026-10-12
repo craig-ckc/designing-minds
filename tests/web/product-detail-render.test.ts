@@ -121,4 +121,8 @@ test('gallery thumbnails represent the cover and every upload, with controls out
   assert.match(html, /aria-label="Previous image"[^>]*disabled/)
   assert.ok(html.indexOf('aria-label="Next image"') > html.indexOf('Image 1 of 17'))
   assert.doesNotMatch(html, /class="absolute (left|right)-0 top-1\/2/)
+  const thumbnails = html.slice(html.indexOf('aria-label="Image thumbnails"'))
+  assert.match(html, /mt-3 flex flex-wrap gap-2/)
+  assert.match(thumbnails, /rounded-\[6px\]/)
+  assert.doesNotMatch(thumbnails, /overflow-x-auto/)
 })

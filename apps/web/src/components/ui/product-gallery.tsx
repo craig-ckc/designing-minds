@@ -41,8 +41,8 @@ export function ProductGallery({
 }) {
   if (images.length === 0) {
     return (
-      <div className={`product-gallery-stage flex items-center justify-center rounded-card bg-surface-alt ${className}`}>
-        <div className="w-3/5 max-w-72">
+      <div className={`product-gallery-stage flex items-center justify-center overflow-hidden rounded-card bg-surface-alt p-6 sm:p-8 ${className}`}>
+        <div className="product-gallery-cover">
           <ProductCover product={item} stacked={stacked} priority />
         </div>
       </div>
@@ -63,23 +63,10 @@ function GalleryTrack({
   className: string
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
-  const thumbnailsRef = useRef<HTMLDivElement>(null)
   // Starts at 0 so the prerendered markup describes the cover, which is what the
   // static HTML actually shows. The scroll listener corrects it once mounted.
   const [active, setActive] = useState(0)
   const total = images.length + 1
-
-  useEffect(() => {
-    const strip = thumbnailsRef.current
-    const thumbnail = strip?.children[active] as HTMLElement | undefined
-    if (!strip || !thumbnail) return
-    const left = thumbnail.offsetLeft
-    const right = left + thumbnail.offsetWidth
-    if (left < strip.scrollLeft) strip.scrollTo({ left, behavior: 'instant' })
-    else if (right > strip.scrollLeft + strip.clientWidth) {
-      strip.scrollTo({ left: right - strip.clientWidth, behavior: 'instant' })
-    }
-  }, [active])
 
   /* Which slide is showing is derived from the scroll position rather than
      tracked alongside it: a swipe never goes through the buttons, so a separate
@@ -162,7 +149,7 @@ function GalleryTrack({
         className="product-gallery-stage relative flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-card bg-surface-alt [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-primary-ink focus-visible:outline-offset-4 [&::-webkit-scrollbar]:hidden"
       >
         <div className="flex h-full w-full flex-none snap-center items-center justify-center p-6 sm:p-8">
-          <div className="w-3/5 max-w-72">
+          <div className="product-gallery-cover">
             <ProductCover product={item} stacked={stacked} priority />
           </div>
         </div>
@@ -212,7 +199,7 @@ function GalleryTrack({
         </div>
       </div>
 
-      <div ref={thumbnailsRef} className="relative mt-3 flex gap-2 overflow-x-auto overscroll-x-contain pb-2" role="group" aria-label="Image thumbnails">
+      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Image thumbnails">
         {Array.from({ length: total }, (_, index) => (
           <button
             key={index === 0 ? 'cover' : images[index - 1].id}
@@ -220,7 +207,7 @@ function GalleryTrack({
             onClick={() => goTo(index)}
             aria-label={index === 0 ? 'Show the cover' : `Show image ${index + 1}`}
             aria-current={index === active}
-            className={`flex h-20 w-16 flex-none items-center justify-center overflow-hidden rounded-control border-2 bg-surface-alt p-1 focus-visible:outline-2 focus-visible:outline-primary-ink focus-visible:outline-offset-2 ${index === active ? 'border-primary-ink' : 'border-transparent hover:border-line-strong'}`}
+            className={`flex h-20 w-16 flex-none items-center justify-center overflow-hidden rounded-[6px] border-2 bg-surface-alt p-1 focus-visible:outline-2 focus-visible:outline-primary-ink focus-visible:outline-offset-2 ${index === active ? 'border-primary-ink' : 'border-transparent hover:border-line-strong'}`}
           >
             {index === 0 ? (
               <span className="block w-full" aria-hidden="true">
