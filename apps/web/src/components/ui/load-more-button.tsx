@@ -6,7 +6,7 @@ export function LoadMoreButton({ remaining, itemLabel, onLoadMore }: { remaining
   return (
     <div className="mt-10 flex justify-center">
       <Button variant="solid" type="button" onClick={onLoadMore}>
-        Load more {itemLabel} <span className="text-muted">({remaining} remaining)</span>
+        Load more {itemLabel} <span>({remaining} remaining)</span>
       </Button>
     </div>
   )
