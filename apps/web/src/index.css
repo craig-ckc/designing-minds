@@ -242,7 +242,7 @@
   }
 
   .catalog-card-description {
-    @apply mt-2 text-body-sm leading-relaxed text-ink-soft line-clamp-3;
+    @apply mt-2 text-body-sm leading-relaxed text-ink-soft line-clamp-2;
   }
 
   .catalog-card-price {
