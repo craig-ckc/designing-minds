@@ -9,8 +9,8 @@ import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../../lib/deferred-ca
 /**
  * Bundle-first entry point for a grade, shown ABOVE the single-resource grid.
  *
- * Uses the shared catalogue card so bundle descriptions, savings and basket
- * actions stay consistent with the shop and bundles pages.
+ * Uses the same heading, grid and bundle cards as the other catalogue views,
+ * regardless of how many bundles a grade has.
  */
 export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot; grade: string }) {
   const packages = bundlesForGrade(snapshot, grade)
@@ -18,25 +18,20 @@ export function GradePackageSection({ snapshot, grade }: { snapshot: CmsSnapshot
   if (packages.length === 0) return null
 
   return (
-    <section className="section-tight border-b border-line bg-surface-alt">
+    <section className="section-tight border-b border-line" aria-label={`${grade} bundles`}>
       <Container width="full">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2>Cover {grade} in one purchase</h2>
-            <p className="mt-1.5 max-w-prose text-muted">
-              Buying the term or full year together costs less than the same resources one at a time.
-            </p>
-          </div>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <h2 className="text-body-lg font-semibold tracking-normal">Bundles for {grade}</h2>
           <Link
             to={`/packages?grade=${encodeURIComponent(grade)}`}
-            className="group inline-flex items-center gap-1.5 font-semibold text-primary-ink hover:text-primary-ink-strong"
+            className="group inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-primary-ink hover:text-primary-ink-strong"
           >
-            Compare all bundles
+            View all bundles
             <ArrowAffordance size="md" />
           </Link>
         </div>
 
-        <div className="catalog-grid mt-6">
+        <div className="catalog-grid">
           {rendered.map((bundle) => (
             <BundleCard key={bundle.id} bundle={bundle} snapshot={snapshot} />
           ))}
