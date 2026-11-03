@@ -1,235 +1,53 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { cn } from '@designing-minds/utils'
-import { type CmsSnapshot, publishedProducts } from '@designing-minds/cms'
+import { useState } from 'react'
+import { type CmsSnapshot } from '@designing-minds/cms'
 import { SOCIAL_PROOF } from '../../content/site'
 import { Button } from '../ui/button'
-import { ArrowAffordance, Icon } from '../ui/icon'
-import { Placeholder } from '../ui/placeholder'
-import { ProductCover } from '../ui/product-cover'
+import { Icon } from '../ui/icon'
+import { ResourceStack } from '../ui/resource-stack'
 import { Section } from '../ui/section'
 import { StarRating } from '../ui/star-rating'
 
-/** Auto-advance cadence for the grade carousel. */
-const INTERVAL_MS = 6000
-/** Countdown ring geometry (drawn in a 44×44 box, hugging the button edge). */
-const RING_R = 20
-const RING_C = 2 * Math.PI * RING_R
-
-/** Circular nav control: warm track → white inner disc with a soft lift → arrow. */
-function ArrowButton({
-  direction,
-  label,
-  onClick,
-  children,
-}: {
-  direction: 'prev' | 'next'
-  label: string
-  onClick: () => void
-  children?: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="group relative grid h-11 w-11 flex-none place-items-center rounded-pill bg-surface-sunk transition-[background-color] hover:bg-line-strong active:scale-[0.96]"
-    >
-      <span className="grid h-9 w-9 place-items-center rounded-pill bg-surface shadow-soft transition-shadow duration-200 group-hover:shadow-card">
-        <span className={cn('h-[18px] w-[18px] text-muted transition-colors group-hover:text-ink', direction === 'prev' && 'rotate-180')}>
-          <Icon name="arrow" />
-        </span>
-      </span>
-      {children}
-    </button>
-  )
-}
-
-function HeroShowcase({ snapshot }: { snapshot: CmsSnapshot }) {
-  const grades = useMemo(() => snapshot.valueLists.grades.slice(0, 5), [snapshot])
-  const [active, setActive] = useState(0)
-  const [paused, setPaused] = useState(false)
-  const [reduced, setReduced] = useState(false)
-  // Bumped on any manual navigation so the countdown restarts from zero.
-  const [cycle, setCycle] = useState(0)
-  const ringRef = useRef<SVGCircleElement>(null)
-  const products = useMemo(() => publishedProducts(snapshot), [snapshot])
-  const activeGrade = grades[active]
-
-  const covers = useMemo(() => {
-    const matches = products.filter((p) => p.grade === activeGrade)
-    return (matches.length ? matches : products).slice(0, 4)
-  }, [products, activeGrade])
-
-  const select = (i: number) => {
-    setActive(i)
-    setCycle((c) => c + 1)
-  }
-  const step = (dir: number) => select((active + dir + grades.length) % grades.length)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = () => setReduced(mq.matches)
-    sync()
-    mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
-  }, [])
-
-  // One clock drives both the ring fill and the auto-advance, so they stay in
-  // sync and freeze together on hover. Ring offset is written imperatively to
-  // avoid a React re-render every animation frame.
-  useEffect(() => {
-    if (ringRef.current) ringRef.current.style.strokeDashoffset = String(RING_C)
-    if (paused || reduced || grades.length < 2) return
-    let raf = 0
-    let start: number | null = null
-    const tick = (t: number) => {
-      if (start === null) start = t
-      const progress = Math.min((t - start) / INTERVAL_MS, 1)
-      if (ringRef.current) ringRef.current.style.strokeDashoffset = String(RING_C * (1 - progress))
-      if (progress >= 1) {
-        start = t
-        setActive((a) => (a + 1) % grades.length)
-      }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [paused, reduced, cycle, grades.length])
-
-  return (
-    <div
-      className="mx-auto mt-12 max-w-wide text-left lg:mt-14"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
-      onBlurCapture={() => setPaused(false)}
-    >
-      <div className="mb-6 flex items-center justify-center gap-1 sm:gap-2.5">
-        <ArrowButton direction="prev" label="Previous grade" onClick={() => step(-1)} />
-
-        <div
-          role="tablist"
-          aria-label="Choose a grade"
-          className="relative flex rounded-pill border border-line bg-surface-sunk p-1"
-        >
-          {/* Sliding white pill under the active grade. Each tab is a fixed,
-              equal width, so the highlight is exactly one tab wide and moves
-              in whole-tab steps. */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0.75 left-1 rounded-pill bg-surface shadow-soft transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-            style={{ width: `calc((100% - 0.5rem) / ${grades.length})`, transform: `translateX(${active * 100}%)` }}
-          />
-          {grades.map((g, i) => {
-            const num = g.replace(/\D+/g, '') || g
-            return (
-              <button
-                key={g}
-                type="button"
-                role="tab"
-                aria-selected={i === active}
-                aria-label={g}
-                onClick={() => select(i)}
-                className={cn(
-                  'relative z-10 w-10 rounded-pill px-0 py-1 text-center text-body-sm font-semibold transition-colors sm:w-fit sm:px-6',
-                  i === active ? 'text-primary-ink' : 'text-ink-soft hover:text-ink',
-                )}
-              >
-                <span>
-                  <span className="hidden sm:inline">Grade </span>
-                  {num}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        <ArrowButton direction="next" label="Next grade" onClick={() => step(1)}>
-          {/* Countdown ring — fills over INTERVAL_MS, then advances. */}
-          <svg
-            viewBox="0 0 44 44"
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-11 w-11 -rotate-90"
-          >
-            <circle cx="22" cy="22" r={RING_R} fill="none" strokeWidth="2.5" className="stroke-line-strong/60" />
-            <circle
-              ref={ringRef}
-              cx="22"
-              cy="22"
-              r={RING_R}
-              fill="none"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeDasharray={RING_C}
-              style={{ strokeDashoffset: RING_C }}
-              className="stroke-primary transition-[stroke-dashoffset] duration-100 ease-linear"
-            />
-          </svg>
-        </ArrowButton>
-      </div>
-
-      <div className="rounded-card bg-surface p-2 shadow-card sm:p-4">
-        <div className="mb-3 flex items-center gap-1.5">
-          <span className="text-label font-semibold text-muted">{activeGrade} · CAPS-aligned resources</span>
-        </div>
-        {covers.length ? (
-          // Keyed on the grade so a swap remounts the grid: the outgoing covers
-          // vanish at once (no exit animation) while the incoming ones fade up
-          // in a slight cascade via per-item animation-delay.
-          <div key={activeGrade} className="grid grid-cols-2 sm:grid-cols-4">
-            {covers.map((p, i) => (
-              <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${i * 70}ms` }}>
-                <Link to={`/shop/${p.slug}`} aria-label={`View ${p.title}`} className="block transition-transform hover:-translate-y-1">
-                  <ProductCover product={p} />
-                </Link>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Placeholder ratio="16 / 7" />
-        )}
-      </div>
-    </div>
-  )
-}
+const GRADES = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7']
 
 export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) {
+  const [selectedGrade, setSelectedGrade] = useState('Grade 4')
+  const grades = snapshot?.valueLists.grades.length ? snapshot.valueLists.grades : GRADES
+  const grade = grades.includes(selectedGrade) ? selectedGrade : grades[0]
   const hasPublishedTestimonials = snapshot?.testimonials.some((testimonial) => testimonial.published) ?? false
 
   return (
-    <Section containerClassName="py-16 text-center lg:py-24" spacing="none">
-      <Link
-        to="/shop"
-        className="inline-flex items-center gap-4 rounded-pill border border-primary/20 bg-primary-tint px-4 py-1.5 text-label font-bold text-primary-ink transition-colors hover:bg-primary/10"
-      >
-        New · Resources for Grades 3–7
-        <ArrowAffordance />
-      </Link>
-      <h1 className="mx-auto mt-6 max-w-[15ch]">Practice resources that build confidence at home</h1>
-      <p className="mx-auto mt-5 max-w-narrow text-body-lg leading-[1.55] text-ink-soft">
-        Teacher-made, parent-tested printable tests and summaries for Grades 3 to 7, aligned with South Africa’s
-        national curriculum — CAPS, the Curriculum and Assessment Policy Statement.
-      </p>
-      <div className="mt-7 flex justify-center">
-        <Button to="/shop" variant="solid">
-          Browse resources
-          <ArrowAffordance size="md" />
-        </Button>
+    <Section className="home-hero" spacing="none" containerClassName="home-hero__layout">
+      <div className="home-hero__copy">
+        <h1>Practice resources that build confidence at home</h1>
+        <p className="mt-3 lead">
+          Printable tests and summaries for Grades 3–7. Aligned with CAPS, South Africa’s
+          Curriculum and Assessment Policy Statement.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+          <Button to={`/shop?grade=${encodeURIComponent(grade)}`} variant="solid">
+            Browse resources <Icon name="arrow" size={16} />
+          </Button>
+          <Button to="/packages" variant="text" className="px-0 sm:px-5">
+            Explore bundles <Icon name="arrow" size={15} />
+          </Button>
+          {hasPublishedTestimonials ? (
+            <a href="#parent-stories" className="inline-flex min-h-8 flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-ink-soft">
+              <StarRating value={SOCIAL_PROOF.rating} size="sm" />
+              <span>{SOCIAL_PROOF.ratingClaim}</span>
+            </a>
+          ) : null}
+        </div>
       </div>
-      <p className="mt-4 text-body-sm font-semibold text-ink-soft">
-        Individual resources start at R50, with discounted once-off bundles available.
-      </p>
-      {hasPublishedTestimonials ? (
-        <a
-          href="#parent-stories"
-          className="group mt-5 inline-flex min-h-8 items-center gap-2 py-1 text-body-sm font-semibold text-ink-soft transition-colors hover:text-ink"
-        >
-          <StarRating value={SOCIAL_PROOF.rating} size="sm" />
-          <span className="underline underline-offset-4 decoration-1">{SOCIAL_PROOF.ratingClaim}</span>
-        </a>
-      ) : null}
-      {snapshot && snapshot.valueLists.grades.length > 0 ? <HeroShowcase snapshot={snapshot} /> : null}
+      <div className="home-hero__showcase">
+        <div className="flex flex-wrap justify-center gap-1.5" role="group" aria-label="Choose a grade">
+          {grades.map((item) => (
+            <button key={item} type="button" className="filter-chip" aria-pressed={item === grade} onClick={() => setSelectedGrade(item)}>
+              {item}
+            </button>
+          ))}
+        </div>
+        <ResourceStack snapshot={snapshot} grade={grade} interactive priority layout="shelf" />
+      </div>
     </Section>
   )
 }

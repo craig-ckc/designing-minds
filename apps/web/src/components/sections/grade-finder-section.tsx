@@ -27,7 +27,7 @@ export function GradeFinderSection({ snapshot, loadError }: { snapshot: CmsSnaps
         </div>
       </div>
 
-      <div className="catalog-grid">
+      <div className="grade-grid">
         {grades.map((grade) => (
           <GradeCard key={grade} grade={grade} count={productsForGrade(snapshot, grade).length} />
         ))}

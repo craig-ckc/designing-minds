@@ -5,7 +5,7 @@ import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
 import { Icon } from '../components/ui/icon'
-import { Card } from '../components/ui/card'
+import { EmptyState } from '../components/ui/empty-state'
 import { ProductCover } from '../components/ui/product-cover'
 import { useNoindex } from '../lib/use-noindex'
 import { removeCartSlug } from '../lib/cart'
@@ -25,21 +25,15 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const remove = (slug: string) => removeCartSlug(slug)
 
   return (
-    <section className="section">
+    <section className="section-tight">
       <Container>
         <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Cart" />
-        <h1 className="mb-8 text-page-title">Your cart</h1>
+        {items.length > 0 ? <h1 className="mb-6 text-page-title">Your cart</h1> : null}
 
         {items.length === 0 ? (
-          <Card variant="surface" pad="lg" className="text-center">
-            <h2>Your cart is empty</h2>
-            <p className="mt-2 text-muted">Browse the catalogue and add resources to get started.</p>
-            <div className="mt-4 flex justify-center">
-              <Button to="/shop" variant="solid">
-                Browse resources
-              </Button>
-            </div>
-          </Card>
+          <EmptyState as="h1" icon="cart" title="Your cart is empty" description="Add a resource or bundle to get started. Your selections will appear here.">
+            <Button to="/shop" variant="solid">Browse resources</Button>
+          </EmptyState>
         ) : (
           <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
             <ul className="grid gap-4">
@@ -93,7 +87,7 @@ export function CartPage({ snapshot }: { snapshot: CmsSnapshot }) {
             </ul>
 
             <aside className="grid gap-4 rounded-card border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
-              <h2>Order summary</h2>
+              <h2 className="text-xl">Order summary</h2>
               <div className="grid gap-2 text-body">
                 <div className="flex justify-between">
                   <span className="text-muted">Subtotal ({items.length} items)</span>

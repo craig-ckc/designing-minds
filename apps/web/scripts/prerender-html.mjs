@@ -21,3 +21,9 @@ export const buildHtml = ({ template, headTags, snapshotScript, appHtml }) =>
     // Load the shared snapshot after the server-rendered content has been
     // parsed, but before the following client module hydrates the page.
     .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>\n  ${snapshotScript}`)
+
+/** Functional routes share the catalogue without hydrating public-page markup. */
+export const buildShellHtml = ({ template, snapshotScript }) =>
+  template
+    .replace('</head>', '    <meta name="robots" content="noindex" />\n  </head>')
+    .replace('<div id="root"></div>', `<div id="root"></div>\n  ${snapshotScript}`)

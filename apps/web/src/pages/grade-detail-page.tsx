@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom'
 import { ALL, type CmsSnapshot, productsForGrade } from '@designing-minds/cms'
 import { GradePackageSection } from '../components/sections/grade-package-section'
 import { GRADE_BLURB, slugToGrade } from '../content/site'
-import { subjectAcronymsIn } from '../lib/subject-acronyms'
 import { subjectsForGrade } from '../lib/subject-labels'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
@@ -14,6 +13,8 @@ import { ProductCard } from '../components/ui/product-card'
 import { PageHeader } from '../components/ui/headings'
 import { LoadMoreButton } from '../components/ui/load-more-button'
 import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
+import { CatalogSortControl } from '../components/ui/catalog-sort-control'
+import { sortCatalogItems, type CatalogSort } from '../lib/catalog-sort'
 import { NotFoundPage } from './not-found-page'
 
 export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
@@ -22,11 +23,11 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const isValidGrade = snapshot.valueLists.grades.includes(grade as never)
 
   const [term, setTerm] = useState<string>(ALL)
+  const [sort, setSort] = useState<CatalogSort>('recommended')
   const all = useMemo(() => (isValidGrade ? productsForGrade(snapshot, grade) : []), [snapshot, grade, isValidGrade])
-  const visible = useMemo(() => (term === ALL ? all : all.filter((p) => p.term === term)), [all, term])
-  const { visible: rendered, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, term)
+  const visible = useMemo(() => sortCatalogItems(term === ALL ? all : all.filter((p) => p.term === term), sort, (product) => product), [all, term, sort])
+  const { visible: rendered, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, `${term}:${sort}`)
   const subjects = useMemo(() => (isValidGrade ? subjectsForGrade(snapshot, grade) : []), [snapshot, grade, isValidGrade])
-  const acronyms = useMemo(() => subjectAcronymsIn(subjects.join(' ')), [subjects])
 
   if (!isValidGrade) {
     return <NotFoundPage />
@@ -46,35 +47,31 @@ export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
         </div>
         {subjects.length > 0 ? (
           <nav aria-label={`Subjects in ${grade}`} className="mt-6">
-            <ul className="flex flex-wrap gap-2">
+            <ul className="flex flex-wrap gap-1.5">
               {subjects.map((subject) => (
                 <li key={subject}>
                   <Link
                     to={`/shop?grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}`}
-                    className="inline-flex min-h-6 items-center rounded-pill border border-line-strong px-3.5 py-1.5 text-body-sm font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
+                    className="filter-chip"
                   >
                     {subject}
                   </Link>
                 </li>
               ))}
             </ul>
-            {acronyms.length > 0 ? (
-              <p className="mt-3 text-label text-muted">
-                {acronyms.map(({ code, meaning }) => `${code} = ${meaning}`).join(' · ')}
-              </p>
-            ) : null}
           </nav>
         ) : null}
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur">
         <Container width="full" className="flex flex-wrap items-end gap-3 py-4">
-          <div className="min-w-[160px]">
-            <Select label="Term" value={term} options={[ALL, ...snapshot.valueLists.terms]} onChange={setTerm} />
+          <div className="min-w-[160px] flex-1 sm:flex-none">
+            <Select compact label="Term" value={term} options={[ALL, ...snapshot.valueLists.terms]} onChange={setTerm} />
           </div>
-          <Button to="/shop" variant="soft" className="ml-auto">
+          <Button to="/shop" variant="outline" size="sm" className="filter-control order-3 min-h-8 w-full rounded-pill px-3 py-1 text-xs sm:order-none sm:ml-auto sm:w-auto">
             Advanced filters in Shop
           </Button>
+          <CatalogSortControl value={sort} onChange={setSort} />
         </Container>
       </div>
 

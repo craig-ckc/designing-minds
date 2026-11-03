@@ -161,6 +161,33 @@ test('a guest cart never reaches the server', async () => {
   assert.deepEqual(log, [])
 })
 
+test('restoring a session clears another customer’s local cart without fetching account data', async () => {
+  const storage = memoryStorage([MATHS], 'cust-other')
+  const { server, log } = fakeServer({ customerId: 'cust-1', cart: [HISTORY] })
+  const cart = createCartSync({ storage, server })
+
+  cart.prepareCustomer('cust-1')
+  await cart.settled()
+
+  assert.deepEqual(storage.read(), [])
+  assert.equal(storage.readOwner(), null)
+  assert.deepEqual(log, [])
+})
+
+test('restoring the same account or a guest preserves its local cart without a server fetch', async () => {
+  for (const owner of [null, 'cust-1']) {
+    const storage = memoryStorage([MATHS], owner)
+    const { server, log } = fakeServer({ customerId: 'cust-1' })
+    const cart = createCartSync({ storage, server })
+
+    cart.prepareCustomer('cust-1')
+    await cart.settled()
+
+    assert.deepEqual(storage.read(), [MATHS])
+    assert.deepEqual(log, [])
+  }
+})
+
 test('signing out wipes only the browser copy, even with a persist still queued', async () => {
   const storage = memoryStorage([MATHS, HISTORY], 'cust-1')
   const { server, carts } = fakeServer({ customerId: 'cust-1', cart: [MATHS, HISTORY] })

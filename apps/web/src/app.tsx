@@ -1,8 +1,9 @@
-import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { withPricingTime, type CmsSnapshot } from '@designing-minds/cms'
-import { repository } from './repository'
+import { loadPublicBuildData } from './build/load-public-data'
 import { useAuth } from './lib/auth'
+import { mergeSignedInCart } from './lib/cart'
 import { ScrollToTop } from './lib/scroll-to-top'
 import { useRouteHead } from './lib/use-route-head'
 import { Shell } from './components/layout/shell'
@@ -21,9 +22,7 @@ import { SignUpPage } from './pages/auth/sign-up-page'
 import { LoginPage } from './pages/auth/login-page'
 import { ForgotPasswordPage } from './pages/auth/forgot-password-page'
 import { ResetPasswordPage } from './pages/auth/reset-password-page'
-import { AccountPage } from './pages/account/account-page'
-import { OrderHistoryPage } from './pages/account/order-history-page'
-import { OrderDetailPage } from './pages/account/order-detail-page'
+import { AccountRoutes } from './pages/account/account-routes'
 import { CartPage } from './pages/cart-page'
 import { CheckoutPage } from './pages/checkout-page'
 import { CheckoutReturnPage } from './pages/checkout-return-page'
@@ -48,14 +47,17 @@ function SnapshotGate({
 }
 
 function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null }) {
-  const { loading: authLoading, session } = useAuth()
-  // Seed from the build-time public snapshot (prerender/hydration) when present
-  // so public pages paint immediately instead of showing "Preparing the
-  // catalogue…". The effect below still refreshes — and for signed-in users it
-  // pulls in their operational data (orders/payments), which the public
-  // snapshot never carries.
+  const { customer } = useAuth()
+  const { pathname } = useLocation()
+  const needsSavedCart = pathname === '/cart' || pathname === '/checkout'
+  // Every production route uses the published catalogue, regardless of login.
+  // Account records live in AccountRoutes and never replace this snapshot.
   const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(() => initialSnapshot ? withPricingTime(initialSnapshot, Date.parse(initialSnapshot.generatedAt)) : null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initialSnapshot || import.meta.env.DEV ? null : 'The published catalogue is unavailable. Please reload the page.')
+
+  useEffect(() => {
+    if (needsSavedCart && customer?.id) void mergeSignedInCart(customer.id).catch(() => undefined)
+  }, [customer?.id, needsSavedCart])
 
   useEffect(() => {
     if (!snapshot) return
@@ -77,32 +79,21 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
   // Keep the tab title + share tags in sync as the user navigates the SPA.
   useRouteHead(snapshot)
 
-  const refreshSnapshot = useCallback(async () => {
-    try {
-      const next = await repository.getSnapshot()
-      setSnapshot(withPricingTime(next, Date.now()))
-      setError(null)
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load content.')
-    }
-  }, [])
-
   useEffect(() => {
-    if (authLoading) return
-    // With a build-time snapshot and no signed-in session, trust it — the
-    // runtime fetch is only a fallback (and would swap sanitized content for an
-    // unsanitized read). Signed-in users still refresh to pull in their
-    // operational data (orders/payments), which the public snapshot omits.
-    if (initialSnapshot && !session?.access_token) return
+    // Vite development has no prerendered HTML. Fetch a sanitized public
+    // preview once there; production must never fall back to live CMS reads.
+    if (!import.meta.env.DEV || initialSnapshot) return
     let cancelled = false
-    const load = async () => {
-      if (!cancelled) await refreshSnapshot()
-    }
-    void load()
-    return () => {
-      cancelled = true
-    }
-  }, [authLoading, refreshSnapshot, session?.access_token, initialSnapshot])
+    void loadPublicBuildData({
+      supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+      supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    }).then(({ snapshot: next }) => {
+      if (!cancelled) setSnapshot(withPricingTime(next, Date.now()))
+    }).catch((loadError: unknown) => {
+      if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Unable to load content.')
+    })
+    return () => { cancelled = true }
+  }, [initialSnapshot])
 
   const body: ReactNode = (
     <Routes>
@@ -142,14 +133,9 @@ function App({ initialSnapshot = null }: { initialSnapshot?: CmsSnapshot | null 
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Customer Account */}
-      <Route path="/account" element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <AccountPage snapshot={ready} />}</SnapshotGate>} />
       <Route
-        path="/account/orders"
-        element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <OrderHistoryPage snapshot={ready} />}</SnapshotGate>}
-      />
-      <Route
-        path="/account/orders/:orderId"
-        element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <OrderDetailPage snapshot={ready} onRefresh={refreshSnapshot} />}</SnapshotGate>}
+        path="/account/*"
+        element={<SnapshotGate snapshot={snapshot} error={error}>{(ready) => <AccountRoutes snapshot={ready} />}</SnapshotGate>}
       />
 
       {/* Commerce flow */}

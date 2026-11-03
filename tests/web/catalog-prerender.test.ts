@@ -33,7 +33,7 @@ test('all catalog views reset the visible count when filter inputs change', () =
   assert.match(packages, /useCatalogLoadMore\(visible,\s*CATALOG_INITIAL_LIMIT,\s*catalogResetKey\)/)
 
   const gradeDetail = readFileSync(new URL('../../apps/web/src/pages/grade-detail-page.tsx', import.meta.url), 'utf8')
-  assert.match(gradeDetail, /useCatalogLoadMore\(visible,\s*CATALOG_INITIAL_LIMIT,\s*term\)/)
+  assert.match(gradeDetail, /useCatalogLoadMore\(visible,\s*CATALOG_INITIAL_LIMIT,\s*`\$\{term\}:\$\{sort\}`\)/)
 })
 
 test('product covers reuse external artwork instead of repeating path payloads', () => {

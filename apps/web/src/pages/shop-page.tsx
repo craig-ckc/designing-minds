@@ -11,6 +11,8 @@ import { LoadMoreButton } from '../components/ui/load-more-button'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
 import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
+import { CatalogSortControl } from '../components/ui/catalog-sort-control'
+import { readCatalogSort, sortCatalogItems } from '../lib/catalog-sort'
 
 const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format'] as const
 
@@ -33,6 +35,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const subjects = readQueryList(searchParams, 'subject', subjectNames)
   const formats = readQueryList(searchParams, 'format', snapshot.valueLists.resourceFormats)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const sort = readCatalogSort(searchParams.get('sort'))
 
   const deferredQuery = useDeferredValue(query)
   const q = deferredQuery.trim().toLowerCase()
@@ -63,13 +66,13 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
       return `${bundle.title} ${bundle.shortDescription}`.toLowerCase().includes(q)
     })
 
-    return [
+    return sortCatalogItems([
       ...matchingBundles.map((bundle): Entry => ({ kind: 'bundle', bundle })),
       ...matchingProducts.map((product): Entry => ({ kind: 'product', product })),
-    ]
-  }, [snapshot, grades, terms, subjects, formats, q])
+    ], sort, (entry) => entry.kind === 'bundle' ? entry.bundle : entry.product)
+  }, [snapshot, grades, terms, subjects, formats, q, sort])
 
-  const catalogResetKey = JSON.stringify([grades, terms, subjects, formats, q])
+  const catalogResetKey = JSON.stringify([grades, terms, subjects, formats, q, sort])
   const { visible: rendered, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, catalogResetKey)
 
   const activeCount = grades.length + terms.length + subjects.length + formats.length
@@ -91,15 +94,18 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur-md">
-        <Container width="full" className="flex items-center gap-3 py-4">
+        <Container width="full" className="flex flex-wrap items-center gap-2 py-3">
           <input
-            className="field w-full max-w-md"
+            className="field min-w-0 basis-full sm:basis-auto sm:w-64"
             value={query}
             onChange={(event) => setSearchParams(setQueryValue(searchParams, 'q', event.target.value), { replace: true })}
             placeholder="Search resources…"
             aria-label="Search resources"
           />
-          <FilterTrigger onClick={() => setFiltersOpen(true)} activeCount={activeCount} className="ml-auto" />
+          <div className="ml-auto flex items-center gap-2">
+            <FilterTrigger onClick={() => setFiltersOpen(true)} activeCount={activeCount} />
+            <CatalogSortControl value={sort} onChange={(value) => setSearchParams(setQueryValue(searchParams, 'sort', value))} />
+          </div>
         </Container>
       </div>
 
@@ -114,7 +120,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <Container width="full">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h2 className="text-body-lg font-semibold tracking-normal">{visible.length} results</h2>
-            {bundleCount > 0 ? <span className="text-muted">Bundles first</span> : null}
+            {bundleCount > 0 && sort === 'recommended' ? <span className="text-muted">Bundles first</span> : null}
           </div>
           {visible.length > 0 ? (
             <div className="catalog-grid">

@@ -21,9 +21,9 @@ test('product-cover copy scales via container queries and stays visible at all c
   assert.doesNotMatch(css, /\.product-cover-copy \{ display: none; \}/)
 })
 
-test('the mobile grade selector uses fixed compact tabs and spacing', () => {
+test('the mobile grade selector uses shared compact wrapping chips', () => {
   const hero = read('components/sections/home-hero-section.tsx')
-
-  assert.match(hero, /justify-center gap-1 sm:gap-2\.5/)
-  assert.match(hero, /w-10 rounded-pill px-0 py-1[\s\S]*sm:w-fit sm:px-6/)
+  assert.match(hero, /flex flex-wrap justify-center gap-1\.5/)
+  assert.match(hero, /className="filter-chip"/)
+  assert.match(read('index.css'), /\.filter-chip\s*{[^}]*min-h-8/)
 })

@@ -185,7 +185,7 @@ test('the grade page renders a subject nav that links into the filtered shop', (
 
   assert.match(page, /aria-label=\{`Subjects in \$\{grade\}`\}/)
   assert.match(page, /subjectsForGrade\(snapshot, grade\)/)
-  assert.match(page, /subjectAcronymsIn\(subjects\.join\(' '\)\)/)
+  assert.doesNotMatch(page, /subjectAcronymsIn|Personal and Social Well-being/)
   assert.match(page, /\/shop\?grade=\$\{encodeURIComponent\(grade\)\}&subject=\$\{encodeURIComponent\(subject\)\}/)
 })
 

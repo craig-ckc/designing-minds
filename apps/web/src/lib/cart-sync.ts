@@ -127,6 +127,11 @@ export function createCartSync({ storage, server }: { storage: CartStorage; serv
     remove: (slug: string) => commit([{ kind: 'remove', slug }]),
     clear: () => commit([{ kind: 'clear' }]),
     clearLocal: () => storage.clear(),
+    /** Discard another customer's browser cart without fetching the saved cart. */
+    prepareCustomer: (customerId: string | null) => {
+      const owner = storage.readOwner()
+      if (owner && owner !== customerId) storage.clear()
+    },
     merge,
     /** Resolves once every server operation queued so far has finished. */
     settled: () => queue.then(() => undefined),

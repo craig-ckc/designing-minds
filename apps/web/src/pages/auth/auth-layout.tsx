@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { ResourceStack } from '../../components/ui/resource-stack'
 import { Section } from '../../components/ui/section'
 import { Button } from '../../components/ui/button'
 import { Notice } from '../../components/ui/notice'
@@ -24,8 +25,15 @@ export function AuthLayout({
   const fromCheckout = params.get('redirect') === '/checkout'
 
   return (
-    <Section>
-        <div className="mx-auto grid max-w-form gap-6">
+    <Section spacing="tight" className="bg-surface" containerClassName="auth-layout">
+      <div className="auth-panel">
+        <aside className="auth-intro" aria-label="Learning with Designing Minds">
+          <p className="hero-eyebrow">A little practice goes a long way.</p>
+          <h2 className="max-w-[20ch]">More confidence starts with a little support.</h2>
+          <p className="mt-3 text-body text-ink-soft">Teacher-made resources, ready whenever your child is.</p>
+          <div aria-hidden="true"><ResourceStack /></div>
+        </aside>
+        <div className="auth-card grid gap-5">
           <div>
             <h1 className="text-page-title">{title}</h1>
             <p className="mt-3 text-muted">{intro}</p>
@@ -53,11 +61,11 @@ export function AuthLayout({
             </Button>
           ) : null}
 
-          <div className="border-t border-line pt-4 text-body-sm text-muted">{footer}</div>
-          <p className="text-label text-muted">
-            Need help? <Link to="/help" className="font-semibold text-primary-ink underline underline-offset-4">Visit support</Link>
+          <p className="auth-footer border-t border-line pt-4 text-body-sm text-muted">
+            {footer}. Need help? <Link to="/help">Visit support</Link>.
           </p>
         </div>
+      </div>
     </Section>
   )
 }

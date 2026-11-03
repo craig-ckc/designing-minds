@@ -9,7 +9,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { buildHtml, createSnapshotAsset } from './prerender-html.mjs'
+import { buildHtml, buildShellHtml, createSnapshotAsset } from './prerender-html.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const webRoot = path.resolve(here, '..')
@@ -113,9 +113,8 @@ for (const route of routes) {
   await writeFile(file, html, 'utf8')
 }
 
-// SPA fallback shell for functional / unknown client routes: empty root, no
-// snapshot (those pages load their own data), and noindex by default.
-const shellHtml = template.replace('</head>', '    <meta name="robots" content="noindex" />\n  </head>')
+// Direct account/cart/auth links use the same public catalogue as static pages.
+const shellHtml = buildShellHtml({ template, snapshotScript: snapshotAsset.scriptTag })
 await writeFile(path.join(distDir, '_shell.html'), shellHtml, 'utf8')
 
 // sitemap.xml + robots.txt + llms.txt

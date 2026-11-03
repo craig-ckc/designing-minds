@@ -35,11 +35,12 @@ test('about introduction is concise and the story pairs one copy column with a v
   assert.doesNotMatch(storySource, /lg:col-start/)
 })
 
-test('about photos appear in the story rather than the hero', () => {
+test('the hero uses the existing learning photo and the founder portrait remains in her story', () => {
   const heroSource = sectionSource('about-hero-section')
   const storySource = sectionSource('about-story-section')
 
-  assert.doesNotMatch(heroSource, /Polaroid|PHOTOS/)
+  assert.match(heroSource, /src="\/images\/image-07\.png"/)
+  assert.match(heroSource, /alt="A parent helping a child practise at home"/)
   assert.match(storySource, /src="\/images\/image-06\.png"/)
   assert.match(storySource, /src="\/images\/image-07\.png"/)
 })

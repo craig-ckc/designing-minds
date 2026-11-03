@@ -11,7 +11,7 @@ test('shared small links meet the mobile tap-target minimum', () => {
 
   assert.match(breadcrumb, /className="inline-flex min-h-6 items-center py-0\.5 hover:text-ink"/)
   assert.match(productCard, /className="inline-flex min-h-6 items-center py-0\.5"/)
-  assert.match(hero, /className="group mt-5 inline-flex min-h-8 items-center/)
+  assert.match(hero, /className="inline-flex min-h-8 flex-wrap items-center/)
 })
 
 test('footer and help navigation links carry the 24px minimum', () => {

@@ -41,7 +41,7 @@ export function FilterDrawer({
 
           <ScrollArea.Root className="min-h-0 flex-1">
             <ScrollArea.Viewport className="h-full">
-              <div className="grid gap-7 px-5 py-6">{children}</div>
+              <div className="grid gap-5 px-5 py-5">{children}</div>
             </ScrollArea.Viewport>
             <ScrollArea.Scrollbar
               orientation="vertical"
@@ -65,7 +65,7 @@ export function FilterDrawer({
   )
 }
 
-/** The bar trigger: "Filters" with an optional active-count badge. No outline. */
+/** Compact outlined filter trigger with an optional active-count badge. */
 export function FilterTrigger({
   onClick,
   activeCount = 0,
@@ -76,7 +76,7 @@ export function FilterTrigger({
   className?: string
 }) {
   return (
-    <Button type="button" variant="soft" onClick={onClick} className={`shrink-0 ${className}`}>
+    <button type="button" onClick={onClick} className={`filter-control shrink-0 ${className}`}>
       <span className="h-4 w-4">
         <Icon name="filter" />
       </span>
@@ -86,7 +86,7 @@ export function FilterTrigger({
           {activeCount}
         </span>
       ) : null}
-    </Button>
+    </button>
   )
 }
 
@@ -104,8 +104,8 @@ export function ChipGroup({
 }) {
   return (
     <div>
-      <h3 className="mb-3 text-label font-semibold uppercase tracking-[0.08em] text-muted">{label}</h3>
-      <div className="flex flex-wrap gap-2">
+      <h3 className="mb-2 text-xs font-semibold text-ink-soft">{label}</h3>
+      <div className="flex flex-wrap gap-1.5">
         {options.map((option) => {
           const on = selected.includes(option)
           return (
@@ -114,11 +114,7 @@ export function ChipGroup({
               type="button"
               aria-pressed={on}
               onClick={() => onToggle(option)}
-              className={`rounded-pill border px-3.5 py-1.5 text-body-sm font-semibold transition-colors ${
-                on
-                  ? 'border-primary-deep bg-primary-deep text-on-primary'
-                  : 'border-line-strong text-ink-soft hover:border-primary hover:text-primary'
-              }`}
+              className="filter-chip"
             >
               {option}
             </button>

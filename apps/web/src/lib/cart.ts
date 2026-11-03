@@ -130,5 +130,6 @@ export const removeCartSlug = cart.remove
 export const clearCart = cart.clear
 /** Wipe only the browser copy — sign-out, where the account's saved cart must survive. */
 export const clearLocalCart = cart.clearLocal
+export const prepareCustomerCart = cart.prepareCustomer
 export const mergeSignedInCart = cart.merge
 export const CART_CHANGED_EVENT = CART_EVENT

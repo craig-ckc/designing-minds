@@ -9,7 +9,6 @@ import { HomeFaqSection } from '../components/sections/home-faq-section'
 import { HomeHeroSection } from '../components/sections/home-hero-section'
 import { TrustStatsSection } from '../components/sections/trust-stats-section'
 import { HomeTestimonialsSection } from '../components/sections/home-testimonials-section'
-import { HowItWorksSection } from '../components/sections/how-it-works-section'
 
 export function HomePage({ snapshot, loadError }: { snapshot: CmsSnapshot | null; loadError?: string | null }) {
   return (
@@ -21,8 +20,7 @@ export function HomePage({ snapshot, loadError }: { snapshot: CmsSnapshot | null
       <HomeTestimonialsSection snapshot={snapshot} />
       <FeatureBentoSection />
       <GradeFinderSection snapshot={snapshot} loadError={loadError} />
-      <HowItWorksSection />
-      <BundleCtaSection />
+      <BundleCtaSection snapshot={snapshot} />
       <HomeFaqSection snapshot={snapshot} loadError={loadError} />
       <FinalCtaSection />
     </>

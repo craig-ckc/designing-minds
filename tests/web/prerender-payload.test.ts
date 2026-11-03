@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildHtml, createSnapshotAsset } from '../../apps/web/scripts/prerender-html.mjs'
+import { buildHtml, buildShellHtml, createSnapshotAsset } from '../../apps/web/scripts/prerender-html.mjs'
 
 const template = `<!doctype html>
 <html>
@@ -38,4 +38,15 @@ test('snapshot asset is content-addressed and safe to execute as JavaScript', ()
   assert.notEqual(first.fileName, changed.fileName)
   assert.doesNotMatch(first.source, /<\/script>/)
   assert.match(first.source, /\\u003c\/script>/)
+})
+
+test('direct account and cart links load the same published snapshot before the client starts', () => {
+  const asset = createSnapshotAsset({ products: [{ slug: 'published-resource' }], orders: [], payments: [] })
+  const html = buildShellHtml({ template, snapshotScript: asset.scriptTag })
+
+  assert.match(html, /<div id="root"><\/div>/, 'functional routes render from an empty root')
+  assert.match(html, /<meta name="robots" content="noindex"/)
+  assert.ok(html.includes(asset.scriptTag))
+  assert.ok(html.indexOf(asset.scriptTag) < html.indexOf('type="module"'))
+  assert.doesNotMatch(html, /published-resource/, 'reuse the shared asset rather than duplicating the catalogue')
 })

@@ -1,0 +1,179 @@
+import assert from 'node:assert/strict'
+import { readFileSync, existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { after, before, test } from 'node:test'
+import { createElement, type ComponentType, type ReactNode } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { Link, MemoryRouter } from 'react-router-dom'
+import { createServer, type ViteDevServer } from 'vite'
+import type { CmsSnapshot, Product } from '../../packages/cms/src/types.ts'
+
+let server: ViteDevServer
+let sorting: typeof import('../../apps/web/src/lib/catalog-sort.ts')
+let HomeHero: ComponentType<{ snapshot: CmsSnapshot | null }>
+let AboutHero: ComponentType
+let BundleCta: ComponentType<{ snapshot?: CmsSnapshot | null }>
+let FinalCta: ComponentType
+let Cart: ComponentType<{ snapshot: CmsSnapshot }>
+let Shop: ComponentType<{ snapshot: CmsSnapshot }>
+let Bundles: ComponentType<{ snapshot: CmsSnapshot }>
+let SortControl: ComponentType<{ value: string; onChange: (value: string) => void }>
+let FormSelect: ComponentType<{ label: string; name: string; value: string; options: string[]; onChange: (value: string) => void }>
+let AuthLayout: ComponentType<{ title: string; intro: string; children: ReactNode; footer: ReactNode }>
+before(async () => {
+  server = await createServer({ configFile: false, root: fileURLToPath(new URL('../../apps/web', import.meta.url)), server: { middlewareMode: true, hmr: false }, appType: 'custom', ssr: { noExternal: ['@designing-minds/cms', '@designing-minds/utils'] } })
+  sorting = await server.ssrLoadModule('/src/lib/catalog-sort.ts')
+  ;({ HomeHeroSection: HomeHero } = await server.ssrLoadModule('/src/components/sections/home-hero-section.tsx'))
+  ;({ AboutHeroSection: AboutHero } = await server.ssrLoadModule('/src/components/sections/about-hero-section.tsx'))
+  ;({ BundleCtaSection: BundleCta } = await server.ssrLoadModule('/src/components/sections/bundle-cta-section.tsx'))
+  ;({ FinalCtaSection: FinalCta } = await server.ssrLoadModule('/src/components/sections/final-cta-section.tsx'))
+  ;({ ShopPage: Shop } = await server.ssrLoadModule('/src/pages/shop-page.tsx'))
+  ;({ PackagesPage: Bundles } = await server.ssrLoadModule('/src/pages/packages-page.tsx'))
+  ;({ CartPage: Cart } = await server.ssrLoadModule('/src/pages/cart-page.tsx'))
+  ;({ CatalogSortControl: SortControl } = await server.ssrLoadModule('/src/components/ui/catalog-sort-control.tsx'))
+  ;({ Select: FormSelect } = await server.ssrLoadModule('/src/components/ui/select.tsx'))
+  ;({ AuthLayout } = await server.ssrLoadModule('/src/pages/auth/auth-layout.tsx'))
+})
+after(async () => { await server?.close() })
+const read = (name: string) => readFileSync(new URL(`../../apps/web/src/${name}`, import.meta.url), 'utf8')
+const render = (element: ReturnType<typeof createElement>, route = '/') => renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: [route] }, element))
+const product = (slug: string, priceZar: number, overrides: Partial<Product> = {}): Product => ({
+  id: slug, slug, title: slug, shortDescription: 'A ready-to-print practice test.', fullDescription: '',
+  priceZar, grade: 'Grade 4', term: 'Term 1', year: '2026', resourceFormat: 'Test', subjects: ['Mathematics'], marks: 20,
+  purchasedFiles: [], galleryImages: [], previewPdfs: [], featured: false, published: true, status: 'published', sortOrder: 0,
+  seo: { title: '', description: '' }, faqs: [], updatedAt: '2026-01-01', ...overrides,
+})
+const snapshot = (products: Product[] = []) => ({ products, bundles: [], testimonials: [], stats: { productCount: products.length }, valueLists: { grades: ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'], terms: ['Term 1'], subjects: ['Mathematics'], resourceFormats: ['Test'] } }) as unknown as CmsSnapshot
+
+test('sort parsing rejects unknown values and recommended retains curated order without mutation', () => {
+  for (const value of [null, '', 'invalid', 'PRICE']) assert.equal(sorting.readCatalogSort(value), 'recommended')
+  for (const option of sorting.CATALOG_SORT_OPTIONS) assert.equal(sorting.readCatalogSort(option.value), option.value)
+  const input = [product('b', 90), product('a', 50)]
+  assert.deepEqual(sorting.sortCatalogItems(input, 'recommended', (item) => item), input)
+  assert.notEqual(sorting.sortCatalogItems(input, 'recommended', (item) => item), input)
+  assert.deepEqual(sorting.sortCatalogItems([], 'title', (item: Product) => item), [])
+})
+
+test('price sorts use current sale prices and preserve equal-price order', () => {
+  const input = [product('regular', 70), product('sale', 100, { salePriceZar: 40 }), product('same', 70)]
+  assert.deepEqual(sorting.sortCatalogItems(input, 'price-asc', (item) => item).map((item) => item.slug), ['sale', 'regular', 'same'])
+  assert.deepEqual(sorting.sortCatalogItems(input, 'price-desc', (item) => item).map((item) => item.slug), ['regular', 'same', 'sale'])
+  assert.deepEqual(input.map((item) => item.slug), ['regular', 'sale', 'same'])
+  const expired = product('expired', 120, { salePriceZar: 20, saleEndsAt: '2025-01-01', priceAsOf: Date.parse('2026-01-01') })
+  assert.equal(sorting.sortCatalogItems([expired, input[0]], 'price-asc', (item) => item)[0].slug, 'regular')
+})
+
+test('recent and alphabetical sorts handle missing dates, case and numeric titles', () => {
+  const input = [product('lesson 10', 50, { updatedAt: 'invalid' }), product('Lesson 2', 50, { updatedAt: '2026-09-01' }), product('another', 50, { updatedAt: '' })]
+  assert.deepEqual(sorting.sortCatalogItems(input, 'newest', (item) => item).map((item) => item.slug), ['Lesson 2', 'lesson 10', 'another'])
+  assert.deepEqual(sorting.sortCatalogItems(input, 'title', (item) => item).map((item) => item.slug), ['another', 'Lesson 2', 'lesson 10'])
+})
+
+test('shop sorts the filtered selection and keeps search, grade and sort in the controls', () => {
+  const data = snapshot([product('expensive', 90), product('affordable', 30), product('other-grade', 10, { grade: 'Grade 5' })])
+  const html = render(createElement(Shop, { snapshot: data }), '/shop?q=practice&grade=Grade%204&sort=price-asc')
+  assert.ok(html.indexOf('View affordable') < html.indexOf('View expensive'))
+  assert.doesNotMatch(html, /View other-grade/)
+  assert.match(html, /aria-label="Sort resources"/)
+  assert.match(html, /value="practice"/)
+  assert.match(html, /Price: low to high/)
+  assert.doesNotMatch(html, /Quick grade filters/)
+  const empty = render(createElement(Bundles, { snapshot: data }), '/packages?sort=title')
+  assert.match(empty, /No matching bundles/)
+  assert.match(empty, /aria-label="Sort resources"/)
+  assert.doesNotMatch(empty, /Quick grade filters/)
+})
+
+test('the themed sort trigger displays labels for every URL value and retains accessible naming', () => {
+  for (const option of sorting.CATALOG_SORT_OPTIONS) {
+    const html = render(createElement(SortControl, { value: option.value, onChange: () => {} }))
+    assert.match(html, /role="combobox"/)
+    assert.match(html, /aria-label="Sort resources"/)
+    assert.ok(html.includes(option.label))
+    assert.doesNotMatch(html, /<select\b/)
+  }
+})
+
+test('the shared themed form select retains its native field name and current value', () => {
+  const html = render(createElement(FormSelect, { label: 'Topic', name: 'topic', value: 'General enquiry', options: ['General enquiry', 'Download help'], onChange: () => {} }))
+  assert.match(html, /name="topic"/)
+  assert.match(html, /value="General enquiry"/)
+  assert.match(html, /aria-label="Topic"/)
+})
+
+test('auth shares one account/support paragraph and preserves the checkout context and form content', () => {
+  const props = {
+    title: 'Log in', intro: 'Access your resources.',
+    footer: createElement('span', null, 'New here? ', createElement(Link, { to: '/sign-up' }, 'Create an account')),
+    children: createElement('input', { type: 'email', required: true, name: 'email' }),
+  }
+  for (const route of ['/login', '/login?redirect=%2Fcheckout']) {
+    const html = render(createElement(AuthLayout, props), route)
+    const footer = html.match(/<p class="auth-footer[^\"]*">([\s\S]*?)<\/p>/)?.[1]
+    assert.ok(footer)
+    assert.equal((html.match(/Visit support/g) ?? []).length, 1)
+    assert.match(footer, /href="\/sign-up"/)
+    assert.match(footer, /href="\/help"/)
+    assert.match(footer.replace(/<[^>]*>/g, ''), /Create an account\. Need help\? Visit support\./)
+    assert.match(html, /<form/)
+    assert.match(html, /name="email"/)
+    assert.equal(html.includes('Return to checkout'), route.includes('redirect'))
+    assert.equal(html.includes('You need an account to complete checkout'), route.includes('redirect'))
+  }
+})
+
+test('home and about heroes use visual assets while the repeated badge, pricing and obsolete graph are retired', () => {
+  const home = render(createElement(HomeHero, { snapshot: snapshot() }))
+  assert.match(home, /Practice resources that build confidence at home/)
+  assert.match(home, /resource-stack/)
+  assert.match(home, /Browse resources/)
+  assert.match(home, /Choose a grade/)
+  assert.doesNotMatch(home, /Individual resources start|New · Resources/)
+  assert.match(render(createElement(AboutHero)), /alt="A parent helping a child practise at home/)
+  assert.doesNotMatch(home, /hero-doodle|Little minds|Big confidence/)
+  assert.doesNotMatch(render(createElement(AboutHero)), /portrait|spark|teacher’s heart/)
+  assert.doesNotMatch(read('pages/home-page.tsx'), /HowItWorksSection/)
+  assert.match(read('components/sections/home-faq-section.tsx'), /Frequently asked questions/)
+})
+
+test('CTA variants share a component while brand uses white text and neutral uses a simpler layout', () => {
+  const brand = render(createElement(BundleCta))
+  assert.match(brand, /bg-primary text-on-primary/)
+  assert.match(brand, /resource-stack/)
+  assert.match(brand, /Browse bundles/)
+  const neutral = render(createElement(FinalCta))
+  assert.match(neutral, /cta-panel--inline/)
+  assert.match(neutral, /border border-line bg-surface text-ink/)
+  assert.match(neutral, /Ready to help your child practise/)
+  assert.doesNotMatch(neutral, /resource-stack|cta-panel__texture|bg-lagoon|breakthrough/)
+  for (const html of [brand, neutral]) {
+    assert.match(html, /cta-panel__content/)
+    assert.match(html, /cta-panel__actions/)
+  }
+})
+
+test('the cart empty state has one page heading, one next action and no promotional banner', () => {
+  const html = render(createElement(Cart, { snapshot: snapshot() }))
+  assert.equal((html.match(/<h1\b/g) ?? []).length, 1)
+  assert.match(html, /<h1[^>]*>Your cart is empty<\/h1>/)
+  assert.match(html, /Browse resources/)
+  assert.doesNotMatch(html, /cta-panel|resource-stack|<h1[^>]*>Your cart<\/h1>/)
+})
+
+test('the existing about connection cards keep their original composition', () => {
+  const source = read('components/sections/about-connect-section.tsx')
+  assert.match(source, /<Card as="article"/)
+  assert.match(source, /min-h-\[36rem\]/)
+  assert.doesNotMatch(source, /CtaBanner/)
+})
+
+test('grade grids share the centred three-plus-two layout and Inter is a real local font', () => {
+  const css = read('index.css')
+  assert.match(read('pages/grades-page.tsx'), /className="grade-grid"/)
+  assert.match(read('components/sections/grade-finder-section.tsx'), /className="grade-grid"/)
+  assert.match(css, /nth-child\(4\):nth-last-child\(2\).*lg:col-start-2/)
+  assert.match(css, /nth-child\(5\):last-child.*lg:col-start-4/)
+  const font = new URL('../../apps/web/public/fonts/inter-latin-variable.woff2', import.meta.url)
+  assert.ok(existsSync(font))
+  assert.equal(readFileSync(font).subarray(0, 4).toString(), 'wOF2')
+})

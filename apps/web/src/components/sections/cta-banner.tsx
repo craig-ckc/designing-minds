@@ -1,18 +1,30 @@
+/* eslint-disable react-refresh/only-export-components -- Intentional compound component API. */
 import { type ReactNode } from 'react'
+import { cn } from '@designing-minds/utils'
 
-export function CtaBanner({title,body,children}: { title: string, body: string, children: ReactNode}) {
+/** Composable CTA: Root → Content (Title, Description, Actions) + optional Artwork. */
+function Root({ children, tone = 'brand', layout = 'feature', className }: { children: ReactNode; tone?: 'brand' | 'neutral'; layout?: 'feature' | 'inline'; className?: string }) {
+  const tones = { brand: 'bg-primary text-on-primary', neutral: 'border border-line bg-surface text-ink' }
   return (
-    <div className="relative isolate grid items-center gap-8 overflow-hidden rounded-panel bg-primary-deep p-9 text-on-primary lg:grid-cols-[1.4fr_1fr] lg:p-14">
-      <div
-        className="absolute inset-0 -z-1 bg-cover bg-center opacity-50 mix-blend-soft-light"
-        style={{ backgroundImage: "url('/images/card-background-01.svg')" }}
-        aria-hidden
-      />
-      <div>
-        <h2 className="text-on-primary">{title}</h2>
-        <p className="mt-3.5 text-body-lg text-on-primary">{body}</p>
-      </div>
-      <div className="relative flex flex-wrap gap-3 lg:justify-end">{children}</div>
+    <div className={cn('cta-panel relative isolate rounded-panel', tones[tone], layout === 'inline' && 'cta-panel--inline', className)}>
+      {tone === 'brand' ? <div className="cta-panel__texture" aria-hidden="true" /> : null}
+      {children}
     </div>
   )
 }
+function Content({ children }: { children: ReactNode }) {
+  return <div className="cta-panel__content">{children}</div>
+}
+function Title({ children, as: Tag = 'h2' }: { children: ReactNode; as?: 'h2' | 'h3' }) {
+  return <Tag className="max-w-[24ch] text-balance">{children}</Tag>
+}
+function Description({ children }: { children: ReactNode }) {
+  return <p className="mt-3 max-w-[58ch] text-body leading-relaxed">{children}</p>
+}
+function Actions({ children }: { children: ReactNode }) {
+  return <div className="cta-panel__actions mt-5 flex flex-wrap gap-2.5">{children}</div>
+}
+function Artwork({ children }: { children: ReactNode }) {
+  return <div className="cta-panel__artwork" aria-hidden="true">{children}</div>
+}
+export const CtaBanner = { Root, Content, Title, Description, Actions, Artwork }

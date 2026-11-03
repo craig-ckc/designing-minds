@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Customer } from '@designing-minds/cms'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { clearLocalCart, mergeSignedInCart } from './cart'
+import { clearLocalCart, prepareCustomerCart } from './cart'
 import { resolvePasswordResetRedirectUrl } from '../site-url'
 
 interface AuthValue {
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false
     const applySession = (nextSession: Session | null) => {
-      if (nextSession?.user.id) void mergeSignedInCart(nextSession.user.id).catch(() => undefined)
+      prepareCustomerCart(nextSession?.user.id ?? null)
       setSession(nextSession)
       setLoading(false)
     }

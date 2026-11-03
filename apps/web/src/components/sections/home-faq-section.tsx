@@ -10,7 +10,7 @@ export function HomeFaqSection({ snapshot, loadError }: { snapshot: CmsSnapshot 
     <Section>
       <div className="mx-auto max-w-readable">
         <div className="mb-8 text-center">
-          <h2>Common questions</h2>
+          <h2>Frequently asked questions</h2>
         </div>
         {snapshot ? (
           <FaqAccordion faqs={homeFaqs} />

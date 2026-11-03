@@ -4,14 +4,14 @@ import test from 'node:test'
 
 const read = (path: string) => readFileSync(new URL(`../../apps/web/${path}`, import.meta.url), 'utf8')
 
-test('Manrope loads directly without a render-blocking remote stylesheet', () => {
+test('Inter is self-hosted and preloaded without a remote stylesheet', () => {
   const html = read('index.html')
   const css = read('src/index.css')
-  const fontUrl = 'https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSvfedN4.woff2'
+  const fontUrl = '/fonts/inter-latin-variable.woff2'
 
   assert.doesNotMatch(html, /fonts\.googleapis\.com/)
   assert.match(html, new RegExp(`<link[\\s\\S]*rel="preload"[\\s\\S]*href="${fontUrl.replace(/[.]/g, '\\.')}([\\s\\S]*?)as="font"`))
-  assert.match(css, /@font-face[\s\S]*font-family: "Manrope"[\s\S]*font-weight: 400 800[\s\S]*font-display: swap/)
+  assert.match(css, /@font-face[\s\S]*font-family: "Inter"[\s\S]*font-weight: 100 900[\s\S]*font-display: swap/)
   assert.ok(css.includes(fontUrl))
 })
 

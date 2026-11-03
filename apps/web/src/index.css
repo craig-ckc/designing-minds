@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: "Manrope";
+  font-family: "Inter";
   font-style: normal;
-  font-weight: 400 800;
+  font-weight: 100 900;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSvfedN4.woff2") format("woff2");
+  src: url("/fonts/inter-latin-variable.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
     U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 /* =========================================================================
    Designing Minds — playful, pastel design system.
-   Art direction drawn from tryplayground.com: warm off-white canvas, bold
-   rounded Manrope display type, a vivid brand-blue primary, soft pastel
+   Compact Inter typography and spacing, warm off-white canvas,
+   a vivid brand-pink primary, soft pastel
    section/product colour pairs, generous radii and soft warm shadows.
    Tailwind v4, CSS-first (@theme). Editing tokens here recolours the app.
    ========================================================================= */
@@ -39,11 +39,8 @@
   --color-primary-ink: #c12c6c; /* accessible brand text on light surfaces */
   --color-primary-ink-strong: #a9235a; /* accessible text hover / pressed */
   --color-primary-tint: #feeef3; /* soft pink backgrounds & chips */
-  /* The brand pink darkened only as far as white body text needs: #f15699 under
-     white measures 3.22:1, short of WCAG AA (4.5:1) for anything below large
-     type, so it stays for large headings, icons and fills. Every solid pink band
-     that carries small white text — announcement bar, CTA banner, count badges,
-     the solid pill — sits on this instead (5.06:1). */
+  /* Deep pink remains available for small white labels. Marketing bands use
+     the brighter logo pink with ink text. */
   --color-primary-deep: #c9316f;
   --color-primary-edge: color-mix(in oklab, var(--color-primary-strong), black 22%); /* hairline edge on the solid button */
 
@@ -88,7 +85,7 @@
   --color-teal: #0b4f57;
 
   /* ---- Type ----------------------------------------------------------- */
-  --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* ---- Elevation ------------------------------------------------------
      The design language is flat: separation comes from borders and surface
@@ -114,18 +111,18 @@
      Generates text-caption / text-label / text-body / … utilities. */
   --text-caption: 0.75rem;
   --text-caption--line-height: 1.4;
-  --text-label: 0.85rem;
+  --text-label: 0.8125rem;
   --text-label--line-height: 1.45;
-  --text-body-sm: 0.9rem;
+  --text-body-sm: 0.875rem;
   --text-body-sm--line-height: 1.5;
-  --text-body: 0.95rem;
+  --text-body: 0.875rem;
   --text-body--line-height: 1.55;
-  --text-body-lg: 1.05rem;
+  --text-body-lg: 1rem;
   --text-body-lg--line-height: 1.55;
-  --text-page-title: 2rem; /* shell/commerce h1 smaller than the display h1 */
+  --text-page-title: 1.875rem; /* shell/commerce h1 smaller than the display h1 */
   --text-page-title--line-height: 1.1;
   --text-page-title--letter-spacing: -0.03em;
-  --text-page-title--font-weight: 800;
+  --text-page-title--font-weight: 700;
   --text-display: clamp(2rem, 3.4vw, 2.8rem); /* stat numbers & big prices */
   --text-display--line-height: 1;
   --text-display--letter-spacing: -0.04em;
@@ -177,15 +174,15 @@
     text-decoration: none;
   }
 
-  /* Bold, rounded, tightly-set display headings (Manrope ExtraBold). */
+  /* A restrained heading scale shared across marketing and utility pages. */
   h1 {
-    @apply font-extrabold leading-[1.02] tracking-[-0.045em] text-[clamp(2.6rem,5.4vw,4.25rem)];
+    @apply font-bold leading-[1.12] tracking-[-0.035em] text-[clamp(1.875rem,3.1vw,2.625rem)];
   }
   h2 {
-    @apply font-extrabold leading-[1.04] tracking-[-0.042em] text-[clamp(2rem,3.9vw,3.25rem)];
+    @apply font-bold leading-[1.16] tracking-[-0.03em] text-[clamp(1.5rem,2.3vw,2rem)];
   }
   h3 {
-    @apply font-bold leading-[1.12] tracking-[-0.03em] text-[clamp(1.4rem,2.2vw,1.85rem)];
+    @apply font-semibold leading-[1.25] tracking-[-0.02em] text-[clamp(1.125rem,1.6vw,1.375rem)];
   }
   h4 {
     @apply font-bold leading-snug tracking-[-0.02em] text-[1.15rem];
@@ -201,15 +198,15 @@
 @layer components {
   /* Vertical rhythm for full-bleed page sections. */
   .section {
-    @apply py-14 sm:py-20 lg:py-28;
+    @apply py-9 sm:py-12 lg:py-16;
   }
   .section-tight {
-    @apply py-10 sm:py-12 lg:py-16;
+    @apply py-7 sm:py-9 lg:py-11;
   }
 
   /* Intro / lead paragraph. */
   .lead {
-    @apply text-[clamp(1.05rem,1.6vw,1.22rem)] leading-[1.55] text-ink-soft;
+    @apply text-[clamp(0.9375rem,1.2vw,1.0625rem)] leading-relaxed text-ink-soft;
   }
 
   /* Soft raised surface card — canonical 16px radius (--radius-card). */
@@ -228,6 +225,23 @@
   .catalog-grid {
     @apply grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
   }
+
+  .grade-grid { @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6; }
+  .grade-grid > * { @apply lg:col-span-2; }
+  .grade-grid > :nth-child(4):nth-last-child(2) { @apply lg:col-start-2; }
+  .grade-grid > :nth-child(5):last-child { @apply lg:col-start-4; }
+
+  .filter-chip {
+    @apply inline-flex min-h-8 items-center justify-center gap-1 rounded-pill border border-transparent bg-surface-sunk px-2.5 py-1 text-xs font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink;
+  }
+  .filter-chip[aria-pressed="true"] { @apply border-ink bg-ink text-white; }
+  .filter-control {
+    @apply inline-flex min-h-8 items-center justify-center gap-2 rounded-pill border border-line-strong bg-canvas px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-surface;
+  }
+  .select-menu { @apply overflow-auto rounded-xl border border-line-strong bg-canvas p-1.5 shadow-card; min-width: max(12rem, var(--anchor-width)); max-height: min(18rem, var(--available-height)); }
+  .select-menu__item { @apply flex min-h-9 cursor-default items-center justify-between gap-4 rounded-lg px-3 py-2 text-label text-ink outline-none; }
+  .select-menu__item[data-highlighted] { @apply bg-surface-sunk; }
+  .select-menu__item[data-selected] { @apply bg-primary-tint font-semibold text-primary-ink; }
 
   .catalog-card-media {
     @apply relative flex aspect-square items-center justify-center overflow-hidden bg-surface-alt;
@@ -373,3 +387,73 @@
 
 .product-detail .rich-text :is(h1, h2) { font-size: 1.125rem; line-height: 1.4; }
 .product-detail .rich-text :is(h3, h4, h5, h6) { font-size: 1rem; line-height: 1.4; }
+
+/* Shared artwork, heroes and composable CTA panels. */
+.resource-stack { position: relative; width: 100%; aspect-ratio: 5 / 4; }
+.resource-stack__book { position: absolute; width: 52%; transition: transform 180ms ease; }
+.resource-stack__book:nth-child(1) { left: 0; top: 7%; transform: rotate(-12deg); z-index: 1; }
+.resource-stack__book:nth-child(2) { left: 24%; top: 0; transform: rotate(2deg); z-index: 3; }
+.resource-stack__book:nth-child(3) { right: 0; top: 11%; transform: rotate(12deg); z-index: 2; }
+a.resource-stack__book:hover { transform: translateY(-6px) rotate(0); z-index: 4; }
+a.resource-stack__book:focus-visible { outline: 3px solid var(--color-primary-ink); outline-offset: 5px; border-radius: 12px; }
+.cta-panel { display: grid; align-items: center; gap: 24px; padding: 28px; }
+.cta-panel__content { position: relative; z-index: 2; }
+.cta-panel__texture { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: url('/images/card-background-01.svg') center / cover; opacity: .09; }
+.cta-panel__artwork { position: relative; justify-self: center; width: 100%; max-width: 280px; margin: 8px 0 -30px; }
+.cta-panel--inline > .cta-panel__actions { margin-top: 0; }
+.home-hero { overflow: hidden; border-bottom: 1px solid var(--color-line); background: var(--color-surface-alt); }
+.home-hero__layout { display: grid; justify-items: center; gap: 18px; padding-block: 28px 12px; text-align: center; }
+.home-hero__copy { width: 100%; max-width: 760px; }
+.home-hero h1 { max-width: 28ch; margin-inline: auto; text-wrap: balance; }
+.home-hero .lead { max-width: 66ch; margin-inline: auto; }
+.home-hero__showcase { width: 100%; max-width: 620px; }
+.resource-stack--shelf { margin-top: 12px; aspect-ratio: 5 / 2; }
+.resource-stack--shelf .resource-stack__book { width: 30%; }
+.resource-stack--shelf .resource-stack__book:nth-child(1) { left: 5%; top: 3%; transform: rotate(-7deg); }
+.resource-stack--shelf .resource-stack__book:nth-child(2) { left: 35%; top: 0; transform: none; }
+.resource-stack--shelf .resource-stack__book:nth-child(3) { left: 65%; top: 3%; right: auto; transform: rotate(7deg); }
+.resource-stack--shelf a.resource-stack__book:hover { transform: translateY(-6px); }
+.hero-eyebrow { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; font-size: 12px; font-weight: 600; }
+.about-hero { background: var(--color-surface); border-bottom: 1px solid var(--color-line); }
+.about-hero__layout { display: grid; align-items: center; gap: 32px; }
+.about-hero__copy { max-width: 54ch; }
+.about-hero h1 { max-width: 23ch; }
+.about-hero__photo { width: 100%; }
+.about-hero__photo img { display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; object-fit: cover; object-position: 50% 38%; }
+.about-hero__photo figcaption { margin-top: 10px; color: var(--color-ink-soft); font-size: 12px; }
+.empty-state { display: flex; min-height: 360px; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; text-align: center; }
+.empty-state__icon { display: grid; width: 64px; height: 64px; place-items: center; margin-bottom: 20px; border: 1px solid var(--color-line); border-radius: 50%; background: var(--color-surface); color: var(--color-ink-soft); }
+.contact-layout { max-width: 1120px; }
+.auth-layout { max-width: 1344px; }
+.auth-panel { display: grid; overflow: hidden; border: 1px solid var(--color-line-strong); border-radius: 24px; background: var(--color-canvas); }
+.auth-intro { display: none; min-width: 0; background: var(--color-cream); padding: 40px; }
+.auth-intro .resource-stack { max-width: 400px; margin: 24px auto 0; }
+.auth-card { width: 100%; max-width: 520px; margin: auto; padding: 32px 24px; }
+.auth-footer a { color: var(--color-primary-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+@media (min-width: 768px) {
+  .cta-panel { padding: 32px 40px; }
+  .cta-panel:has(.cta-panel__artwork) { grid-template-columns: minmax(0, 1.3fr) minmax(200px, .7fr); min-height: 280px; }
+  .cta-panel__artwork { max-width: 340px; margin-top: -56px; margin-bottom: -40px; transform: translateY(-30px); }
+  .about-hero__layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; }
+  .home-hero__layout { padding-block: 28px 16px; }
+  .cta-panel--inline { grid-template-columns: minmax(0, 1fr) auto; }
+  .cta-panel--inline > .cta-panel__actions { max-width: 380px; justify-content: flex-end; }
+}
+@media (min-width: 1024px) {
+  .auth-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 580px; }
+  .auth-intro { display: flex; flex-direction: column; justify-content: center; }
+  .auth-card { padding: 40px; }
+}
+@media (max-width: 767px) {
+  .home-hero .filter-chip { padding-inline: 8px; font-size: 11px; }
+  .resource-stack--shelf { aspect-ratio: 5 / 3; }
+  .resource-stack--shelf .resource-stack__book { width: 40%; }
+  .resource-stack--shelf .resource-stack__book:nth-child(1) { left: 0; }
+  .resource-stack--shelf .resource-stack__book:nth-child(2) { left: 30%; }
+  .resource-stack--shelf .resource-stack__book:nth-child(3) { left: 60%; }
+  .home-hero__layout { gap: 16px; }
+  .about-hero__layout { gap: 28px; }
+  .empty-state { min-height: 320px; }
+  .cta-panel__artwork { max-width: 230px; }
+}
+@media (prefers-reduced-motion: reduce) { .resource-stack__book { transition: none; } }

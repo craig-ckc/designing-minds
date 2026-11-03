@@ -2,6 +2,8 @@
 
 This combines backend readiness, preview setup, static publishing, and launch checks for the Supabase + Vercel implementation.
 
+Production browsing uses the published catalogue snapshot for both guests and signed-in customers, including direct cart/account links. Account routes load only that customer's orders and their payments; they do not refresh the catalogue. Saved carts merge on opening cart/checkout rather than on every session event. Checkout, downloads, form submissions, and cart edits still perform their required server operations. Vite development without prerendered HTML loads one sanitized public preview from the CMS.
+
 ## Current Status
 
 | Area | Status | Notes |

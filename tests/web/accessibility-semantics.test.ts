@@ -19,13 +19,13 @@ test('shared icon-only navigation controls have accessible names', () => {
 test('image-only product links and decorative images expose the right semantics', () => {
   const productCard = read('components/ui/product-card.tsx')
   const productCover = read('components/ui/product-cover.tsx')
-  const hero = read('components/sections/home-hero-section.tsx')
+  const hero = read('components/ui/resource-stack.tsx')
   const placeholder = read('components/ui/placeholder.tsx')
   const polaroid = read('components/ui/polaroid.tsx')
   const aboutConnect = read('components/sections/about-connect-section.tsx')
 
   assert.match(productCard, /aria-label=\{`View \$\{product\.title\}`\}/)
-  assert.match(hero, /aria-label=\{`View \$\{p\.title\}`\}/)
+  assert.match(hero, /aria-label=\{product \? `View \$\{product\.title\}`/)
   // Product artwork is announced once using the complete title supplied by CMS data.
   assert.match(productCover, /role="img" aria-label=\{product\.title\}/)
   assert.match(productCover, /alt=\{`\$\{illustrationLabel\(illustration\)\} illustration`\}/)
@@ -48,15 +48,17 @@ test('SVG textures used as backgrounds are hidden from assistive technology', ()
     read('components/layout/navbar.tsx'),
     read('components/sections/bundle-pricing-section.tsx'),
     read('components/sections/cta-banner.tsx'),
+    read('index.css'),
   ].join('\n')
 
-  assert.match(sources, /backgroundImage: "url\('\/images\/card-background-01\.svg'\)"/)
+  assert.match(sources, /card-background-01\.svg/)
   assert.match(sources, /backgroundImage: "url\('\/images\/card-background-02\.svg'\)"/)
   assert.doesNotMatch(sources, /<img[^>]+card-background/)
   assert.equal(
     sources.match(/style=\{\{ backgroundImage: "url\('\/images\/card-background-0[12]\.svg'\)" \}\}\s+aria-hidden/g)?.length,
-    3,
+    2,
   )
+  assert.match(sources, /className="cta-panel__texture" aria-hidden="true"/)
 })
 
 test('catalogue pages establish sequential heading levels', () => {
@@ -70,16 +72,16 @@ test('catalogue pages establish sequential heading levels', () => {
   assert.doesNotMatch(product, /<h3/)
 })
 
-test('homepage states the pricing model in readable text', () => {
+test('homepage removes redundant pricing and new-resource badges', () => {
   const hero = read('components/sections/home-hero-section.tsx')
 
-  assert.match(hero, /Individual resources start at R50, with discounted once-off bundles available\./)
+  assert.doesNotMatch(hero, /Individual resources start|New · Resources/)
 })
 
 test('homepage grade selector exposes each grade label only once', () => {
   const hero = read('components/sections/home-hero-section.tsx')
 
-  assert.match(hero, /aria-label=\{g\}/)
-  assert.match(hero, /<span className="hidden sm:inline">Grade <\/span>\s*\{num\}/)
-  assert.doesNotMatch(hero, /<span className="hidden sm:inline">\{g\}<\/span>/)
+  assert.match(hero, /aria-label="Choose a grade"/)
+  assert.match(hero, /aria-pressed=\{item === grade\}/)
+  assert.match(hero, />\s*\{item\}\s*<\/button>/)
 })

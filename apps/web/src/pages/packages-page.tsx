@@ -10,6 +10,8 @@ import { LoadMoreButton } from '../components/ui/load-more-button'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
 import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
+import { CatalogSortControl } from '../components/ui/catalog-sort-control'
+import { readCatalogSort, sortCatalogItems } from '../lib/catalog-sort'
 
 // The "Offer" dimension replaces the old tabs, and reads the same as the Shop's
 // chips. Access plans are retired, so scope is the only axis left.
@@ -42,17 +44,18 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const terms = readQueryList(searchParams, 'term', snapshot.valueLists.terms)
   const query = searchParams.get('q') ?? ''
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const sort = readCatalogSort(searchParams.get('sort'))
   const deferredQuery = useDeferredValue(query)
   const q = deferredQuery.trim().toLowerCase()
 
-  const visible = packages.filter((bundle) => {
+  const visible = sortCatalogItems(packages.filter((bundle) => {
     if (offerSel.length && !offerSel.some((offer) => matchesOffer(bundle, offer))) return false
     if (grades.length && !grades.includes(bundle.grade)) return false
     if (terms.length && !terms.includes(bundle.term)) return false
     if (q && !`${bundle.title} ${bundle.shortDescription}`.toLowerCase().includes(q)) return false
     return true
-  })
-  const catalogResetKey = JSON.stringify([offerSel, grades, terms, q])
+  }), sort, (bundle) => bundle)
+  const catalogResetKey = JSON.stringify([offerSel, grades, terms, q, sort])
   const { visible: renderedPackages, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, catalogResetKey)
 
   const activeCount = offerSel.length + grades.length + terms.length
@@ -87,15 +90,18 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur">
-        <Container width="full" className="flex items-center gap-3 py-4">
+        <Container width="full" className="flex flex-wrap items-center gap-2 py-3">
           <input
-            className="field w-full max-w-md"
+            className="field min-w-0 basis-full sm:basis-auto sm:w-64"
             value={query}
             onChange={(event) => setSearchParams(setQueryValue(searchParams, 'q', event.target.value), { replace: true })}
             placeholder="Search bundles…"
             aria-label="Search bundles"
           />
-          <FilterTrigger onClick={() => setFiltersOpen(true)} activeCount={activeCount} className="ml-auto" />
+          <div className="ml-auto flex items-center gap-2">
+            <FilterTrigger onClick={() => setFiltersOpen(true)} activeCount={activeCount} />
+            <CatalogSortControl value={sort} onChange={(value) => setSearchParams(setQueryValue(searchParams, 'sort', value))} />
+          </div>
         </Container>
       </div>
 
@@ -109,7 +115,7 @@ export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
         <Container width="full">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h2 className="text-body-lg font-semibold tracking-normal">{visible.length} results</h2>
-            <span className="text-muted">Sorted by catalogue order</span>
+            <span className="text-label text-muted">{sort === 'recommended' ? 'Curated for you' : 'Sorted by your choice'}</span>
           </div>
           {visible.length > 0 ? (
             <div className="catalog-grid">

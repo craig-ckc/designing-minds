@@ -64,11 +64,11 @@ export function ContactPage() {
   }
 
   return (
-    <Section>
+    <Section spacing="tight" containerClassName="contact-layout">
       <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Contact" />
-      <div className="grid items-start gap-9 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+      <div className="grid items-start gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
         <div>
-          <h1>Get in touch</h1>
+          <h1 className="text-page-title">Get in touch</h1>
           <p className="mt-4 lead">
             Questions about a resource, a bundle, or{' '}
             <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4">
@@ -90,8 +90,8 @@ export function ContactPage() {
           </p>
         </div>
 
-        <form action={apiUrl('/api/forms')} method="post" className="card grid gap-[18px] p-7" onSubmit={handleSubmit}>
-          <h2>Send us a message</h2>
+        <form action={apiUrl('/api/forms')} method="post" className="card grid gap-4 p-5 sm:p-6" onSubmit={handleSubmit}>
+          <h2 className="text-xl">Send us a message</h2>
           {/* Progressive-enhancement fallback: CSS-only, shown via the
               :target pseudo-class when the browser lands on the matching
               fragment after a native form POST (no JS ran, or it hadn't
@@ -202,15 +202,15 @@ export function ContactPage() {
 
 function ContactDetail({ icon, label, value, last }: { icon: IconName; label: string; value: string; last?: boolean }) {
   return (
-    <div className={`flex items-center gap-4 py-[18px] ${last ? '' : 'border-b border-line'}`}>
+    <div className={`flex items-center gap-3 py-3 ${last ? '' : 'border-b border-line'}`}>
       <span className="grid h-11 w-11 flex-none place-items-center rounded-lg bg-primary-tint text-primary">
         <span className="h-5 w-5">
           <Icon name={icon} />
         </span>
       </span>
-      <span className="grid gap-0.5">
+      <span className="grid min-w-0 gap-0.5">
         <span className="text-caption font-bold uppercase tracking-[0.08em] text-muted">{label}</span>
-        <strong className="text-[1.05rem] font-bold">{value}</strong>
+        <strong className="break-words text-sm font-semibold">{value}</strong>
       </span>
     </div>
   )

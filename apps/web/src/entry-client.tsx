@@ -32,9 +32,8 @@ const tree = (
   </StrictMode>
 )
 
-// Prerendered pages ship server-rendered markup + a bootstrap snapshot, so we
-// hydrate them. The SPA fallback Shell ships an empty root with no snapshot, so
-// we render from scratch (functional routes load their own data).
+// Prerendered pages hydrate their markup. Functional routes share the bootstrap
+// catalogue but have an empty root, so they render from scratch.
 if (bootstrap && Container.hasChildNodes()) {
   hydrateRoot(Container, tree, { onUncaughtError: (error) => reportRuntimeError(error), onCaughtError: (error) => reportRuntimeError(error, 'runtime.react'), onRecoverableError: (error) => reportRuntimeError(error) })
 } else {

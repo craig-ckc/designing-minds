@@ -17,8 +17,8 @@ export function PageHeader({
     <section className="section-tight border-b border-line">
       <Container width={width}>
         <div className="max-w-prose">
-          <h1>{title}</h1>
-          {lead ? <p className="mt-4 lead">{lead}</p> : null}
+          <h1 className="text-page-title">{title}</h1>
+          {lead ? <p className="mt-3 lead">{lead}</p> : null}
         </div>
         {children}
       </Container>

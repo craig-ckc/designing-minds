@@ -20,7 +20,7 @@ export function GradesPage({ snapshot }: { snapshot: CmsSnapshot }) {
       <section className="section-tight">
         <Container width="full">
           <h2 className="sr-only">Browse resources by grade</h2>
-          <div className="catalog-grid">
+          <div className="grade-grid">
             {snapshot.valueLists.grades.map((grade) => (
               <GradeCard key={grade} grade={grade} count={productsForGrade(snapshot, grade).length} />
             ))}

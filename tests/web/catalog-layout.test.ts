@@ -5,7 +5,7 @@ import test from 'node:test'
 const read = (path: string) => readFileSync(new URL(`../../apps/web/src/${path}`, import.meta.url), 'utf8')
 
 test('catalogues use full-width containers and one grid cell per product or bundle', () => {
-  for (const page of ['shop', 'packages', 'grades', 'grade-detail']) {
+  for (const page of ['shop', 'packages', 'grade-detail']) {
     const source = read(`pages/${page}-page.tsx`)
     assert.match(source, /width="full"/)
     assert.match(source, /className="catalog-grid"/)

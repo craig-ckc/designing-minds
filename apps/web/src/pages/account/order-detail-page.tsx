@@ -44,8 +44,8 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
   const isDownloadable = order?.status === 'paid' || order?.status === 'fulfilled'
 
   // While an order is still pending, poll only its status (cheap) rather than
-  // refetching the whole catalogue snapshot; refresh the snapshot once it flips
-  // to a downloadable state so the files appear, then stop.
+  // refetching account records; refresh those once it flips to a downloadable
+  // state so the files appear, then stop. The catalogue remains static.
   useEffect(() => {
     if (!customer || !orderId || isDownloadable) return
     let attempts = 0

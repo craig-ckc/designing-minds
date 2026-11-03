@@ -1,4 +1,5 @@
 import { Select as BaseSelect } from '@base-ui/react/select'
+import { cn } from '@designing-minds/utils'
 import { Icon } from './icon'
 import { Field } from './field'
 
@@ -8,59 +9,71 @@ function disableHiddenInputHitTarget(input: HTMLInputElement | null) {
   input.style.pointerEvents = 'none'
 }
 
-/** Accessible single-select built on Base UI. Used for browse-page filters.
- *  Composes <Field> for the label and the shared `.field` control base so it
- *  stays visually identical to text inputs. */
-export function Select({
-  label,
-  name,
-  value,
-  options,
-  onChange,
-}: {
+export interface SelectOption {
+  value: string
   label: string
-  /** Native form field name. When set, Base UI renders a hidden input that
-   *  carries the current value, so the select posts through a plain HTML
-   *  form the same way a native <select> would (see newsletter/contact
-   *  progressive-enhancement fallbacks). */
+}
+
+/** Shared themed control and popup, also used without a visible field label in toolbars. */
+export function SelectControl({ label, name, value, options, onChange, compact = false, align = 'start', className }: {
+  label: string
+  name?: string
+  value: string
+  options: readonly SelectOption[]
+  onChange: (value: string) => void
+  compact?: boolean
+  align?: 'start' | 'end'
+  className?: string
+}) {
+  return (
+    <BaseSelect.Root
+      name={name}
+      value={value}
+      items={options}
+      onValueChange={(next) => { if (next !== null) onChange(next) }}
+      inputRef={disableHiddenInputHitTarget}
+    >
+      <BaseSelect.Trigger
+        aria-label={label}
+        className={cn(compact ? 'filter-control w-full justify-between text-left' : 'field flex items-center justify-between gap-2 text-left font-normal hover:border-primary', className)}
+      >
+        <BaseSelect.Value />
+        <BaseSelect.Icon className="h-3 w-3 text-ink-soft">
+          <Icon name="chevron" />
+        </BaseSelect.Icon>
+      </BaseSelect.Trigger>
+      <BaseSelect.Portal>
+        <BaseSelect.Positioner align={align} sideOffset={8} collisionPadding={8} alignItemWithTrigger={false} className="z-50">
+          <BaseSelect.Popup className="select-menu">
+            <BaseSelect.List>
+              {options.map((option) => (
+                <BaseSelect.Item key={option.value} value={option.value} className="select-menu__item">
+                  <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
+                  <span className="h-4 w-4 shrink-0">
+                    <BaseSelect.ItemIndicator><Icon name="check" size={16} /></BaseSelect.ItemIndicator>
+                  </span>
+                </BaseSelect.Item>
+              ))}
+            </BaseSelect.List>
+          </BaseSelect.Popup>
+        </BaseSelect.Positioner>
+      </BaseSelect.Portal>
+    </BaseSelect.Root>
+  )
+}
+
+/** Labelled form/filter select. The optional name preserves native form posting. */
+export function Select({ label, name, value, options, onChange, compact = false }: {
+  label: string
   name?: string
   value: string
   options: string[]
   onChange: (value: string) => void
+  compact?: boolean
 }) {
   return (
     <Field label={label}>
-      <BaseSelect.Root
-        name={name}
-        value={value}
-        onValueChange={(next) => onChange(next as string)}
-        inputRef={disableHiddenInputHitTarget}
-      >
-        <BaseSelect.Trigger className="field flex items-center justify-between gap-2 text-left font-normal hover:border-primary">
-          <BaseSelect.Value />
-          <BaseSelect.Icon className="h-4 w-4 text-muted">
-            <Icon name="chevron" />
-          </BaseSelect.Icon>
-        </BaseSelect.Trigger>
-        <BaseSelect.Portal>
-          <BaseSelect.Positioner sideOffset={6} className="z-50">
-            <BaseSelect.Popup className="max-h-[18rem] min-w-[var(--anchor-width)] overflow-auto rounded-control border border-line bg-surface p-1.5 shadow-card">
-              {options.map((option) => (
-                <BaseSelect.Item
-                  key={option}
-                  value={option}
-                  className="flex cursor-default items-center justify-between gap-3 rounded-lg px-3 py-2 text-body-sm data-[highlighted]:bg-surface-sunk data-[selected]:font-bold data-[selected]:text-primary-ink"
-                >
-                  <BaseSelect.ItemText>{option}</BaseSelect.ItemText>
-                  <BaseSelect.ItemIndicator className="h-4 w-4">
-                    <Icon name="check" />
-                  </BaseSelect.ItemIndicator>
-                </BaseSelect.Item>
-              ))}
-            </BaseSelect.Popup>
-          </BaseSelect.Positioner>
-        </BaseSelect.Portal>
-      </BaseSelect.Root>
+      <SelectControl label={label} name={name} value={value} options={options.map((option) => ({ value: option, label: option }))} onChange={onChange} compact={compact} />
     </Field>
   )
 }
