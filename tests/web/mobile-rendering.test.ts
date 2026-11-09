@@ -27,3 +27,10 @@ test('the mobile grade selector uses shared compact wrapping chips', () => {
   assert.match(hero, /className="filter-chip"/)
   assert.match(read('index.css'), /\.filter-chip\s*{[^}]*min-h-8/)
 })
+
+test('homepage product category controls reuse the same compact wrapping chips', () => {
+  const featured = read('components/sections/home-featured-section.tsx')
+  assert.match(featured, /flex flex-wrap/)
+  assert.match(featured, /filter-chip/)
+  assert.match(read('index.css'), /\.filter-chip\s*{[^}]*min-h-8/)
+})

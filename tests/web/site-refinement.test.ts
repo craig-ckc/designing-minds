@@ -127,6 +127,7 @@ test('home and about heroes use visual assets while the repeated badge, pricing 
   assert.match(home, /Practice resources that build confidence at home/)
   assert.match(home, /resource-stack/)
   assert.match(home, /Browse resources/)
+  assert.match(home, /href="\/shop"/)
   assert.match(home, /Choose a grade/)
   assert.doesNotMatch(home, /Individual resources start|New · Resources/)
   assert.match(render(createElement(AboutHero)), /alt="A parent helping a child practise at home/)
@@ -136,17 +137,23 @@ test('home and about heroes use visual assets while the repeated badge, pricing 
   assert.match(read('components/sections/home-faq-section.tsx'), /Frequently asked questions/)
 })
 
-test('CTA variants share a component while brand uses white text and neutral uses a simpler layout', () => {
+test('CTA variants share a component; the homepage close is the brand band in ink text', () => {
   const brand = render(createElement(BundleCta))
   assert.match(brand, /bg-primary text-on-primary/)
   assert.match(brand, /resource-stack/)
   assert.match(brand, /Browse bundles/)
-  const neutral = render(createElement(FinalCta))
-  assert.match(neutral, /cta-panel--inline/)
-  assert.match(neutral, /border border-line bg-surface text-ink/)
-  assert.match(neutral, /Ready to help your child practise/)
-  assert.doesNotMatch(neutral, /resource-stack|cta-panel__texture|bg-lagoon|breakthrough/)
-  for (const html of [brand, neutral]) {
+  // The final CTA is the page's closing colour peak. Ink replaces white on the
+  // logo pink (5.4:1 vs 3.2:1), so the override must win the class merge.
+  const final = render(createElement(FinalCta))
+  assert.match(final, /cta-panel relative isolate rounded-panel bg-primary text-ink/)
+  // Scoped to the panel: the cover artwork's term ribbons legitimately keep white text.
+  assert.doesNotMatch(final, /rounded-panel[^"]*text-on-primary|cta-panel--inline/)
+  assert.match(final, /cta-panel__texture/)
+  assert.match(final, /resource-stack/)
+  assert.match(final, /Ready to help your child practise/)
+  assert.match(final, /href="\/shop"[^>]*>See all resources/)
+  assert.match(final, /href="\/packages"[^>]*>See all bundles/)
+  for (const html of [brand, final]) {
     assert.match(html, /cta-panel__content/)
     assert.match(html, /cta-panel__actions/)
   }
@@ -170,7 +177,8 @@ test('the existing about connection cards keep their original composition', () =
 test('grade grids share the centred three-plus-two layout and Inter is a real local font', () => {
   const css = read('index.css')
   assert.match(read('pages/grades-page.tsx'), /className="grade-grid"/)
-  assert.match(read('components/sections/grade-finder-section.tsx'), /className="grade-grid"/)
+  // The homepage adds a phone-only compact modifier on top of the shared grid.
+  assert.match(read('components/sections/grade-finder-section.tsx'), /className="grade-grid grade-grid--compact"/)
   assert.match(css, /nth-child\(4\):nth-last-child\(2\).*lg:col-start-2/)
   assert.match(css, /nth-child\(5\):last-child.*lg:col-start-4/)
   const font = new URL('../../apps/web/public/fonts/inter-latin-variable.woff2', import.meta.url)

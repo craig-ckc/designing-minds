@@ -313,6 +313,37 @@
 }
 .catalog-card-bundle { contain-intrinsic-block-size: auto 20rem; }
 
+/* Homepage featured picks: a swipeable row on phones, where four stacked
+   cards would push grade discovery ~2,400px down; the next card peeks in so
+   the row reads as scrollable. A 2×2 grid on tablets and one row of four from
+   lg, so the fourth pick never wraps alone under three columns. */
+@media (max-width: 639px) {
+  .featured-rail {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: min(80%, 20rem);
+    margin-inline: -1rem;
+    padding: 0 1rem 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 1rem;
+    scrollbar-width: none;
+  }
+  .featured-rail::-webkit-scrollbar { display: none; }
+  .featured-rail > * { scroll-snap-align: start; }
+}
+@media (min-width: 1024px) {
+  .featured-rail { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Homepage grade discovery on phones: compact tiles two to a row (the odd
+   last tile spans both) instead of five full-height cards in one column. */
+@media (max-width: 639px) {
+  .grade-grid--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .grade-grid--compact > :last-child:nth-child(odd) { grid-column: span 2; }
+}
+
 /* Edge-to-edge testimonial marquee with a seamless duplicated track. */
 @keyframes testimonial-scroll {
   to { transform: translateX(-50%); }
@@ -403,10 +434,12 @@ a.resource-stack__book:focus-visible { outline: 3px solid var(--color-primary-in
 .cta-panel--inline > .cta-panel__actions { margin-top: 0; }
 .home-hero { overflow: hidden; border-bottom: 1px solid var(--color-line); background: var(--color-surface-alt); }
 .home-hero__layout { display: grid; justify-items: center; gap: 18px; padding-block: 28px 12px; text-align: center; }
-.home-hero__copy { width: 100%; max-width: 760px; }
-.home-hero h1 { max-width: 28ch; margin-inline: auto; text-wrap: balance; }
-.home-hero .lead { max-width: 66ch; margin-inline: auto; }
-.home-hero__showcase { width: 100%; max-width: 620px; }
+.home-hero__copy { width: 100%; max-width: 880px; }
+/* The homepage h1 is the one display moment in the system: it runs well past
+   the shared utility-page h1 scale so the offer lands before anything else. */
+.home-hero h1 { max-width: 18ch; margin-inline: auto; font-size: clamp(2.25rem, 5.2vw, 4.25rem); line-height: 1.02; letter-spacing: -0.04em; text-wrap: balance; }
+.home-hero .lead { max-width: 54ch; margin-inline: auto; font-size: clamp(1rem, 1.3vw, 1.1875rem); }
+.home-hero__showcase { width: 100%; max-width: 780px; }
 .resource-stack--shelf { margin-top: 12px; aspect-ratio: 5 / 2; }
 .resource-stack--shelf .resource-stack__book { width: 30%; }
 .resource-stack--shelf .resource-stack__book:nth-child(1) { left: 5%; top: 3%; transform: rotate(-7deg); }
@@ -435,7 +468,7 @@ a.resource-stack__book:focus-visible { outline: 3px solid var(--color-primary-in
   .cta-panel:has(.cta-panel__artwork) { grid-template-columns: minmax(0, 1.3fr) minmax(200px, .7fr); min-height: 280px; }
   .cta-panel__artwork { max-width: 340px; margin-top: -56px; margin-bottom: -40px; transform: translateY(-30px); }
   .about-hero__layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; }
-  .home-hero__layout { padding-block: 28px 16px; }
+  .home-hero__layout { gap: 24px; padding-block: 64px 16px; }
   .cta-panel--inline { grid-template-columns: minmax(0, 1fr) auto; }
   .cta-panel--inline > .cta-panel__actions { max-width: 380px; justify-content: flex-end; }
 }

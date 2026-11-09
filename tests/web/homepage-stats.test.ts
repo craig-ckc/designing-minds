@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const read = (path: string) => readFileSync(new URL(`../../apps/web/src/${path}`, import.meta.url), 'utf8')
 
-test('homepage trust stats show Amy’s curated brand figures', () => {
+test('the shared trust stats retain Amy’s curated brand figures', () => {
   const section = read('components/sections/trust-stats-section.tsx')
   const content = read('content/site.ts')
 
@@ -49,13 +49,14 @@ test('750+ is the only customer figure in the storefront — no page quotes a ri
   assert.deepEqual(offenders, [], 'social-proof counts must come from SOCIAL_PROOF.customers')
 })
 
-test('trust-stats section no longer needs a snapshot prop', () => {
+test('the stats band stays on about while homepage leads directly into real products', () => {
   const section = read('components/sections/trust-stats-section.tsx')
   const home = read('pages/home-page.tsx')
   const about = read('pages/about-page.tsx')
 
   assert.doesNotMatch(section, /snapshot: CmsSnapshot/)
-  // Call sites pass only the optional caption, not the catalogue snapshot.
-  assert.match(home, /<TrustStatsSection \/>/)
+  assert.doesNotMatch(home, /TrustStatsSection/)
+  assert.match(home, /<HomeFeaturedSection/)
+  // The about call site passes only the optional caption, not the snapshot.
   assert.match(about, /<TrustStatsSection caption="The difference we’ve made so far" \/>/)
 })

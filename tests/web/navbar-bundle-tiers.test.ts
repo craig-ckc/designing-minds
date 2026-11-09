@@ -52,11 +52,13 @@ test('navbar omits a bundle tier when no matching published bundle exists', () =
   ])
 })
 
-test('homepage promotes bundle cards before testimonials and links each card to its offer', () => {
+test('homepage promotes actual catalogue cards before testimonials while tier offers retain their filtered links', () => {
   const home = readFileSync(new URL('../../apps/web/src/pages/home-page.tsx', import.meta.url), 'utf8')
   const section = readFileSync(new URL('../../apps/web/src/components/sections/bundle-pricing-section.tsx', import.meta.url), 'utf8')
 
-  assert.ok(home.indexOf('<HomeBundlesSection') < home.indexOf('<HomeTestimonialsSection'))
+  const featuredIndex = home.indexOf('<HomeFeaturedSection')
+  assert.ok(featuredIndex >= 0)
+  assert.ok(featuredIndex < home.indexOf('<HomeTestimonialsSection'))
   assert.match(section, /bundleTiers|BundleTier/)
   assert.match(section, /\/packages\?offer=\$\{encodeURIComponent\(offer\)\}/)
   assert.doesNotMatch(section, /Access Plan|Essential|Premium/)

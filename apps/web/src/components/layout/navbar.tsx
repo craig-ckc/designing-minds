@@ -24,6 +24,17 @@ function AnnouncementBar() {
   )
 }
 
+function CatalogSearch({ className = '', onSubmit }: { className?: string; onSubmit?: () => void }) {
+  return (
+    <form action="/shop" method="get" role="search" aria-label="Search the shop" onSubmit={onSubmit} className={`items-center gap-1 rounded-control border border-line-strong bg-surface pl-3 focus-within:outline-2 focus-within:outline-primary-ink ${className}`}>
+      <input type="search" name="q" aria-label="Search resources" placeholder="Search resources…" className="min-h-10 w-full min-w-0 bg-transparent text-body outline-none" />
+      <button type="submit" aria-label="Submit search" className="grid h-10 w-10 flex-none place-items-center rounded-control text-ink-soft hover:bg-surface-sunk">
+        <Icon name="arrow" size={16} />
+      </button>
+    </form>
+  )
+}
+
 function AccountControls({ onNavigate }: { onNavigate?: () => void }) {
   const { customer } = useAuth()
   const cartCount = useCartSlugs().length
@@ -276,7 +287,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
     <>
       <AnnouncementBar />
       <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md">
-      <Container className="flex min-h-[var(--header-h)] items-center gap-7">
+      <Container className="flex min-h-[var(--header-h)] items-center gap-3 xl:gap-7">
         <Wordmark onClick={closeMega} />
 
         <nav className="ml-3 hidden items-center gap-1 lg:flex">
@@ -305,7 +316,9 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
           </NavLink>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <CatalogSearch className="ml-auto hidden w-40 xl:w-64 lg:flex" onSubmit={closeMega} />
+
+        <div className="ml-auto flex items-center gap-1 lg:ml-0 sm:gap-2">
           <AccountControls onNavigate={closeMega} />
 
           {/* Mobile menu toggle — the panel itself drops down below the header
@@ -346,6 +359,7 @@ function MobileMenu({ open, onClose, tiers }: { open: boolean; onClose: () => vo
     <div
       id="mobile-menu"
       aria-hidden={!open}
+      inert={!open}
       className={`absolute inset-x-0 top-full z-30 h-[calc(100dvh-var(--header-h))] overflow-hidden lg:hidden ${
         open ? '' : 'pointer-events-none'
       }`}
@@ -356,6 +370,7 @@ function MobileMenu({ open, onClose, tiers }: { open: boolean; onClose: () => vo
         }`}
       >
         <Container className="flex flex-col pb-16">
+          <CatalogSearch className="my-4 flex" onSubmit={onClose} />
           <NavLink to="/" end onClick={onClose} className={linkCls(true)}>
             Home
           </NavLink>

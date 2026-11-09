@@ -16,19 +16,16 @@ export function HomeHeroSection({ snapshot }: { snapshot: CmsSnapshot | null }) 
   const hasPublishedTestimonials = snapshot?.testimonials.some((testimonial) => testimonial.published) ?? false
 
   return (
-    <Section className="home-hero" spacing="none" containerClassName="home-hero__layout">
+    <Section id="home-intro" className="home-hero" spacing="none" containerClassName="home-hero__layout">
       <div className="home-hero__copy">
         <h1>Practice resources that build confidence at home</h1>
-        <p className="mt-3 lead">
-          Printable tests and summaries for Grades 3–7. Aligned with CAPS, South Africa’s
+        <p className="mt-5 lead">
+          Printable tests and summaries for <span className="whitespace-nowrap">Grades 3–7</span>. Aligned with CAPS, South Africa’s
           Curriculum and Assessment Policy Statement.
         </p>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-          <Button to={`/shop?grade=${encodeURIComponent(grade)}`} variant="solid">
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+          <Button to="/shop" variant="solid">
             Browse resources <Icon name="arrow" size={16} />
-          </Button>
-          <Button to="/packages" variant="text" className="px-0 sm:px-5">
-            Explore bundles <Icon name="arrow" size={15} />
           </Button>
           {hasPublishedTestimonials ? (
             <a href="#parent-stories" className="inline-flex min-h-8 flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-ink-soft">

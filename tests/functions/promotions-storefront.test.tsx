@@ -10,7 +10,7 @@ import { ProductCard } from '../../apps/web/src/components/ui/product-card.tsx'
 import { BundleCard } from '../../apps/web/src/components/ui/bundle-card.tsx'
 import { CheckoutPage } from '../../apps/web/src/pages/checkout-page.tsx'
 import type { Product, Bundle, CmsSnapshot } from '../../packages/cms/src/types.ts'
-const record = { id:'1', slug:'test', title:'Test', grade:'Grade 4', term:'Term 1', subjects:['Mathematics'], resourceFormat:'Test / Assessment', priceZar:100, salePriceZar:80.55, published:true, purchasedFiles:[], includedProductSlugs:[], includedProductIds:[] }
+const record = { id:'1', slug:'test', title:'Test', shortDescription:'', grade:'Grade 4', term:'Term 1', subjects:['Mathematics'], resourceFormat:'Test / Assessment', priceZar:100, salePriceZar:80.55, published:true, purchasedFiles:[], includedProductSlugs:[], includedProductIds:[] }
 const render = (component: ReturnType<typeof createElement>) => renderToStaticMarkup(createElement(MemoryRouter, {}, component))
 it('renders sale prices with a crossed-out regular price on both catalogue cards', () => {
   for (const html of [render(createElement(ProductCard,{product:record as Product})), render(createElement(BundleCard,{bundle:record as Bundle,snapshot:{products:[]} as unknown as CmsSnapshot}))]) {
