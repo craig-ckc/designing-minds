@@ -8,17 +8,23 @@
     "dev:prod": "node --env-file=.env.production --experimental-strip-types src/server.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
-    "test": "vitest run --root ../.. tests/functions"
+    "test": "vitest run --root ../.. tests/functions --maxWorkers=2",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@designing-minds/cms": "file:../../packages/cms",
+    "@designing-minds/utils": "file:../../packages/utils",
     "@supabase/supabase-js": "^2.110.8",
     "resend": "^6.18.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.13.3",
     "esbuild": "^0.28.1",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
     "typescript": "~6.0.2",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.10"
   }
 }

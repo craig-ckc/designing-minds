@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && npm run build:ssr && npm run optimize:images && npm run prerender",
+    "typecheck": "tsc -b",
     "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist-server",
     "optimize:images": "node scripts/optimize-images.mjs dist",
     "prerender": "node --env-file-if-exists=.env --env-file-if-exists=.env.production --env-file-if-exists=.env.local scripts/prerender.mjs",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test ../../tests/web/*.test.ts",
+    "test": "node --experimental-strip-types --test \"../../tests/web/*.test.{ts,tsx}\"",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -21,7 +22,7 @@
     "@supabase/supabase-js": "^2.110.8",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

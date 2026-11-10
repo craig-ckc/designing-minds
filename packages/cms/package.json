@@ -6,9 +6,22 @@
   "exports": {
     ".": "./src/index.ts",
     "./types": "./src/types.ts",
+    "./commerce": "./src/lib/commerce.ts",
     "./entitlements": "./src/lib/entitlements.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p ."
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.13.3",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.65.0"
   }
 }

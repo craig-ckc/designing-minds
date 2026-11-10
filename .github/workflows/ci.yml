@@ -1,0 +1,37 @@
+# Runs with no secrets: tests use fakes and an in-process Postgres (PGlite), and
+# the web build uses an empty catalogue snapshot instead of reaching Supabase.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Build admin
+        run: npm run build --workspace @designing-minds/admin
+      - name: Build web (no Supabase)
+        run: npm run build --workspace @designing-minds/web
+        env:
+          # prerender.mjs fails closed without a reachable CMS; this opts in to
+          # an empty snapshot so the build is hermetic. Never set it on deploys.
+          ALLOW_EMPTY_PRERENDER: 'true'

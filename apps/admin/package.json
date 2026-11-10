@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test ../../tests/admin/*.test.ts",
+    "test": "node --experimental-strip-types --test \"../../tests/admin/*.test.{ts,tsx}\"",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,13 +17,13 @@
     "@designing-minds/utils": "file:../../packages/utils",
     "@jsquash/avif": "^2.1.1",
     "@supabase/supabase-js": "^2.110.8",
-    "@tiptap/markdown": "^3.28.0",
-    "@tiptap/pm": "^3.27.1",
-    "@tiptap/react": "^3.28.0",
-    "@tiptap/starter-kit": "^3.28.0",
+    "@tiptap/markdown": "^3.33.0",
+    "@tiptap/pm": "^3.33.0",
+    "@tiptap/react": "^3.33.0",
+    "@tiptap/starter-kit": "^3.33.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.1",
+    "react-router-dom": "^7.18.5",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

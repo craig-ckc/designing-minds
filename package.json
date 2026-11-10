@@ -14,11 +14,21 @@
     "dev:functions": "npm run dev --workspace @designing-minds/functions",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present && npm run test:components",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tests",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "build:ci": "ALLOW_EMPTY_PRERENDER=true npm run build",
+    "test:components": "vitest run --config vitest.components.config.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
+    "@testing-library/react": "16.3.3",
     "concurrently": "^9.2.4",
-    "supabase": "^2.113.0"
+    "jsdom": "26.1.0",
+    "supabase": "^2.113.0",
+    "vitest": "4.1.12"
+  },
+  "engines": {
+    "node": "^22.12.0 || >=24.0.0"
   }
 }
