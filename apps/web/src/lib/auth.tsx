@@ -1,137 +1,130 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Customer } from '@designing-minds/cms'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { clearLocalCart, prepareCustomerCart } from './cart'
-import { resolvePasswordResetRedirectUrl } from '../site-url'
+import { clearLocalPhysicalCart, prepareCustomerPhysicalCart } from './physical-cart'
+import { createAuthActions, customerFromSession, loadSession, sameCustomer, type AuthActions } from './auth-client'
 
-interface AuthValue {
+export type { AuthActions, SignUpResult } from './auth-client'
+
+/* -------------------------------------------------------------------------
+   Auth provider.
+
+   Three contexts so consumers subscribe only to what they use:
+     state    { customer, loading, authError }  re-renders on sign-in/out, not on token refresh
+     actions  stable callbacks                    never re-renders its consumers
+     session  the raw Supabase session            changes on every token refresh
+   `useAuth()` stays as the combined convenience.
+   ------------------------------------------------------------------------- */
+
+export interface AuthState {
   customer: Customer | null
-  session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (name: string, email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-  getAccessToken: () => Promise<string | null>
-  /** Send a password-reset email that links back to /reset-password. */
-  resetPassword: (email: string) => Promise<void>
-  /** Set a new password for the recovery session established by the email link. */
-  updatePassword: (password: string) => Promise<void>
+  /** Set when the stored session could not be read; the visitor is treated as signed out. */
+  authError: string | null
 }
 
-const AuthContext = createContext<AuthValue | null>(null)
-
-const customerFromSession = (session: Session | null): Customer | null => {
-  const user = session?.user
-  if (!user?.email) return null
-  return {
-    id: user.id,
-    name: String(user.user_metadata.name ?? user.user_metadata.full_name ?? user.email.split('@')[0]),
-    email: user.email,
-    createdAt: user.created_at,
-  }
+export interface AuthRecovery {
+  /** Read the stored session again after `authError`. */
+  retrySession: () => void
 }
+
+const AuthStateContext = createContext<AuthState | null>(null)
+const AuthActionsContext = createContext<(AuthActions & AuthRecovery) | null>(null)
+const AuthSessionContext = createContext<Session | null | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
+  // Kept in state, not derived, so a token refresh (new session, same account) leaves its identity alone.
+  const [customer, setCustomer] = useState<Customer | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
+  const [authError, setAuthError] = useState<string | null>(null)
+  const stale = useRef(false)
+
+  const applySession = useCallback((nextSession: Session | null, error: string | null = null) => {
+    prepareCustomerCart(nextSession?.user.id ?? null)
+    prepareCustomerPhysicalCart(nextSession?.user.id ?? null)
+    setSession(nextSession)
+    const next = customerFromSession(nextSession)
+    setCustomer((current) => (sameCustomer(current, next) ? current : next))
+    setAuthError(error)
+    setLoading(false)
+  }, [])
+
+  const readSession = useCallback(() => {
+    if (!supabase) return
+    void loadSession(supabase.auth).then(({ session: stored, error }) => {
+      if (!stale.current) applySession(stored, error)
+    })
+  }, [applySession])
 
   useEffect(() => {
     if (!supabase) return
-
-    let cancelled = false
-    const applySession = (nextSession: Session | null) => {
-      prepareCustomerCart(nextSession?.user.id ?? null)
-      setSession(nextSession)
-      setLoading(false)
-    }
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled) {
-        applySession(data.session)
-      }
-    })
+    stale.current = false
+    readSession()
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       // Drop the previous user's cart on sign-out so a different account signing
       // in next on this browser doesn't inherit it. Guard on the explicit event:
       // a null session on initial load is a guest, whose cart we must preserve.
-      if (event === 'SIGNED_OUT') clearLocalCart()
+      if (event === 'SIGNED_OUT') { clearLocalCart(); clearLocalPhysicalCart() }
       applySession(nextSession)
     })
     return () => {
-      cancelled = true
+      stale.current = true
       listener.subscription.unsubscribe()
     }
-  }, [])
+  }, [applySession, readSession])
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    if (!supabase) throw new Error('Supabase is not configured.')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw new Error(error.message)
-  }, [])
+  const retrySession = useCallback(() => {
+    setLoading(true)
+    setAuthError(null)
+    readSession()
+  }, [readSession])
 
-  const signUp = useCallback(async (name: string, email: string, password: string) => {
-    if (!supabase) throw new Error('Supabase is not configured.')
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name },
-      },
-    })
-    if (error) throw new Error(error.message)
-  }, [])
+  const actions = useMemo(() => ({
+    ...createAuthActions(supabase?.auth ?? null, () => window.location.origin),
+    retrySession,
+  }), [retrySession])
 
-  const logout = useCallback(async () => {
-    if (!supabase) return
-    const { error } = await supabase.auth.signOut()
-    if (error) throw new Error(error.message)
-  }, [])
+  const state = useMemo<AuthState>(() => ({ customer, loading, authError }), [customer, loading, authError])
 
-  const getAccessToken = useCallback(async () => {
-    if (!supabase) return null
-    const { data, error } = await supabase.auth.getSession()
-    if (error) throw new Error(error.message)
-    return data.session?.access_token ?? null
-  }, [])
-
-  const resetPassword = useCallback(async (email: string) => {
-    if (!supabase) throw new Error('Supabase is not configured.')
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: resolvePasswordResetRedirectUrl(window.location.origin),
-    })
-    if (error) throw new Error(error.message)
-  }, [])
-
-  const updatePassword = useCallback(async (password: string) => {
-    if (!supabase) throw new Error('Supabase is not configured.')
-    const { error } = await supabase.auth.updateUser({ password })
-    if (error) throw new Error(error.message)
-  }, [])
-
-  const value = useMemo<AuthValue>(
-    () => ({
-      customer: customerFromSession(session),
-      session,
-      loading,
-      signIn,
-      signUp,
-      logout,
-      getAccessToken,
-      resetPassword,
-      updatePassword,
-    }),
-    [getAccessToken, loading, logout, resetPassword, session, signIn, signUp, updatePassword],
+  return (
+    <AuthActionsContext.Provider value={actions}>
+      <AuthStateContext.Provider value={state}>
+        <AuthSessionContext.Provider value={session}>{children}</AuthSessionContext.Provider>
+      </AuthStateContext.Provider>
+    </AuthActionsContext.Provider>
   )
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+const need = <T,>(value: T | null | undefined, hook: string): T => {
+  if (value === null || value === undefined) throw new Error(`${hook} must be used within an AuthProvider`)
+  return value
+}
+
+/** Who is signed in. Does not re-render on token refresh. */
+export const useAuthState = (): AuthState => need(useContext(AuthStateContext), 'useAuthState')
+
+/** Sign-in, sign-up, sign-out and password actions. Stable: consumers never re-render for auth changes. */
+export const useAuthActions = (): AuthActions & AuthRecovery => need(useContext(AuthActionsContext), 'useAuthActions')
+
+/** The raw Supabase session (for the recovery link flow). Changes on every token refresh. */
+export function useAuthSession(): Session | null {
+  const session = useContext(AuthSessionContext)
+  if (session === undefined) throw new Error('useAuthSession must be used within an AuthProvider')
+  return session
+}
+
+export type AuthValue = AuthState & AuthActions & AuthRecovery & { session: Session | null }
+
+/** State, actions and session together. Prefer the narrower hooks in new code. */
 export function useAuth(): AuthValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
-  return ctx
+  const state = useAuthState()
+  const actions = useAuthActions()
+  const session = useAuthSession()
+  return useMemo(() => ({ ...state, ...actions, session }), [state, actions, session])
 }
 
 /** Up to two uppercase initials from a name, e.g. "Amoré van Wyk" -> "AV". */

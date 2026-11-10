@@ -3,9 +3,11 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 const read = (path: string) => readFileSync(new URL(`../../apps/web/src/${path}`, import.meta.url), 'utf8')
+const readNavbar = () => ['account-actions', 'announcement-bar', 'bundle-tier-card', 'catalog-search', 'desktop-nav', 'mobile-menu', 'shop-menu', 'site-navbar']
+  .map((name) => read(`components/layout/navbar/${name}.tsx`)).join('\n')
 
 test('shared icon-only navigation controls have accessible names', () => {
-  const navbar = read('components/layout/navbar.tsx')
+  const navbar = readNavbar()
   const wordmark = read('components/ui/wordmark.tsx')
 
   assert.match(navbar, /aria-label="Log in to your account"/)
@@ -20,7 +22,6 @@ test('image-only product links and decorative images expose the right semantics'
   const productCard = read('components/ui/product-card.tsx')
   const productCover = read('components/ui/product-cover.tsx')
   const hero = read('components/ui/resource-stack.tsx')
-  const placeholder = read('components/ui/placeholder.tsx')
   const polaroid = read('components/ui/polaroid.tsx')
   const aboutConnect = read('components/sections/about-connect-section.tsx')
 
@@ -30,22 +31,19 @@ test('image-only product links and decorative images expose the right semantics'
   assert.match(productCover, /role="img" aria-label=\{product\.title\}/)
   assert.match(productCover, /alt=\{`\$\{illustrationLabel\(illustration\)\} illustration`\}/)
   // Real images cannot be passed to the shared components without descriptive alt text.
-  assert.match(placeholder, /\{ src: string; alt: string \}/)
   assert.match(polaroid, /\{ src: string; alt: string \}/)
-  assert.match(placeholder, /<img src=\{src\} alt=\{alt\}/)
   assert.match(polaroid, /<img src=\{src\} alt=\{alt\}/)
   assert.match(aboutConnect, /image: string, imageAlt: string/)
   assert.match(aboutConnect, /<img src=\{image\} alt=\{imageAlt\}/)
   // Shared placeholder artwork is decorative and does not render an empty-alt image.
-  assert.match(placeholder, /backgroundImage: "url\('\/placeholder-image\.svg'\)"/)
   assert.match(polaroid, /backgroundImage: "url\('\/placeholder-image\.svg'\)"/)
-  assert.doesNotMatch(placeholder, /<img[^>]+placeholder-image\.svg/)
   assert.doesNotMatch(polaroid, /<img[^>]+placeholder-image\.svg/)
+  assert.match(productCover, /<div aria-hidden className=\{`\[container-type:inline-size\]/)
 })
 
 test('SVG textures used as backgrounds are hidden from assistive technology', () => {
   const sources = [
-    read('components/layout/navbar.tsx'),
+    readNavbar(),
     read('components/sections/bundle-pricing-section.tsx'),
     read('components/sections/cta-banner.tsx'),
     read('index.css'),
@@ -68,7 +66,9 @@ test('catalogue pages establish sequential heading levels', () => {
   assert.match(grades, /<h2 className="sr-only">Browse resources by grade<\/h2>/)
   assert.match(product, /<h1 className="text-2xl[^"]*">\{product\.title\}<\/h1>/)
   assert.match(product, /<DetailDisclosure title="About this/)
-  assert.match(read('components/ui/detail-disclosure.tsx'), /<h2[^>]*>\{title\}<\/h2>/)
+  const disclosure = read('components/ui/disclosure.tsx')
+  assert.match(disclosure, /as: Heading = 'h2'/)
+  assert.match(disclosure, /<Heading className=\{cn\([^\n]+\)\}>\{title\}<\/Heading>/)
   assert.doesNotMatch(product, /<h3/)
 })
 

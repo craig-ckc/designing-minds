@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { CANONICAL_SITE_URL, resolvePasswordResetRedirectUrl } from '../../apps/web/src/site-url.ts'
 
-const authSource = readFileSync(new URL('../../apps/web/src/lib/auth.tsx', import.meta.url), 'utf8')
+const authClientSource = readFileSync(new URL('../../apps/web/src/lib/auth-client.ts', import.meta.url), 'utf8')
 const resetSource = readFileSync(
   new URL('../../apps/web/src/pages/auth/reset-password-page.tsx', import.meta.url),
   'utf8',
@@ -40,9 +40,9 @@ test('password-reset redirect falls back when a local origin is not allowlisted'
 })
 
 test('web auth sends the reset email with the testable redirect helper', () => {
-  assert.match(authSource, /resolvePasswordResetRedirectUrl/)
-  assert.match(authSource, /resetPasswordForEmail/)
-  assert.doesNotMatch(authSource, /redirectTo:\s*`?\$\{window\.location\.origin\}\/reset-password`?/)
+  assert.match(authClientSource, /resolvePasswordResetRedirectUrl/)
+  assert.match(authClientSource, /resetPasswordForEmail/)
+  assert.doesNotMatch(authClientSource, /redirectTo:\s*`?\$\{window\.location\.origin\}\/reset-password`?/)
 })
 
 test('recovery page waits for auth init before offering the form', () => {

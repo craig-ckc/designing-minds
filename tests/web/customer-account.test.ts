@@ -88,3 +88,17 @@ test('payment failures are reported instead of rendering an incomplete account',
   })
   await assert.rejects(loadCustomerAccount(client, 'customer-1'), /payments unavailable/)
 })
+
+
+test('an old schema falls back to bounded digital columns without dropping ownership filtering', async () => {
+  const queries: { columns: string; filter: string; value: string }[] = []
+  const client = { from: () => ({ select: (columns: string) => ({ eq: async (filter: string, value: string) => {
+    queries.push({ columns, filter, value })
+    return columns.includes('hasPhysical') ? { data: null, error: { code: '42703', message: 'commerce columns are not installed' } } : { data: [], error: null }
+  } }) }) } as unknown as Client
+  assert.deepEqual(await loadCustomerAccount(client, 'customer-1'), { orders: [], payments: [] })
+  assert.equal(queries.length, 2)
+  assert.ok(queries[0].columns.includes('hasPhysical'))
+  assert.ok(!queries[1].columns.includes('hasPhysical'))
+  assert.ok(queries.every((query) => !query.columns.includes('*') && query.filter === 'customerId' && query.value === 'customer-1'))
+})

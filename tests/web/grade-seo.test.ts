@@ -2,33 +2,12 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import type { Product } from '../../packages/cms/src/types.ts'
+import { makeProduct } from '../support/fixtures.ts'
 import { gradePageMeta, PSW_SUBJECT, subjectsForGrade } from '../../apps/web/src/lib/subject-labels.ts'
 
 const read = (path: string) => readFileSync(new URL(`../../apps/web/src/${path}`, import.meta.url), 'utf8')
 
-const product = (overrides: Partial<Product> & Pick<Product, 'slug'>): Product => ({
-  id: overrides.slug,
-  title: overrides.slug,
-  shortDescription: '',
-  fullDescription: '',
-  priceZar: 60,
-  grade: 'Grade 3',
-  term: 'Term 1',
-  year: '2026',
-  resourceFormat: 'Test / Assessment',
-  subjects: ['Mathematics'],
-  marks: null,
-  purchasedFiles: [],
-  galleryImages: [],
-  previewPdfs: [],
-  featured: false,
-  published: true,
-  sortOrder: 0,
-  seo: { title: '', description: '' },
-  faqs: [],
-  updatedAt: '2026-01-01',
-  ...overrides,
-})
+const product = (overrides: Partial<Product> & Pick<Product, 'slug'>) => makeProduct({ priceZar: 60, ...overrides })
 
 /* ----------------------------- subjectsForGrade ------------------------- */
 

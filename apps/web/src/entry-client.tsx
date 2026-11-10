@@ -5,6 +5,7 @@ import type { CmsSnapshot } from '@designing-minds/cms'
 import './index.css'
 import App from './app.tsx'
 import { AuthProvider } from './lib/auth.tsx'
+import { CatalogProvider } from './lib/catalog.tsx'
 import { installDiagnostics, reportRuntimeError } from './lib/diagnostics.ts'
 import { AppErrorBoundary } from './components/app-error-boundary.tsx'
 
@@ -24,9 +25,11 @@ const tree = (
   <StrictMode>
     <BrowserRouter>
       <AppErrorBoundary>
-        <AuthProvider>
-          <App initialSnapshot={bootstrap} />
-        </AuthProvider>
+        <CatalogProvider initialSnapshot={bootstrap}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </CatalogProvider>
       </AppErrorBoundary>
     </BrowserRouter>
   </StrictMode>

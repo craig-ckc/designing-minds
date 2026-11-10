@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { Pill } from './pill'
+import { Pill, type PillTone } from './pill'
 
 /** Small pill for product kinds, formats, and statuses. Thin wrapper over Pill. */
 export function Badge({
@@ -8,7 +8,7 @@ export function Badge({
   className,
 }: {
   children: ReactNode
-  tone?: 'neutral' | 'solid' | 'outline'
+  tone?: Extract<PillTone, 'neutral' | 'solid' | 'outline' | 'danger'>
   className?: string
 }) {
   return (

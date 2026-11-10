@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Container } from '../components/ui/container'
 import { Button } from '../components/ui/button'
-import { apiUrl } from '../lib/api'
+import { unsubscribeEmail } from '../lib/forms'
 import { useNoindex } from '../lib/use-noindex'
 
 type Status = 'working' | 'done' | 'invalid' | 'error'
@@ -21,22 +21,7 @@ export function UnsubscribePage() {
     if (!hasSignedLink || started.current) return
     started.current = true
 
-    void (async () => {
-      try {
-        const response = await fetch(apiUrl('/api/unsubscribe'), {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, token }),
-        })
-        if (response.ok) {
-          setStatus('done')
-        } else {
-          setStatus(response.status === 400 ? 'invalid' : 'error')
-        }
-      } catch {
-        setStatus('error')
-      }
-    })()
+    void unsubscribeEmail(email, token).then((outcome) => setStatus(outcome))
   }, [email, hasSignedLink, token])
 
   const content = {

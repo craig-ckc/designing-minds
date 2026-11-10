@@ -1,20 +1,22 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { publishedBundles, publishedProducts, type Bundle, type CmsSnapshot, type Product } from '@designing-minds/cms'
+import { publishedBundles, publishedProducts, type Bundle, type PhysicalCatalogProduct, type Product } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Card } from '../components/ui/card'
 import { BundleCard } from '../components/ui/bundle-card'
 import { ProductCard } from '../components/ui/product-card'
+import { PhysicalProductCard } from '../components/ui/physical-product-card'
 import { PageHeader } from '../components/ui/headings'
 import { LoadMoreButton } from '../components/ui/load-more-button'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
+import { useCatalogSnapshot } from '../lib/catalog'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
 import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
 import { CatalogSortControl } from '../components/ui/catalog-sort-control'
 import { readCatalogSort, sortCatalogItems } from '../lib/catalog-sort'
 
-const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format'] as const
+const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format', 'type'] as const
 
 /**
  * One grid, bundles first.
@@ -23,9 +25,10 @@ const SHOP_FILTER_KEYS = ['q', 'grade', 'term', 'subject', 'format'] as const
  * ordered list rather than two sections: a shopper scrolls one grid, and the
  * cheaper-per-item way to buy leads it. Only the card component differs.
  */
-type Entry = { kind: 'bundle'; bundle: Bundle } | { kind: 'product'; product: Product }
+type Entry = { kind: 'bundle'; bundle: Bundle } | { kind: 'product'; product: Product } | { kind: 'physical'; product: PhysicalCatalogProduct }
 
-export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
+export function ShopPage() {
+  const snapshot = useCatalogSnapshot()
   const [searchParams, setSearchParams] = useSearchParams()
   const subjectNames = snapshot.valueLists.subjects
 
@@ -34,6 +37,7 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const terms = readQueryList(searchParams, 'term', snapshot.valueLists.terms)
   const subjects = readQueryList(searchParams, 'subject', subjectNames)
   const formats = readQueryList(searchParams, 'format', snapshot.valueLists.resourceFormats)
+  const category = ['digital', 'physical'].includes(searchParams.get('type') ?? '') ? searchParams.get('type')! : 'all'
   const [filtersOpen, setFiltersOpen] = useState(false)
   const sort = readCatalogSort(searchParams.get('sort'))
 
@@ -41,20 +45,30 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const q = deferredQuery.trim().toLowerCase()
 
   const visible = useMemo<Entry[]>(() => {
-    const matchingProducts = publishedProducts(snapshot).filter((product) => {
+    const digitalSelected = category !== 'physical'
+    const physicalSelected = category !== 'digital'
+    const matchingProducts = digitalSelected ? publishedProducts(snapshot).filter((product) => {
       if (grades.length && !grades.includes(product.grade)) return false
       if (terms.length && !terms.includes(product.term)) return false
       if (subjects.length && !subjects.some((name) => product.subjects.includes(name))) return false
       if (formats.length && !formats.includes(product.resourceFormat)) return false
       if (!q) return true
       return `${product.title} ${product.shortDescription} ${product.subjects.join(' ')}`.toLowerCase().includes(q)
-    })
+    }) : []
+
+    // Physical goods have no education taxonomy. When a shopper narrows by
+    // grade, term, subject or format, omit them instead of implying a match.
+    const matchingPhysical = physicalSelected && !grades.length && !terms.length && !subjects.length && !formats.length
+      ? (snapshot.physicalCatalog ?? []).filter((product) =>
+          !q || `${product.title} ${product.shortDescription} ${product.fullDescription}`.toLowerCase().includes(q),
+        )
+      : []
 
     // A bundle carries no subjects or format of its own, so those facets match
     // against what it contains — filtering to "Mathematics" should surface the
     // maths bundle, not hide it. Membership is resolved once, here.
     const bySlug = new Map(publishedProducts(snapshot).map((product) => [product.slug, product]))
-    const matchingBundles = publishedBundles(snapshot).filter((bundle) => {
+    const matchingBundles = digitalSelected ? publishedBundles(snapshot).filter((bundle) => {
       if (grades.length && !grades.includes(bundle.grade)) return false
       const members = bundle.includedProductSlugs
         .map((slug) => bySlug.get(slug))
@@ -64,15 +78,16 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
       if (formats.length && !members.some((m) => formats.includes(m.resourceFormat))) return false
       if (!q) return true
       return `${bundle.title} ${bundle.shortDescription}`.toLowerCase().includes(q)
-    })
+    }) : []
 
     return sortCatalogItems([
       ...matchingBundles.map((bundle): Entry => ({ kind: 'bundle', bundle })),
       ...matchingProducts.map((product): Entry => ({ kind: 'product', product })),
+      ...matchingPhysical.map((product): Entry => ({ kind: 'physical', product })),
     ], sort, (entry) => entry.kind === 'bundle' ? entry.bundle : entry.product)
-  }, [snapshot, grades, terms, subjects, formats, q, sort])
+  }, [snapshot, grades, terms, subjects, formats, category, q, sort])
 
-  const catalogResetKey = JSON.stringify([grades, terms, subjects, formats, q, sort])
+  const catalogResetKey = JSON.stringify([grades, terms, subjects, formats, category, q, sort])
   const { visible: rendered, loadMore } = useCatalogLoadMore(visible, CATALOG_INITIAL_LIMIT, catalogResetKey)
 
   const activeCount = grades.length + terms.length + subjects.length + formats.length
@@ -80,13 +95,17 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const reset = () => setSearchParams(clearQueryValues(searchParams, SHOP_FILTER_KEYS))
 
   const bundleCount = visible.filter((entry) => entry.kind === 'bundle').length
+  const physicalCount = visible.filter((entry) => entry.kind === 'physical').length
+  const hasPhysicalCatalog = (snapshot.physicalCatalog ?? []).length > 0
 
   return (
     <>
       <PageHeader
         width="full"
-        title="All resources"
-        lead={`Browse ${snapshot.stats.productCount} CAPS-aligned resources across grades, terms, subjects and formats — or start with a bundle.`}
+        title={hasPhysicalCatalog ? 'All products' : 'All resources'}
+        lead={hasPhysicalCatalog
+          ? 'Learning resources, personalised keyrings and thoughtful gifts — all in one place.'
+          : 'Find CAPS-aligned tests, summaries and bundles by grade, term, subject and format.'}
       >
         <div className="mt-6">
           <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Shop" />
@@ -94,13 +113,25 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
       </PageHeader>
 
       <div className="sticky top-[var(--header-h)] z-20 border-b border-line bg-canvas/90 backdrop-blur-md">
+        {hasPhysicalCatalog ? <Container width="full" className="flex flex-wrap gap-2 pt-3" >
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Product category">
+            {([{ value: 'all', label: 'All products' }, { value: 'digital', label: 'Digital resources' }, { value: 'physical', label: 'Gifts & keyrings' }] as const).map((option) => (
+              <button key={option.value} type="button" className={`filter-chip ${category === option.value ? 'bg-ink text-canvas' : ''}`} aria-pressed={category === option.value}
+                onClick={() => {
+                  const next = clearQueryValues(searchParams, ['type', 'grade', 'term', 'subject', 'format'])
+                  if (option.value !== 'all') next.set('type', option.value)
+                  setSearchParams(next)
+                }}>{option.label}</button>
+            ))}
+          </div>
+        </Container> : null}
         <Container width="full" className="flex flex-wrap items-center gap-2 py-3">
           <input
             className="field min-w-0 basis-full sm:basis-auto sm:w-64"
             value={query}
             onChange={(event) => setSearchParams(setQueryValue(searchParams, 'q', event.target.value), { replace: true })}
-            placeholder="Search resources…"
-            aria-label="Search resources"
+            placeholder={hasPhysicalCatalog ? 'Search products…' : 'Search resources…'}
+            aria-label={hasPhysicalCatalog ? 'Search products' : 'Search resources'}
           />
           <div className="ml-auto flex items-center gap-2">
             <FilterTrigger onClick={() => setFiltersOpen(true)} activeCount={activeCount} />
@@ -127,18 +158,20 @@ export function ShopPage({ snapshot }: { snapshot: CmsSnapshot }) {
               {rendered.map((entry) =>
                 entry.kind === 'bundle' ? (
                   <BundleCard key={entry.bundle.id} bundle={entry.bundle} snapshot={snapshot} />
-                ) : (
+                ) : entry.kind === 'product' ? (
                   <ProductCard key={entry.product.id} product={entry.product} />
+                ) : (
+                  <PhysicalProductCard key={entry.product.id} product={entry.product} />
                 ),
               )}
             </div>
           ) : (
             <Card variant="surface" pad="none" className="p-7 text-center">
-              <h2>No matching resources</h2>
-              <p className="mt-2 text-muted">Try clearing a filter or searching for a different grade or subject.</p>
+              <h2>No matching {hasPhysicalCatalog ? 'products' : 'resources'}</h2>
+              <p className="mt-2 text-muted">Try clearing a filter or searching for a different grade, subject or product.</p>
             </Card>
           )}
-          <LoadMoreButton remaining={visible.length - rendered.length} itemLabel="resources" onLoadMore={loadMore} />
+          <LoadMoreButton remaining={visible.length - rendered.length} itemLabel={physicalCount ? 'items' : 'resources'} onLoadMore={loadMore} />
         </Container>
       </section>
     </>

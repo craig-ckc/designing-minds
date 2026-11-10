@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { type CmsSnapshot, type Faq } from '@designing-minds/cms'
+import { type Faq } from '@designing-minds/cms'
+import { useCatalogSnapshot } from '../lib/catalog'
 import { Section } from '../components/ui/section'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { PageHeader } from '../components/ui/headings'
@@ -13,7 +14,8 @@ const categorySlug = (category: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-export function HelpPage({ snapshot }: { snapshot: CmsSnapshot }) {
+export function HelpPage() {
+  const snapshot = useCatalogSnapshot()
   const byCategory = useMemo(() => {
     const groups = new Map<string, Faq[]>()
     for (const faq of snapshot.faqs.filter((f) => f.published).sort((a, b) => a.sortOrder - b.sortOrder)) {

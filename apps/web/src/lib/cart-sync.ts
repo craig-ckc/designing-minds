@@ -24,8 +24,8 @@
  */
 
 export interface CartStorage {
-  read(): string[]
-  write(slugs: string[]): void
+  read(): readonly string[]
+  write(slugs: readonly string[]): void
   /** Forget the cart and its owner without touching the server (sign-out). */
   clear(): void
   /** Which signed-in user the local cart belongs to; null for a guest. */
@@ -37,17 +37,17 @@ export interface CartServer {
   /** The signed-in customer, or null for a guest. */
   currentCustomerId(): Promise<string | null>
   readCart(customerId: string): Promise<string[]>
-  writeCart(customerId: string, slugs: string[]): Promise<void>
+  writeCart(customerId: string, slugs: readonly string[]): Promise<void>
   /** Slugs in the customer's paid or fulfilled orders. */
   ownedSlugs(customerId: string): Promise<string[]>
 }
 
 type CartEdit = { kind: 'add'; slug: string } | { kind: 'remove'; slug: string } | { kind: 'clear' }
 
-const unique = (slugs: string[]) => [...new Set(slugs)]
+const unique = (slugs: readonly string[]) => [...new Set(slugs)]
 
-const applyEdits = (slugs: string[], edits: CartEdit[]) =>
-  edits.reduce<string[]>((current, edit) => {
+const applyEdits = (slugs: readonly string[], edits: CartEdit[]) =>
+  edits.reduce<readonly string[]>((current, edit) => {
     if (edit.kind === 'clear') return []
     if (edit.kind === 'remove') return current.filter((slug) => slug !== edit.slug)
     return current.includes(edit.slug) ? current : [...current, edit.slug]
@@ -121,7 +121,7 @@ export function createCartSync({ storage, server }: { storage: CartStorage; serv
   }
 
   return {
-    read: () => storage.read(),
+    read: (): readonly string[] => storage.read(),
     set: (slugs: string[]) => commit([{ kind: 'clear' }, ...unique(slugs).map((slug): CartEdit => ({ kind: 'add', slug }))]),
     add: (slug: string) => commit([{ kind: 'add', slug }]),
     remove: (slug: string) => commit([{ kind: 'remove', slug }]),

@@ -77,7 +77,7 @@ export function useRouteHead(snapshot: CmsSnapshot | null) {
       upsertMeta('name', 'robots', 'noindex,nofollow')
       removeCanonical()
       for (const key of ['description', 'twitter:title', 'twitter:description', 'twitter:image', 'twitter:image:alt']) removeMeta('name', key)
-      for (const key of ['og:title', 'og:description', 'og:url', 'og:type', 'og:image', 'og:image:alt']) removeMeta('property', key)
+      for (const key of ['og:title', 'og:description', 'og:url', 'og:type', 'og:image', 'og:image:alt', 'og:image:width', 'og:image:height']) removeMeta('property', key)
       return
     }
 
@@ -93,8 +93,18 @@ export function useRouteHead(snapshot: CmsSnapshot | null) {
     upsertMeta('property', 'og:description', meta.description)
     upsertMeta('property', 'og:url', meta.canonical)
     upsertMeta('property', 'og:type', meta.ogType)
+    upsertMeta('property', 'og:image', meta.image)
+    upsertMeta('property', 'og:image:alt', meta.imageAlt ?? 'Designing Minds — CAPS-aligned assessments and resources')
+    const imageWidth = meta.imageWidth ?? (meta.image.endsWith('/og-image.png') ? 1200 : undefined)
+    const imageHeight = meta.imageHeight ?? (meta.image.endsWith('/og-image.png') ? 630 : undefined)
+    if (imageWidth) upsertMeta('property', 'og:image:width', String(imageWidth))
+    else removeMeta('property', 'og:image:width')
+    if (imageHeight) upsertMeta('property', 'og:image:height', String(imageHeight))
+    else removeMeta('property', 'og:image:height')
     upsertMeta('name', 'twitter:title', meta.title)
     upsertMeta('name', 'twitter:description', meta.description)
+    upsertMeta('name', 'twitter:image', meta.image)
+    upsertMeta('name', 'twitter:image:alt', meta.imageAlt ?? 'Designing Minds — CAPS-aligned assessments and resources')
     upsertCanonical(meta.canonical)
   }, [pathname, snapshot])
 }

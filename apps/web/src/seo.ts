@@ -7,6 +7,7 @@ import {
   type CmsSnapshot,
   type Faq,
   type Product,
+  type PhysicalCatalogProduct,
   type Testimonial,
 } from '@designing-minds/cms'
 import { CONTACT, GRADE_BLURB } from './content/site'
@@ -33,6 +34,43 @@ const DEFAULT_OG_IMAGE = '/og-image.png'
 const OG_IMAGE_ALT = 'Designing Minds — CAPS-aligned assessments and resources'
 /** Content locale: South African English. */
 const OG_LOCALE = 'en_ZA'
+
+/** Marketing images may be absolute or site-relative, but never executable URLs. */
+const publicImageUrl = (value: string, siteUrl: string): string | null => {
+  if (!value.trim()) return null
+  try {
+    const url = new URL(value, siteUrl)
+    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null
+  } catch { return null }
+}
+
+const physicalProductSchema = (product: PhysicalCatalogProduct, meta: PageMeta, siteUrl: string) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: product.title,
+  description: meta.description,
+  url: meta.canonical,
+  image: product.galleryImages.map((entry) => publicImageUrl(entry.url, siteUrl)).filter((url): url is string => Boolean(url)),
+  sku: product.slug,
+  category: 'Physical products',
+  brand: { '@type': 'Brand', name: SITE_NAME },
+  offers: product.variants.map((variant) => {
+    const price = variant.unitPriceZar ?? promotionPrice(product)
+    return {
+      '@type': 'Offer',
+      name: [product.title, ...Object.values(variant.optionValues)].join(' · '),
+      ...(variant.sku ? { sku: variant.sku } : {}),
+      priceCurrency: 'ZAR',
+      // A name has no fixed total before personalisation. Describe the unit
+      // rate rather than advertising a whole keyring for one letter's price.
+      ...(product.pricingMode === 'per_character' ? {
+        priceSpecification: { '@type': 'UnitPriceSpecification', price, priceCurrency: 'ZAR', unitText: 'letter', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'letter' } },
+      } : { price }),
+      availability: variant.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: meta.canonical,
+    }
+  }),
+})
 
 interface StaticMeta {
   title: string
@@ -108,9 +146,12 @@ export interface PageMeta {
   ogType: 'website' | 'article' | 'product'
   /** Absolute URL of the social share image. */
   image: string
+  imageAlt?: string
+  imageWidth?: number
+  imageHeight?: number
 }
 
-const metatags = ({ title, description, canonical, ogType, image }: PageMeta): string =>
+const metatags = ({ title, description, canonical, ogType, image, imageAlt = OG_IMAGE_ALT, imageWidth, imageHeight }: PageMeta): string =>
   [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -123,14 +164,14 @@ const metatags = ({ title, description, canonical, ogType, image }: PageMeta): s
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:url" content="${escapeHtml(canonical)}" />`,
     `<meta property="og:image" content="${escapeHtml(image)}" />`,
-    `<meta property="og:image:width" content="1200" />`,
-    `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="${escapeHtml(OG_IMAGE_ALT)}" />`,
+    ...(imageWidth || image.endsWith(DEFAULT_OG_IMAGE) ? [`<meta property="og:image:width" content="${imageWidth ?? 1200}" />`] : []),
+    ...(imageHeight || image.endsWith(DEFAULT_OG_IMAGE) ? [`<meta property="og:image:height" content="${imageHeight ?? 630}" />`] : []),
+    `<meta property="og:image:alt" content="${escapeHtml(imageAlt)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
-    `<meta name="twitter:image:alt" content="${escapeHtml(OG_IMAGE_ALT)}" />`,
+    `<meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}" />`,
   ].join('\n    ')
 
 interface Crumb {
@@ -291,6 +332,20 @@ export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: 
   const image = `${canonicalSiteUrl}${DEFAULT_OG_IMAGE}`
 
   if (route.kind === 'product' && route.productSlug) {
+    const physical = snapshot.physicalCatalog?.find((product) => product.slug === route.productSlug && product.published)
+    if (physical) {
+      const artwork = physical.galleryImages.find((entry) => publicImageUrl(entry.url, canonicalSiteUrl))
+      return {
+        title: `${physical.title} | ${SITE_NAME}`,
+        description: physical.shortDescription.trim() || `Choose your options for ${physical.title}. Delivery availability and charges are confirmed at checkout.`,
+        canonical,
+        ogType: 'product',
+        image: artwork ? publicImageUrl(artwork.url, canonicalSiteUrl)! : image,
+        imageAlt: artwork?.alt.trim() || physical.title,
+        ...(artwork?.width ? { imageWidth: artwork.width } : {}),
+        ...(artwork?.height ? { imageHeight: artwork.height } : {}),
+      }
+    }
     // A /shop slug names either Collection; both carry the same SEO fields.
     const item = getCatalogItemBySlug(snapshot, route.productSlug)
     if (!item) throw new Error(`SEO: no product or bundle found for slug "${route.productSlug}"`)
@@ -298,6 +353,10 @@ export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: 
     const title = record.seo?.title?.trim() || `${record.title} | ${SITE_NAME}`
     const description = record.seo?.description?.trim() || record.shortDescription || DEFAULT_DESCRIPTION
     return { title, description, canonical, ogType: 'product', image }
+  }
+
+  if (route.path === '/shop' && (snapshot.physicalCatalog ?? []).some((product) => product.published)) {
+    return { title: `Shop resources, gifts & keyrings | ${SITE_NAME}`, description: 'Browse digital learning resources, personalised keyrings and gifts. Choose product options and review delivery at checkout.', canonical, ogType: 'website', image }
   }
 
   if (route.kind === 'grade' && route.grade) {
@@ -322,6 +381,13 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
   const jsonLd: unknown[] = []
 
   if (route.kind === 'product' && route.productSlug) {
+    const physical = snapshot.physicalCatalog?.find((product) => product.slug === route.productSlug && product.published)
+    if (physical) {
+      jsonLd.push(physicalProductSchema(physical, meta, canonicalSiteUrl))
+      jsonLd.push(breadcrumbList(canonicalSiteUrl, [
+        { name: 'Home', path: '/' }, { name: 'Shop', path: '/shop' }, { name: physical.title, path: route.path },
+      ]))
+    } else {
     // pageMetaFor already threw if the slug resolves to nothing, so it exists.
     const item = getCatalogItemBySlug(snapshot, route.productSlug)!
     const product = item.kind === 'bundle' ? item.bundle : item.product
@@ -368,6 +434,7 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     )
     const faqs = getFaqsByIds(snapshot, product.faqs)
     if (faqs.length > 0) jsonLd.push(faqPage(faqs))
+    }
   } else if (route.kind === 'grade' && route.grade) {
     const grade = route.grade
     const products = productsForGrade(snapshot, grade).filter((product) => product.published)
@@ -387,7 +454,10 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     }
     if (route.path === '/shop') {
       const products = snapshot.products.filter((product) => product.published)
-      if (products.length > 0) {
+      const physical = (snapshot.physicalCatalog ?? []).filter((product) => product.published)
+      if (physical.length > 0) {
+        jsonLd.push(itemList(canonicalSiteUrl, 'Resources, gifts and keyrings', [...products, ...snapshot.bundles.filter((bundle) => bundle.published), ...physical].map((product) => `/shop/${product.slug}`)))
+      } else if (products.length > 0) {
         jsonLd.push(itemList(canonicalSiteUrl, 'CAPS-aligned resources', products.map((product) => `/shop/${product.slug}`)))
       }
     }

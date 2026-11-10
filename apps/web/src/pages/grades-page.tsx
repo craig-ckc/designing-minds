@@ -1,10 +1,12 @@
-import { type CmsSnapshot, productsForGrade } from '@designing-minds/cms'
+import { productsForGrade } from '@designing-minds/cms'
+import { useCatalogSnapshot } from '../lib/catalog'
 import { Container } from '../components/ui/container'
 import { GradeCard } from '../components/ui/grade-card'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { PageHeader } from '../components/ui/headings'
 
-export function GradesPage({ snapshot }: { snapshot: CmsSnapshot }) {
+export function GradesPage() {
+  const snapshot = useCatalogSnapshot()
   return (
     <>
       <PageHeader

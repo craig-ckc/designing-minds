@@ -2,10 +2,13 @@ import { diagnosticId } from '../../../../packages/utils/src/diagnostics.ts'
 
 export class RequestError extends Error {
   requestId: string
-  constructor(message: string, requestId: string) {
+  /** HTTP status of the response, or null when none arrived (network failure, timeout). */
+  status: number | null
+  constructor(message: string, requestId: string, status: number | null = null) {
     super(message)
     this.name = 'RequestError'
     this.requestId = requestId
+    this.status = status
   }
 }
 
@@ -20,13 +23,13 @@ export async function requestJson<T>(url: string, init: RequestInit, send: typeo
     const response = await send(url, { ...init, headers, signal: init.signal ? AbortSignal.any([init.signal, controller.signal]) : controller.signal })
     requestId = diagnosticId(response.headers.get('x-request-id')) ?? requestId
     const body: unknown = await response.json().catch(() => null)
-    if (response.status === 401) throw new RequestError('Your session has expired. Please sign in again.', requestId)
+    if (response.status === 401) throw new RequestError('Your session has expired. Please sign in again.', requestId, response.status)
     if (!response.ok) {
       const message = response.status < 500 && body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
         ? body.error : 'The service is temporarily unavailable. Please try again shortly.'
-      throw new RequestError(message, requestId)
+      throw new RequestError(message, requestId, response.status)
     }
-    if (!body || typeof body !== 'object') throw new RequestError('The service returned an unexpected response. Please contact support.', requestId)
+    if (!body || typeof body !== 'object') throw new RequestError('The service returned an unexpected response. Please contact support.', requestId, response.status)
     return body as T
   } catch (error) {
     if (error instanceof RequestError) throw error

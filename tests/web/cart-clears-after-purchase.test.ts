@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { createCartSync, type CartServer, type CartStorage } from '../../apps/web/src/lib/cart-sync.ts'
+import { planCartWrite } from '../../apps/web/src/lib/cart-rows.ts'
 
 const read = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')
 
@@ -63,6 +64,16 @@ const MATHS = 'grade-4-mathematics-term-3'
 const HISTORY = 'grade-4-history-term-3'
 const ENGLISH = 'grade-4-english-term-3'
 const BUNDLE = 'grade-4-term-3-summary-bundle'
+
+test('account cart planning inserts a bundle row when the bundle is wanted', () => {
+  const plan = planCartWrite({
+    existing: [],
+    products: [],
+    bundles: [{ id: 'bundle-id', slug: BUNDLE }],
+  })
+
+  assert.deepEqual(plan, { insert: [{ bundleId: 'bundle-id' }], deleteIds: [] })
+})
 
 // --- The regression: clearing on the PayFast return page ------------------
 
@@ -227,9 +238,10 @@ test('the PayFast return page empties the cart and the real store reads ownershi
   const cartSource = read('apps/web/src/lib/cart.ts')
   assert.match(cartSource, /createCartSync\(\{ storage, server \}\)/)
   assert.match(cartSource, /\.from\('orders'\)\.select\('items'\)\.eq\('customerId', customerId\)\.in\('status', \['paid', 'fulfilled'\]\)/)
-  // Bundles share the cart with resources, so the account copy must carry both.
+  // Bundle resolution stays wired into persistence; row construction is covered
+  // behaviorally above by planCartWrite, where that responsibility now lives.
   assert.match(cartSource, /lookup\('catalog_bundles', 'slug', slugs\)/)
-  assert.match(cartSource, /bundleId: bundle\.id/)
+  assert.match(cartSource, /planCartWrite\(\{ existing, products, bundles \}\)/)
   assert.match(cartSource, /select\('productId,bundleId'\)/)
 })
 

@@ -18,6 +18,7 @@ import { FlaskIcon } from '@phosphor-icons/react/dist/ssr/Flask'
 import { FunnelIcon } from '@phosphor-icons/react/dist/ssr/Funnel'
 import { GlobeIcon } from '@phosphor-icons/react/dist/ssr/Globe'
 import { ListIcon } from '@phosphor-icons/react/dist/ssr/List'
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass'
 import { PaletteIcon } from '@phosphor-icons/react/dist/ssr/Palette'
 import { PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple'
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus'
@@ -25,6 +26,7 @@ import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck'
 import { ShoppingCartIcon } from '@phosphor-icons/react/dist/ssr/ShoppingCart'
 import { SmileyIcon } from '@phosphor-icons/react/dist/ssr/Smiley'
 import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle'
+import { SpinnerGapIcon } from '@phosphor-icons/react/dist/ssr/SpinnerGap'
 import { StarIcon } from '@phosphor-icons/react/dist/ssr/Star'
 import { TrashIcon } from '@phosphor-icons/react/dist/ssr/Trash'
 import { TrendUpIcon } from '@phosphor-icons/react/dist/ssr/TrendUp'
@@ -58,6 +60,8 @@ export type IconName =
   | 'phone'
   | 'mail'
   | 'pin'
+  | 'search'
+  | 'spinner'
 
 const icons: Record<IconName, ComponentType<IconProps>> = {
   check: CheckIcon,
@@ -86,11 +90,13 @@ const icons: Record<IconName, ComponentType<IconProps>> = {
   phone: PhoneIcon,
   mail: EnvelopeSimpleIcon,
   pin: MapPinIcon,
+  search: MagnifyingGlassIcon,
+  spinner: SpinnerGapIcon,
 }
 
 // Functional UI glyphs read best as simple single-stroke lines; everything else
 // keeps Phosphor's richer duotone. An explicit `weight` prop overrides both.
-const LINE_ICONS = new Set<IconName>(['arrow', 'plus', 'check', 'chevron', 'close', 'menu', 'filter', 'download', 'trash'])
+const LINE_ICONS = new Set<IconName>(['arrow', 'plus', 'check', 'chevron', 'close', 'menu', 'filter', 'download', 'trash', 'search', 'spinner'])
 
 /**
  * Themeable Icon. Picks up `currentColor` from the surrounding text. Defaults to

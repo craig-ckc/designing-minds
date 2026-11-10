@@ -7,8 +7,9 @@ const TONE: Record<OrderStatus, 'solid' | 'outline' | 'neutral'> = {
   pending: 'outline',
   failed: 'neutral',
   refunded: 'neutral',
+  payment_review: 'outline',
 }
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  return <Badge tone={TONE[status]}>{status}</Badge>
+  return <Badge tone={TONE[status]}>{status === 'payment_review' ? 'Payment under review' : status}</Badge>
 }

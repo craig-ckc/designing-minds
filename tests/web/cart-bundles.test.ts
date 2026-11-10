@@ -1,57 +1,15 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import type { Bundle, CmsSnapshot, Product } from '../../packages/cms/src/types.ts'
+import type { Bundle, Product } from '../../packages/cms/src/types.ts'
+import { makeBundle, makeProduct, makeSnapshot } from '../support/fixtures.ts'
 import { resolveCartItems } from '../../packages/cms/src/lib/formatters.ts'
 
-const product = (overrides: Partial<Product> & Pick<Product, 'slug'>): Product => ({
-  id: overrides.slug,
-  title: overrides.slug,
-  shortDescription: '',
-  fullDescription: '',
-  priceZar: 100,
-  grade: 'Grade 4',
-  term: 'Term 3',
-  year: '2026',
-  resourceFormat: 'Test / Assessment',
-  subjects: ['Mathematics'],
-  marks: null,
-  purchasedFiles: [],
-  galleryImages: [],
-  previewPdfs: [],
-  featured: false,
-  published: true,
-  sortOrder: 0,
-  seo: { title: '', description: '' },
-  faqs: [],
-  updatedAt: '2026-01-01',
-  ...overrides,
-})
+const product = (overrides: Partial<Product> & Pick<Product, 'slug'>) => makeProduct({ priceZar: 100, grade: 'Grade 4', term: 'Term 3', ...overrides })
 
-const bundle = (overrides: Partial<Bundle> & Pick<Bundle, 'slug'>): Bundle => ({
-  id: overrides.slug,
-  title: overrides.slug,
-  shortDescription: '',
-  fullDescription: '',
-  priceZar: 350,
-  grade: 'Grade 4',
-  term: 'Term 3',
-  year: '2026',
-  bundleScope: 'Term',
-  galleryImages: [],
-  previewPdfs: [],
-  featured: false,
-  published: true,
-  sortOrder: 0,
-  seo: { title: '', description: '' },
-  faqs: [],
-  updatedAt: '2026-01-01',
-  includedProductIds: [],
-  includedProductSlugs: [],
-  ...overrides,
-})
+const bundle = (overrides: Partial<Bundle> & Pick<Bundle, 'slug'>) => makeBundle({ priceZar: 350, grade: 'Grade 4', term: 'Term 3', ...overrides })
 
-const snapshot = (products: Product[], bundles: Bundle[] = []) => ({ products, bundles }) as CmsSnapshot
+const snapshot = (products: Product[], bundles: Bundle[] = []) => makeSnapshot({ products, bundles })
 
 const read = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')
 

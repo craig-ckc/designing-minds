@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { apiUrl } from '../../lib/api'
+import { submitForm } from '../../lib/forms'
 import { Button } from './button'
 
 type Status = 'idle' | 'submitting' | 'sent' | 'error'
@@ -17,15 +18,7 @@ export function NewsletterForm({ compact, source = 'website' }: { compact?: bool
     setStatus('submitting')
     setError(null)
     try {
-      const response = await fetch(apiUrl('/api/forms'), {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ form: 'newsletter', fields: { email, source }, website: honeypot }),
-      })
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null
-        throw new Error(data?.error ?? 'Something went wrong. Please try again.')
-      }
+      await submitForm('newsletter', { email, source }, honeypot)
       setStatus('sent')
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Something went wrong. Please try again.')

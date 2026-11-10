@@ -1,6 +1,6 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { publishedBundles, type Bundle, type CmsSnapshot } from '@designing-minds/cms'
+import { publishedBundles, type Bundle } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Card } from '../components/ui/card'
@@ -8,6 +8,7 @@ import { BundleCard } from '../components/ui/bundle-card'
 import { PageHeader } from '../components/ui/headings'
 import { LoadMoreButton } from '../components/ui/load-more-button'
 import { ChipGroup, FilterDrawer, FilterTrigger } from '../components/ui/filter-drawer'
+import { useCatalogSnapshot } from '../lib/catalog'
 import { clearQueryValues, readQueryList, setQueryValue, toggleQueryValue } from '../lib/filter-query'
 import { CATALOG_INITIAL_LIMIT, useCatalogLoadMore } from '../lib/deferred-catalog'
 import { CatalogSortControl } from '../components/ui/catalog-sort-control'
@@ -29,7 +30,8 @@ const matchesOffer = (bundle: Bundle, offer: string) => {
   }
 }
 
-export function PackagesPage({ snapshot }: { snapshot: CmsSnapshot }) {
+export function PackagesPage() {
+  const snapshot = useCatalogSnapshot()
   const [searchParams, setSearchParams] = useSearchParams()
   const packages = useMemo(() => publishedBundles(snapshot), [snapshot])
 

@@ -5,6 +5,7 @@ import { StaticRouter } from 'react-router'
 import type { CmsSnapshot } from '@designing-minds/cms'
 import App from './app.tsx'
 import { AuthProvider } from './lib/auth.tsx'
+import { CatalogProvider } from './lib/catalog.tsx'
 
 /* -------------------------------------------------------------------------
    Server render entry for the prerender build.
@@ -20,9 +21,11 @@ export function render({ url, snapshot }: { url: string; snapshot: CmsSnapshot }
   const appHtml = renderToString(
     <StrictMode>
       <StaticRouter location={url}>
-        <AuthProvider>
-          <App initialSnapshot={snapshot} />
-        </AuthProvider>
+        <CatalogProvider initialSnapshot={snapshot}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </CatalogProvider>
       </StaticRouter>
     </StrictMode>,
   )

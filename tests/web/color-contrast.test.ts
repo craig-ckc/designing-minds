@@ -53,7 +53,8 @@ test('vivid primary accents meet the 3:1 non-text contrast minimum', () => {
 })
 
 test('marketing bands retain the requested bright logo pink with solid white text', () => {
-  assert.match(read('components/layout/navbar.tsx'), /block bg-primary text-on-primary transition-colors/)
+  // The promo bar's small white text uses the deep pink (AA); see navbar-render.test.ts.
+  assert.match(read('components/layout/navbar/announcement-bar.tsx'), /block bg-primary-deep text-on-primary transition-colors/)
   assert.match(read('components/sections/cta-banner.tsx'), /brand: 'bg-primary text-on-primary'/)
   assert.equal(token('on-primary').toLowerCase(), '#ffffff')
   for (const path of ['components/ui/pill.tsx', 'components/ui/card.tsx']) {
@@ -62,7 +63,7 @@ test('marketing bands retain the requested bright logo pink with solid white tex
 })
 
 test('text on primary surfaces and product-cover labels do not reduce contrast with opacity', () => {
-  const navbar = read('components/layout/navbar.tsx')
+  const navbar = ['announcement-bar', 'bundle-tier-card', 'account-actions'].map((name) => read(`components/layout/navbar/${name}.tsx`)).join('\n')
   const bundlePricing = read('components/sections/bundle-pricing-section.tsx')
   const ctaBanner = read('components/sections/cta-banner.tsx')
   const button = read('components/ui/button.tsx')

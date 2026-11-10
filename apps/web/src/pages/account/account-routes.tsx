@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
-import type { CmsSnapshot } from '@designing-minds/cms'
 import { Button } from '../../components/ui/button'
 import { StatePanel } from '../../components/ui/state-panel'
 import { useAuth } from '../../lib/auth'
-import { loadCustomerAccount, type CustomerAccountData } from '../../lib/customer-account'
-import { supabase } from '../../lib/supabase'
+import { useCatalogSnapshot } from '../../lib/catalog'
+import type { CustomerAccountData } from '../../lib/customer-account'
+import { loadSignedInAccount } from '../../lib/account-data'
 import { NotFoundPage } from '../not-found-page'
 import { AccountPage } from './account-page'
 import { SignedOut } from './account-shell'
@@ -19,7 +19,8 @@ interface AccountResult {
 }
 
 /** Mounted only under /account, never while a customer browses public pages. */
-export function AccountRoutes({ snapshot }: { snapshot: CmsSnapshot }) {
+export function AccountRoutes() {
+  const snapshot = useCatalogSnapshot()
   const { customer, loading } = useAuth()
   const customerId = customer?.id
   const [result, setResult] = useState<AccountResult | null>(null)
@@ -28,10 +29,7 @@ export function AccountRoutes({ snapshot }: { snapshot: CmsSnapshot }) {
   const refresh = useCallback(() => {
     const version = ++requestVersion.current
     if (!customerId) return Promise.resolve()
-    const request = supabase
-      ? loadCustomerAccount(supabase, customerId)
-      : Promise.reject(new Error('Account access is not configured.'))
-    return request.then((data) => {
+    return loadSignedInAccount(customerId).then((data) => {
       if (version === requestVersion.current) setResult({ customerId, data })
     }).catch((error: unknown) => {
       if (version === requestVersion.current) {

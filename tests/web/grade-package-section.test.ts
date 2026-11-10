@@ -5,7 +5,8 @@ import { createElement, type ComponentType } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router-dom'
 import { createServer, type ViteDevServer } from 'vite'
-import type { Bundle, CmsSnapshot, Product } from '../../packages/cms/src/types.ts'
+import type { Bundle, CmsSnapshot } from '../../packages/cms/src/types.ts'
+import { makeProduct } from '../support/fixtures.ts'
 
 let server: ViteDevServer
 let GradePackageSection: ComponentType<{ snapshot: CmsSnapshot; grade: string }>
@@ -16,7 +17,7 @@ before(async () => {
 })
 after(async () => { await server?.close() })
 
-const product = { id: 'english', slug: 'english', title: 'Grade 3 English test', grade: 'Grade 3', subjects: ['English'], priceZar: 250, purchasedFiles: [], published: true, sortOrder: 0 } as Product
+const product = makeProduct({ slug: 'english', title: 'Grade 3 English test', subjects: ['English'], priceZar: 250 })
 const bundle = (id: string, overrides: Partial<Bundle> = {}) => ({
   id, slug: id, title: `Grade 3 ${id} bundle`, grade: 'Grade 3', term: 'Term 4', priceZar: 200,
   shortDescription: 'Tests with memorandums, ready to print.', published: true, sortOrder: 0,

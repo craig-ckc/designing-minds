@@ -9,7 +9,8 @@ import type { CmsSnapshot, Product } from '../../packages/cms/src/types.ts'
 import type * as HeroHelpers from '../../apps/web/src/lib/hero-demo.ts'
 
 let server: ViteDevServer
-let HeroDemoPage: ComponentType<{ snapshot: CmsSnapshot | null }>
+let HeroDemoPage: ComponentType
+let CatalogContext: typeof import('../../apps/web/src/lib/catalog.tsx').CatalogContext
 let helpers: typeof HeroHelpers
 let routes: typeof import('../../apps/web/src/static-routes.ts')
 
@@ -17,13 +18,16 @@ before(async () => {
   server = await createServer({ configFile: false, root: fileURLToPath(new URL('../../apps/web', import.meta.url)),
     server: { middlewareMode: true }, appType: 'custom', ssr: { noExternal: ['@designing-minds/cms', '@designing-minds/utils'] } })
   ;({ default: HeroDemoPage } = await server.ssrLoadModule('/src/pages/hero-demo-page.tsx'))
-  helpers = await server.ssrLoadModule('/src/lib/hero-demo.ts')
-  routes = await server.ssrLoadModule('/src/static-routes.ts')
+  ;({ CatalogContext } = await server.ssrLoadModule('/src/lib/catalog.tsx'))
+  helpers = (await server.ssrLoadModule('/src/lib/hero-demo.ts')) as typeof HeroHelpers
+  routes = (await server.ssrLoadModule('/src/static-routes.ts')) as typeof routes
 })
 after(async () => { await server?.close() })
 
 const render = (query = '', snapshot: CmsSnapshot | null = null) => renderToStaticMarkup(
-  createElement(MemoryRouter, { initialEntries: [`/hero-demo${query}`] }, createElement(HeroDemoPage, { snapshot })),
+  createElement(CatalogContext.Provider, {
+    value: { state: { snapshot, status: snapshot ? 'ready' : 'loading', error: null }, actions: { retry: () => {} }, meta: { now: Date.UTC(2026, 0, 1) } },
+  }, createElement(MemoryRouter, { initialEntries: [`/hero-demo${query}`] }, createElement(HeroDemoPage))),
 )
 const resource = (id: string, overrides: Partial<Product> = {}) => ({
   id, slug: id, title: `Grade 4 ${id}`, grade: 'Grade 4', term: 'Term 1', subjects: [id], published: true, sortOrder: 0, ...overrides,

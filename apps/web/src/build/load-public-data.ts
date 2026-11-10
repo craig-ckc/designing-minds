@@ -1,4 +1,5 @@
 import { createCmsRepository, toPublicSnapshot, type CmsSnapshot, type SlugRedirect } from '@designing-minds/cms'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /* -------------------------------------------------------------------------
    Build-time data fetch.
@@ -17,10 +18,12 @@ export interface PublicBuildData {
 export interface LoadOptions {
   supabaseUrl?: string
   supabasePublishableKey?: string
+  /** Development reuses the browser auth client instead of opening another session manager. */
+  supabaseClient?: SupabaseClient
 }
 
-export async function loadPublicBuildData({ supabaseUrl, supabasePublishableKey }: LoadOptions): Promise<PublicBuildData> {
-  const repository = createCmsRepository({ supabaseUrl, supabasePublishableKey, audience: 'public' })
+export async function loadPublicBuildData({ supabaseUrl, supabasePublishableKey, supabaseClient }: LoadOptions): Promise<PublicBuildData> {
+  const repository = createCmsRepository({ supabaseUrl, supabasePublishableKey, supabaseClient, audience: 'public' })
   const [full, redirects] = await Promise.all([repository.getSnapshot(), repository.getSlugRedirects()])
   return { snapshot: toPublicSnapshot(full), redirects }
 }

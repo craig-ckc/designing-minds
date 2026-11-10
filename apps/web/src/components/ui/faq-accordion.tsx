@@ -1,6 +1,6 @@
 import { Accordion } from '@base-ui/react/accordion'
 import type { Faq } from '@designing-minds/cms'
-import { Icon } from './icon'
+import { PlusMarker } from './disclosure'
 
 /**
  * FAQ list as an accessible Base UI accordion. Deliberately flat: hairline
@@ -17,8 +17,8 @@ export function FaqAccordion({ faqs, keepMounted = false }: { faqs: Faq[]; keepM
         <Accordion.Item key={faq.id} value={faq.id} className="border-b border-line">
           <Accordion.Header className="m-0">
             <Accordion.Trigger className="group flex w-full items-start gap-3 py-4 text-left">
-              <span className="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full bg-current/15 text-primary transition-[transform,color] duration-200 group-data-[panel-open]:rotate-45 group-data-[panel-open]:text-ink">
-                <Icon name="plus" size={16} weight={'bold'} />
+              <span className="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full bg-current/15 text-primary transition-colors duration-200 group-data-[panel-open]:text-ink">
+                <PlusMarker className="duration-200" weight="bold" />
               </span>
               <span className="flex-1 text-body-lg font-semibold leading-snug text-ink transition-colors group-hover:text-primary-ink">
                 {faq.question}

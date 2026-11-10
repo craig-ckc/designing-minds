@@ -8,8 +8,9 @@ import { createServer, type ViteDevServer } from 'vite'
 import type { Bundle, CmsSnapshot, Product, ProductImage } from '../../packages/cms/src/types.ts'
 
 let server: ViteDevServer
-let ProductPage: ComponentType<{ snapshot: CmsSnapshot }>
+let ProductPage: ComponentType
 let ProductGallery: ComponentType<{ item: Product; images: ProductImage[]; stacked?: boolean }>
+let CatalogContext: typeof import('../../apps/web/src/lib/catalog.tsx').CatalogContext
 
 before(async () => {
   server = await createServer({
@@ -20,6 +21,7 @@ before(async () => {
   })
   ;({ ProductPage } = await server.ssrLoadModule('/src/pages/product-page.tsx'))
   ;({ ProductGallery } = await server.ssrLoadModule('/src/components/ui/product-gallery.tsx'))
+  ;({ CatalogContext } = await server.ssrLoadModule('/src/lib/catalog.tsx'))
 })
 after(async () => { await server?.close() })
 
@@ -43,11 +45,13 @@ const snapshot = (resource = product, pack = bundle) => ({
   faqs: [{ id: 'download', question: 'Where do I download?', answer: 'Open Order Detail after payment.', published: true }],
 }) as CmsSnapshot
 const renderPage = (slug: string, data = snapshot()) => renderToStaticMarkup(
-  createElement(MemoryRouter, { initialEntries: [`/shop/${slug}`] },
+  createElement(CatalogContext.Provider, {
+    value: { state: { snapshot: data, status: 'ready', error: null }, actions: { retry: () => {} }, meta: { now: Date.UTC(2026, 0, 1) } },
+  }, createElement(MemoryRouter, { initialEntries: [`/shop/${slug}`] },
     createElement(Routes, null,
-      createElement(Route, { path: '/shop/:slug', element: createElement(ProductPage, { snapshot: data }) }),
+      createElement(Route, { path: '/shop/:slug', element: createElement(ProductPage) }),
     ),
-  ),
+  )),
 ).replace(/\u00a0/g, ' ')
 
 test('both detail views put purchase controls ahead of the collapsible information in a full-width layout', () => {

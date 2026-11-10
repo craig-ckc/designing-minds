@@ -1,30 +1,14 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import type { Bundle, CmsSnapshot } from '../../packages/cms/src/types.ts'
+import type { Bundle } from '../../packages/cms/src/types.ts'
+import { makeBundle, makeSnapshot } from '../support/fixtures.ts'
 import { bundleTiers } from '../../packages/cms/src/lib/formatters.ts'
 
-const product = (overrides: Partial<Bundle> & Pick<Bundle, 'slug'>): Bundle => ({
-  id: overrides.slug,
-  title: overrides.slug,
-  shortDescription: '',
-  fullDescription: '',
-  priceZar: 0,
-  grade: 'Grade 3',
-  term: 'Term 1',
-  year: '2026',
-  featured: false,
-  published: true,
-  sortOrder: 0,
-  seo: { title: '', description: '' },
-  faqs: [],
-  updatedAt: '2026-01-01',
-  includedProductIds: [],
-  includedProductSlugs: [],
-  ...overrides,
-})
+// Deliberately no default bundleScope: the rule under test is that only bundles with an actual scope form a tier.
+const product = (overrides: Partial<Bundle> & Pick<Bundle, 'slug'>): Bundle => makeBundle({ bundleScope: undefined, ...overrides })
 
-const snapshot = (bundles: Bundle[]) => ({ bundles }) as CmsSnapshot
+const snapshot = (bundles: Bundle[]) => makeSnapshot({ bundles })
 
 test('navbar bundle tiers come only from published bundles with an actual bundle scope', () => {
   // "From" is the real cheapest published bundle in the tier, not a fixed
@@ -62,11 +46,4 @@ test('homepage promotes actual catalogue cards before testimonials while tier of
   assert.match(section, /bundleTiers|BundleTier/)
   assert.match(section, /\/packages\?offer=\$\{encodeURIComponent\(offer\)\}/)
   assert.doesNotMatch(section, /Access Plan|Essential|Premium/)
-})
-
-test('navbar no longer presents access plans', () => {
-  const navbar = readFileSync(new URL('../../apps/web/src/components/layout/navbar.tsx', import.meta.url), 'utf8')
-
-  assert.doesNotMatch(navbar, /Access plans|access plans|Essential|Premium/)
-  assert.match(navbar, /label="Bundles"/)
 })

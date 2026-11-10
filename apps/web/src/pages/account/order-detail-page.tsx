@@ -17,9 +17,12 @@ import { Notice } from '../../components/ui/notice'
 import { StatePanel } from '../../components/ui/state-panel'
 import { useAuth } from '../../lib/auth'
 import { apiUrl } from '../../lib/api'
-import { supabase } from '../../lib/supabase'
+import { fetchOrderStatus } from '../../lib/account-data'
+import { commerceFieldLabel } from '../../lib/commerce-label'
+import { consumePurchasedPhysicalCart } from '../../lib/physical-cart'
 import { AccountShell, SignedOut } from './account-shell'
 import { OrderStatusBadge } from './order-status-badge'
+import { OrderRecoveryNotice } from './order-recovery-notice'
 
 /**
  * The resources an order line entitles you to download.
@@ -30,6 +33,7 @@ import { OrderStatusBadge } from './order-status-badge'
  * construction — both mean "is it in includedProductSlugs".
  */
 const downloadProductsForItem = (snapshot: CmsSnapshot, item: OrderItem) => {
+  if (item.productType === 'physical' || item.productKind === 'Physical') return []
   const product = getProductBySlug(snapshot, item.productSlug)
   if (product) return [product]
   const bundle = getBundleBySlug(snapshot, item.productSlug)
@@ -41,29 +45,28 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const { orderId } = useParams()
   const order = orderId ? getOrderById(snapshot, orderId) : undefined
+  const orderStatus = order?.status
   const isDownloadable = order?.status === 'paid' || order?.status === 'fulfilled'
+  useEffect(() => {
+    if (order && isDownloadable) consumePurchasedPhysicalCart(order.id, order.items)
+  }, [order, isDownloadable])
 
   // While an order is still pending, poll only its status (cheap) rather than
   // refetching account records; refresh those once it flips to a downloadable
   // state so the files appear, then stop. The catalogue remains static.
   useEffect(() => {
-    if (!customer || !orderId || isDownloadable) return
+    if (!customer || !orderId || (orderStatus && orderStatus !== 'pending')) return
     let attempts = 0
     const interval = window.setInterval(() => {
       attempts += 1
       void (async () => {
-        if (supabase) {
-          const { data } = await supabase.from('orders').select('status').eq('id', orderId).maybeSingle()
-          const status = (data as { status?: string } | null)?.status
-          if (status === 'paid' || status === 'fulfilled') await onRefresh()
-        } else {
-          await onRefresh()
-        }
+        const status = await fetchOrderStatus(orderId).catch(() => null)
+        if (status && status !== 'pending') await onRefresh()
       })()
       if (attempts >= 20) window.clearInterval(interval)
     }, 3000)
     return () => window.clearInterval(interval)
-  }, [customer, onRefresh, isDownloadable, orderId])
+  }, [customer, onRefresh, orderStatus, orderId])
 
   if (!customer) {
     return <SignedOut />
@@ -83,6 +86,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
 
   const payment = paymentForOrder(snapshot, order)
   const downloadable = order.status === 'paid' || order.status === 'fulfilled'
+  const hasDigital = order.items.some((item) => item.productType !== 'physical' && item.productKind !== 'Physical')
 
   const download = async (fileId: string) => {
     setDownloadError(null)
@@ -114,6 +118,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
   return (
     <AccountShell title={`Order ${order.reference}`}>
       <div className="grid gap-8">
+        <OrderRecoveryNotice status={order.status} />
         {/* Receipt summary */}
         <Card variant="surface" pad="md" className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -131,16 +136,25 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
               <Row label="Subtotal" value={priceLabel(order.subtotalZar ?? order.totalZar + (order.discountZar ?? 0))} />
               <Row label={`Discount (${order.couponCode})`} value={`−${priceLabel(order.discountZar ?? 0)}`} />
             </> : null}
+            {order.hasPhysical ? <Row label={order.shippingMethod ?? 'Delivery'} value={priceLabel(order.shippingZar ?? 0)} /> : null}
             <Row label="Total" value={priceLabel(order.totalZar)} strong />
           </div>
         </Card>
 
+        {order.hasPhysical ? <Card variant="surface" pad="md" className="grid gap-4">
+          <h2>Delivery and fulfilment</h2>
+          {order.status === 'payment_review' ? <Notice tone="info">Payment was received, but this order needs a stock review. We will confirm fulfilment before dispatch.{hasDigital ? ' Downloads remain locked while the order is under review.' : ''}</Notice> : <p className="text-body-sm text-ink-soft">{order.status === 'failed' ? 'Payment was not completed. No physical products will be dispatched.' : order.status === 'refunded' ? 'This order has been refunded.' : order.status === 'pending' ? 'Physical products will be prepared after payment succeeds.' : order.fulfillmentStatus === 'delivered' ? 'Delivered' : order.fulfillmentStatus === 'shipped' ? 'Your physical products have shipped.' : 'Your physical products are awaiting fulfilment.'}</p>}
+          {order.delivery ? <address className="text-body-sm not-italic text-ink-soft">{order.delivery.recipientName}<br />{order.delivery.addressLine1}<br />{order.delivery.addressLine2 ? <>{order.delivery.addressLine2}<br /></> : null}{order.delivery.suburb}, {order.delivery.city}<br />{order.delivery.province} {order.delivery.postalCode}<br />{order.delivery.phone}</address> : null}
+          {order.trackingNumber ? <Row label="Tracking number" value={order.trackingNumber} /> : null}
+          {order.trackingUrl && safeTrackingUrl(order.trackingUrl, snapshot.localCommercePreview) ? <a className="text-body-sm font-semibold underline" href={order.trackingUrl} target="_blank" rel="noreferrer">Track your delivery</a> : null}
+        </Card> : null}
+
         {/* Purchased items + downloads */}
         <div>
-          <h2 className="mb-4">Purchased items</h2>
-          {!downloadable ? (
+          <h2 className="mb-4">Order items</h2>
+          {hasDigital && !downloadable ? (
             <Notice tone="info" className="mb-4">
-              Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.
+              {order.status === 'payment_review' ? 'Your payment is under review. Downloads will unlock after your order is confirmed.' : <>Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.</>}
             </Notice>
           ) : null}
           {downloadError ? <Notice tone="error" className="mb-4">{downloadError}</Notice> : null}
@@ -156,6 +170,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                         <Link to={`/shop/${item.productSlug}`} className="font-semibold hover:text-primary-ink">
                           {item.title}
                         </Link>
+                        {item.productType === 'physical' ? <div className="mt-2 grid gap-1 text-body-sm text-ink-soft"><p>Quantity {item.quantity ?? 1}{item.unitPriceZar != null ? ` × ${priceLabel(item.unitPriceZar)}` : ''}</p>{Object.entries({ ...item.optionValues, ...item.customizations }).map(([key, value]) => <p key={key} className="break-words">{commerceFieldLabel(key, snapshot.physicalCatalog?.find((product) => product.slug === item.productSlug))}: <strong>{value}</strong></p>)}</div> : null}
                         <span className="mt-1.5 inline-flex rounded-pill bg-surface-sunk px-2.5 py-0.5 text-caption font-semibold uppercase tracking-wide text-muted">
                           {item.productKind}
                         </span>
@@ -184,7 +199,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                       </ul>
                     ) : (
                       <p className="mt-3 border-t border-line pt-3 text-label text-muted">
-                        Files for bundles resolve from their included resources.
+                        {item.productType === 'physical' ? physicalDeliveryMessage(order.status, order.fulfillmentStatus) : 'Files for bundles resolve from their included resources.'}
                       </p>
                     )}
                   </Card>
@@ -195,7 +210,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
         </div>
 
         <p className="text-body-sm text-muted">
-          Problem with a download?{' '}
+          {hasDigital ? 'Problem with a download?' : 'Question about your order?'}{' '}
           <Link to="/contact" className="text-ink underline underline-offset-4">
             Contact support
           </Link>
@@ -213,4 +228,18 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
       <span className={strong ? 'font-semibold' : ''}>{value}</span>
     </div>
   )
+}
+
+function safeTrackingUrl(value: string, localPreview = false): boolean {
+  try { const url = new URL(value); return url.protocol === 'https:' || (localPreview && url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) } catch { return false }
+}
+
+function physicalDeliveryMessage(status: string, fulfillment?: string): string {
+  if (status === 'failed') return 'Payment was not completed. This item will not be dispatched.'
+  if (status === 'refunded') return 'This item is part of a refunded order.'
+  if (status === 'payment_review') return 'Delivery for this item is awaiting a stock review.'
+  if (status === 'pending') return 'This item will be prepared after payment succeeds.'
+  if (fulfillment === 'delivered') return 'This item has been delivered.'
+  if (fulfillment === 'shipped') return 'This item has been dispatched.'
+  return 'This item will be delivered. It has no downloadable files.'
 }

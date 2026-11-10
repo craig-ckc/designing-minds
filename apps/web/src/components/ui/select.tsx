@@ -14,13 +14,29 @@ export interface SelectOption {
   label: string
 }
 
+type SelectValueProps = {
+  /** Controlled value. Pair with `onValueChange`. */
+  value?: string
+  /** Uncontrolled initial value. */
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+  /** @deprecated Use `onValueChange`; kept so existing call sites compile. */
+  onChange?: (value: string) => void
+}
+
+function notifier({ onValueChange, onChange }: Pick<SelectValueProps, 'onValueChange' | 'onChange'>) {
+  return (next: string | null) => {
+    if (next === null) return
+    onValueChange?.(next)
+    onChange?.(next)
+  }
+}
+
 /** Shared themed control and popup, also used without a visible field label in toolbars. */
-export function SelectControl({ label, name, value, options, onChange, compact = false, align = 'start', className }: {
+export function SelectControl({ label, name, value, defaultValue, options, onValueChange, onChange, compact = false, align = 'start', className }: SelectValueProps & {
   label: string
   name?: string
-  value: string
   options: readonly SelectOption[]
-  onChange: (value: string) => void
   compact?: boolean
   align?: 'start' | 'end'
   className?: string
@@ -29,8 +45,9 @@ export function SelectControl({ label, name, value, options, onChange, compact =
     <BaseSelect.Root
       name={name}
       value={value}
+      defaultValue={defaultValue}
       items={options}
-      onValueChange={(next) => { if (next !== null) onChange(next) }}
+      onValueChange={notifier({ onValueChange, onChange })}
       inputRef={disableHiddenInputHitTarget}
     >
       <BaseSelect.Trigger
@@ -62,18 +79,26 @@ export function SelectControl({ label, name, value, options, onChange, compact =
   )
 }
 
-/** Labelled form/filter select. The optional name preserves native form posting. */
-export function Select({ label, name, value, options, onChange, compact = false }: {
+/** Labelled form/filter select. The optional name preserves native form posting.
+ *  `options` may be plain strings or `{ value, label }` pairs. */
+export function Select({ label, name, value, defaultValue, options, onValueChange, onChange, compact = false }: SelectValueProps & {
   label: string
   name?: string
-  value: string
-  options: string[]
-  onChange: (value: string) => void
+  options: readonly (string | SelectOption)[]
   compact?: boolean
 }) {
   return (
     <Field label={label}>
-      <SelectControl label={label} name={name} value={value} options={options.map((option) => ({ value: option, label: option }))} onChange={onChange} compact={compact} />
+      <SelectControl
+        label={label}
+        name={name}
+        value={value}
+        defaultValue={defaultValue}
+        options={options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option))}
+        onValueChange={onValueChange}
+        onChange={onChange}
+        compact={compact}
+      />
     </Field>
   )
 }

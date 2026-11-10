@@ -28,8 +28,12 @@ import { IncludedProduct } from '../components/ui/included-product'
 import { ProductCard } from '../components/ui/product-card'
 import { BundleCard } from '../components/ui/bundle-card'
 import { ProductGallery } from '../components/ui/product-gallery'
+import { MobileProductPreview } from '../components/ui/mobile-product-preview'
+import { PhysicalProductDetail } from '../components/physical-product-detail'
+import { RelatedPhysicalProducts } from '../components/related-physical-products'
 import { SpecRow } from '../components/ui/spec-row'
 import { addCartSlug } from '../lib/cart'
+import { useCatalogSnapshot } from '../lib/catalog'
 import { Markdown } from '../lib/markdown'
 import { NotFoundPage } from './not-found-page'
 
@@ -40,10 +44,18 @@ import { NotFoundPage } from './not-found-page'
  * rather than braided together with conditionals, because past the shared
  * chrome they genuinely show different things.
  */
-export function ProductPage({ snapshot }: { snapshot: CmsSnapshot }) {
+export function ProductPage() {
+  const snapshot = useCatalogSnapshot()
   const { slug } = useParams()
+  const physical = snapshot.physicalCatalog?.find((product) => product.slug === slug)
   const item = slug ? getCatalogItemBySlug(snapshot, slug) : undefined
 
+  if (physical) return (
+    <>
+      <PhysicalProductDetail key={physical.id} product={physical} />
+      <RelatedPhysicalProducts product={physical} catalog={snapshot.physicalCatalog ?? []} />
+    </>
+  )
   if (!item) return <NotFoundPage />
   if (item.kind === 'bundle') {
     return item.bundle.published ? <BundleDetail bundle={item.bundle} snapshot={snapshot} /> : <NotFoundPage />
@@ -161,19 +173,22 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
               min-content, so one non-wrapping row inside a column could widen
               the whole page instead of wrapping or scrolling within it. */}
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
-            <div className="min-w-0 lg:sticky lg:top-[var(--sticky-offset)]">
+            <div id="product-preview" tabIndex={-1} className="min-w-0 scroll-mt-[var(--sticky-offset)] lg:sticky lg:top-[var(--sticky-offset)]">
               <ProductGallery item={product} images={product.galleryImages ?? []} />
             </div>
 
             <aside className="order-first grid min-w-0 gap-4 rounded-card border border-line p-5 sm:p-6 lg:order-none lg:p-7">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="neutral">{product.resourceFormat}</Badge>
-                <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
-                  {product.grade} · {product.term}
-                </span>
+              <div className="flow-root">
+                <MobileProductPreview item={product} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="neutral">{product.resourceFormat}</Badge>
+                  <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
+                    {product.grade} · {product.term}
+                  </span>
+                </div>
+                <h1 className="text-2xl mt-3 font-bold leading-snug tracking-[-0.02em]">{product.title}</h1>
+                {product.shortDescription.trim() ? <p className="mt-3 text-sm leading-relaxed text-ink-soft">{product.shortDescription}</p> : null}
               </div>
-              <h1 className="text-2xl font-bold leading-snug tracking-[-0.02em]">{product.title}</h1>
-              {product.shortDescription.trim() ? <p className="text-sm leading-relaxed text-ink-soft">{product.shortDescription}</p> : null}
               <div className="text-[1.75rem] font-semibold leading-snug tracking-[-0.03em]"><CatalogPrice record={product} /></div>
               <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(product.slug)}>
                 <Icon name="cart" size={16} />
@@ -278,7 +293,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
           />
 
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
-            <div className="min-w-0 lg:sticky lg:top-[var(--sticky-offset)]">
+            <div id="product-preview" tabIndex={-1} className="min-w-0 scroll-mt-[var(--sticky-offset)] lg:sticky lg:top-[var(--sticky-offset)]">
               <ProductGallery
                 item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
                 images={bundle.galleryImages ?? []}
@@ -287,14 +302,17 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
             </div>
 
             <aside className="order-first grid min-w-0 gap-4 rounded-card border border-line p-5 sm:p-6 lg:order-none lg:p-7">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="solid">Bundle</Badge>
-                <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
-                  {bundle.grade} · {bundle.term}
-                </span>
+              <div className="flow-root">
+                <MobileProductPreview item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }} stacked />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="solid">Bundle</Badge>
+                  <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
+                    {bundle.grade} · {bundle.term}
+                  </span>
+                </div>
+                <h1 className="text-2xl mt-3 font-bold leading-snug tracking-[-0.02em]">{bundle.title}</h1>
+                {bundle.shortDescription.trim() ? <p className="mt-3 text-sm leading-relaxed text-ink-soft">{bundle.shortDescription}</p> : null}
               </div>
-              <h1 className="text-2xl font-bold leading-snug tracking-[-0.02em]">{bundle.title}</h1>
-              {bundle.shortDescription.trim() ? <p className="text-sm leading-relaxed text-ink-soft">{bundle.shortDescription}</p> : null}
               <div className="text-[1.75rem] font-semibold leading-snug tracking-[-0.03em]"><CatalogPrice record={bundle} compareAtPriceZar={value?.singlesTotalZar} /></div>
               <Button type="button" variant="solid" className="w-full" onClick={() => addCartSlug(bundle.slug)}>
                 <Icon name="cart" size={16} />

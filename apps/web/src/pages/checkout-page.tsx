@@ -1,17 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Checkbox } from '@base-ui/react/checkbox'
-import { type CmsSnapshot, priceLabel, promotionPrice, resolveCartItems } from '@designing-minds/cms'
+import { priceLabel, promotionPrice, resolveCartItems } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
 import { Icon } from '../components/ui/icon'
 import { useAuth } from '../lib/auth'
+import { useCatalogSnapshot } from '../lib/catalog'
 import { apiUrl } from '../lib/api'
 import { requestJson, RequestError } from '../lib/request-json'
 import { trackEvent, flushDiagnostics } from '../lib/diagnostics'
 import { useCartSlugs } from '../lib/use-cart'
 import { useNoindex } from '../lib/use-noindex'
+import { usePhysicalCartLines } from '../lib/physical-cart'
+import { CommerceCheckout } from './commerce-checkout'
+import { postToPayment } from '../lib/payment-handoff'
+import { TermsCheckbox } from '../components/checkout/terms-checkbox'
 
 interface PriceQuote {
   items: { productSlug: string; title: string; priceZar: number; originalPriceZar: number; onSale: boolean }[]
@@ -38,22 +42,14 @@ interface PayfastCheckoutResponse extends CheckoutBaseResponse {
 
 type CheckoutResponse = PayfastCheckoutResponse
 
-const postToPayfast = ({ url, fields }: PayfastCheckoutResponse['payfast']) => {
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = url
-  for (const [key, value] of Object.entries(fields)) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = key
-    input.value = String(value)
-    form.appendChild(input)
-  }
-  document.body.appendChild(form)
-  form.submit()
+export function CheckoutPage() {
+  const snapshot = useCatalogSnapshot()
+  const physicalItems = usePhysicalCartLines()
+  return physicalItems.length || snapshot.localCommercePreview ? <CommerceCheckout /> : <DigitalCheckoutPage />
 }
 
-export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
+function DigitalCheckoutPage() {
+  const snapshot = useCatalogSnapshot()
   useNoindex()
   const navigate = useNavigate()
   const { customer, getAccessToken } = useAuth()
@@ -69,6 +65,11 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
   const [quote, setQuote] = useState<PriceQuote | null>(null)
   const [quoting, setQuoting] = useState(false)
   const quoteVersion = useRef(0)
+  const checkoutIdentity = JSON.stringify([customerId, basketKey, appliedCode])
+  const currentCheckoutIdentity = useRef(checkoutIdentity)
+  useLayoutEffect(() => {
+    currentCheckoutIdentity.current = checkoutIdentity
+  }, [checkoutIdentity])
   const quoteValid = quote?.basketKey === basketKey && quote?.customerId === customer?.id && quote?.requestedCode === appliedCode
   const loadQuote = useCallback(async (code: string, clearError = true, signal?: AbortSignal) => {
     const version = ++quoteVersion.current
@@ -92,7 +93,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
     } finally {
       if (version === quoteVersion.current && !signal?.aborted) setQuoting(false)
     }
-  }, [customerId, getAccessToken, slugs, basketKey])
+  }, [customerId, getAccessToken, slugs, basketKey, setQuoting, setQuote])
   useEffect(() => {
     const controller = new AbortController()
     // Start external work after commit; an aborted effect never starts a request.
@@ -129,6 +130,7 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
       return
     }
     submittingRef.current = true
+    const submittedIdentity = checkoutIdentity
     const requestId = crypto.randomUUID()
     trackEvent('checkout.started', { requestId })
     setSubmitting(true)
@@ -136,6 +138,11 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
     try {
       const token = await getAccessToken()
       if (!token) throw new Error('Authentication required.')
+      if (currentCheckoutIdentity.current !== submittedIdentity) {
+        submittingRef.current = false
+        setSubmitting(false)
+        return
+      }
       const checkout = await requestJson<CheckoutResponse>(apiUrl('/api/checkout'), {
         method: 'POST',
         headers: {
@@ -150,10 +157,15 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
           expectedTotalZar: quote.totalZar,
         }),
       })
+      if (currentCheckoutIdentity.current !== submittedIdentity) {
+        submittingRef.current = false
+        setSubmitting(false)
+        return
+      }
       if ('payfast' in checkout && checkout.payfast?.url && checkout.payfast.fields) {
         trackEvent('checkout.handoff', { requestId })
         void flushDiagnostics()
-        postToPayfast(checkout.payfast)
+        postToPayment(checkout.payfast)
         return
       }
       throw new Error('Checkout response did not include a payment handoff.')
@@ -267,32 +279,14 @@ export function CheckoutPage({ snapshot }: { snapshot: CmsSnapshot }) {
             {error ? (
               <p role="alert" className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p>
             ) : null}
-            <div className="flex items-start gap-3 rounded-control bg-surface-alt p-4 text-body-sm text-ink-soft">
-              <Checkbox.Root
-                id="accepted-terms"
-                name="acceptedTerms"
-                checked={acceptedTerms}
-                onCheckedChange={setAcceptedTerms}
-                required
-                nativeButton
-                render={<button type="button" />}
-                className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-[0.35rem] border border-line-strong bg-canvas text-on-primary transition data-checked:border-primary data-checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                <Checkbox.Indicator className="flex data-unchecked:hidden">
-                  <Icon name="check" size={16} weight="bold" />
-                </Checkbox.Indicator>
-              </Checkbox.Root>
-              <label htmlFor="accepted-terms" className="cursor-pointer">
+            <TermsCheckbox checked={acceptedTerms} onChange={setAcceptedTerms} disabled={submitting}>
+              <span className="text-ink-soft">
                 I have read and agree to the{' '}
-                <Link
-                  to="/terms"
-                  className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong"
-                >
+                <Link to="/terms" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
                   Terms of Use
-                </Link>
-                .
-              </label>
-            </div>
+                </Link>.
+              </span>
+            </TermsCheckbox>
             <Button
               type="submit"
               variant="solid"

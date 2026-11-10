@@ -1,10 +1,8 @@
-import { type ReactNode } from 'react'
+import { type ComponentPropsWithRef } from 'react'
 import { cn, cv } from '@designing-minds/utils'
+import { type VariantOf } from './variants'
 
-export type NoticeTone = 'info' | 'error' | 'success'
-
-/** Inline alert banner for form errors, confirmations and info. Replaces the
- *  hand-rolled bordered banners scattered across auth, checkout and forms. */
+/** Inline banner for form errors, confirmations and info. */
 const noticeStyles = cv({
   base: ['rounded-control border px-4 py-3 text-body-sm'],
   variants: {
@@ -17,19 +15,20 @@ const noticeStyles = cv({
   defaultVariants: { tone: 'info' },
 })
 
-export function Notice({
-  children,
-  tone,
-  className,
-  role,
-}: {
-  children: ReactNode
+export type NoticeTone = VariantOf<typeof noticeStyles, 'tone'>
+
+export type NoticeProps = {
   tone?: NoticeTone
-  className?: string
+  /** Defaults to `alert` for errors and `status` otherwise (a polite live region). */
   role?: 'alert' | 'status'
-}) {
+} & ComponentPropsWithRef<'p'>
+
+/** The default role follows the tone so failures interrupt and confirmations
+ *  do not. A notice that is already on screen when the page loads is not
+ *  announced; mount it on the state change that produces it. */
+export function Notice({ tone, className, role, children, ...rest }: NoticeProps) {
   return (
-    <p className={cn(noticeStyles({ tone }), className)} role={role ?? (tone === 'error' ? 'alert' : undefined)}>
+    <p {...rest} className={cn(noticeStyles({ tone }), className)} role={role ?? (tone === 'error' ? 'alert' : 'status')}>
       {children}
     </p>
   )

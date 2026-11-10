@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ALL, type CmsSnapshot, productsForGrade } from '@designing-minds/cms'
+import { ALL, productsForGrade } from '@designing-minds/cms'
 import { GradePackageSection } from '../components/sections/grade-package-section'
 import { GRADE_BLURB, slugToGrade } from '../content/site'
+import { useCatalogSnapshot } from '../lib/catalog'
 import { subjectsForGrade } from '../lib/subject-labels'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
@@ -17,7 +18,8 @@ import { CatalogSortControl } from '../components/ui/catalog-sort-control'
 import { sortCatalogItems, type CatalogSort } from '../lib/catalog-sort'
 import { NotFoundPage } from './not-found-page'
 
-export function GradeDetailPage({ snapshot }: { snapshot: CmsSnapshot }) {
+export function GradeDetailPage() {
+  const snapshot = useCatalogSnapshot()
   const { gradeSlug } = useParams()
   const grade = gradeSlug ? slugToGrade(gradeSlug) : ''
   const isValidGrade = snapshot.valueLists.grades.includes(grade as never)

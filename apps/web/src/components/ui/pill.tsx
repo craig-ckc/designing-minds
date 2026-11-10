@@ -1,11 +1,9 @@
-import { type ReactNode } from 'react'
+import { type ComponentPropsWithRef } from 'react'
 import { cn, cv } from '@designing-minds/utils'
-
-export type PillTone = 'neutral' | 'primary' | 'solid' | 'outline' | 'surface'
-export type PillSize = 'sm' | 'md'
+import { type VariantOf } from './variants'
 
 /** The one pill-shaped label primitive: chips, tags, badges, statuses.
- *  `Badge` and `Tag` are thin wrappers over it. */
+ *  `Badge` is a thin wrapper over it. */
 const pillStyles = cv({
   base: ['inline-flex items-center rounded-pill font-semibold'],
   variants: {
@@ -15,6 +13,7 @@ const pillStyles = cv({
       solid: ['bg-primary-deep text-on-primary'],
       outline: ['border border-line-strong text-ink-soft'],
       surface: ['border border-line-strong bg-surface text-ink-soft shadow-soft'],
+      danger: ['bg-danger-tint text-danger'],
     },
     size: {
       sm: ['gap-1.5 px-2.5 py-1 text-caption tracking-[0.02em]'],
@@ -24,22 +23,19 @@ const pillStyles = cv({
   defaultVariants: { tone: 'neutral', size: 'sm' },
 })
 
-export function Pill({
-  children,
-  tone,
-  size,
-  dot,
-  className,
-}: {
-  children: ReactNode
+export type PillTone = VariantOf<typeof pillStyles, 'tone'>
+export type PillSize = VariantOf<typeof pillStyles, 'size'>
+
+export type PillProps = {
   tone?: PillTone
   size?: PillSize
-  /** Leading brand-blue dot (as on section tags). */
+  /** Leading brand dot (as on section tags). */
   dot?: boolean
-  className?: string
-}) {
+} & Omit<ComponentPropsWithRef<'span'>, 'color'>
+
+export function Pill({ children, tone, size, dot, className, ...rest }: PillProps) {
   return (
-    <span className={cn(pillStyles({ tone, size }), className)}>
+    <span {...rest} className={cn(pillStyles({ tone, size }), className)}>
       {dot ? <span className="h-1.5 w-1.5 rounded-pill bg-primary" aria-hidden /> : null}
       {children}
     </span>

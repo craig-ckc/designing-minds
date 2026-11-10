@@ -1,56 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { Bundle, CmsSnapshot, Product } from '../../packages/cms/src/types.ts'
+import type { Bundle, Product } from '../../packages/cms/src/types.ts'
+import { makeBundle as bundle, makeProduct as product, makeSnapshot } from '../support/fixtures.ts'
 import { bundleValue, bundlesContaining, bundlesForGrade } from '../../packages/cms/src/lib/formatters.ts'
 
-const product = (overrides: Partial<Product> & Pick<Product, 'slug'>): Product => ({
-  id: overrides.slug,
-  title: overrides.slug,
-  shortDescription: '',
-  fullDescription: '',
-  priceZar: 0,
-  grade: 'Grade 3',
-  term: 'Term 1',
-  year: '2026',
-  resourceFormat: 'Test / Assessment',
-  subjects: ['Mathematics'],
-  marks: null,
-  purchasedFiles: [],
-  galleryImages: [],
-  previewPdfs: [],
-  featured: false,
-  published: true,
-  sortOrder: 0,
-  seo: { title: '', description: '' },
-  faqs: [],
-  updatedAt: '2026-01-01',
-  ...overrides,
-})
-
-const bundle = (overrides: Partial<Bundle> & Pick<Bundle, 'slug'>): Bundle => ({
-  id: overrides.slug,
-  title: overrides.slug,
-  shortDescription: '',
-  fullDescription: '',
-  priceZar: 0,
-  grade: 'Grade 3',
-  term: 'Term 1',
-  year: '2026',
-  bundleScope: 'Term',
-  galleryImages: [],
-  previewPdfs: [],
-  featured: false,
-  published: true,
-  sortOrder: 0,
-  seo: { title: '', description: '' },
-  faqs: [],
-  updatedAt: '2026-01-01',
-  includedProductIds: [],
-  includedProductSlugs: [],
-  ...overrides,
-})
-
-const snapshot = (products: Product[], bundles: Bundle[] = []) => ({ products, bundles }) as CmsSnapshot
+const snapshot = (products: Product[], bundles: Bundle[] = []) => makeSnapshot({ products, bundles })
 
 test('a bundle states what it saves against buying the same resources singly', () => {
   const snap = snapshot(

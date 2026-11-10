@@ -99,6 +99,11 @@ export function getPublicRoutes(snapshot: CmsSnapshot): PublicRoute[] {
     routes.push({ path: `/shop/${bundle.slug}`, kind: 'product', productSlug: bundle.slug })
   }
 
+  for (const product of snapshot.physicalCatalog ?? []) {
+    if (!product.published) continue
+    routes.push({ path: `/shop/${product.slug}`, kind: 'product', productSlug: product.slug })
+  }
+
   return routes
 }
 
@@ -127,7 +132,8 @@ export function matchPath(pathname: string, snapshot: CmsSnapshot): PublicRoute 
     const slug = productMatch[1]
     const exists =
       snapshot.products.some((product) => product.slug === slug && product.published) ||
-      snapshot.bundles.some((bundle) => bundle.slug === slug && bundle.published)
+      snapshot.bundles.some((bundle) => bundle.slug === slug && bundle.published) ||
+      (snapshot.physicalCatalog ?? []).some((product) => product.slug === slug && product.published)
     return exists ? { path, kind: 'product', productSlug: slug } : null
   }
 

@@ -1,4 +1,5 @@
-import { type ReactNode } from 'react'
+import { type ComponentPropsWithRef, type ReactNode } from 'react'
+import { cn } from '@designing-minds/utils'
 import { Card } from './card'
 import { Container } from './container'
 
@@ -12,19 +13,18 @@ const spacingClass: Record<SectionSpacing, string> = {
 
 export function Section({
   children,
-  className = '',
-  containerClassName = '',
+  className,
+  containerClassName,
   spacing = 'default',
-  id,
+  ...rest
 }: {
   children: ReactNode
   className?: string
   containerClassName?: string
   spacing?: SectionSpacing
-  id?: string
-}) {
+} & Omit<ComponentPropsWithRef<'section'>, 'className' | 'children'>) {
   return (
-    <section id={id} className={[spacingClass[spacing], className].filter(Boolean).join(' ')}>
+    <section {...rest} className={cn(spacingClass[spacing], className)}>
       <Container className={containerClassName}>{children}</Container>
     </section>
   )

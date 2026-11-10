@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import type { CmsSnapshot } from '@designing-minds/cms'
 import { SOCIAL_PROOF } from '../content/site'
+import { useCatalog } from '../lib/catalog'
 import { HERO_STUDIES, heroExamples, heroStudyIndex, type HeroExample } from '../lib/hero-demo'
 import { Button } from '../components/ui/button'
 import { Icon } from '../components/ui/icon'
@@ -39,7 +39,8 @@ function BookScene({ examples }: { examples: HeroExample[] }) {
   )
 }
 
-export default function HeroDemoPage({ snapshot }: { snapshot: CmsSnapshot | null }) {
+export default function HeroDemoPage() {
+  const { state: { snapshot } } = useCatalog()
   const [params, setParams] = useSearchParams()
   // Keep rapid grade/design choices together before the router rerenders.
   const latestParams = useRef(params)

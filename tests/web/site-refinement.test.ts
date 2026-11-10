@@ -20,9 +20,10 @@ let Bundles: ComponentType<{ snapshot: CmsSnapshot }>
 let SortControl: ComponentType<{ value: string; onChange: (value: string) => void }>
 let FormSelect: ComponentType<{ label: string; name: string; value: string; options: string[]; onChange: (value: string) => void }>
 let AuthLayout: ComponentType<{ title: string; intro: string; children: ReactNode; footer: ReactNode }>
+let CatalogContext: typeof import('../../apps/web/src/lib/catalog.tsx').CatalogContext
 before(async () => {
   server = await createServer({ configFile: false, root: fileURLToPath(new URL('../../apps/web', import.meta.url)), server: { middlewareMode: true, hmr: false }, appType: 'custom', ssr: { noExternal: ['@designing-minds/cms', '@designing-minds/utils'] } })
-  sorting = await server.ssrLoadModule('/src/lib/catalog-sort.ts')
+  sorting = (await server.ssrLoadModule('/src/lib/catalog-sort.ts')) as typeof sorting
   ;({ HomeHeroSection: HomeHero } = await server.ssrLoadModule('/src/components/sections/home-hero-section.tsx'))
   ;({ AboutHeroSection: AboutHero } = await server.ssrLoadModule('/src/components/sections/about-hero-section.tsx'))
   ;({ BundleCtaSection: BundleCta } = await server.ssrLoadModule('/src/components/sections/bundle-cta-section.tsx'))
@@ -33,17 +34,25 @@ before(async () => {
   ;({ CatalogSortControl: SortControl } = await server.ssrLoadModule('/src/components/ui/catalog-sort-control.tsx'))
   ;({ Select: FormSelect } = await server.ssrLoadModule('/src/components/ui/select.tsx'))
   ;({ AuthLayout } = await server.ssrLoadModule('/src/pages/auth/auth-layout.tsx'))
+  ;({ CatalogContext } = await server.ssrLoadModule('/src/lib/catalog.tsx'))
 })
 after(async () => { await server?.close() })
 const read = (name: string) => readFileSync(new URL(`../../apps/web/src/${name}`, import.meta.url), 'utf8')
-const render = (element: ReturnType<typeof createElement>, route = '/') => renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: [route] }, element))
+const catalogValue = (snapshot: CmsSnapshot | null = null) => ({
+  state: { snapshot, status: snapshot ? 'ready' as const : 'loading' as const, error: null },
+  actions: { retry: () => {} },
+  meta: { now: Date.UTC(2026, 0, 1) },
+})
+const render = (element: ReturnType<typeof createElement>, route = '/', value = catalogValue()) => renderToStaticMarkup(
+  createElement(CatalogContext.Provider, { value }, createElement(MemoryRouter, { initialEntries: [route] }, element)),
+)
 const product = (slug: string, priceZar: number, overrides: Partial<Product> = {}): Product => ({
   id: slug, slug, title: slug, shortDescription: 'A ready-to-print practice test.', fullDescription: '',
-  priceZar, grade: 'Grade 4', term: 'Term 1', year: '2026', resourceFormat: 'Test', subjects: ['Mathematics'], marks: 20,
+  priceZar, grade: 'Grade 4', term: 'Term 1', year: '2026', resourceFormat: 'Test / Assessment', subjects: ['Mathematics'], marks: 20,
   purchasedFiles: [], galleryImages: [], previewPdfs: [], featured: false, published: true, status: 'published', sortOrder: 0,
   seo: { title: '', description: '' }, faqs: [], updatedAt: '2026-01-01', ...overrides,
 })
-const snapshot = (products: Product[] = []) => ({ products, bundles: [], testimonials: [], stats: { productCount: products.length }, valueLists: { grades: ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'], terms: ['Term 1'], subjects: ['Mathematics'], resourceFormats: ['Test'] } }) as unknown as CmsSnapshot
+const snapshot = (products: Product[] = []) => ({ products, bundles: [], testimonials: [], stats: { productCount: products.length }, valueLists: { grades: ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'], terms: ['Term 1'], subjects: ['Mathematics'], resourceFormats: ['Test / Assessment'] } }) as unknown as CmsSnapshot
 
 test('sort parsing rejects unknown values and recommended retains curated order without mutation', () => {
   for (const value of [null, '', 'invalid', 'PRICE']) assert.equal(sorting.readCatalogSort(value), 'recommended')
@@ -59,7 +68,7 @@ test('price sorts use current sale prices and preserve equal-price order', () =>
   assert.deepEqual(sorting.sortCatalogItems(input, 'price-asc', (item) => item).map((item) => item.slug), ['sale', 'regular', 'same'])
   assert.deepEqual(sorting.sortCatalogItems(input, 'price-desc', (item) => item).map((item) => item.slug), ['regular', 'same', 'sale'])
   assert.deepEqual(input.map((item) => item.slug), ['regular', 'sale', 'same'])
-  const expired = product('expired', 120, { salePriceZar: 20, saleEndsAt: '2025-01-01', priceAsOf: Date.parse('2026-01-01') })
+  const expired = product('expired', 120, { salePriceZar: 20, saleEndsAt: '2025-01-01', priceAsOf: Date.parse('2026-01-01') } as Partial<Product>)
   assert.equal(sorting.sortCatalogItems([expired, input[0]], 'price-asc', (item) => item)[0].slug, 'regular')
 })
 
@@ -71,14 +80,14 @@ test('recent and alphabetical sorts handle missing dates, case and numeric title
 
 test('shop sorts the filtered selection and keeps search, grade and sort in the controls', () => {
   const data = snapshot([product('expensive', 90), product('affordable', 30), product('other-grade', 10, { grade: 'Grade 5' })])
-  const html = render(createElement(Shop, { snapshot: data }), '/shop?q=practice&grade=Grade%204&sort=price-asc')
+  const html = render(createElement(Shop), '/shop?q=practice&grade=Grade%204&sort=price-asc', catalogValue(data))
   assert.ok(html.indexOf('View affordable') < html.indexOf('View expensive'))
   assert.doesNotMatch(html, /View other-grade/)
   assert.match(html, /aria-label="Sort resources"/)
   assert.match(html, /value="practice"/)
   assert.match(html, /Price: low to high/)
   assert.doesNotMatch(html, /Quick grade filters/)
-  const empty = render(createElement(Bundles, { snapshot: data }), '/packages?sort=title')
+  const empty = render(createElement(Bundles), '/packages?sort=title', catalogValue(data))
   assert.match(empty, /No matching bundles/)
   assert.match(empty, /aria-label="Sort resources"/)
   assert.doesNotMatch(empty, /Quick grade filters/)
@@ -160,7 +169,7 @@ test('CTA variants share a component; the homepage close is the brand band in in
 })
 
 test('the cart empty state has one page heading, one next action and no promotional banner', () => {
-  const html = render(createElement(Cart, { snapshot: snapshot() }))
+  const html = render(createElement(Cart), '/', catalogValue(snapshot()))
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1)
   assert.match(html, /<h1[^>]*>Your cart is empty<\/h1>/)
   assert.match(html, /Browse resources/)

@@ -11,11 +11,8 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
   const currentYear = new Date().getFullYear()
   return (
     <footer className="mt-auto border-t border-line bg-surface">
-      <div
-        className="bg-bottom bg-no-repeat"
-      // style={{ backgroundImage: "url('/images/image-03.png')", backgroundSize: 'max(100%, 64rem) auto' }}
-      >
-        <Container className="relative z-10 grid grid-cols-2 gap-10 py-12 sm:grid-cols-2 lg:grid-cols-5 pb-10">
+      <>
+        <Container className="relative z-10 grid grid-cols-2 gap-10 pb-10 pt-12 lg:grid-cols-5">
           <div className="col-span-2">
             <Wordmark sub={false} />
             <p className="mt-3.5 max-w-[34ch] text-body text-muted">
@@ -30,6 +27,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
                 {grade}
               </FooterLink>
             ))}
+            <FooterLink to="/shop">All resources</FooterLink>
             <FooterLink to="/packages">Bundles</FooterLink>
           </FooterColumn>
 
@@ -37,7 +35,6 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
             <FooterLink to="/about">About</FooterLink>
             <FooterLink to="/contact">Contact</FooterLink>
             <FooterLink to="/help">Help</FooterLink>
-            <FooterLink to="/shop">All resources</FooterLink>
             <FooterLink to="/privacy-policy">Privacy policy</FooterLink>
             <FooterLink to="/terms">Terms of Use</FooterLink>
             <FooterLink to="/refund-policy">Refund policy</FooterLink>
@@ -58,17 +55,26 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
           </FooterColumn>
         </Container>
 
-        <div className="h-[clamp(9rem,20vw,18rem)]" >
-          <img src="/images/image-03.png" alt="A parent helping a child with schoolwork at a desk" className="w-full h-full object-cover" />
+        {/* Decorative illustration: the surrounding copy carries the meaning. */}
+        <div className="h-[clamp(9rem,20vw,18rem)]">
+          <img
+            src="/images/image-03.png"
+            alt=""
+            width={2048}
+            height={412}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         </div>
 
-        <div className="bg-[#FDF6F0]" >
-          <Container className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-t border-line/70 py-5.5 text-label text-muted">
+        <div className="bg-cream">
+          <Container className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-t border-line/70 py-5 text-label text-muted">
             <span>© {currentYear} Designing Minds. All rights reserved.</span>
             <span>Made for South African learners</span>
           </Container>
         </div>
-      </div>
+      </>
     </footer>
   )
 }

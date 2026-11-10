@@ -6,11 +6,12 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router-dom'
 import { createServer, type ViteDevServer } from 'vite'
 import type { Bundle, CmsSnapshot, Product, Testimonial } from '../../packages/cms/src/types.ts'
+import { makeSnapshot } from '../support/fixtures.ts'
 
 let server: ViteDevServer
 let catalog: typeof import('../../apps/web/src/lib/featured-catalog.ts')
 type SectionProps = { snapshot: CmsSnapshot | null; loadError?: string | null }
-let HomePage: ComponentType<SectionProps>
+let HomePage: ComponentType
 let Featured: ComponentType<SectionProps>
 let Hero: ComponentType<{ snapshot: CmsSnapshot | null }>
 let Explore: ComponentType<SectionProps>
@@ -18,6 +19,7 @@ let Support: ComponentType
 let Testimonials: ComponentType<{ snapshot: CmsSnapshot | null }>
 let Navbar: ComponentType<{ snapshot: CmsSnapshot | null }>
 let AuthProvider: ComponentType<{ children: ReactNode }>
+let CatalogContext: typeof import('../../apps/web/src/lib/catalog.tsx').CatalogContext
 
 before(async () => {
   server = await createServer({
@@ -27,7 +29,7 @@ before(async () => {
     appType: 'custom',
     ssr: { noExternal: ['@designing-minds/cms', '@designing-minds/utils'] },
   })
-  catalog = await server.ssrLoadModule('/src/lib/featured-catalog.ts')
+  catalog = (await server.ssrLoadModule('/src/lib/featured-catalog.ts')) as typeof catalog
   ;({ HomePage } = await server.ssrLoadModule('/src/pages/home-page.tsx'))
   ;({ HomeFeaturedSection: Featured } = await server.ssrLoadModule('/src/components/sections/home-featured-section.tsx'))
   ;({ HomeHeroSection: Hero } = await server.ssrLoadModule('/src/components/sections/home-hero-section.tsx'))
@@ -36,6 +38,7 @@ before(async () => {
   ;({ HomeTestimonialsSection: Testimonials } = await server.ssrLoadModule('/src/components/sections/home-testimonials-section.tsx'))
   ;({ Navbar } = await server.ssrLoadModule('/src/components/layout/navbar.tsx'))
   ;({ AuthProvider } = await server.ssrLoadModule('/src/lib/auth.tsx'))
+  ;({ CatalogContext } = await server.ssrLoadModule('/src/lib/catalog.tsx'))
 })
 after(async () => { await server?.close() })
 
@@ -52,16 +55,23 @@ const testimonial = (id: string, overrides: Partial<Testimonial> = {}): Testimon
   id, customerName: `Parent ${id}`, quote: `Real feedback from ${id}.`, context: 'Grade 4 parent', learnerGrade: 'Grade 4',
   sourceDate: '2026-01-01', featured: false, sortOrder: 0, published: true, status: 'published', updatedAt: '2026-01-01', ...overrides,
 })
-const snapshot = (products: Product[] = [], bundles: Bundle[] = [], testimonials: Testimonial[] = []): CmsSnapshot => ({
-  products, bundles, testimonials, faqs: [], customers: [], orders: [], payments: [],
+const snapshot = (products: Product[] = [], bundles: Bundle[] = [], testimonials: Testimonial[] = []): CmsSnapshot => makeSnapshot({
+  products, bundles, testimonials,
   valueLists: {
-    grades: ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'], terms: ['Term 1'], subjects: ['Mathematics'], resourceFormats: ['Test / Assessment'],
+    grades: ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'], terms: ['Term 1'], years: ['2026'], subjects: ['Mathematics'], resourceFormats: ['Test / Assessment'],
   },
-  generatedAt: '2026-01-01', stats: { productCount: products.length, bundleCount: bundles.length },
-}) as CmsSnapshot
+  stats: { productCount: products.length, subjectCount: 0, gradeCount: 0, bundleCount: bundles.length, orderCount: 0, customerCount: 0 },
+})
 const slugs = (data: CmsSnapshot, category: 'all' | 'resources' | 'bundles' = 'all') =>
   catalog.featuredCatalog(data, category).map((entry) => entry.kind === 'bundle' ? entry.bundle.slug : entry.product.slug)
-const render = (element: ReturnType<typeof createElement>) => renderToStaticMarkup(createElement(MemoryRouter, null, element))
+const catalogValue = (snapshot: CmsSnapshot | null, status: 'loading' | 'ready' | 'error' = snapshot ? 'ready' : 'loading', error: string | null = null) => ({
+  state: { snapshot, status, error },
+  actions: { retry: () => {} },
+  meta: { now: Date.UTC(2026, 0, 1) },
+})
+const render = (element: ReturnType<typeof createElement>, value = catalogValue(null)) => renderToStaticMarkup(
+  createElement(CatalogContext.Provider, { value }, createElement(MemoryRouter, null, element)),
+)
 
 test('featured catalogue balances real bundles and resources within each featured tier, capped at four', () => {
   const data = snapshot([
@@ -113,7 +123,7 @@ test('featured selection preserves editorial tie order and leaves catalogue arra
 
 test('homepage follows the agreed discovery story with actual products directly after the unrestricted hero', () => {
   const data = snapshot([product('maths', { featured: true })], [bundle('term', { featured: true })], [testimonial('amy')])
-  const html = render(createElement(HomePage, { snapshot: data }))
+  const html = render(createElement(HomePage), catalogValue(data))
   const sections = [...html.matchAll(/<section\b[^>]*\bid="([^"]+)"/g)].map((match) => match[1])
   assert.deepEqual(sections, ['home-intro', 'featured-products', 'explore-resources', 'learning-support', 'parent-stories', 'start-shopping'])
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1)
@@ -170,7 +180,7 @@ test('featured loading, failure, and empty states retain discovery without fabri
 })
 
 test('the full homepage remains usable when catalogue loading fails', () => {
-  const html = render(createElement(HomePage, { snapshot: null, loadError: 'The catalogue could not load.' }))
+  const html = render(createElement(HomePage), catalogValue(null, 'error', 'The catalogue could not load.'))
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1)
   assert.match(html, /The catalogue could not load\./)
   assert.match(html, /id="home-intro"/)
@@ -236,10 +246,11 @@ test('no testimonials means no invented stories; one real lead retains its illus
   assert.doesNotMatch(single, /More parent stories|testimonial-carousel/)
 })
 
-test('header search submits real catalogue queries on desktop and mobile while preserving account and cart routes', () => {
+test('header search submits real catalogue queries from the bar while preserving account and cart routes', () => {
   const html = render(createElement(AuthProvider, { children: createElement(Navbar, { snapshot: snapshot() }) }))
   const searches = [...html.matchAll(/<form\b[^>]*action="\/shop"[^>]*>[\s\S]*?<\/form>/g)].map((match) => match[0])
-  assert.equal(searches.length, 2)
+  // Desktop search is in the bar; the mobile search lives inside the (closed) menu dialog — see navbar-render.test.ts.
+  assert.equal(searches.length, 1)
   for (const form of searches) {
     assert.match(form, /method="[Gg][Ee][Tt]"/)
     assert.match(form, /type="search"[^>]*name="q"|name="q"[^>]*type="search"/)
@@ -249,7 +260,7 @@ test('header search submits real catalogue queries on desktop and mobile while p
   assert.match(html, /href="\/account"|href="\/login"/)
   assert.match(html, /href="\/cart"/)
   assert.match(html, /aria-label="Open navigation menu"/)
-  assert.match(html, /id="mobile-menu"[^>]*aria-hidden="true"[^>]*inert=""/)
+  assert.doesNotMatch(html, /role="dialog"/)
 })
 
 test('phones get a swipeable featured row instead of four stacked cards, and four picks never orphan one card on desktop', async () => {
@@ -304,7 +315,8 @@ test('the homepage opens on a display-scale headline and closes on decorative re
   assert.match(h1, /font-size: clamp\(2\.25rem, 5\.2vw, 4\.25rem\)/)
   assert.match(h1, /letter-spacing: -0\.04em/)
   assert.match(h1, /text-wrap: balance/)
-  const html = render(createElement(HomePage, { snapshot: snapshot([product('maths', { featured: true })], [], [testimonial('amy')]) }))
+  const data = snapshot([product('maths', { featured: true })], [], [testimonial('amy')])
+  const html = render(createElement(HomePage), catalogValue(data))
   assert.match(html, /<span class="whitespace-nowrap">Grades 3–7<\/span>/)
   const close = html.slice(html.indexOf('id="start-shopping"'))
   assert.match(close, /bg-primary text-ink/)

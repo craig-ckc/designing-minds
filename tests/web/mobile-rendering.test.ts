@@ -23,14 +23,18 @@ test('product-cover copy scales via container queries and stays visible at all c
 
 test('the mobile grade selector uses shared compact wrapping chips', () => {
   const hero = read('components/sections/home-hero-section.tsx')
+  const css = read('index.css')
   assert.match(hero, /flex flex-wrap justify-center gap-1\.5/)
   assert.match(hero, /className="filter-chip"/)
-  assert.match(read('index.css'), /\.filter-chip\s*{[^}]*min-h-8/)
+  assert.match(css, /--control-h-sm:\s*36px/)
+  assert.match(css, /\.filter-chip\s*\{[^}]*min-h-\[var\(--control-h-sm\)\]/)
 })
 
 test('homepage product category controls reuse the same compact wrapping chips', () => {
   const featured = read('components/sections/home-featured-section.tsx')
+  const css = read('index.css')
   assert.match(featured, /flex flex-wrap/)
   assert.match(featured, /filter-chip/)
-  assert.match(read('index.css'), /\.filter-chip\s*{[^}]*min-h-8/)
+  assert.match(css, /--control-h-sm:\s*36px/)
+  assert.match(css, /\.filter-chip\s*\{[^}]*min-h-\[var\(--control-h-sm\)\]/)
 })

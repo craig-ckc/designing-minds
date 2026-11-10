@@ -1,20 +1,23 @@
 import { type ReactNode } from 'react'
 import { Icon, type IconName } from './icon'
 
-/** A quiet empty state: one heading, a reason and the next useful action. */
-export function EmptyState({ title, description, icon, children, as: Heading = 'h2' }: {
+/** A quiet empty state: one heading, a reason and the next useful action.
+ *  Same `action` slot as `StatePanel`; `children` is a legacy alias for it. */
+export function EmptyState({ title, description, icon, action, children, as: Heading = 'h2' }: {
   title: string
   description: string
   icon: IconName
-  children: ReactNode
+  action?: ReactNode
+  children?: ReactNode
   as?: 'h1' | 'h2'
 }) {
+  const next = action ?? children
   return (
     <div className="empty-state">
       <span className="empty-state__icon" aria-hidden="true"><Icon name={icon} size={28} /></span>
-      <Heading className="text-2xl">{title}</Heading>
+      <Heading className="text-heading-md">{title}</Heading>
       <p className="mt-3 max-w-[38ch] text-body text-ink-soft">{description}</p>
-      <div className="mt-5">{children}</div>
+      {next ? <div className="mt-5">{next}</div> : null}
     </div>
   )
 }

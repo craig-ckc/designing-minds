@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CONTACT } from '../content/site'
 import { apiUrl } from '../lib/api'
+import { submitForm } from '../lib/forms'
 import { Section } from '../components/ui/section'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Field } from '../components/ui/field'
@@ -43,19 +44,7 @@ export function ContactPage() {
     setError(null)
     try {
       const name = `${firstName} ${lastName}`.trim()
-      const response = await fetch(apiUrl('/api/forms'), {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          form: 'contact',
-          fields: { name, firstName, lastName, email, topic, message, marketing: String(marketing) },
-          website: honeypot,
-        }),
-      })
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null
-        throw new Error(data?.error ?? 'Something went wrong. Please try again.')
-      }
+      await submitForm('contact', { name, firstName, lastName, email, topic, message, marketing: String(marketing) }, honeypot)
       setStatus('sent')
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Something went wrong. Please try again.')

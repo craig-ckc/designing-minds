@@ -47,8 +47,8 @@ test('filter dependencies reset the visible count to the initial limit', () => {
   const packages = read('pages/packages-page.tsx')
   const gradeDetail = read('pages/grade-detail-page.tsx')
 
-  // Shop resets on grade, term, subject, format, and query changes.
-  assert.match(shop, /const catalogResetKey = JSON\.stringify\(\[grades, terms, subjects, formats, q, sort\]\)/)
+  // Shop resets on every narrowing/sort change, including the digital/gift category.
+  assert.match(shop, /const catalogResetKey = JSON\.stringify\(\[grades, terms, subjects, formats, category, q, sort\]\)/)
   assert.match(shop, /useCatalogLoadMore\(visible,\s*CATALOG_INITIAL_LIMIT,\s*catalogResetKey\)/)
   // Packages resets on offer, grade, term, and query changes.
   assert.match(packages, /const catalogResetKey = JSON\.stringify\(\[offerSel, grades, terms, q, sort\]\)/)

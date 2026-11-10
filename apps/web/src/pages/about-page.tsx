@@ -1,4 +1,4 @@
-import { type CmsSnapshot } from '@designing-minds/cms'
+import { useCatalog } from '../lib/catalog'
 import { AboutConnectSection } from '../components/sections/about-connect-section'
 import { AboutCtaSection } from '../components/sections/about-cta-section'
 import { AboutHeroSection } from '../components/sections/about-hero-section'
@@ -8,7 +8,8 @@ import { AboutValuesSection } from '../components/sections/about-values-section'
 import { OurStorySection } from '../components/sections/our-story-section'
 import { TrustStatsSection } from '../components/sections/trust-stats-section'
 
-export function AboutPage({ snapshot, loadError }: { snapshot: CmsSnapshot | null; loadError?: string | null }) {
+export function AboutPage() {
+  const { state: { snapshot, error: loadError } } = useCatalog()
   return (
     <>
       <AboutHeroSection />
