@@ -1,4 +1,6 @@
 import { promotionValidation } from '../lib/promotions.ts'
+import { customizationRulesValidation, type PhysicalProduct } from '../lib/physical-products.ts'
+import { physicalPricingValidation, type PhysicalCatalogProduct, type PhysicalVariantDraft } from '../lib/commerce.ts'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type {
   Bundle,
@@ -45,6 +47,10 @@ const TABLES = {
   valueLists: 'value_lists',
   coupons: 'coupons',
   slugRedirects: 'active_slug_redirects',
+  physicalCatalog: 'catalog_physical_products',
+  commerceContext: 'commerce_public_context',
+  physicalVariants: 'product_variants',
+  physicalInventory: 'product_inventory',
 } as const
 
 const DEFAULT_VALUE_LISTS: ValueLists = {
@@ -105,6 +111,36 @@ const rowsToValueLists = (rows: ValueListRow[] | null): ValueLists =>
   ) as ValueLists
 
 const numberizeProduct = (product: Product): Product => ({ ...product, priceZar: Number(product.priceZar), salePriceZar: product.salePriceZar == null ? null : Number(product.salePriceZar) })
+const numberizePhysicalProduct = (product: PhysicalProduct): PhysicalProduct => ({
+  ...product,
+  priceZar: Number(product.priceZar),
+  salePriceZar: product.salePriceZar == null ? null : Number(product.salePriceZar),
+  pricingMode: product.pricingMode ?? 'fixed',
+  pricingFieldKey: product.pricingFieldKey ?? null,
+  billableCharacters: product.billableCharacters ?? null,
+  variants: product.variants?.map((variant) => ({ ...variant, _persisted: true })),
+})
+
+interface OptionalRows {
+  data: unknown
+  error: { code?: string; message: string } | null
+}
+
+/** Older databases keep digital commerce working until the additive migration is applied. */
+const commerceRows = <T>(result: OptionalRows): T[] => {
+  if (result.error) {
+    if (result.error.code === 'PGRST205' || result.error.code === '42P01') return []
+    throw new Error(result.error.message)
+  }
+  return (result.data as T[] | null) ?? []
+}
+
+const numberizePhysicalCatalog = (product: PhysicalCatalogProduct): PhysicalCatalogProduct => ({
+  ...product,
+  priceZar: Number(product.priceZar),
+  salePriceZar: product.salePriceZar == null ? null : Number(product.salePriceZar),
+  variants: (product.variants ?? []).map((variant) => ({ ...variant, unitPriceZar: variant.unitPriceZar == null ? null : Number(variant.unitPriceZar) })),
+})
 const numberizeBundle = (bundle: Bundle): Bundle => ({
   ...bundle,
   priceZar: Number(bundle.priceZar),
@@ -182,7 +218,7 @@ const tolerateMissingTable = <T>(
 }
 
 const buildStats = (snapshot: Omit<CmsSnapshot, 'stats'>): CmsSnapshot['stats'] => ({
-  productCount: snapshot.products.length,
+  productCount: snapshot.products.length + (snapshot.physicalProducts?.length ?? 0),
   subjectCount: snapshot.valueLists.subjects.length,
   gradeCount: snapshot.valueLists.grades.length,
   bundleCount: snapshot.bundles.length,
@@ -218,20 +254,26 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
     mode: 'supabase',
     canWrite: audience === 'admin',
     async getSnapshot() {
-      const [products, bundles, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists, coupons] =
+      const [products, bundles, faqs, testimonials, customers, orders, payments, formContact, formNewsletter, valueLists, coupons, physicalCatalog, commerceContext, physicalVariants, physicalInventory] =
         await Promise.all([
           client.from(productReadTable).select('*'),
           client.from(bundleReadTable).select(bundleSelect),
           client.from(faqReadTable).select('*'),
           client.from(testimonialReadTable).select('*'),
-          client.from(TABLES.customers).select('*'),
-          client.from(TABLES.orders).select('*'),
-          client.from(TABLES.payments).select('*'),
-          // Admin-only via RLS: returns [] for the public/customer client, rows for admins.
-          client.from(TABLES.formContact).select('*'),
-          client.from(TABLES.formNewsletter).select('*'),
+          // Public catalogue readers have no operational table privileges.
+          // Do not request private data and rely on RLS to return empty rows:
+          // a fresh database correctly rejects those requests before RLS.
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.customers).select('*'),
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.orders).select('*'),
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.payments).select('*'),
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.formContact).select('*'),
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.formNewsletter).select('*'),
           client.from(TABLES.valueLists).select('*'),
           isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.coupons).select('*'),
+          client.from(TABLES.physicalCatalog).select('*'),
+          client.from(TABLES.commerceContext).select('*'),
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.physicalVariants).select('*'),
+          isPublic ? Promise.resolve({ data: [], error: null }) : client.from(TABLES.physicalInventory).select('*'),
         ])
 
       // Core tables must exist; any error is fatal.
@@ -240,12 +282,36 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
         throw new Error(firstError.error.message)
       }
 
+      // The existing storefront contract is digital. Physical drafts stay in
+      // the same database collection, but must never be treated as resources
+      // with grades, download entitlements, or slug-only checkout lines.
+      const productRows = (products.data as (Product | PhysicalProduct)[] | null) ?? []
+      const digitalProducts = productRows.filter((row): row is Product => row.productType !== 'physical')
+      const physicalProducts = productRows.filter((row): row is PhysicalProduct => row.productType === 'physical')
+      const contextRows = commerceRows<{ enabled: boolean; localPreview: boolean }>(commerceContext)
+      const context = contextRows[0]
+      const catalogue = commerceRows<PhysicalCatalogProduct>(physicalCatalog)
+      const variants = commerceRows<PhysicalVariantDraft>(physicalVariants)
+      const inventory = new Map(commerceRows<{ variantId: string; onHand: number }>(physicalInventory).map((entry) => [entry.variantId, Number(entry.onHand)]))
+
       const base = {
         generatedAt: new Date().toISOString(),
         source: 'supabase',
         ...(isPublic ? {} : { coupons: ((coupons.data as Coupon[] | null) ?? []).map((row) => ({ ...row, value: Number(row.value) })) }),
+        ...(isPublic ? {} : { physicalProducts: physicalProducts.map((row) => ({
+          ...numberizePhysicalProduct(withoutLive(row)),
+          variants: variants.filter((variant) => variant.productId === row.id).map((variant) => ({
+            ...withoutLive(variant),
+            _persisted: true,
+            unitPriceZar: variant.unitPriceZar == null ? null : Number(variant.unitPriceZar),
+            onHand: inventory.get(variant.id) ?? 0,
+          })),
+        })) }),
+        physicalCatalog: context?.enabled === true ? catalogue.map(numberizePhysicalCatalog) : [],
+        commerceReady: !commerceContext.error && !physicalCatalog.error,
+        localCommercePreview: context?.enabled === true && context.localPreview === true,
         valueLists: rowsToValueLists(valueLists.data as ValueListRow[] | null),
-        products: ((products.data as Product[] | null) ?? []).map((row) => numberizeProduct(withoutLive(row))),
+        products: digitalProducts.map((row) => numberizeProduct(withoutLive(row))),
         bundles: (bundles.data ?? []).map((row) => numberizeBundle(toBundle(withoutLive(row as unknown as BundleRow)))),
         faqs: ((faqs.data as Faq[] | null) ?? []).map(withoutLive),
         testimonials: ((testimonials.data as Testimonial[] | null) ?? []).map(withoutLive),
@@ -297,11 +363,26 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
     },
 
     async saveProduct(product: Product) {
+      if ((product as { productType?: unknown }).productType === 'physical') {
+        throw new Error('Physical drafts must use savePhysicalProduct.')
+      }
       const problem = promotionValidation('products', product as unknown as Record<string, unknown>)
       if (problem) throw new Error(problem)
       const res = await client.from(TABLES.products).upsert(writable(product)).select().single()
       if (res.error) throw new Error(res.error.message)
       return withoutLive(res.data as Product)
+    },
+
+    async savePhysicalProduct(product: PhysicalProduct) {
+      if (product.productType !== 'physical') throw new Error('A physical product type is required.')
+      const problem = customizationRulesValidation(product.customizationRules)
+        ?? physicalPricingValidation(product)
+        ?? promotionValidation('products', product as unknown as Record<string, unknown>)
+      if (problem) throw new Error(problem)
+      const { variants = [], ...record } = product
+      const res = await client.rpc('save_physical_product', { p_product: writable(record), p_variants: variants })
+      if (res.error) throw new Error(res.error.message)
+      return numberizePhysicalProduct(withoutLive(res.data as PhysicalProduct))
     },
 
     /**

@@ -51,6 +51,7 @@ export function withPricingTime(snapshot: CmsSnapshot, now: number): CmsSnapshot
   return { ...snapshot,
     products: snapshot.products.map((record) => ({ ...record, priceAsOf: now })),
     bundles: snapshot.bundles.map((record) => ({ ...record, priceAsOf: now })),
+    ...(snapshot.physicalCatalog ? { physicalCatalog: snapshot.physicalCatalog.map((record) => ({ ...record, priceAsOf: now })) } : {}),
   }
 }
 export const duplicateCouponCode = (code: string, id: string) => `${code.trim().toUpperCase().slice(0,31)}_${id.slice(0,8).toUpperCase()}`

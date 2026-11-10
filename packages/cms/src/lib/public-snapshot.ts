@@ -1,4 +1,26 @@
 import type { CmsSnapshot } from '../types'
+import type { PhysicalCatalogProduct } from './commerce'
+
+/** Keep the public projection explicit even when a caller supplies an admin snapshot. */
+const publicPhysicalProduct = (product: PhysicalCatalogProduct): PhysicalCatalogProduct => ({
+  id: product.id,
+  slug: product.slug,
+  title: product.title,
+  shortDescription: product.shortDescription,
+  fullDescription: product.fullDescription,
+  productType: 'physical',
+  priceZar: product.priceZar,
+  salePriceZar: product.salePriceZar ?? null,
+  saleStartsAt: product.saleStartsAt ?? null,
+  saleEndsAt: product.saleEndsAt ?? null,
+  pricingMode: product.pricingMode,
+  pricingFieldKey: product.pricingFieldKey,
+  billableCharacters: product.billableCharacters,
+  customizationRules: product.customizationRules,
+  galleryImages: product.galleryImages,
+  variants: product.variants.map((variant) => ({ id: variant.id, sku: variant.sku, optionValues: variant.optionValues, unitPriceZar: variant.unitPriceZar, available: variant.available })),
+  published: true,
+})
 
 /* -------------------------------------------------------------------------
    Public snapshot sanitization.
@@ -49,6 +71,9 @@ export const toPublicSnapshot = (snapshot: CmsSnapshot): CmsSnapshot => {
     source: snapshot.source,
     valueLists: snapshot.valueLists,
     products,
+    physicalCatalog: (snapshot.physicalCatalog ?? []).filter((product) => product.published && product.productType === 'physical').map(publicPhysicalProduct),
+    commerceReady: snapshot.commerceReady === true,
+    localCommercePreview: snapshot.localCommercePreview === true,
     bundles,
     faqs,
     testimonials,

@@ -5,6 +5,8 @@ export * from './types'
 export * from './lib/formatters'
 export * from './lib/entitlements'
 export * from './lib/public-snapshot'
+export * from './lib/physical-products'
+export * from './lib/commerce'
 
 interface RepositoryOptions {
   supabaseUrl?: string

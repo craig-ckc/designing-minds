@@ -1,3 +1,6 @@
+import type { PhysicalProduct } from './lib/physical-products'
+import type { DeliveryDetails, FulfillmentStatus, PhysicalCatalogProduct } from './lib/commerce'
+
 /* -------------------------------------------------------------------------
    Designing Minds content model.
 
@@ -148,6 +151,8 @@ interface Publishable {
 
 /** An individual resource. Bundles are a separate Collection — see `Bundle`. */
 export interface Product extends Publishable {
+  /** Absent on legacy public snapshots; physical drafts use PhysicalProduct. */
+  productType?: 'digital'
   id: string
   slug: string
   title: string
@@ -254,7 +259,7 @@ export interface Testimonial extends Publishable {
 /* ----------------------------- Operational records --------------------- */
 
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'refunded'
-export type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'refunded' | 'failed'
+export type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'refunded' | 'failed' | 'payment_review'
 
 export interface Customer {
   id: string
@@ -273,7 +278,14 @@ export interface OrderItem {
    * live reference — old orders still read 'Single' and 'Access Plan' even
    * though neither can be created any more.
    */
-  productKind: 'Single' | 'Bundle' | 'Access Plan'
+  productKind: 'Single' | 'Bundle' | 'Access Plan' | 'Physical'
+  productType?: 'digital' | 'physical'
+  quantity?: number
+  unitPriceZar?: number
+  customizations?: Record<string, string>
+  variantId?: string
+  optionValues?: Record<string, string>
+  cartLineId?: string
   priceZar: number
   /**
    * The grade this line item grants — the product's or bundle's own grade.
@@ -308,6 +320,14 @@ export interface Order {
   couponCode?: string | null
   paymentId: string
   placedAt: string
+  hasPhysical?: boolean
+  shippingZar?: number
+  shippingMethod?: string | null
+  delivery?: DeliveryDetails | null
+  fulfillmentStatus?: FulfillmentStatus
+  trackingNumber?: string | null
+  trackingUrl?: string | null
+  reservationExpiresAt?: string | null
 }
 
 /* ----------------------------- Slug redirects -------------------------- */
@@ -371,6 +391,14 @@ export interface CmsSnapshot {
   source: string
   valueLists: ValueLists
   products: Product[]
+  /** Admin-only physical drafts from the same Product collection. Not sellable yet. */
+  physicalProducts?: PhysicalProduct[]
+  /** Public, sale-ready physical listings from the curated physical catalogue. */
+  physicalCatalog?: PhysicalCatalogProduct[]
+  /** Missing physical-commerce schema is treated as disabled for old databases. */
+  commerceReady?: boolean
+  /** Safe public context flag; no private settings are serialized. */
+  localCommercePreview?: boolean
   bundles: Bundle[]
   faqs: Faq[]
   testimonials: Testimonial[]
@@ -404,6 +432,8 @@ export interface CmsRepository {
   /** System-managed redirects whose target is a currently-published product or bundle. */
   getSlugRedirects: () => Promise<SlugRedirect[]>
   saveProduct: (product: Product) => Promise<Product>
+  /** Data foundation only: saving does not enable physical storefront sales. */
+  savePhysicalProduct: (product: PhysicalProduct) => Promise<PhysicalProduct>
   /**
    * Saves the bundle and replaces its membership. Membership goes through the
    * set_bundle_products RPC so the row and its members can't end up disagreeing
