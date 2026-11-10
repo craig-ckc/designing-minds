@@ -1,5 +1,12 @@
 # Designing Minds
 
+The physical-commerce expansion adds physical products to the existing Product
+collection and shop, with variant quantities, personalisation, delivery and
+separate inventory. Its complete journey is available in the local sample-data
+preview; production physical sales remain disabled. The digital launch rules
+below still apply to digital resources. See [physical commerce](./docs/physical-commerce.md)
+for the current pricing, stock and fulfilment contracts.
+
 Designing Minds sells downloadable CAPS-aligned learning resources to customers through a simple public catalogue and customer account area.
 
 ## Language
@@ -37,23 +44,21 @@ A group of admin-manageable content records that can be created, edited, or remo
 _Avoid_: Database table, static page, system record
 
 **Product Collection**:
-The main catalogue collection containing downloadable resources and bundles.
+The catalogue collection of individual downloadable resources. **Bundles** are their own collection (see below); both share the `/shop/<slug>` URL space and the cart.
 _Avoid_: Catalogue item collection
 
 **Package**:
-An umbrella term for any Product that grants more than one resource — a Bundle or an Access Plan — as opposed to a **Single** product. The Packages Browse Page (route `/packages`) presents both Bundles and Access Plans.
-_Avoid_: using "Package" to mean only a Bundle
+Legacy umbrella term, kept for the `/packages` route name. Since 2026-08-09 the only package is a **Bundle**, so prefer "Bundle" in visitor-facing copy and new code. The Packages Browse Page (route `/packages`) is bundles-only.
 
 **Bundle**:
-A purchasable product that groups multiple resources into one offer.
-_Avoid_: Bundle collection, Package (a Bundle is one kind of Package, not the only kind)
+A purchasable offer that groups an explicit list of individual resources (Products) into one price. A Bundle is its own **Collection** (the `bundles` table), not an item in the Product Collection.
 
-**Access Plan**:
-A purchasable product that grants access to a defined set of resources for one fixed grade over a fixed period. An **Essential Access** plan covers one grade for one term; a **Premium Access** plan covers one grade for the full year (all terms). The grade and term are fixed properties of the plan itself — the customer chooses them by choosing which plan to buy, not as a checkout option. Purchased once for its period; it does not auto-renew or auto-charge at launch.
+**Access Plan** (retired 2026-08-09; history only):
+A former product kind that granted access to a defined set of resources for one fixed grade over a fixed period. An **Essential Access** plan covers one grade for one term; a **Premium Access** plan covers one grade for the full year (all terms). The grade and term are fixed properties of the plan itself — the customer chooses them by choosing which plan to buy, not as a checkout option. Purchased once for its period; it does not auto-renew or auto-charge at launch.
 _Avoid_: Plan collection, Subscription, "choose grade at checkout"
 
-**Product Kind**:
-A Product field that describes how a product is sold; its value is drawn from the Product Kinds Value List.
+**Product Kind** (retired 2026-08-09):
+A former Product field (Single / Bundle / Access Plan). Products are now individual resources only; the value survives only as a snapshot in `orders.items[].productKind` for historical orders.
 _Avoid_: Resource format
 
 **Resource Format**:
@@ -79,7 +84,7 @@ A defined attribute of a record, such as a Product's title, slug, short descript
 _Avoid_: Controlled field
 
 **Value List**:
-A database-sourced set of allowed values that certain Fields draw from — Grades, Terms, Product Kinds, Resource Formats, Years, and Subjects. Value Lists are edited directly in the database (not through the admin app) and appear as fixed select options on records.
+A database-sourced set of allowed values that certain Fields draw from — Grades, Terms, Resource Formats, Years, and Subjects. Value Lists are edited directly in the database (not through the admin app) and appear as fixed select options on records.
 _Avoid_: Controlled field, option collection
 
 **Reference Field**:
@@ -139,14 +144,12 @@ _Avoid_: Marketing page
 - **Authentication Pages**, **Cart**, **Checkout**, **Customer Account**, **Order History**, and **Order Details** are **Functional Pages**.
 - A **Product Detail** is a top-level route because products can be reached from Shop, Grades, and Bundles.
 - **Shop**, **Grades**, and **Packages** are **Browse Pages**.
-- A **Bundle** and an **Access Plan** are both **Packages**; a **Single** product is not.
-- The **Packages** Browse Page (route `/packages`) lists **Bundles** and **Access Plans**; tier/grade/term filters narrow the Access Plans, pre-filled from query parameters when the customer arrives from a homepage or nav plan entry.
+- The **Packages** Browse Page (route `/packages`) lists **Bundles** only; `/bundles` redirects to it. Access Plans were retired on 2026-08-09.
 - A **Browse Page** can link to many **Product Details**, but it does not own their routes.
 - The **Product Collection** is the primary catalogue **Collection**.
-- A **Bundle** is an item in the **Product Collection**.
-- A **Bundle** can reference included Products while still being sold as its own Product.
-- An **Access Plan** is an item in the **Product Collection**.
-- **Product Kind** and **Resource Format** are separate Product **Fields**, each drawing its value from its own **Value List**.
+- A **Bundle** is an item in the **Bundle Collection**, separate from the **Product Collection**.
+- A **Bundle** lists the included Products explicitly; what a buyer gets is exactly that list.
+- **Resource Format** is a Product **Field** drawing its value from its own **Value List**.
 - The **FAQ Collection** is global and can be reused across static pages, browse pages, product pages, and checkout support.
 - The **Testimonial Collection** is global and can be reused across static pages, browse pages, and product pages.
 - Static pages can query reusable collection content directly without page-to-content reference fields.
@@ -158,8 +161,8 @@ _Avoid_: Marketing page
 - **Customers** and **Orders** may be stored in the database, but they are not **Collections**.
 - An **Administrator** manages catalogue **Collections** and can view all **Customers**, **Orders**, and **Payments**; an Administrator is not a **Customer** and does not place **Orders**.
 - Every **Customer** and every **Administrator** is exactly one authenticated account.
-- **Value Lists** supply the allowed values for fields like Grade, Term, Product Kind, Resource Format, Year, and Subject; **Reference Fields** are for relationships between **Collections**.
-- **Value Lists** are stored in the database and changed there directly; they are not managed through an admin screen, and Grades, Terms, and Product Kinds are effectively fixed for launch.
+- **Value Lists** supply the allowed values for fields like Grade, Term, Resource Format, Year, and Subject; **Reference Fields** are for relationships between **Collections**.
+- **Value Lists** are stored in the database and changed there directly; they are not managed through an admin screen, and Grades and Terms are effectively fixed for launch.
 - Products carry one or more **Subjects** (a required multi-select) whose allowed values come from the **Subjects Value List**; the subject names are stored directly on the Product.
 
 ## Example dialogue
@@ -175,5 +178,6 @@ _Avoid_: Marketing page
 - A top-level route can be a **Functional Page** without being an **Indexable Page**.
 - Physical delivery and cash-on-delivery are possible future concepts, but they are out of scope for launch.
 - **Digital Fulfillment** is automatic and immediate once a payment is confirmed; there is no separate manual fulfillment step at launch. A distinct "fulfilled" state is reserved for possible future non-instant (e.g. physical) fulfillment, but at launch a confirmed payment is what unlocks downloads.
-- "Essential" and "Premium" are marketed as term and yearly **Access Plans**, but they are one-time purchases for that period, not recurring subscriptions. Automatic renewal and automatic charging are possible future concepts, out of scope for launch.
-- Each **Access Plan** is a distinct product per grade. Essential is further split per term (one product per grade-and-term); Premium is one product per grade covering all terms. There is no single "Essential" or "Premium" product that spans grades, and grade is never selected during **Checkout**.
+- Every purchase (single resource or **Bundle**) is a one-time charge, never a recurring subscription. Automatic renewal and automatic charging are possible future concepts, out of scope for launch.
+- Grade and term are fixed properties of what is bought and are never selected during **Checkout**.
+- Retired: "Essential" and "Premium" **Access Plans** (one product per grade and term / per grade for the year) were removed on 2026-08-09 when bundles became their own collection; see `docs/decisions.md`.

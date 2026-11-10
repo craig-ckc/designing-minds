@@ -139,7 +139,7 @@ Local web build:
 npm run build --workspace @designing-minds/web
 ```
 
-Set `ALLOW_EMPTY_PRERENDER=true` only when an offline build should tolerate an empty snapshot.
+The prerender step loads `.env`, `.env.production` and `.env.local` from `apps/web`, so a local build may read whichever Supabase project those point at. Set `ALLOW_EMPTY_PRERENDER=true` only when an offline build should tolerate an empty snapshot (CI and `npm run build:ci` do this; never set it on a deploy).
 
 ## Launch Checklist
 
@@ -218,7 +218,7 @@ Smoke tests:
 
 Code quality:
 
-- [ ] `npm run lint`, `npm test`, and `npm run build` pass from the repository root.
+- [ ] `npm run check` (lint, typecheck, test) passes from the repository root and CI is green; a real `npm run build` passes against the production Supabase project.
 - [ ] `npm audit --omit=dev` reports no known production dependency vulnerabilities.
 - [ ] `npm outdated` has no unexpected in-range updates; major upgrades are reviewed separately.
 

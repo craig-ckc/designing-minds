@@ -2,11 +2,11 @@
 
 Accepted decisions that still constrain product, data, and infrastructure work.
 
-## Access Plans Are One-Time Purchases
+## Purchases Are One-Time
 
 Status: accepted.
 
-Essential and Premium are marketed as access offers, but launch Access Plans are Products purchased once for a fixed period. There is no stored payment mandate, automatic renewal, cancellation UI, dunning, or recurring charge.
+Every purchase (a resource or a Bundle) is paid once. There is no stored payment mandate, automatic renewal, cancellation UI, dunning, or recurring charge.
 
 Consequences:
 
@@ -14,29 +14,28 @@ Consequences:
 - Download access is fulfilled through Order Detail.
 - Automatic renewal is a future project, not a launch assumption.
 
-## Access Plans Are Fixed Products
+## Access Plans Are Retired; Bundles Are Their Own Collection
 
-Status: accepted.
+Status: accepted 2026-08-09. Supersedes the earlier "Access Plans Are Fixed Products" decision (20 Essential and 5 Premium plan products, one `products` table split by a product-kind column).
 
-Each Access Plan is a distinct Product with fixed grade and period. Essential is one product per grade and term. Premium is one product per grade covering the year. Customers choose the plan by selecting the Product; checkout does not collect grade or term.
+Bundles are a separate `bundles` collection with an explicit member list; Products are individual resources only; the product-kind column is gone. Plans that nobody bought were deleted, and the few that had been bought were migrated (see `supabase/patch/2026-08-09-bundles-table.sql`). Order history keeps the old kind as a snapshot in `orders.items[].productKind`.
 
 Consequences:
 
-- The catalogue contains 20 Essential plan products and 5 Premium plan products.
-- Entitlements derive from the purchased Product fields.
-- Homepage/nav plan links deep-link into `/packages` with filters; Product Detail remains the purchase page.
+- Checkout does not collect grade or term; the purchased Product or Bundle fixes them.
+- Entitlements derive from the Bundle's explicit member list (`packages/cms/src/lib/entitlements.ts`); a purchaser keeps access if the Bundle is later withdrawn.
+- `/packages` is the bundles browse page; `/bundles` redirects to it.
 
 ## Value Lists Are Database-Sourced
 
 Status: accepted.
 
-Grades, Terms, Years, Product Kinds, and Resource Formats are database-sourced allowed values. They are not admin-managed collections and cannot be created inline in the editor.
+Grades, Terms, Years, and Resource Formats are database-sourced allowed values. They are not admin-managed collections and cannot be created inline in the editor.
 
 Consequences:
 
 - Admin reads value lists from the CMS snapshot.
 - Adding a Year or Resource Format is a database edit.
-- Adding a Product Kind requires database and code changes.
 
 ## Roles Are Database-Managed And RLS-Enforced
 

@@ -38,7 +38,7 @@ Functional noindex routes:
 /unsubscribe/
 ```
 
-`/bundles/` is legacy and redirects to `/packages/`. Product pages use the canonical `/shop/[product-slug]/` route regardless of whether the visitor discovered them through Shop, Grades, or Packages.
+`/hero-demo/` is a functional, noindex design-study page (not in the sitemap). `/bundles/` is legacy and redirects to `/packages/`. Product pages use the canonical `/shop/[product-slug]/` route regardless of whether the visitor discovered them through Shop, Grades, or Packages.
 
 ## Page Families
 
@@ -60,27 +60,28 @@ Admin-managed collections:
 
 ```text
 Products
+Bundles
 FAQs
 Testimonials
 ```
 
+The admin also lists Discount codes (see [promotions.md](./promotions.md)) and read-only operational records (Orders, Customers, Payments, form submissions).
+
 ### Products
 
-Products are every sellable offer:
-
-- `Single`: one downloadable resource.
-- `Bundle`: a fixed group of individual resources.
-- `Access Plan`: a fixed grade/term or grade/year offer that unlocks included resources.
+Products are individual downloadable resources. Bundles are a separate collection (below). Access Plans and the product-kind column were retired on 2026-08-09 (see [decisions.md](./decisions.md)).
 
 Core product fields:
 
 ```text
 title, slug, shortDescription, description, price, grade, term, year,
-productKind, resourceFormat, subjects, marks, purchasedFiles,
+resourceFormat, subjects, marks, purchasedFiles,
 featured, published, sort/order metadata, SEO metadata, faqs
 ```
 
-Bundle and Access Plan products can reference included products whose Product Kind is `Single`. Access Plans are normal products with fixed grade and term/year fields; checkout does not ask the customer to choose a grade.
+### Bundles
+
+A Bundle lists its included Products explicitly (`includedProductIds` / `includedProductSlugs`) and has its own price, grade, term, year, and `bundleScope` (`Term` or `Full Year`). Subjects, terms, file count, and saving versus buying singly are derived from the members, never stored. Checkout does not ask the customer to choose a grade.
 
 ### FAQs
 
@@ -98,12 +99,11 @@ Value Lists are database-sourced allowed values, not admin-managed collections:
 Grades
 Terms
 Years
-Product Kinds
 Resource Formats
 Subjects
 ```
 
-Grades, Terms, and Product Kinds are effectively fixed for launch. Years, Resource Formats, and Subjects can be extended by database edit. A new Product Kind also requires code changes because the editor and site branch on known kinds.
+Grades and Terms are effectively fixed for launch. Years, Resource Formats, and Subjects can be extended by database edit.
 
 Subjects classify Products and support catalogue browsing. Products require at least one Subject; a product stores its subject **display names** directly in `subjects` (there is no Subjects table to join). Edit the list of subjects in `value_lists.subjects`, like grades and terms.
 
@@ -111,7 +111,6 @@ Launch values:
 
 - Grades: Grade 3, Grade 4, Grade 5, Grade 6, Grade 7.
 - Terms: Any Term, Term 1, Term 2, Term 3, Term 4.
-- Product Kinds: Single, Bundle, Access Plan.
 - Resource Formats: Test / Assessment, Summary.
 - Subjects: Afrikaans First Additional Language, Economic Management Sciences (EMS), English First Additional Language, English Home Language, Geography, History, Life Orientation, Life Skills, Life Skills (PSW), Mathematics, Natural Science, Natural Science and Technology, Technology.
 
@@ -138,4 +137,4 @@ Public browsing reads `catalog_products`, a sanitized published-only view. Stati
 
 ## Non-Collections
 
-Do not create admin collections for Pages, Page Sections, Grades, Terms, Years, Product Kinds, Resource Formats, Bundles, Plans, Files, Users, Orders, or Payments. Bundles and Access Plans are Products. Files live on Products as private storage keys for launch.
+Do not create admin collections for Pages, Page Sections, Grades, Terms, Years, Resource Formats, Plans, Files, Users, Orders, or Payments as editable content collections. Files live on Products as private storage keys for launch.
