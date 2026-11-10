@@ -38,6 +38,8 @@ export type FieldType =
   | 'fileList'
   | 'imageGallery'
   | 'previewPdfList'
+  | 'customizationRules'
+  | 'physicalVariants'
 
 /** Collections that a Reference Field can point at. */
 export type ReferenceCollection = 'faqs' | 'products'
@@ -104,6 +106,9 @@ export type ImageGalleryField = FieldBase & { type: 'imageGallery' }
  */
 export type PreviewPdfListField = FieldBase & { type: 'previewPdfList' }
 
+/** Structured physical product forms; these persist the commerce JSON shapes. */
+export type PhysicalField = FieldBase & { type: 'customizationRules' | 'physicalVariants' }
+
 export type AdminField =
   | PrimitiveField
   | SlugField
@@ -112,6 +117,7 @@ export type AdminField =
   | FileListField
   | ImageGalleryField
   | PreviewPdfListField
+  | PhysicalField
 
 /* ------------------------------ List columns --------------------------- */
 
@@ -204,6 +210,7 @@ export type FieldOption = { label: string; value: string }
 
 /** Runtime data the generic FieldControl needs to resolve dynamic options. */
 export type FieldContext = {
+  commerceReady?: boolean
   valueLists: ValueLists
   optionsForSelect: (field: SelectField) => FieldOption[]
   optionsForReference: (field: ReferenceField) => FieldOption[]

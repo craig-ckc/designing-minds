@@ -104,7 +104,7 @@ export function MenuChoice({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'grid cursor-default gap-0.5 px-2.5 py-1.5 outline-none',
+        'grid min-h-field cursor-default gap-0.5 px-2.5 py-1.5 outline-none dense:min-h-0',
         'data-[highlighted]:bg-surface-alt data-[disabled]:opacity-50',
         selected && 'bg-surface-alt',
       )}

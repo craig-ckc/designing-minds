@@ -1,7 +1,7 @@
-import { type ComponentPropsWithoutRef } from 'react'
+import { type ComponentPropsWithRef } from 'react'
 import { cn, FIELD } from '../../design'
 
-export type TextareaProps = ComponentPropsWithoutRef<'textarea'>
+export type TextareaProps = ComponentPropsWithRef<'textarea'>
 
 /**
  * Multiline text control. Base UI has no textarea primitive, so this is a native

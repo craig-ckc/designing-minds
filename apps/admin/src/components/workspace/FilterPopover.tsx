@@ -63,7 +63,7 @@ export function FilterPopover({
               {facet.options.map((option) => {
                 const checked = (filters[facet.key] ?? []).includes(option.value)
                 return (
-                  <label key={option.value} className="flex cursor-pointer items-center gap-2 text-ui text-ink-soft">
+                  <label key={option.value} className="flex min-h-field cursor-pointer items-center gap-2 text-ui text-ink-soft dense:min-h-0">
                     <Checkbox
                       checked={checked}
                       onCheckedChange={() => toggle(facet.key, option.value)}

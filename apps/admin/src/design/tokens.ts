@@ -36,19 +36,18 @@ export const STATUSBAR =
 
 /**
  * Every text-entry control: input, textarea, select trigger, combobox, and the
- * read-only displays that must line up with them. 24px tall at 12px type. The
- * inner shadow is what stops a control this short from reading as a flat
- * outlined box.
+ * read-only displays that must line up with them. Phones use 16px values in
+ * 44px controls; desktop uses 12px values in compact 24px controls.
  */
 export const FIELD =
-  'w-full min-h-field rounded-control border border-line-strong bg-surface px-2.5 py-1 text-ui text-ink shadow-field-inset transition placeholder:text-muted focus:border-primary focus:outline focus:outline-2 focus:outline-primary/20 focus:-outline-offset-1'
+  'w-full min-h-field rounded-control border border-line-strong bg-surface px-2.5 py-1 text-base dense:text-ui text-ink shadow-field-inset transition placeholder:text-muted focus:border-primary focus:outline focus:outline-2 focus:outline-primary/20 focus:-outline-offset-1'
 
 /** Floating surface: menu, select list, popover, combobox list. */
 export const POPUP = 'rounded-control border border-line bg-surface text-ui shadow-popup'
 
 /** A row inside a POPUP — menu item, select option, combobox option. */
 export const POPUP_ROW =
-  'flex cursor-default items-center gap-2 px-2.5 py-1.5 outline-none data-[highlighted]:bg-surface-alt'
+  'flex min-h-field cursor-default items-center gap-2 px-2.5 py-1.5 outline-none data-[highlighted]:bg-surface-alt dense:min-h-0'
 
 /**
  * Table head cell. Sentence case, not uppercase micro-caps: at 12px semibold
@@ -58,7 +57,7 @@ export const POPUP_ROW =
 export const TH = 'whitespace-nowrap px-2.5 py-1.5 text-left text-ui font-semibold text-ink border-b border-line'
 
 /** Table body cell. With `text-ui` this lands a row at ~32px, matching `h-row`. */
-export const TD = 'px-2.5 py-1.5 align-middle'
+export const TD = 'h-row px-2.5 py-0 align-middle dense:h-auto dense:py-1.5'
 
 /** A non-interactive state chip, e.g. "Read only". */
 export const CHIP_DASHED =

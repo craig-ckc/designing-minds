@@ -9,7 +9,9 @@ import { Input, ReferencePicker, Select, Switch, Textarea, type SelectOption } f
 import { FileListField } from './FileListField'
 import { ImageGalleryField } from './ImageGalleryField'
 import { PreviewPdfField } from './PreviewPdfField'
-import { RichTextEditor } from './RichTextEditor'
+import { DeferredRichTextEditor } from './DeferredRichTextEditor'
+import { CustomizationRulesField } from './CustomizationRulesField'
+import { PhysicalVariantsField } from './PhysicalVariantsField'
 
 type Props = {
   field: AdminField
@@ -60,10 +62,10 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
       case 'boolean': {
         const checked = Boolean(value)
         return (
-          <div className="flex items-center gap-2">
-            <Switch id={inputId} checked={checked} onCheckedChange={(next) => onUpdate(field.key, next)} disabled={disabled} />
-            <span className="text-ui text-ink-soft">{checked ? 'On' : 'Off'}</span>
-          </div>
+          <label htmlFor={inputId} className={cn('flex min-h-field w-fit min-w-field items-center gap-2 dense:min-h-0 dense:min-w-0', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
+            <Switch id={inputId} aria-label={field.label} checked={checked} onCheckedChange={(next) => onUpdate(field.key, next)} disabled={disabled} />
+            <span aria-hidden className="text-ui text-ink-soft">{checked ? 'On' : 'Off'}</span>
+          </label>
         )
       }
 
@@ -74,8 +76,9 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
 
       case 'richText':
         return (
-          <RichTextEditor
+          <DeferredRichTextEditor
             id={inputId}
+            aria-labelledby={`${inputId}:label`}
             value={String(value ?? '')}
             disabled={disabled}
             onChange={(markdown) => onUpdate(field.key, markdown)}
@@ -144,6 +147,12 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
 
       case 'previewPdfList':
         return renderPreviewPdfList()
+
+      case 'customizationRules':
+        return <CustomizationRulesField value={value} disabled={disabled} onChange={(rules) => onUpdate(field.key, rules)} />
+
+      case 'physicalVariants':
+        return <PhysicalVariantsField value={value} productId={record.id} disabled={disabled} onChange={(variants) => onUpdate(field.key, variants)} />
 
       default:
         return <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
@@ -277,13 +286,13 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
    controls, not one input, so their caption is a plain label referenced by
    aria-labelledby rather than a <label htmlFor> pointing at something that
    can't take focus. */
-const GROUP_FIELDS = new Set<AdminField['type']>(['fileList', 'imageGallery', 'previewPdfList'])
+const GROUP_FIELDS = new Set<AdminField['type']>(['fileList', 'imageGallery', 'previewPdfList', 'richText', 'customizationRules', 'physicalVariants'])
 
 function FieldShell({ field, inputId, children }: { field: AdminField; inputId: string; children: ReactNode }) {
   const isGroup = GROUP_FIELDS.has(field.type)
   const Caption = isGroup ? 'span' : 'label'
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2" role={isGroup ? 'group' : undefined} aria-labelledby={isGroup ? `${inputId}:label` : undefined}>
       {/* The label steps down to control size and regular weight, deliberately
           not bold, so the eye goes to the value below it rather than competing
           with it. */}

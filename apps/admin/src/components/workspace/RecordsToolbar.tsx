@@ -1,5 +1,5 @@
 import { Icon } from '../ui'
-import { Button, Input } from '../primitives'
+import { Button, Input, Menu, MenuChoice } from '../primitives'
 import { cn, BAR } from '../../design'
 import { SAVE_CHOICES, type SaveStatus } from '../../cms/publish-state'
 import { FilterPopover, type FilterState, type ResolvedFacet } from './FilterPopover'
@@ -122,6 +122,11 @@ export function RecordsToolbar({
           {selectedCount > 0 ? (
             <>
               {/* Same three choices as the editor's save menu, same words. */}
+              {onBulkStatus ? <span className="dense:hidden">
+                <Menu trigger={<Button disabled={busy}>Set status <span className="size-4"><Icon name="chevron" /></span></Button>}>
+                  {SAVE_CHOICES.map((choice) => <MenuChoice key={choice.status} label={choice.label} description={choice.description} disabled={busy} onClick={() => onBulkStatus(choice.status)} />)}
+                </Menu>
+              </span> : null}
               {onBulkStatus
                 ? SAVE_CHOICES.map((choice) => (
                     <Button
@@ -130,6 +135,7 @@ export function RecordsToolbar({
                       size="sm"
                       disabled={busy}
                       title={choice.description}
+                      className="hidden dense:inline-flex"
                       onClick={() => onBulkStatus(choice.status)}
                     >
                       {choice.label}
@@ -137,12 +143,19 @@ export function RecordsToolbar({
                   ))
                 : null}
 
+              <span className="dense:hidden">
+                <Menu trigger={<Button aria-label="More actions" disabled={busy}>More <span className="size-4"><Icon name="chevron" /></span></Button>}>
+                  <MenuChoice label="Export selected as CSV" disabled={busy} onClick={onExport} />
+                  {onDelete ? <MenuChoice label={<span className="text-danger">Delete selected {noun}</span>} disabled={busy} onClick={onDelete} /> : null}
+                </Menu>
+              </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onExport}
                 disabled={busy}
                 aria-label={`Export the selected ${noun} as CSV`}
+                className="hidden dense:inline-flex"
               >
                 <span className="size-4">
                   <Icon name="download" />
@@ -160,7 +173,7 @@ export function RecordsToolbar({
                   onClick={onDelete}
                   disabled={busy}
                   aria-label={`Delete the selected ${noun}`}
-                  className="border-danger/40 text-danger hover:border-danger hover:text-danger"
+                  className="hidden border-danger/40 text-danger hover:border-danger hover:text-danger dense:inline-flex"
                 >
                   <span className="size-4">
                     <Icon name="trash" />

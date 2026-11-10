@@ -10,8 +10,9 @@ import { useAdminAuth } from '../lib/auth'
 import { useUnsavedChanges } from '../lib/unsaved'
 import { CollectionSidebar } from './workspace/CollectionSidebar'
 import { ErrorBoundary } from './ErrorBoundary'
-import { Avatar, Button, ConfirmDialog, Menu, MenuItem, MenuLabel, MenuSeparator } from './primitives'
+import { Avatar, Button, ConfirmDialog, Dialog, Menu, MenuItem, MenuLabel, MenuSeparator } from './primitives'
 import { PublishButton } from './PublishButton'
+import { FeedbackMessages } from './FeedbackMessages'
 
 /* ----------------------------- Top app bar ----------------------------- */
 
@@ -53,7 +54,7 @@ function AdminBreadcrumb({ snapshot }: { snapshot: CmsSnapshot | null }) {
   )
 }
 
-function TopBar({ snapshot, onPublished }: { snapshot: CmsSnapshot | null; onPublished: () => void }) {
+function TopBar({ snapshot, onPublished, onOpenCollections }: { snapshot: CmsSnapshot | null; onPublished: () => void; onOpenCollections: () => void }) {
   const { session, logout } = useAdminAuth()
   const unsaved = useUnsavedChanges()
   const [confirmLogout, setConfirmLogout] = useState(false)
@@ -66,8 +67,8 @@ function TopBar({ snapshot, onPublished }: { snapshot: CmsSnapshot | null; onPub
   }
 
   return (
-    <header className={cn(BAR, 'sticky top-0 z-30 gap-2')}>
-      <div className="flex min-w-0 items-center gap-2">
+    <header className={cn(BAR, 'sticky top-0 z-30 h-auto min-h-bar items-start gap-2 py-2 md:h-bar md:items-center md:py-0')}>
+      <div className="flex min-w-0 items-center gap-2 py-2.5 md:py-0">
         {/* Negative tracking kept deliberately: this is a logotype, not body
             text, and it's the one exception to the "delete tracking" rule. */}
         <span className="grid size-6 flex-none place-items-center rounded-control bg-primary text-meta font-bold tracking-[-0.04em] text-on-primary">
@@ -82,7 +83,10 @@ function TopBar({ snapshot, onPublished }: { snapshot: CmsSnapshot | null; onPub
       <span aria-hidden className="hidden text-line-strong md:block">/</span>
       <AdminBreadcrumb snapshot={snapshot} />
 
-      <div className="ml-auto flex flex-none items-center gap-2">
+      <div className="ml-auto flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 md:flex-none md:flex-nowrap">
+        {snapshot ? <Button variant="outline" size="sm" className="lg:hidden" aria-label="Open collections" onClick={onOpenCollections}>
+          <span className="sm:hidden">Menu</span><span className="hidden sm:inline">Collections</span>
+        </Button> : null}
         {!repository.canWrite ? (
           <span className={cn(CHIP_DASHED, 'hidden sm:inline-flex')}>Read only</span>
         ) : null}
@@ -133,6 +137,7 @@ export function Shell({
   message,
   error,
   onPublished,
+  onDismissError,
 }: {
   children: ReactNode
   snapshot: CmsSnapshot | null
@@ -140,10 +145,30 @@ export function Shell({
   error: string | null
   /** Publishing changes record statuses server-side; the caller reloads them. */
   onPublished: () => void
+  onDismissError?: () => void
 }) {
+  const [collectionsOpen, setCollectionsOpen] = useState(false)
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
-      <TopBar snapshot={snapshot} onPublished={onPublished} />
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <TopBar snapshot={snapshot} onPublished={onPublished} onOpenCollections={() => setCollectionsOpen(true)} />
+      {snapshot ? (
+        <Dialog
+          open={collectionsOpen}
+          onClose={() => setCollectionsOpen(false)}
+          title="Collections"
+          description="Choose a workspace section."
+          className="h-[min(40rem,calc(100dvh-2rem))] w-[min(24rem,calc(100vw-2rem))]"
+        >
+          <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden border-t border-line">
+            <div className="flex justify-end border-b border-line py-2">
+              <Button variant="text" size="sm" aria-label="Close collections" onClick={() => setCollectionsOpen(false)}>Close</Button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <CollectionSidebar snapshot={snapshot} onNavigate={() => setCollectionsOpen(false)} />
+            </div>
+          </div>
+        </Dialog>
+      ) : null}
       <div className="flex min-h-0 flex-1">
         <aside className="hidden w-pane flex-none border-r border-line bg-surface lg:block">
           {snapshot ? <CollectionSidebar snapshot={snapshot} /> : null}
@@ -154,19 +179,7 @@ export function Shell({
               sidebar navigable instead of blanking the app. */}
           <ErrorBoundary>{children}</ErrorBoundary>
 
-          {message || error ? (
-            <div className="pointer-events-none absolute bottom-3 right-3 z-20 max-w-sm">
-              {error ? (
-                <div className="pointer-events-auto rounded-control border border-danger bg-danger-tint px-3 py-2 text-ui text-danger shadow-popup">
-                  {error}
-                </div>
-              ) : (
-                <div className="pointer-events-auto rounded-control border border-line bg-surface px-3 py-2 text-ui text-ink-soft shadow-popup">
-                  {message}
-                </div>
-              )}
-            </div>
-          ) : null}
+          <FeedbackMessages message={message} error={error} onDismissError={onDismissError} />
         </main>
       </div>
     </div>

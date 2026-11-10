@@ -1,6 +1,7 @@
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
+import { useEffect, type AriaAttributes } from 'react'
 import { cn } from '../../design'
 import { Toolbar, ToolbarSeparator, ToolbarToggle } from '../primitives'
 
@@ -15,12 +16,13 @@ export function RichTextEditor({
   onChange,
   disabled,
   id,
+  'aria-labelledby': labelledBy,
 }: {
   value: string
   onChange: (markdown: string) => void
   disabled?: boolean
   id?: string
-}) {
+} & Pick<AriaAttributes, 'aria-labelledby'>) {
   const editor = useEditor({
     extensions: [StarterKit, Markdown],
     content: value,
@@ -33,9 +35,17 @@ export function RichTextEditor({
         class: 'tiptap min-h-[140px] px-2.5 py-2',
         role: 'textbox',
         'aria-multiline': 'true',
+        ...(labelledBy ? { 'aria-labelledby': labelledBy } : {}),
+        'aria-readonly': String(Boolean(disabled)),
       },
     },
   })
+
+  useEffect(() => {
+    if (editor && editor.getMarkdown() !== value) {
+      editor.commands.setContent(value, { contentType: 'markdown', emitUpdate: false })
+    }
+  }, [editor, value])
 
   return (
     <div

@@ -74,7 +74,7 @@ test('CSV import rejects multiple subjects instead of silently discarding one', 
 test('CSV import keeps every value for unlimited multiReference fields (faqs)', () => {
   const plan = importCsv('faqs\nf1; f2; f3')
   assert.equal(plan.rows.length, 1)
-  assert.equal(plan.rows[0].record.faqs.length, 3)
+  assert.equal((plan.rows[0].record.faqs as string[]).length, 3)
   assert.deepEqual(plan.rows[0].record.faqs, ['f1', 'f2', 'f3'])
 })
 

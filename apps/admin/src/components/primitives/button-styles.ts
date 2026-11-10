@@ -15,6 +15,7 @@ export type ButtonSize = 'sm' | 'md' | 'icon'
 export const buttonStyles = cv({
   base: [
     'inline-flex items-center justify-center gap-1 font-medium transition select-none',
+    'min-h-field min-w-field dense:min-h-0 dense:min-w-0',
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ],

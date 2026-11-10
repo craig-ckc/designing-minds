@@ -7,7 +7,8 @@ const scrollbar =
 
 /**
  * Scrollable region on the Base UI ScrollArea primitive, with a thin monochrome
- * overlay thumb. The Root must have a bounded height (e.g. `min-h-0 flex-1`).
+ * overlay thumb. Bound the Root's height for vertical scrolling (e.g.
+ * `min-h-0 flex-1`); horizontal tables can keep their natural height.
  */
 export function ScrollArea({
   children,
@@ -21,8 +22,8 @@ export function ScrollArea({
   orientation?: 'vertical' | 'horizontal' | 'both'
 }) {
   return (
-    <BaseScrollArea.Root className={cn('relative min-h-0', className)}>
-      <BaseScrollArea.Viewport className={cn('h-full w-full overscroll-contain', viewportClassName)}>
+    <BaseScrollArea.Root className={cn('relative flex min-h-0 flex-col', className)}>
+      <BaseScrollArea.Viewport className={cn('min-h-0 w-full flex-1 overscroll-contain', viewportClassName)}>
         {children}
       </BaseScrollArea.Viewport>
 
@@ -33,8 +34,8 @@ export function ScrollArea({
       ) : null}
 
       {orientation !== 'vertical' ? (
-        <BaseScrollArea.Scrollbar orientation="horizontal" className={cn(scrollbar, 'm-0.5 h-1.5 flex-col justify-center')}>
-          <BaseScrollArea.Thumb className="h-full rounded-full bg-line-strong" />
+        <BaseScrollArea.Scrollbar orientation="horizontal" className={cn(scrollbar, 'm-0.5 h-2 flex-col justify-center bg-line/50 opacity-100 dense:h-1.5 dense:bg-transparent dense:opacity-0')}>
+          <BaseScrollArea.Thumb className="h-full rounded-full bg-ink-soft dense:bg-line-strong" />
         </BaseScrollArea.Scrollbar>
       ) : null}
 

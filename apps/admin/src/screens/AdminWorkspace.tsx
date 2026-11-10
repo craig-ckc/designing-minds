@@ -16,7 +16,11 @@ import { RecordTable } from '../components/workspace/RecordTable'
 import { ImportDialog } from '../components/workspace/ImportDialog'
 import { RecordEditor } from '../components/editor/RecordEditor'
 import { cn, STATUSBAR } from '../design'
-import { recordStatus, type SaveStatus } from '../cms/publish-state'
+import { type SaveStatus } from '../cms/publish-state'
+import { chooseNewProductType, duplicatePhysicalVariants, physicalProductEditValidation } from '../cms/physical-product-edit'
+import type { PhysicalVariantDraft } from '@designing-minds/cms'
+import { currentYear } from '../cms/years'
+import { saveSelectedStatus } from '../lib/bulk-status'
 
 type SaveFn = (collection: AdminCollection, record: AdminRecord) => Promise<AdminRecord | null>
 
@@ -28,13 +32,14 @@ type Props = {
   saving: boolean
   onSave: SaveFn
   onDelete: DeleteFn
+  onRefresh?: () => void
 }
 
 /**
  * The Editorial Workspace for one Collection: the record table (full width) or,
  * once a record is selected via the URL, the record-list pane + Record Editor.
  */
-export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete }: Props) {
+export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete, onRefresh }: Props) {
   const navigate = useNavigate()
   const { recordId } = useParams()
   const [search, setSearch] = useState('')
@@ -43,6 +48,7 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set())
   const [importOpen, setImportOpen] = useState(false)
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkSummary, setBulkSummary] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const records = useMemo(() => selectRecords(snapshot, collection.id), [snapshot, collection.id])
@@ -122,15 +128,14 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
   const bulkSetStatus = async (status: SaveStatus) => {
     const statusField = collection.statusField
     if (!statusField) return
+    setBulkSummary(null)
     setBulkBusy(true)
     try {
-      for (const record of records) {
-        if (!selected.has(record.id)) continue
-        const current = recordStatus(record)
-        // Queueing something already Published (unchanged) would publish nothing.
-        if (current === status || (status === 'queued' && current === 'published')) continue
-        await onSave(collection, setPath(record, statusField, status))
-      }
+      const result = await saveSelectedStatus(collection, records, selected, status, onSave)
+      const summary = result.failedIds.length
+        ? `Updated ${result.updated} of ${result.attempted}; ${result.failedIds.length} failed. Selection is unchanged so you can retry.`
+        : `Updated ${result.updated} ${collection.label.toLowerCase()}.`
+      setBulkSummary(summary)
     } finally {
       setBulkBusy(false)
     }
@@ -185,7 +190,7 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
   return (
     <div className="flex min-h-0 flex-1">
       <section
-        className={cn('flex min-h-0 flex-col border-r border-line', editing ? 'w-pane flex-none' : 'min-w-0 flex-1')}
+        className={cn('min-h-0 flex-col border-r border-line', editing ? 'hidden lg:flex lg:w-pane lg:flex-none' : 'flex min-w-0 flex-1')}
         aria-label={`${collection.label} records`}
       >
         <RecordsToolbar
@@ -209,6 +214,7 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
           newLabel={`New ${collection.singular.toLowerCase()}`}
           compact={editing}
         />
+        {bulkSummary ? <p role={bulkSummary.includes('failed') ? 'alert' : 'status'} className="px-3 py-2 text-ui">{bulkSummary}</p> : null}
 
         {/* One table in both states — narrowed to its first column while a
             record is open, so the list never becomes a different component. */}
@@ -272,6 +278,7 @@ export function AdminWorkspace({ collection, snapshot, saving, onSave, onDelete 
             ctx={ctx}
             saving={saving}
             onSave={onSave}
+            onRefresh={onRefresh}
             onDelete={onDelete}
             onBack={goToList}
             onNavigateToRecord={goToRecord}
@@ -298,6 +305,7 @@ function RecordEditorPane({
   onDelete,
   onBack,
   onNavigateToRecord,
+  onRefresh,
 }: {
   collection: AdminCollection
   initial: AdminRecord
@@ -312,6 +320,7 @@ function RecordEditorPane({
   onDelete: DeleteFn
   onBack: () => void
   onNavigateToRecord: (id: string) => void
+  onRefresh?: () => void
 }) {
   const [draft, setDraft] = useState<AdminRecord>(initial)
   // The last saved shape of the record; the draft is dirty when it differs.
@@ -385,7 +394,11 @@ function RecordEditorPane({
     if (slugKey && key === slugKey && !isUpdater) setSlugFollowsTitle(String(value ?? '').trim() === '')
     setDraft((current) => {
       const resolved = isUpdater ? (value as (previous: unknown) => unknown)(getPath(current, key)) : value
+      if (collection.id === 'products' && key === 'productType') {
+        return isNew ? chooseNewProductType(current, resolved, ctx.valueLists, currentYear()) : current
+      }
       let next = setPath(current, key, resolved)
+      if (collection.id === 'products' && key === 'pricingMode' && resolved === 'fixed') next = { ...next, pricingFieldKey: null, billableCharacters: null }
       if (slugKey && slugFollowsTitle && key === collection.titleField) {
         next = setPath(next, slugKey, uniqueSlug(String(resolved ?? ''), slugKey, records, current.id))
       }
@@ -394,6 +407,11 @@ function RecordEditorPane({
   }
 
   const validate = (record: AdminRecord): string | null => {
+    if (collection.id === 'products' && record.productType === 'physical') {
+      if (!ctx.commerceReady) return 'Physical-product management is not installed in this environment yet.'
+      const error = physicalProductEditValidation(record)
+      if (error) return error
+    }
     for (const field of collection.fields) {
       if (!field.required || !fieldIsVisible(field, record)) continue
       const value = getPath(record, field.key)
@@ -427,7 +445,7 @@ function RecordEditorPane({
       setBaseline({ ...saved })
       dirtyRef.current = false
       setJustSaved(true)
-      if (saved.id !== initial.id) onNavigateToRecord(saved.id)
+      if (isNew || saved.id !== initial.id) onNavigateToRecord(saved.id)
     }
   }
 
@@ -465,6 +483,7 @@ function RecordEditorPane({
     // not a second publish of the original.
     if (collection.statusField) copy = setPath(copy, collection.statusField, 'draft')
     if (collection.id === 'coupons') copy = { ...copy, code: duplicateCouponCode(String(baseline.code ?? ''), copy.id), enabled: false }
+    if (collection.id === 'products' && baseline.productType === 'physical') copy = { ...copy, variants: duplicatePhysicalVariants(baseline.variants as PhysicalVariantDraft[] | undefined, copy.id) }
     if (slugKey) copy = setPath(copy, slugKey, uniqueSlug(title, slugKey, records, copy.id))
     void persist(copy)
   }
@@ -475,6 +494,17 @@ function RecordEditorPane({
    * like on screen.
    */
   const deleteThisRecord = (): Promise<boolean> => onDelete(collection, [initial.id])
+  const clearDirtyBeforeDeleteNavigation = () => {
+    dirtyRef.current = false
+    setDraft({ ...baseline })
+    setBaseline({ ...baseline })
+  }
+  const keepEditing = () => {
+    blocker.reset?.()
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>('button[aria-label="Back to list"]')?.focus()
+    })
+  }
 
   return (
     <>
@@ -487,6 +517,7 @@ function RecordEditorPane({
         onSaveAs={saveAs}
         onDuplicate={duplicateRecord}
         onDelete={deleteThisRecord}
+        onDeleted={clearDirtyBeforeDeleteNavigation}
         isNew={isNew}
         onBack={onBack}
         saving={saving}
@@ -494,6 +525,7 @@ function RecordEditorPane({
         justSaved={justSaved && !dirty}
         error={validationError}
         canWrite={repository.canWrite}
+        onRefresh={onRefresh}
       />
       <ConfirmDialog
         open={blocker.state === 'blocked'}
@@ -502,7 +534,7 @@ function RecordEditorPane({
         confirmLabel="Discard changes"
         cancelLabel="Keep editing"
         onConfirm={() => blocker.proceed?.()}
-        onCancel={() => blocker.reset?.()}
+        onCancel={keepEditing}
       />
     </>
   )

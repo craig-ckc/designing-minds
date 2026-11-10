@@ -154,7 +154,7 @@ export function PreviewPdfField({
                 {dragActive ? 'Drop to upload' : 'Drag & drop a PDF here'}
               </span>
               <span className="text-ui text-muted">
-                or <span className="font-medium text-primary">click to browse</span>
+                or <span className="font-medium text-primary-ink">click to browse</span>
               </span>
               {/* Said before anything is picked, not after a refusal. */}
               <span className="text-ui text-muted">{uploadHint('preview')}</span>

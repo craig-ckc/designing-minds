@@ -182,7 +182,7 @@ export function ImageGalleryField({
                     : 'Drag & drop images here'}
               </span>
               <span className="text-ui text-muted">
-                or <span className="font-medium text-primary">click to browse</span> — you can pick several at once
+                or <span className="font-medium text-primary-ink">click to browse</span> — you can pick several at once
               </span>
               {/* Said before anything is picked, not after a refusal — and this
                   zone in particular, since a PDF dropped here used to be stored

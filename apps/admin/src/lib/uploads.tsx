@@ -36,6 +36,15 @@ export type UploadStatus = 'uploading' | 'done' | 'error'
 
 export type { UploadPurpose }
 
+interface StartInput {
+  collectionId: string
+  recordId: string
+  fieldKey: string
+  purpose: UploadPurpose
+  file: File
+  replacesFileId?: string
+}
+
 /** What a finished upload becomes, by purpose. */
 export type UploadedArtifact = ProductFile | ProductImage | PreviewPdf
 
@@ -67,6 +76,15 @@ type Listener = () => void
 const listeners = new Set<Listener>()
 const aborts = new Map<string, () => void>()
 let jobs: UploadJob[] = []
+// Keep the browser file metadata separately from UploadJob: image preparation
+// can change the job's displayed filename and size before storage rejects it.
+const retryIdentities = new Map<string, string>()
+
+const retryIdentity = (input: StartInput) => JSON.stringify([
+  input.collectionId, input.recordId, input.fieldKey, input.purpose,
+  input.replacesFileId ?? null, input.file.name, input.file.size,
+  input.file.lastModified, input.file.type,
+])
 
 const emit = () => {
   // A new array identity each time, so useSyncExternalStore sees the change.
@@ -92,15 +110,6 @@ const targetKey = (collectionId: string, recordId: string, fieldKey: string) =>
   `${collectionId}:${recordId}:${fieldKey}`
 
 /* ------------------------------- Provider ------------------------------- */
-
-interface StartInput {
-  collectionId: string
-  recordId: string
-  fieldKey: string
-  purpose: UploadPurpose
-  file: File
-  replacesFileId?: string
-}
 
 interface UploadsValue {
   jobs: UploadJob[]
@@ -142,6 +151,15 @@ export function UploadsProvider({
 
   const start = useCallback((input: StartInput) => {
     const id = crypto.randomUUID()
+    const identity = retryIdentity(input)
+    // Replacing only failed attempts makes a picker retry tidy without
+    // conflating parallel uploads or separate destinations.
+    const previousFailures = jobs.filter((entry) => entry.status === 'error' && retryIdentities.get(entry.id) === identity)
+    if (previousFailures.length > 0) {
+      const previousFailureIds = new Set(previousFailures.map((entry) => entry.id))
+      jobs = jobs.filter((entry) => !previousFailureIds.has(entry.id))
+      previousFailures.forEach((entry) => retryIdentities.delete(entry.id))
+    }
     const job: UploadJob = {
       id,
       collectionId: input.collectionId,
@@ -154,6 +172,7 @@ export function UploadsProvider({
       status: 'uploading',
       replacesFileId: input.replacesFileId,
     }
+    retryIdentities.set(id, identity)
 
     /* The one gate every upload passes through — too big or the wrong kind of
        file for this zone, and not a single byte leaves the browser.
@@ -167,7 +186,11 @@ export function UploadsProvider({
     if (refusal) {
       jobs = [...jobs, { ...job, status: 'error', error: refusal }]
       emit()
-      live.current.onNotify(`${input.file.name} was not uploaded. ${refusal}`, 'error')
+      const targetIsOpen = targets.has(targetKey(input.collectionId, input.recordId, input.fieldKey))
+      live.current.onNotify(
+        targetIsOpen ? `${input.file.name} was not uploaded. See the field for details.` : `${input.file.name} was not uploaded. ${refusal}`,
+        'error',
+      )
       return
     }
 
@@ -215,10 +238,12 @@ export function UploadsProvider({
         // The file is now visible as a card, so the finished job has nothing
         // left to show; dropping it keeps the queue from growing all session.
         jobs = jobs.filter((entry) => entry.id !== id)
+        retryIdentities.delete(id)
         emit()
       } catch (error) {
         if (controller.signal.aborted || error instanceof UploadAbortedError) {
           jobs = jobs.filter((entry) => entry.id !== id)
+          retryIdentities.delete(id)
           emit()
           return
         }
@@ -228,7 +253,11 @@ export function UploadsProvider({
         const message = error instanceof Error ? error.message : 'Upload failed.'
         const detail = error instanceof UploadFailedError ? error.detail : undefined
         patch(id, { status: 'error', error: message, errorDetail: detail })
-        live.current.onNotify(`${input.file.name} failed to upload. ${message}`, 'error')
+        const targetIsOpen = targets.has(targetKey(input.collectionId, input.recordId, input.fieldKey))
+        live.current.onNotify(
+          targetIsOpen ? `${input.file.name} failed to upload. See the field for details.` : `${input.file.name} failed to upload. ${message}`,
+          'error',
+        )
       } finally {
         aborts.delete(id)
       }
@@ -237,12 +266,14 @@ export function UploadsProvider({
 
   const dismiss = useCallback((id: string) => {
     jobs = jobs.filter((job) => job.id !== id)
+    retryIdentities.delete(id)
     emit()
   }, [])
 
   const cancel = useCallback((id: string) => {
     aborts.get(id)?.()
     jobs = jobs.filter((job) => job.id !== id)
+    retryIdentities.delete(id)
     emit()
   }, [])
 

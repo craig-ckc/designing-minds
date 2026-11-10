@@ -8,6 +8,7 @@ import {
   publishState,
   publishStateHint,
   recordStatus,
+  isLocalPublication,
   SAVE_CHOICES,
   type SiteStatus,
 } from '../../apps/admin/src/cms/publish-state.ts'
@@ -66,6 +67,19 @@ test('without the site stamp, nothing claims a rebuild is needed', () => {
   assert.equal(needsRebuild(justPublished, unknownSite), false)
   assert.equal(publishState(justPublished, unknownSite), 'published')
   assert.equal(needsRebuild(record({ publishedAt: 'not a date' }), site), false)
+})
+
+test('a guarded local publication uses database state without claiming a deployed build', () => {
+  const published = record({ status: 'published', published: true, publishedAt: '2026-10-01T10:05:00.000Z' })
+  const localSite = { ...site, localPreview: true }
+  assert.equal(needsRebuild(published, localSite), false)
+  assert.equal(publishState(published, localSite), 'published')
+  assert.equal(needsRebuild(published, site), true)
+  assert.equal(isLocalPublication({ state: 'queued', localPreview: true }, true), true)
+  assert.equal(isLocalPublication({ state: 'queued', localPreview: true }, false), false)
+  assert.equal(isLocalPublication({ state: 'queued', localPreview: 'true' }, true), false)
+  assert.equal(isLocalPublication({ state: 'debounced', localPreview: true }, true), false)
+  assert.equal(isLocalPublication({ state: 'queued' }, true), false)
 })
 
 test('the hint says whether the website is still showing an older version', () => {

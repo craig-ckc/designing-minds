@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import type { DiagnosticEvent } from '../../../../packages/utils/src/diagnostics.ts'
 import { supabase } from '../lib/supabase'
 import { diagnosticColumns, validateDiagnosticFilters, type DiagnosticFilters } from '../lib/diagnostic-query'
+import { Button, Input, ScrollArea } from '../components/primitives'
 
 const initial: DiagnosticFilters = { level: 'error', referenceType: 'requestId', reference: '', days: 1 }
-const inputClass = 'rounded-control border border-line bg-surface px-3 py-2 text-ui'
+const inputClass = 'min-h-field w-full min-w-0 rounded-control border border-line bg-surface px-3 py-2 text-base dense:text-ui'
 type Row = DiagnosticEvent & { receivedAt: string }
 
 export function DiagnosticsPage() {
@@ -46,55 +47,59 @@ export function DiagnosticsPage() {
     setQuery({ filters, page: 0, until: new Date().toISOString() })
   }
   return (
-    <main className="min-h-0 flex-1 overflow-auto p-6">
+    <main className="min-h-0 min-w-0 flex-1 overflow-auto p-3 sm:p-6">
       <h1 className="text-xl font-semibold">Diagnostics</h1>
-      <p className="my-3 text-ui text-muted">Search a customer’s reference, then follow the request, session, or order. Browser events are client-reported; server events show API processing. Retention: 30 days, cleaned daily.</p>
-      <form className="mb-5 flex flex-wrap items-end gap-3" onSubmit={(event) => {
+      <p className="my-3 max-w-4xl text-ui text-muted">Search a customer’s reference, then follow the request, session, or order. Browser events are client-reported; server events show API processing. Retention: 30 days, cleaned daily.</p>
+      <form className="mb-5 grid min-w-0 grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap" onSubmit={(event) => {
         event.preventDefault()
         const validation = validateDiagnosticFilters(draft)
         if (validation) { setError(validation); return }
         setQuery({ filters: { ...draft }, page: 0, until: new Date().toISOString() })
       }}>
-        <label className="grid gap-1 text-ui">Level
+        <label className="grid min-w-0 gap-1 text-ui lg:w-40">Level
           <select className={inputClass} value={draft.level} onChange={(e) => setDraft({ ...draft, level: e.target.value as DiagnosticFilters['level'] })}>
             <option value="">All events</option><option value="error">Errors</option><option value="warning">Warnings</option><option value="info">Info</option>
           </select>
         </label>
-        <label className="grid gap-1 text-ui">Period
+        <label className="grid min-w-0 gap-1 text-ui lg:w-40">Period
           <select className={inputClass} value={draft.days} onChange={(e) => setDraft({ ...draft, days: Number(e.target.value) as 1 | 7 | 30 })}>
             <option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option>
           </select>
         </label>
-        <label className="grid gap-1 text-ui">Reference type
+        <label className="grid min-w-0 gap-1 text-ui lg:w-40">Reference type
           <select className={inputClass} value={draft.referenceType} onChange={(e) => setDraft({ ...draft, referenceType: e.target.value as DiagnosticFilters['referenceType'] })}>
             <option value="requestId">Request</option><option value="sessionId">Session</option><option value="orderId">Order</option>
           </select>
         </label>
-        <label className="grid gap-1 text-ui">Reference ID
-          <input className={`${inputClass} w-80`} value={draft.reference} placeholder="Optional full reference ID" onChange={(e) => setDraft({ ...draft, reference: e.target.value })} />
+        <label className="grid min-w-0 gap-1 text-ui sm:col-span-2 lg:col-span-1 lg:w-80">Reference ID
+          <Input className="w-full min-w-0" value={draft.reference} placeholder="Optional full reference ID" onChange={(e) => setDraft({ ...draft, reference: e.target.value })} />
         </label>
-        <button className={inputClass} type="submit" disabled={loading}>Search / refresh</button>
+        <Button className="w-full sm:w-auto" type="submit" disabled={loading}>Search / refresh</Button>
       </form>
       {error ? <p role="alert" className="mb-4 text-ui">{error}</p> : null}
       <p role="status" className="mb-3 text-ui text-muted">{loading ? 'Loading logs…' : rows.length ? `Page ${query.page + 1} · ${rows.length} events · newest first` : 'No matching events. Collection begins after diagnostics is enabled on functions.'}</p>
       {!loading && rows.length > 0 ? (
-        <table className="w-full border-collapse text-left text-ui">
-          <thead><tr>{['Time', 'Event', 'Outcome', 'Trace'].map((title) => <th key={title} className="border-b border-line p-3">{title}</th>)}</tr></thead>
-          <tbody>{rows.map((row) => (
-            <tr key={row.id} className="align-top">
-              <td className="border-b border-line p-3 whitespace-nowrap"><time dateTime={row.occurredAt}>{new Date(row.occurredAt).toLocaleString()}</time><div className="text-muted">{row.source} · {row.level}</div></td>
-              <td className="border-b border-line p-3"><strong>{row.event}</strong><div className="text-muted">{row.route}</div>{row.asset ? <code>{row.asset}</code> : null}{row.release ? <div>Release {row.release.slice(0, 7)}</div> : null}</td>
-              <td className="border-b border-line p-3">{[row.status ? `HTTP ${row.status}` : '', row.errorKind, row.code, row.durationMs !== null ? `${row.durationMs} ms` : ''].filter(Boolean).join(' · ') || '—'}</td>
-              <td className="border-b border-line p-3">{(['requestId', 'sessionId', 'orderId'] as const).map((key) => row[key] ? (
-                <button type="button" key={key} className="mb-1 block break-all text-left underline underline-offset-2" onClick={() => trace(key, row[key]!)}>{key.replace('Id', '')}: {row[key]}</button>
-              ) : null)}</td>
-            </tr>
-          ))}</tbody>
-        </table>
+        <div role="region" aria-label="Diagnostic events table" className="min-w-0 max-w-full overflow-hidden">
+          <ScrollArea orientation="horizontal" className="w-full" viewportClassName="overflow-x-auto">
+            <table className="w-full min-w-[760px] table-fixed border-collapse text-left text-ui">
+              <thead><tr>{['Time', 'Event', 'Outcome', 'Trace'].map((title) => <th key={title} className="border-b border-line p-3">{title}</th>)}</tr></thead>
+              <tbody>{rows.map((row) => (
+                <tr key={row.id} className="align-top">
+                  <td className="w-52 border-b border-line p-3 whitespace-nowrap"><time dateTime={row.occurredAt}>{new Date(row.occurredAt).toLocaleString()}</time><div className="text-muted">{row.source} · {row.level}</div></td>
+                  <td className="w-64 border-b border-line p-3 break-words"><strong className="break-words">{row.event}</strong><div className="break-words text-muted">{row.route}</div>{row.asset ? <code className="break-all">{row.asset}</code> : null}{row.release ? <div className="break-words">Release {row.release.slice(0, 7)}</div> : null}</td>
+                  <td className="w-44 border-b border-line p-3 break-words">{[row.status ? `HTTP ${row.status}` : '', row.errorKind, row.code, row.durationMs !== null ? `${row.durationMs} ms` : ''].filter(Boolean).join(' · ') || '—'}</td>
+                  <td className="w-56 border-b border-line p-3">{(['requestId', 'sessionId', 'orderId'] as const).map((key) => row[key] ? (
+                    <button type="button" key={key} className="mb-1 block min-h-field max-w-full break-all text-left underline underline-offset-2 dense:min-h-0" onClick={() => trace(key, row[key]!)}>{key.replace('Id', '')}: {row[key]}</button>
+                  ) : null)}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </ScrollArea>
+        </div>
       ) : null}
       <div className="mt-4 flex gap-3">
-        <button type="button" className={inputClass} disabled={loading || query.page === 0} onClick={() => setQuery({ ...query, page: query.page - 1 })}>Newer</button>
-        <button type="button" className={inputClass} disabled={loading || rows.length < 100} onClick={() => setQuery({ ...query, page: query.page + 1 })}>Older</button>
+        <Button type="button" disabled={loading || query.page === 0} onClick={() => setQuery({ ...query, page: query.page - 1 })}>Newer</Button>
+        <Button type="button" disabled={loading || rows.length < 100} onClick={() => setQuery({ ...query, page: query.page + 1 })}>Older</Button>
       </div>
     </main>
   )

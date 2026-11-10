@@ -40,11 +40,18 @@ export type PublishState = ContentStatus | 'publishing'
 
 /** What the admin knows about the deployed website right now. */
 export interface SiteStatus {
+  /** The Vite preview reads published database content directly; it has no deployment build. */
+  localPreview?: boolean
   /** The live site's own build stamp, or null when it couldn't be read. */
   build: SiteBuild | null
 }
 
 export const UNKNOWN_SITE: SiteStatus = { build: null }
+
+/** A preview receipt never means that a production deployment was queued or completed. */
+export function isLocalPublication(result: { state?: unknown; localPreview?: unknown }, localPreview: boolean): boolean {
+  return localPreview && result.state === 'queued' && result.localPreview === true
+}
 
 /** Parse an ISO timestamp to millis. Blank/invalid values return null, never NaN. */
 function time(value: unknown): number | null {
@@ -76,6 +83,7 @@ export function needsPublish(record: AdminRecord): boolean {
  * we only claim a rebuild is needed on evidence.
  */
 export function needsRebuild(record: AdminRecord, site: SiteStatus): boolean {
+  if (site.localPreview === true) return false
   const changed = time(getPath(record, 'publishedAt'))
   const content = time(site.build?.contentAt)
   if (changed === null || content === null) return false

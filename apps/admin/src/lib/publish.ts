@@ -10,6 +10,8 @@ import { apiUrl } from './api'
  * sends the admin's own session token.
  */
 export interface PublishResult {
+  /** A guarded loopback preview publishes database content without a website deployment. */
+  localPreview?: boolean
   state: 'queued' | 'debounced'
   message?: string
   /** Server time the build was requested — the anchor for publish-status. */
@@ -24,6 +26,7 @@ export type BuildState = 'unconfigured' | 'pending' | 'queued' | 'building' | 'r
 
 export interface BuildStatus {
   state: BuildState
+  localPreview?: boolean
   /** Link to the build in the Vercel dashboard. */
   inspectorUrl?: string | null
 }
@@ -55,6 +58,7 @@ export async function publishWebsite(): Promise<PublishResult> {
     requestedAt: body.requestedAt ?? new Date().toISOString(),
     promoted: Number(body.promoted ?? 0),
     removed: Number(body.removed ?? 0),
+    localPreview: body.localPreview === true,
   }
 }
 

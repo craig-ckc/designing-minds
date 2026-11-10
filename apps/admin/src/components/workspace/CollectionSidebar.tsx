@@ -16,12 +16,13 @@ const rowCls = ({ isActive }: { isActive: boolean }) =>
   }`
 
 /** Registry-driven navigation: Dashboard pinned, then grouped collections with counts. */
-export function CollectionSidebar({ snapshot }: { snapshot: CmsSnapshot }) {
+export function CollectionSidebar({ snapshot, onNavigate }: { snapshot: CmsSnapshot; onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       <NavLink
         to="/"
         end
+        onClick={onNavigate}
         className={({ isActive }) =>
           `flex h-bar items-center gap-2 border-b border-line px-2.5 text-ui ${isActive ? 'font-medium text-ink' : 'text-ink-soft'}`
         }
@@ -33,14 +34,14 @@ export function CollectionSidebar({ snapshot }: { snapshot: CmsSnapshot }) {
       </NavLink>
 
       <ScrollArea className="min-h-0 flex-1" viewportClassName="py-1.5">
-        <div className="px-1 pb-2"><NavLink to="/diagnostics" className={rowCls}>Diagnostics</NavLink></div>
+        <div className="px-1 pb-2"><NavLink to="/diagnostics" onClick={onNavigate} className={rowCls}>Diagnostics</NavLink></div>
         {collectionGroups.map((group) => (
           <div key={group.group} className="flex flex-col gap-0.5 px-1 pb-1.5">
             <div className="px-1.5 py-1.5">
               <span className="text-title font-semibold text-ink">{group.group}</span>
             </div>
             {group.collections.map((collection) => (
-              <NavLink key={collection.id} to={`/${collection.id}`} className={rowCls}>
+              <NavLink key={collection.id} to={`/${collection.id}`} onClick={onNavigate} className={rowCls}>
                 <span className="truncate">{collection.label}</span>
                 <span className="ml-1 flex-none text-ui text-muted">{recordCount(snapshot, collection.id)} items</span>
                 <span className="ml-auto size-3.5 flex-none text-muted opacity-0 group-hover:opacity-100 group-[.active]:opacity-100">

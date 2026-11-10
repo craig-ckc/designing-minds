@@ -3,7 +3,26 @@
    helper. Kept dependency-free; the admin's export/import volumes are small.
    ------------------------------------------------------------------------- */
 
-function encodeCell(value: string): string {
+/*
+ * Spreadsheet formula injection: Excel/Sheets evaluate a cell that STARTS with
+ * = + - @ (or a tab/CR that some apps trim away first). Submissions, customer
+ * names and similar fields are written by the public, so an exported cell must
+ * never be able to start a formula. The OWASP-recommended fix is a leading
+ * apostrophe, which spreadsheets render as plain text.
+ *
+ * A plain number such as -12.50 is left alone so numeric columns stay numeric;
+ * anything else that merely looks numeric (+27 82 ..., -1+1) is guarded.
+ */
+const FORMULA_START = /^[=+\-@\t\r]/
+const PLAIN_NUMBER = /^-?\d+(\.\d+)?$/
+const FORMULA_GUARD = /^'(?=[=+\-@\t\r])/
+
+export function neutraliseFormula(value: string): string {
+  return FORMULA_START.test(value) && !PLAIN_NUMBER.test(value) ? `'${value}` : value
+}
+
+function encodeCell(raw: string): string {
+  const value = neutraliseFormula(raw)
   return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
 }
 
@@ -50,8 +69,11 @@ export function parseCsv(text: string): string[][] {
     row.push(cell)
     rows.push(row)
   }
-  // Drop rows that are entirely empty (trailing newlines, blank lines).
-  return rows.filter((cells) => cells.some((value) => value.trim() !== ''))
+  // Drop rows that are entirely empty (trailing newlines, blank lines), and
+  // undo the export-side formula guard so an exported file re-imports unchanged.
+  return rows
+    .filter((cells) => cells.some((value) => value.trim() !== ''))
+    .map((cells) => cells.map((value) => value.replace(FORMULA_GUARD, '')))
 }
 
 export function downloadCsv(filename: string, csv: string): void {

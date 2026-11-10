@@ -75,6 +75,7 @@ const ORDER_TONE: Record<OrderStatus, Tone> = {
   pending: 'outline',
   failed: 'muted',
   refunded: 'muted',
+  payment_review: 'warn',
 }
 const PAYMENT_TONE: Record<PaymentStatus, Tone> = {
   succeeded: 'solid',
@@ -88,7 +89,7 @@ const PAYMENT_TONE: Record<PaymentStatus, Tone> = {
    sentences ("Changes in draft") that must not be title-cased. */
 export const OrderStatusPill = ({ status }: { status: OrderStatus }) => (
   <Pill tone={ORDER_TONE[status]} className="capitalize">
-    {status}
+    {status.replaceAll('_', ' ')}
   </Pill>
 )
 export const PaymentStatusPill = ({ status }: { status: PaymentStatus }) => (

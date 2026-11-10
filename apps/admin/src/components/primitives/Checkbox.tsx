@@ -26,18 +26,19 @@ export function Checkbox({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        'grid size-3.5 flex-none place-items-center rounded-tight border border-line-strong bg-surface text-on-primary transition',
-        'data-[checked]:border-primary-edge data-[checked]:bg-primary',
+        'group grid size-field flex-none place-items-center rounded-tight text-on-primary transition dense:size-3.5',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
     >
-      <BaseCheckbox.Indicator>
-        <span className="block size-2.5">
-          <Icon name="check" />
-        </span>
-      </BaseCheckbox.Indicator>
+      <span className="grid size-3.5 place-items-center rounded-tight border border-line-strong bg-surface group-data-[checked]:border-primary-edge group-data-[checked]:bg-primary">
+        <BaseCheckbox.Indicator>
+          <span className="block size-2.5">
+            <Icon name="check" />
+          </span>
+        </BaseCheckbox.Indicator>
+      </span>
     </BaseCheckbox.Root>
   )
 }

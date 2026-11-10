@@ -25,8 +25,8 @@ export function Dialog({
         <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-ink/30" />
         <BaseDialog.Popup
           className={cn(
-            'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100vh-4rem)] w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col',
-            'rounded-card border border-line bg-surface p-4 shadow-popup',
+            'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-4rem)] w-[min(440px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col',
+            'overflow-y-auto rounded-card border border-line bg-surface p-4 shadow-popup',
             className,
           )}
         >
@@ -61,7 +61,7 @@ export function ConfirmDialog({
 }) {
   return (
     <Dialog open={open} onClose={onCancel} title={title} description={description}>
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onCancel}>
           {cancelLabel}
         </Button>

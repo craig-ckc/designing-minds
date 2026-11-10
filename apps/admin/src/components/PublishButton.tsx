@@ -6,7 +6,7 @@ import { fetchBuildStatus, publishWebsite, type BuildState } from '../lib/publis
 import { useSiteStatus } from '../lib/site-status'
 import { collectionRegistry } from '../cms/registry'
 import { selectRecords } from '../cms/adapter'
-import { countPendingPublish, needsRebuild, type SiteStatus } from '../cms/publish-state'
+import { countPendingPublish, isLocalPublication, needsRebuild, type SiteStatus } from '../cms/publish-state'
 
 /* -------------------------------------------------------------------------
    Top-bar Publish: makes every Queued record live, rebuilds the website, and
@@ -30,6 +30,7 @@ type Phase =
   | { kind: 'starting' }
   | { kind: 'watching'; requestedAt: string; build: BuildState; inspectorUrl?: string | null; readySince?: number }
   | { kind: 'live' }
+  | { kind: 'preview_published' }
   | { kind: 'failed'; message: string; inspectorUrl?: string | null }
 
 const POLL_MS = 4_000
@@ -43,7 +44,8 @@ const STORAGE_KEY = 'dm-admin:publish-in-flight'
 
 export function PublishButton({ snapshot, onPublished }: { snapshot: CmsSnapshot | null; onPublished: () => void }) {
   const site = useSiteStatus()
-  const [phase, setPhase] = useState<Phase>(() => resumeInFlight())
+  const localPreview = site.localPreview === true
+  const [phase, setPhase] = useState<Phase>(() => resumeInFlight(localPreview))
   const statusErrors = useRef(0)
 
   const pending = countPending(snapshot)
@@ -66,6 +68,10 @@ export function PublishButton({ snapshot, onPublished }: { snapshot: CmsSnapshot
       if (build !== 'unconfigured' && build !== 'ready') {
         try {
           const status = await fetchBuildStatus(phase.requestedAt)
+          if (status.localPreview === true && localPreview && status.state === 'ready') {
+            if (!cancelled) { finish({ kind: 'preview_published' }); onPublished() }
+            return
+          }
           statusErrors.current = 0
           build = status.state
           inspectorUrl = status.inspectorUrl ?? inspectorUrl
@@ -113,11 +119,11 @@ export function PublishButton({ snapshot, onPublished }: { snapshot: CmsSnapshot
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [phase, site, finish])
+  }, [phase, site, finish, localPreview, onPublished])
 
   // "Live" is a moment, not a state: show it, then step back.
   useEffect(() => {
-    if (phase.kind !== 'live') return
+    if (phase.kind !== 'live' && phase.kind !== 'preview_published') return
     const timer = window.setTimeout(() => setPhase({ kind: 'idle' }), 8_000)
     return () => window.clearTimeout(timer)
   }, [phase.kind])
@@ -133,6 +139,10 @@ export function PublishButton({ snapshot, onPublished }: { snapshot: CmsSnapshot
       }
       // Records just moved Queued → Published; reload so every list agrees.
       onPublished()
+      if (isLocalPublication(result, localPreview)) {
+        finish({ kind: 'preview_published' })
+        return
+      }
       rememberInFlight(result.requestedAt)
       setPhase({ kind: 'watching', requestedAt: result.requestedAt, build: 'pending' })
     } catch (error) {
@@ -141,27 +151,26 @@ export function PublishButton({ snapshot, onPublished }: { snapshot: CmsSnapshot
   }
 
   const busy = phase.kind === 'starting' || phase.kind === 'watching'
-  if (!busy && phase.kind !== 'live' && phase.kind !== 'failed' && pending === 0 && !rebuild) return null
+  if (!busy && phase.kind !== 'live' && phase.kind !== 'preview_published' && phase.kind !== 'failed' && pending === 0 && !rebuild) return null
 
   const { label, message } = describe(phase, pending)
 
   return (
-    <span className="flex items-center gap-2">
-      <span
-        role="status"
-        aria-live="polite"
-        className={`hidden max-w-[360px] truncate text-ui md:inline ${phase.kind === 'failed' ? 'text-danger' : 'text-muted'}`}
+    <span className="contents md:flex md:min-w-0 md:items-center md:gap-2">
+      {message ? <span
+        role={phase.kind === 'failed' ? 'alert' : 'status'}
+        className={`order-last basis-full break-words text-ui md:order-none md:max-w-[360px] md:basis-auto md:truncate ${phase.kind === 'failed' ? 'text-danger' : 'text-muted'}`}
         title={message ?? undefined}
       >
         {message}
-      </span>
+      </span> : null}
       {/* Outside the truncated message, so it can never be clipped away. */}
       {phase.kind === 'failed' && phase.inspectorUrl ? (
         <a
           href={phase.inspectorUrl}
           target="_blank"
           rel="noreferrer"
-          className="hidden flex-none text-ui font-medium text-ink hover:text-primary md:inline"
+          className="order-last flex-none text-ui font-medium text-ink underline underline-offset-2 hover:text-primary-ink md:order-none"
         >
           View build log
         </a>
@@ -171,7 +180,7 @@ export function PublishButton({ snapshot, onPublished }: { snapshot: CmsSnapshot
         variant="solid"
         size="md"
         onClick={() => void publish()}
-        disabled={busy || phase.kind === 'live'}
+        disabled={busy || phase.kind === 'live' || phase.kind === 'preview_published'}
         aria-busy={busy}
         // Busy is not "unavailable": keep full colour so progress reads as progress.
         className="disabled:opacity-100 disabled:cursor-default"
@@ -184,7 +193,7 @@ export function PublishButton({ snapshot, onPublished }: { snapshot: CmsSnapshot
         }
       >
         {busy ? <Spinner className="size-3.5 text-on-primary" /> : null}
-        {phase.kind === 'live' ? (
+        {phase.kind === 'live' || phase.kind === 'preview_published' ? (
           <span className="size-4">
             <Icon name="check" />
           </span>
@@ -212,6 +221,8 @@ function describe(phase: Phase, pending: number): { label: string; message: stri
       }
     case 'live':
       return { label: 'Live', message: 'Everything is live.' }
+    case 'preview_published':
+      return { label: 'Preview published', message: 'Local preview published. Refresh the storefront to see content changes.' }
     case 'failed':
       return { label: 'Retry publish', message: phase.message }
     default:
@@ -257,7 +268,8 @@ function forgetInFlight() {
   }
 }
 
-function resumeInFlight(): Phase {
+function resumeInFlight(localPreview = false): Phase {
+  if (localPreview) { forgetInFlight(); return { kind: 'idle' } }
   try {
     const requestedAt = window.sessionStorage.getItem(STORAGE_KEY)
     const at = requestedAt ? Date.parse(requestedAt) : Number.NaN

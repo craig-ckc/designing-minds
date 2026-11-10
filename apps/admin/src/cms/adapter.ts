@@ -30,6 +30,7 @@ import {
   type Product,
   type ProductFile,
   type ProductImage,
+  type PhysicalProduct,
   type Testimonial,
 } from '@designing-minds/cms'
 import { currentYear, yearOptions } from './years'
@@ -44,7 +45,11 @@ import { getPath } from './record'
 function mapOrder(snapshot: CmsSnapshot, order: CmsSnapshot['orders'][number]): AdminRecord {
   const payment = snapshot.payments.find((p) => p.id === order.paymentId)
   const itemsSummary = order.items.length
-    ? order.items.map((item) => `${item.title} — ${item.productKind} — ${formatCurrency(item.priceZar)}`).join('\n')
+    ? order.items.map((item) => [
+      `${item.quantity ?? 1} × ${item.title} — ${item.productKind} — ${formatCurrency(item.priceZar)}`,
+      ...Object.entries(item.optionValues ?? {}).map(([key, value]) => `${key}: ${value}`),
+      ...Object.entries(item.customizations ?? {}).map(([key, value]) => `${key}: ${value}`),
+    ].join('\n')).join('\n\n')
     : 'No items.'
   const paymentSummary = payment
     ? `${payment.provider} · ${payment.reference} · ${formatCurrency(payment.amountZar)} · ${payment.status}`
@@ -63,6 +68,13 @@ function mapOrder(snapshot: CmsSnapshot, order: CmsSnapshot['orders'][number]): 
     subtotalLabel: formatCurrency(order.subtotalZar ?? order.totalZar),
     itemsSummary,
     paymentSummary,
+    hasPhysical: order.hasPhysical === true,
+    fulfillmentStatus: order.fulfillmentStatus ?? 'not_required',
+    shippingLabel: formatCurrency(order.shippingZar ?? 0),
+    shippingMethod: order.shippingMethod ?? '—',
+    delivery: order.delivery ?? {},
+    trackingNumber: order.trackingNumber ?? '',
+    trackingUrl: order.trackingUrl ?? '',
   }
 }
 
@@ -120,7 +132,7 @@ export function selectRecords(snapshot: CmsSnapshot, collectionId: string): Admi
     case 'coupons':
       return (snapshot.coupons ?? []) as unknown as AdminRecord[]
     case 'products':
-      return snapshot.products as unknown as AdminRecord[]
+      return [...snapshot.products.map((product) => ({ ...product, productType: 'digital' })), ...(snapshot.physicalProducts ?? [])] as unknown as AdminRecord[]
     case 'bundles':
       return snapshot.bundles as unknown as AdminRecord[]
     case 'faqs':
@@ -160,6 +172,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
       return { id, code: '', discountType: 'percentage', value: 10, enabled: false, allowSaleItems: false, startsAt: null, expiresAt: null, updatedAt: '' }
     case 'products': {
       const product: Product = {
+        productType: 'digital',
         id,
         slug: '',
         title: 'New product',
@@ -181,7 +194,7 @@ export function createBlank(snapshot: CmsSnapshot, collectionId: string): AdminR
         featured: false,
         published: false,
         status: 'draft',
-        sortOrder: snapshot.products.length + 1,
+        sortOrder: snapshot.products.length + (snapshot.physicalProducts?.length ?? 0) + 1,
         seo: { title: '', description: '' },
         faqs: [],
         updatedAt: '',
@@ -286,6 +299,7 @@ export function resolveFilterFacets(
 export function buildFieldContext(snapshot: CmsSnapshot): FieldContext {
   const toOptions = (values: readonly string[]) => values.map((value) => ({ label: value, value }))
   return {
+    commerceReady: snapshot.commerceReady === true,
     valueLists: snapshot.valueLists,
     optionsForSelect: (field: SelectField) => {
       if (!('valueList' in field)) return field.options
@@ -377,6 +391,10 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
           return { saved: saved as unknown as AdminRecord, apply: (s) => ({ ...s, coupons: [...(s.coupons ?? []).filter((c) => c.id !== saved.id), saved] }) }
         }
         case 'products': {
+          if (record.productType === 'physical') {
+            const saved = await repository.savePhysicalProduct(record as unknown as PhysicalProduct)
+            return { saved: saved as unknown as AdminRecord, apply: (s) => ({ ...s, physicalProducts: [...(s.physicalProducts ?? []).filter((product) => product.id !== saved.id), saved] }) }
+          }
           const saved = await repository.saveProduct(record as unknown as Product)
           return { saved: saved as unknown as AdminRecord, apply: (s) => updateProductInSnapshot(s, saved) }
         }
@@ -402,7 +420,7 @@ export function createAdminAdapter(repository: CmsRepository): AdminAdapter {
       // are destroyed, and "read-only" has to mean it.
       if (!isDeletable(collectionId)) throw new Error(`Collection "${collectionId}" cannot be deleted from.`)
       await repository.deleteRecords(collectionId, ids)
-      return { apply: (s) => removeRecordsFromSnapshot(s, collectionId, ids) }
+      return { apply: (s) => ({ ...removeRecordsFromSnapshot(s, collectionId, ids), ...(collectionId === 'products' ? { physicalProducts: (s.physicalProducts ?? []).filter((product) => !ids.includes(product.id)) } : {}) }) }
     },
 
     /**

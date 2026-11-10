@@ -45,7 +45,7 @@ export function ToolbarToggle({
       // Keep focus in the editor so marks apply to the current selection.
       onMouseDown={(event) => event.preventDefault()}
       className={cn(
-        'grid h-6 min-w-6 cursor-default place-items-center rounded-control px-1.5 text-ui font-medium text-ink-soft transition',
+        'grid h-field min-w-field cursor-default place-items-center rounded-control px-1.5 text-ui font-medium text-ink-soft transition',
         'hover:bg-surface-alt hover:text-ink',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-1',
         'data-[pressed]:bg-primary data-[pressed]:text-on-primary data-[pressed]:hover:bg-primary',

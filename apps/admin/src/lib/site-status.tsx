@@ -17,13 +17,14 @@ interface SiteStatusValue extends SiteStatus {
 }
 
 const SiteStatusContext = createContext<SiteStatusValue | null>(null)
+const localPreview = import.meta.env.DEV && import.meta.env.VITE_LOCAL_COMMERCE_PREVIEW === 'true'
 
 export function SiteStatusProvider({ children }: { children: ReactNode }) {
   const [build, setBuild] = useState<SiteBuild | null>(null)
 
   const refresh = useCallback(
     () =>
-      fetchSiteBuild().then((next) => {
+      (localPreview ? Promise.resolve(null) : fetchSiteBuild()).then((next) => {
         // A failed read keeps the last good stamp: "unknown right now" is not
         // evidence that the site changed.
         if (next) setBuild(next)
@@ -41,7 +42,7 @@ export function SiteStatusProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('focus', onFocus)
   }, [refresh])
 
-  const value = useMemo<SiteStatusValue>(() => ({ build, refresh }), [build, refresh])
+  const value = useMemo<SiteStatusValue>(() => ({ build, refresh, localPreview }), [build, refresh])
 
   return <SiteStatusContext.Provider value={value}>{children}</SiteStatusContext.Provider>
 }
@@ -56,5 +57,5 @@ export function useSiteStatus(): SiteStatusValue {
 export function useSite(): SiteStatus {
   const ctx = useContext(SiteStatusContext)
   if (!ctx) return UNKNOWN_SITE
-  return { build: ctx.build }
+  return { build: ctx.build, localPreview: ctx.localPreview }
 }

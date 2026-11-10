@@ -171,7 +171,7 @@ function PreviewStep({
   return (
     <div className="mt-3 grid min-h-0 gap-3">
       <p className="text-ui text-ink-soft">
-        <strong className="font-medium text-ink">{filename}</strong> — {plan.rows.length}{' '}
+        <strong className="font-medium text-ink [overflow-wrap:anywhere]">{filename}</strong> — {plan.rows.length}{' '}
         {plan.rows.length === 1 ? 'row' : 'rows'}: {plan.validCount} valid
         {errorCount > 0 ? `, ${errorCount} with errors (skipped on import)` : ''}.
       </p>
@@ -185,7 +185,7 @@ function PreviewStep({
       ) : null}
 
       {plan.rows.length > 0 ? (
-        <div className="flex max-h-[320px] min-h-0 flex-col overflow-hidden rounded-control border border-line">
+        <div className="hidden max-h-[320px] min-h-0 flex-col overflow-hidden rounded-control border border-line lg:flex">
           <ScrollArea className="min-h-0 flex-1">
             <table className="w-full border-collapse text-ui">
               <thead className="sticky top-0 z-10 bg-surface-alt">
@@ -223,11 +223,44 @@ function PreviewStep({
         </div>
       ) : null}
 
-      <div className="flex items-center justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={onBack}>
+      {plan.rows.length > 0 ? (
+        <div className="max-h-[320px] min-h-0 overflow-y-auto rounded-control border border-line p-2 lg:hidden">
+          <div role="list" aria-label="CSV preview rows" className="grid min-w-0 gap-2">
+            {plan.rows.map((row) => (
+              <article
+                key={row.line}
+                role="listitem"
+                aria-label={`Line ${row.line}: ${row.title}`}
+                className="grid min-w-0 gap-2 rounded-control border border-line p-2"
+              >
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-meta text-muted">Line {row.line}</p>
+                    <p className="font-medium text-ink [overflow-wrap:anywhere]">{row.title}</p>
+                  </div>
+                  <Pill className="flex-none" tone={row.action === 'create' ? 'solid' : 'outline'}>{row.action}</Pill>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-meta text-muted">Issues</p>
+                  {row.errors.length === 0 ? (
+                    <p className="text-ui text-muted">No issues</p>
+                  ) : (
+                    <ul className="grid gap-0.5 text-ui text-danger [overflow-wrap:anywhere]">
+                      {row.errors.map((error) => <li key={error}>{error}</li>)}
+                    </ul>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={onBack}>
           Choose another file
         </Button>
-        <Button variant="solid" size="sm" onClick={onApply} disabled={plan.validCount === 0}>
+        <Button variant="solid" size="sm" className="w-full sm:w-auto" onClick={onApply} disabled={plan.validCount === 0}>
           Import {plan.validCount} {plan.validCount === 1 ? 'row' : 'rows'}
         </Button>
       </div>

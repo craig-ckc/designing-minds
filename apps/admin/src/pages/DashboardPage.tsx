@@ -29,7 +29,7 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
       <PageHeader eyebrow="Overview" title="Dashboard" description="Catalogue, collections, and operational records at a glance." />
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <StatCard icon="box" value={String(snapshot.stats.productCount)} label="Products" to="/products" />
+        <StatCard icon="box" value={String(snapshot.products.length + (snapshot.physicalProducts?.length ?? 0))} label="Products" to="/products" />
         <StatCard icon="receipt" value={String(snapshot.stats.orderCount)} label="Orders" to="/orders" />
         <StatCard icon="users" value={String(snapshot.stats.customerCount)} label="Customers" to="/customers" />
         <StatCard icon="rand" value={formatCurrency(revenue)} label="Order value" to="/payments" />
@@ -40,7 +40,7 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
           <h3 className="text-section">Recent orders</h3>
           <Link
             to="/orders"
-            className="inline-flex items-center gap-1 text-ui font-medium text-ink-soft transition hover:text-primary"
+            className="inline-flex min-h-field items-center gap-1 text-ui font-medium text-ink-soft transition hover:text-primary-ink dense:min-h-0"
           >
             View all
             <span className="size-3.5">
@@ -65,7 +65,7 @@ export function DashboardPage({ snapshot }: { snapshot: CmsSnapshot }) {
                   <Td>
                     <Link
                       to={`/orders/${order.id}`}
-                      className="font-medium underline-offset-4 transition hover:text-primary hover:underline"
+                      className="inline-flex min-h-field items-center font-medium underline-offset-4 transition hover:text-primary-ink hover:underline dense:min-h-0"
                     >
                       {order.reference}
                     </Link>

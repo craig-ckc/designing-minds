@@ -152,5 +152,5 @@ test('FieldControl dispatches previewPdfList to the new field, as a labelled gro
   const control = read('components/editor/FieldControl.tsx')
   assert.match(control, /case 'previewPdfList':/)
   assert.match(control, /renderPreviewPdfList/)
-  assert.match(control, /GROUP_FIELDS = new Set<AdminField\['type'\]>\(\['fileList', 'imageGallery', 'previewPdfList'\]\)/)
+  assert.match(control, /GROUP_FIELDS = new Set<AdminField\['type'\]>\(\[[^\]]*'previewPdfList'[^\]]*\]\)/)
 })

@@ -1,4 +1,5 @@
 import { Combobox } from '@base-ui/react/combobox'
+import { useRef } from 'react'
 import { cn, FIELD, POPUP, POPUP_ROW } from '../../design'
 import { Icon } from '../ui'
 import { Button } from './Button'
@@ -31,6 +32,7 @@ export function ReferencePicker({
   maxSelected?: number
   placeholder?: string
 }) {
+  const input = useRef<HTMLInputElement>(null)
   const byValue = new Map(options.map((option) => [option.value, option]))
   const value = selected.map((item) => byValue.get(item) ?? { label: item, value: item })
   // Suggestions are only ever things you haven't added yet — see availableOptions.
@@ -51,7 +53,7 @@ export function ReferencePicker({
           onValueChange={(next) => emit(next.map((option) => option.value))}
           isItemEqualToValue={(a, b) => a.value === b.value}
         >
-          <Combobox.Input id={id} placeholder={placeholder} className={FIELD} />
+          <Combobox.Input ref={input} id={id} placeholder={placeholder} className={FIELD} />
           <Combobox.Portal>
             <Combobox.Positioner align="start" sideOffset={6} className="z-50">
               <Combobox.Popup className={cn(POPUP, 'max-h-[16rem] w-[var(--anchor-width)] overflow-auto py-1')}>
@@ -89,9 +91,9 @@ export function ReferencePicker({
           {value.map((option) => (
             <li
               key={option.value}
-              className="flex h-5.5 max-w-full items-center overflow-hidden rounded-tight bg-ref text-ref-ink"
+              className="flex min-h-field max-w-full items-center overflow-hidden rounded-tight bg-ref text-ref-ink dense:h-5.5 dense:min-h-0"
             >
-              <span className="min-w-0 truncate px-2 text-ui font-medium">{option.label}</span>
+              <span className="min-w-0 whitespace-normal px-2 py-1 text-ui font-medium [overflow-wrap:anywhere] dense:truncate dense:py-0">{option.label}</span>
               {!disabled ? (
                 <Button
                   variant="ghost"
@@ -99,9 +101,12 @@ export function ReferencePicker({
                   // Square, flush to the chip's edges, and its left border IS
                   // the divider — a separate 1px element would sit inside the
                   // padding and stop short of the chip's top and bottom.
-                  className="size-5.5 flex-none rounded-none border-l border-ref-line p-0 text-ref-ink hover:bg-ref-line hover:text-ref-ink"
+                  className="size-field flex-none rounded-none border-l border-ref-line p-0 text-ref-ink hover:bg-ref-line hover:text-ref-ink dense:size-5.5"
                   aria-label={`Remove ${option.label}`}
-                  onClick={() => emit(selected.filter((item) => item !== option.value))}
+                  onClick={() => {
+                    emit(selected.filter((item) => item !== option.value))
+                    input.current?.focus()
+                  }}
                 >
                   <span className="size-3">
                     <Icon name="trash" />

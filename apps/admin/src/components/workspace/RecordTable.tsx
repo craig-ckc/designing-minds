@@ -85,7 +85,7 @@ export function RecordTable({
               key={record.id}
               onClick={() => (selection ? selection.onToggle(record.id) : onSelect(record.id))}
               className={cn(
-                'h-8 cursor-pointer border-b border-line hover:bg-surface-alt',
+                'h-row cursor-pointer border-b border-line hover:bg-surface-alt',
                 (selectedId === record.id || selection?.selectedIds.has(record.id)) && 'bg-surface-sunk',
               )}
             >
@@ -108,7 +108,15 @@ export function RecordTable({
                     column.key === collection.titleField && 'font-medium',
                   )}
                 >
-                  {renderCell(record, column, site)}
+                  {column.key === collection.titleField && !selection ? (
+                    <button
+                      type="button"
+                      className="block min-h-field w-full min-w-0 text-left font-medium outline-offset-2 dense:min-h-0"
+                      onClick={(event) => { event.stopPropagation(); onSelect(record.id) }}
+                    >
+                      {renderCell(record, column, site, true)}
+                    </button>
+                  ) : renderCell(record, column, site, column.key === collection.titleField)}
                 </td>
               ))}
             </tr>
@@ -140,9 +148,9 @@ function columnStyle(column: ListColumn): { width?: string; minWidth?: string } 
   return { width: column.width, minWidth: column.width }
 }
 
-function renderCell(record: AdminRecord, column: ListColumn, site: SiteStatus): ReactNode {
+function renderCell(record: AdminRecord, column: ListColumn, site: SiteStatus, wrapTitle = false): ReactNode {
   const value = getPath(record, column.key)
-  const text = (content: string) => <span className="block truncate">{content}</span>
+  const text = (content: string) => <span className={wrapTitle ? 'block whitespace-normal [overflow-wrap:anywhere] dense:truncate' : 'block truncate'}>{content}</span>
 
   switch (column.valueType) {
     case 'currency':

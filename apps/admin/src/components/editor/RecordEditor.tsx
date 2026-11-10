@@ -19,6 +19,7 @@ import { Icon } from '../ui'
 import { Button, ConfirmDialog, MenuChoice, ScrollArea, SplitButton } from '../primitives'
 import { EditorSection } from './EditorSection'
 import { FieldControl } from './FieldControl'
+import { OrderFulfillment } from './OrderFulfillment'
 
 type Props = {
   collection: AdminCollection
@@ -45,6 +46,7 @@ type Props = {
   isNew: boolean
   /** Permanently delete this record. Resolves false on failure, so the caller knows to stay put. */
   onDelete: () => Promise<boolean>
+  onDeleted: () => void
   onBack: () => void
   saving: boolean
   dirty: boolean
@@ -52,6 +54,7 @@ type Props = {
   justSaved: boolean
   error: string | null
   canWrite: boolean
+  onRefresh?: () => void
 }
 
 export function RecordEditor({
@@ -63,6 +66,7 @@ export function RecordEditor({
   onSaveAs,
   onDuplicate,
   onDelete,
+  onDeleted,
   isNew,
   onBack,
   saving,
@@ -70,6 +74,7 @@ export function RecordEditor({
   justSaved,
   error,
   canWrite,
+  onRefresh,
 }: Props) {
   const site = useSite()
   const editable = !collection.readOnly && canWrite
@@ -84,7 +89,10 @@ export function RecordEditor({
     // A failed delete surfaces through the same error banner every other
     // write does — staying put (rather than calling onBack unconditionally)
     // is what keeps that message attached to a record that's still here.
-    if (await onDelete()) onBack()
+    if (await onDelete()) {
+      onDeleted()
+      onBack()
+    }
   }
 
   // The stored status plus whether the website pages have caught up with it.
@@ -104,23 +112,23 @@ export function RecordEditor({
           collectionId={collection.id}
           ctx={ctx}
           onUpdate={onUpdate}
-          disabled={!editable}
+          disabled={!editable || (field.key === 'productType' && !isNew)}
         />
       )
     })
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
-      <header className={cn(BAR, 'gap-2')}>
+      <header className={cn(BAR, 'h-auto min-h-bar flex-wrap gap-2 py-2 lg:h-bar lg:flex-nowrap lg:py-0')}>
         <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to list">
           <span className="size-4">
             <Icon name="back" />
           </span>
         </Button>
-        <h2 className="min-w-0 truncate text-title font-semibold">{getRecordTitle(collection, record)}</h2>
+        <h2 className="min-w-0 grow basis-[calc(100%-var(--spacing-field)-0.5rem)] text-title font-semibold [overflow-wrap:anywhere] lg:basis-auto lg:truncate">{getRecordTitle(collection, record)}</h2>
 
-        <div className="ml-auto flex flex-none items-center gap-2">
-          {error ? <span className="text-ui text-danger">{error}</span> : null}
+        <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:flex-none lg:flex-nowrap">
+          {error ? <span role="alert" className="text-ui text-danger">{error}</span> : null}
 
           {/* The stored status — the answer to "is my change live?". It
               describes what's SAVED, so unsaved edits are called out beside it
@@ -162,6 +170,8 @@ export function RecordEditor({
               {renderFields(section)}
             </EditorSection>
           ))}
+          {collection.id === 'orders' && record.hasPhysical === true ? <OrderFulfillment record={record} onRefresh={onRefresh} /> : null}
+          {collection.id === 'products' && record.productType === 'physical' && !ctx.commerceReady ? <p role="status" className="px-4 py-3 text-ui text-warn">Physical-product management is not installed in this environment yet. Digital products remain available.</p> : null}
 
           {/* Record-level actions, not a titled section: these act ON the
               record rather than editing it, and a heading here would only

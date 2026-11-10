@@ -10,21 +10,25 @@ import { UploadsProvider, type UploadedArtifact, type UploadJob } from './lib/up
 import type { UploadPurpose } from './lib/upload-transport'
 import { Shell } from './components/Shell'
 import { LoadingScreen, StatePanel } from './components/ui'
-import { ScrollArea } from './components/primitives'
+import { Button, ScrollArea } from './components/primitives'
 import { AdminWorkspace } from './screens/AdminWorkspace'
 import { DiagnosticsPage } from './pages/DiagnosticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { useAdminAuth } from './lib/auth'
+import { enqueueSerial } from './lib/serial-queue'
 
-function App() {
+function AdminSessionWorkspace() {
   const { pathname } = useLocation()
-  const { session, loading: authLoading, isAdmin, recovery } = useAdminAuth()
+  const { session, loading: authLoading, isAdmin, roleError, retryRole, recovery, logout } = useAdminAuth()
+  const sessionId = session?.user.id
   const [snapshot, setSnapshot] = useState<CmsSnapshot | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const snapshotRef = useRef<CmsSnapshot | null>(null)
+  const orphanAttachmentQueue = useRef<Promise<void>>(Promise.resolve())
 
   const adapter = useMemo(() => createAdminAdapter(repository), [])
 
@@ -34,7 +38,7 @@ function App() {
   const reloadSnapshot = useCallback(() => setReloadKey((key) => key + 1), [])
 
   useEffect(() => {
-    if (!session || !isAdmin) return
+    if (!sessionId || !isAdmin) return
     let cancelled = false
     const load = async () => {
       try {
@@ -51,7 +55,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [isAdmin, session, reloadKey])
+  }, [isAdmin, sessionId, reloadKey])
 
   const saveRecord = useCallback(
     async (collection: AdminCollection, record: AdminRecord): Promise<AdminRecord | null> => {
@@ -59,7 +63,9 @@ function App() {
       setSaving(true)
       try {
         const { saved, apply } = await adapter.save(collection.id, record)
-        setSnapshot((current) => (current ? apply(current) : current))
+        const next = snapshotRef.current ? apply(snapshotRef.current) : null
+        snapshotRef.current = next
+        setSnapshot(next)
         setMessage(`Saved ${collection.singular.toLowerCase()}: ${getRecordTitle(collection, saved)}`)
         setError(null)
         return saved
@@ -86,7 +92,9 @@ function App() {
       setSaving(true)
       try {
         const { apply } = await adapter.remove(collection.id, ids)
-        setSnapshot((current) => (current ? apply(current) : current))
+        const next = snapshotRef.current ? apply(snapshotRef.current) : null
+        snapshotRef.current = next
+        setSnapshot(next)
         setMessage(
           `Deleted ${ids.length} ${(ids.length === 1 ? collection.singular : collection.label).toLowerCase()}.`,
         )
@@ -104,7 +112,6 @@ function App() {
 
   // The upload queue outlives any one editor, so it reads the current snapshot
   // through a ref rather than closing over a stale one.
-  const snapshotRef = useRef<CmsSnapshot | null>(null)
   useEffect(() => {
     snapshotRef.current = snapshot
   }, [snapshot])
@@ -130,22 +137,27 @@ function App() {
    */
   const attachOrphanedFile = useCallback(
     async (job: UploadJob, file: UploadedArtifact) => {
-      const collection = getCollection(job.collectionId)
-      const current = snapshotRef.current
-      if (!collection || !current) return
-      const record = selectRecord(current, job.collectionId, job.recordId)
-      if (!record) return
+      await enqueueSerial(orphanAttachmentQueue, async () => {
+        const collection = getCollection(job.collectionId)
+        const current = snapshotRef.current
+        if (!collection || !current) throw new Error('The uploaded file could not be attached because its record is no longer available.')
+        const record = selectRecord(current, job.collectionId, job.recordId)
+        if (!record) throw new Error('The uploaded file could not be attached because its record no longer exists.')
 
-      const existing = (getPath(record, job.fieldKey) as UploadedArtifact[] | undefined) ?? []
-      // Replacing is a purchased-file move only — a gallery has no Replace, so
-      // its uploads only ever append. The label is carried across because it is
-      // the editor's words about the file, not the file's own name.
-      const next = job.replacesFileId
-        ? existing.map((entry) =>
-            entry.id === job.replacesFileId ? { ...file, label: (entry as ProductFile).label } : entry,
-          )
-        : [...existing, file]
-      await saveRecord(collection, setPath(record, job.fieldKey, next))
+        const existing = (getPath(record, job.fieldKey) as UploadedArtifact[] | undefined) ?? []
+        // Replacing is a purchased-file move only — a gallery has no Replace.
+        if (job.replacesFileId && !existing.some((entry) => entry.id === job.replacesFileId)) {
+          throw new Error('The file selected for replacement is no longer attached to this record. Refresh the record and try again.')
+        }
+        const next = job.replacesFileId
+          ? existing.map((entry) =>
+              entry.id === job.replacesFileId ? { ...file, label: (entry as ProductFile).label } : entry,
+            )
+          : [...existing, file]
+        if (!(await saveRecord(collection, setPath(record, job.fieldKey, next)))) {
+          throw new Error('The upload finished, but saving its attachment failed. Retry the save from the record.')
+        }
+      })
     },
     [saveRecord],
   )
@@ -165,7 +177,7 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [message])
 
-  const shellProps = { message, error, onPublished: reloadSnapshot }
+  const shellProps = { message, error, onPublished: reloadSnapshot, onDismissError: () => setError(null) }
 
   // Checking the session and loading the content are two requests but one wait,
   // so they share one screen — see the `!snapshot` branch below.
@@ -184,7 +196,19 @@ function App() {
   }
 
   if (!isAdmin) {
-    return <StatePanel eyebrow="Admin" title="Not authorized" body="This account does not have administrator access." />
+    return (
+      <StatePanel
+        eyebrow="Admin"
+        title={roleError ? 'Access check unavailable' : 'Not authorized'}
+        body={roleError ? 'We could not check administrator access. Check your connection and try again.' : 'This account does not have administrator access.'}
+      >
+        <div className="flex justify-center gap-2">
+          {roleError ? <Button onClick={() => void retryRole()}>Retry access check</Button> : null}
+          <Button onClick={() => void logout().catch(() => setError('Unable to log out. Check your connection and try again.'))}>Log out</Button>
+        </div>
+        {error ? <p role="alert" className="mt-3 text-danger">{error}</p> : null}
+      </StatePanel>
+    )
   }
 
   // A failed load is a state to deal with, so it gets the chrome and an
@@ -197,7 +221,9 @@ function App() {
     if (!error) return <LoadingScreen />
     return (
       <Shell {...shellProps} snapshot={null}>
-        <StatePanel eyebrow="Something went wrong" title="Content unavailable" body={error} />
+        <StatePanel eyebrow="Something went wrong" title="Content unavailable" body={error}>
+          <Button onClick={reloadSnapshot}>Retry</Button>
+        </StatePanel>
       </Shell>
     )
   }
@@ -226,6 +252,7 @@ function App() {
                 saving={saving}
                 onSave={saveRecord}
                 onDelete={deleteRecords}
+                onRefresh={reloadSnapshot}
               />
             )
             return [
@@ -239,6 +266,12 @@ function App() {
       </Shell>
     </UploadsProvider>
   )
+}
+
+/** Account changes start a fresh workspace; token refreshes keep local drafts. */
+function App() {
+  const { session } = useAdminAuth()
+  return <AdminSessionWorkspace key={session?.user.id ?? 'signed-out'} />
 }
 
 export default App

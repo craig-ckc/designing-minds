@@ -105,11 +105,15 @@ test('the action block offers no status change of its own', () => {
   assert.doesNotMatch(block, /onSaveAs|statusLabels|verbOff|Unpublish/)
 })
 
-test('Delete is styled exactly like RecordsToolbar\'s Delete, so the two agree', () => {
+test('Delete actions share danger styling independently of responsive visibility', () => {
   const block = actionsBlock()
-  assert.match(block, /className="ml-auto border-danger\/40 text-danger hover:border-danger hover:text-danger"/)
   const toolbar = read('components/workspace/RecordsToolbar.tsx')
-  assert.match(toolbar, /className="border-danger\/40 text-danger hover:border-danger hover:text-danger"/)
+  for (const source of [block, toolbar]) {
+    const classes = /className="([^"]*border-danger\/40[^"]*)"/.exec(source)?.[1].split(/\s+/) ?? []
+    for (const role of ['border-danger/40', 'text-danger', 'hover:border-danger', 'hover:text-danger']) {
+      assert.ok(classes.includes(role), `Delete must retain ${role}`)
+    }
+  }
 })
 
 test('every button in the block is outline/sm, and Delete carries the trash icon that already exists', () => {
@@ -148,7 +152,9 @@ test('the dialog is worded for one named record and says the action is permanent
 })
 
 test('a successful delete navigates back to the list; a failed one leaves the editor where it was', () => {
-  assert.match(editor, /if \(await onDelete\(\)\) onBack\(\)/)
+  const deleteHandler = editor.slice(editor.indexOf('const handleDelete ='), editor.indexOf('// The stored status'))
+  assert.match(deleteHandler, /if \(await onDelete\(\)\)\s*\{\s*onDeleted\(\)\s*onBack\(\)\s*\}/)
+  assert.ok(deleteHandler.indexOf('onDeleted()') < deleteHandler.indexOf('onBack()'), 'clear dirty state before navigating')
 })
 
 test('deleteThisRecord in AdminWorkspace targets a stable id and reuses the same onDelete the bulk case uses', () => {
