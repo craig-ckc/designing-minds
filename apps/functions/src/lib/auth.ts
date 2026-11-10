@@ -1,5 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 import { createServiceClient } from './supabase.ts'
+import { AuthenticationError, ForbiddenError } from './auth-errors.ts'
 
 export const bearerTokenFrom = (headers: Record<string, string | undefined>): string | null => {
   const header = headers.authorization ?? headers.Authorization
@@ -10,11 +11,11 @@ export const bearerTokenFrom = (headers: Record<string, string | undefined>): st
 
 export const requireUser = async (headers: Record<string, string | undefined>): Promise<User> => {
   const token = bearerTokenFrom(headers)
-  if (!token) throw new Error('Missing bearer token.')
+  if (!token) throw new AuthenticationError('Missing bearer token.')
 
   const supabase = createServiceClient()
   const { data, error } = await supabase.auth.getUser(token)
-  if (error || !data.user) throw new Error('Invalid bearer token.')
+  if (error || !data.user) throw new AuthenticationError('Invalid bearer token.')
   return data.user
 }
 
@@ -23,6 +24,6 @@ export const requireAdmin = async (headers: Record<string, string | undefined>):
   const supabase = createServiceClient()
   const { data, error } = await supabase.from('user_roles').select('role').eq('userId', user.id).maybeSingle()
   if (error) throw new Error(error.message)
-  if (data?.role !== 'admin') throw new Error('Administrator access is required.')
+  if (data?.role !== 'admin') throw new ForbiddenError('Administrator access is required.')
   return user
 }

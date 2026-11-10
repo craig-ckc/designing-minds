@@ -1,5 +1,8 @@
 import { createHash } from 'node:crypto'
 import { promises as dns } from 'node:dns'
+import { isIP } from 'node:net'
+import { fetchWithTimeout, withTimeout } from './fetch-timeout.ts'
+import { signedKeys } from './itn-fields.ts'
 
 export type PayfastMode = 'sandbox' | 'live'
 
@@ -166,12 +169,6 @@ const ACCEPTED_VARIANTS: readonly PayfastSignatureVariant[] = [
   'exclude-empty-no-trim',
 ]
 
-const signedKeys = (fields: PayfastFields): string[] => {
-  const keys = Object.keys(fields)
-  const signatureAt = keys.indexOf('signature')
-  return signatureAt === -1 ? keys : keys.slice(0, signatureAt)
-}
-
 const itnSignature = (fields: PayfastFields, passphrase: string, spec: VariantSpec): string => {
   const pairs: string[] = []
   for (const key of signedKeys(fields)) {
@@ -233,27 +230,60 @@ export const buildPayfastProcess = (fields: PayfastFields) => {
   }
 }
 
-export const validatePayfastData = async (fields: PayfastFields): Promise<boolean> => {
+/** PayFast's validate call sits on the ITN critical path, so it gets a hard limit. */
+export const PAYFAST_VALIDATE_TIMEOUT_MS = 8_000
+
+export const validatePayfastData = async (fields: PayfastFields, timeoutMs = PAYFAST_VALIDATE_TIMEOUT_MS): Promise<boolean> => {
   const body = new URLSearchParams()
   for (const [key, value] of Object.entries(fields)) {
     if (value === undefined || value === null || value === '') continue
     body.set(key, String(value))
   }
-  const response = await fetch(PAYFAST_VALIDATE_URLS[payfastMode()], {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body,
-  })
+  const response = await fetchWithTimeout(
+    PAYFAST_VALIDATE_URLS[payfastMode()],
+    { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body },
+    timeoutMs,
+  )
   if (!response.ok) throw new Error(`PayFast validate endpoint returned ${response.status}.`)
   const text = (await response.text()).trim()
   return text === 'VALID'
 }
 
+/*
+ * Which forwarding header is trusted.
+ *
+ * On Vercel the platform OVERWRITES `x-real-ip` and `x-forwarded-for` with the
+ * address it saw connecting, discarding anything the caller sent, so the values
+ * below cannot be forged by an ITN sender. `x-real-ip` is read first, then the
+ * first `x-forwarded-for` entry. Outside Vercel (the local dev server, another
+ * host) these headers are caller-controlled: only run this handler behind a
+ * proxy that overwrites them, and keep PAYFAST_ALLOWED_IPS empty in dev.
+ */
 const ipFromHeaders = (headers: Record<string, string | undefined>) =>
   headers['x-real-ip'] ||
   headers['X-Real-IP'] ||
   (headers['x-forwarded-for'] ?? headers['X-Forwarded-For'] ?? '').split(',').at(0)?.trim() ||
   ''
+
+/**
+ * Canonical text for an address so equal addresses compare equal: IPv4 as is,
+ * IPv4-mapped IPv6 (`::ffff:1.2.3.4`) as the IPv4 address, other IPv6 in its
+ * compressed lower-case form, brackets removed.
+ */
+export const normaliseIp = (value: string): string => {
+  let ip = value.trim()
+  if (ip.startsWith('[') && ip.endsWith(']')) ip = ip.slice(1, -1)
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip)
+  if (mapped?.[1]) return mapped[1]
+  if (isIP(ip) === 6) {
+    try {
+      return new URL(`http://[${ip}]`).hostname.slice(1, -1)
+    } catch {
+      return ip.toLowerCase()
+    }
+  }
+  return ip
+}
 
 const configuredPayfastIps = (): string[] =>
   (process.env.PAYFAST_ALLOWED_IPS ?? '')
@@ -261,13 +291,23 @@ const configuredPayfastIps = (): string[] =>
     .map((value) => value.trim())
     .filter(Boolean)
 
-// Resolves PayFast's valid ITN source hosts to their current IPv4 addresses,
-// mirroring PayFast's reference pfValidIP() (gethostbynamel over the host list).
+const DNS_TIMEOUT_MS = 4_000
+const SOURCE_IP_TTL_MS = 60_000
+const sourceIpCache = new Map<PayfastMode, { expiresAt: number; ips: Set<string> }>()
+
+// Resolves PayFast's valid ITN source hosts to their current IPv4 AND IPv6
+// addresses (PayFast's reference pfValidIP() is IPv4-only; an IPv6 callback
+// would otherwise be rejected for good). Each lookup is time-limited.
 const resolvePayfastSourceIps = async (mode: PayfastMode): Promise<Set<string>> => {
   const ips = new Set<string>()
-  const lookups = await Promise.allSettled(PAYFAST_VALID_HOSTS[mode].map((host) => dns.resolve4(host)))
+  const lookups = await Promise.allSettled(
+    PAYFAST_VALID_HOSTS[mode].flatMap((host) => [
+      withTimeout(dns.resolve4(host), DNS_TIMEOUT_MS, `DNS A lookup for ${host}`),
+      withTimeout(dns.resolve6(host), DNS_TIMEOUT_MS, `DNS AAAA lookup for ${host}`),
+    ]),
+  )
   for (const lookup of lookups) {
-    if (lookup.status === 'fulfilled') for (const ip of lookup.value) ips.add(ip)
+    if (lookup.status === 'fulfilled') for (const ip of lookup.value) ips.add(normaliseIp(ip))
   }
   return ips
 }
@@ -275,19 +315,29 @@ const resolvePayfastSourceIps = async (mode: PayfastMode): Promise<Set<string>> 
 // Confirms the ITN came from PayFast. Sandbox and live resolve the same canonical
 // source hosts because PayFast shares callback infrastructure. A manual
 // PAYFAST_ALLOWED_IPS override short-circuits DNS (useful for pinning IPs or
-// offline tests). A total DNS
-// failure throws so the webhook retries rather than permanently dropping a real
-// payment; a resolved-but-non-matching IP returns false (rejected as spoofed).
+// offline tests). A total DNS failure throws so the webhook retries rather than
+// permanently dropping a real payment; a resolved-but-non-matching IP returns
+// false (rejected as spoofed).
+//
+// Resolved addresses are cached for 60 s, but only to ACCEPT faster: an address
+// missing from the cache triggers a fresh lookup, so a PayFast IP rotation is
+// never rejected because of a stale entry.
 export const verifyPayfastSourceIp = async (headers: Record<string, string | undefined>): Promise<boolean> => {
-  const sourceIp = ipFromHeaders(headers)
-  if (!sourceIp) return false
+  const rawIp = ipFromHeaders(headers)
+  if (!rawIp) return false
+  const sourceIp = normaliseIp(rawIp)
 
   const configured = configuredPayfastIps()
-  if (configured.includes(sourceIp)) return true
+  if (configured.includes(rawIp) || configured.some((entry) => normaliseIp(entry) === sourceIp)) return true
 
-  const resolved = await resolvePayfastSourceIps(payfastMode())
+  const mode = payfastMode()
+  const cached = sourceIpCache.get(mode)
+  if (cached && cached.expiresAt > Date.now() && cached.ips.has(sourceIp)) return true
+
+  const resolved = await resolvePayfastSourceIps(mode)
   if (resolved.size === 0 && configured.length === 0) {
     throw new Error('Could not resolve PayFast source IPs for ITN validation.')
   }
+  if (resolved.size > 0) sourceIpCache.set(mode, { expiresAt: Date.now() + SOURCE_IP_TTL_MS, ips: resolved })
   return resolved.has(sourceIp)
 }

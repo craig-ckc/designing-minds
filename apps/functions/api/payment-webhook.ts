@@ -1,4 +1,4 @@
-import { paymentWebhook } from '../src/index.ts'
+import { paymentWebhook } from '../src/handlers/payment-webhook.ts'
 import { handleVercel } from './_adapter.ts'
 
 export const config = { api: { bodyParser: false } }

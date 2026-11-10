@@ -1,6 +1,6 @@
 import { badRequest, type Handler } from '../lib/http.ts'
 import { persistEvents } from '../lib/diagnostics.ts'
-import { sanitizeEvent, type DiagnosticEvent } from '../../../../packages/utils/src/diagnostics.ts'
+import { sanitizeEvent, type DiagnosticEvent } from '@designing-minds/utils/diagnostics'
 
 /** Public, write-only telemetry. No client-supplied event can claim server provenance. */
 export const diagnostics: Handler = async (req) => {

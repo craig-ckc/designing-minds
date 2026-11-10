@@ -15,6 +15,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 const read = (path: string) => readFileSync(new URL(`../../supabase/${path}`, import.meta.url), 'utf8')
 const db = new PGlite()
 const ADMIN = '00000000-0000-4000-8000-0000000000aa'
+const CUSTOMER = '00000000-0000-4000-8000-0000000000bb'
 const PRODUCT = '00000000-0000-4000-8000-000000000001'
 const OTHER = '00000000-0000-4000-8000-000000000002'
 const BUNDLE = '00000000-0000-4000-8000-0000000000b1'
@@ -31,7 +32,9 @@ beforeAll(async () => {
   // PGlite ships gen_random_uuid() built in but not the pgcrypto extension.
   await db.exec(read('schema.sql').replace('create extension if not exists pgcrypto;', ''))
   await db.exec(read('patch/2026-10-01-publish-workflow.sql'))
-  await db.exec(`insert into auth.users (id, email) values ('${ADMIN}', 'admin@example.com');
+  await db.exec(`insert into auth.users (id, email) values
+      ('${ADMIN}', 'admin@example.com'),
+      ('${CUSTOMER}', 'customer@example.com');
     update public.user_roles set role = 'admin' where "userId" = '${ADMIN}';`)
 }, 30_000)
 
@@ -135,9 +138,9 @@ describe('the public catalogue', () => {
     expect((await one<{ includedProductSlugs: string[] }>('select "includedProductSlugs" from public.catalog_bundles')).includedProductSlugs).toEqual(['fractions'])
 
     // A membership change on a Published bundle re-queues it; the site keeps the old set.
-    await db.exec(`set request.jwt.claim.sub = '${ADMIN}'`)
+    await db.exec(`set request.jwt.claim.sub = '${ADMIN}'; set role authenticated`)
     await db.query(`select public.set_bundle_products($1::uuid, $2::uuid[])`, [BUNDLE, [PRODUCT, OTHER]])
-    await db.exec(`reset request.jwt.claim.sub`)
+    await db.exec(`reset role; reset request.jwt.claim.sub`)
     expect((await one<{ status: string }>('select status from public.bundles')).status).toBe('queued')
     expect((await one<{ includedProductSlugs: string[] }>('select "includedProductSlugs" from public.catalog_bundles')).includedProductSlugs).toEqual(['fractions'])
 
@@ -162,6 +165,24 @@ describe('the public catalogue', () => {
 })
 
 describe('permissions', () => {
+  it('denies anonymous bundle-membership RPC calls before they can mutate rows', async () => {
+    const before = await rows(`select "bundleId", "productId", "sortOrder" from public.bundle_products where "bundleId" = '${BUNDLE}'`)
+    await db.exec('set role anon')
+    await expect(db.query(`select public.set_bundle_products($1::uuid, $2::uuid[])`, [BUNDLE, [OTHER]])).rejects.toThrow(/permission denied/)
+    await db.exec('reset role')
+
+    expect(await rows(`select "bundleId", "productId", "sortOrder" from public.bundle_products where "bundleId" = '${BUNDLE}'`)).toEqual(before)
+  })
+
+  it('rejects authenticated non-admin bundle-membership calls without changing rows', async () => {
+    const before = await rows(`select "bundleId", "productId", "sortOrder" from public.bundle_products where "bundleId" = '${BUNDLE}'`)
+    await db.exec(`set request.jwt.claim.sub = '${CUSTOMER}'; set role authenticated`)
+    await expect(db.query(`select public.set_bundle_products($1::uuid, $2::uuid[])`, [BUNDLE, [OTHER]])).rejects.toThrow(/Administrator access is required/)
+    await db.exec('reset role; reset request.jwt.claim.sub')
+
+    expect(await rows(`select "bundleId", "productId", "sortOrder" from public.bundle_products where "bundleId" = '${BUNDLE}'`)).toEqual(before)
+  })
+
   it('only lets the service role publish', async () => {
     for (const role of ['anon', 'authenticated']) {
       await db.exec(`set role ${role}`)

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-const persistEvents = vi.hoisted(() => vi.fn(async () => true))
+const persistEvents = vi.hoisted(() => vi.fn(async (_events: Array<{ source?: string }>) => true))
 vi.mock('../../apps/functions/src/lib/diagnostics.ts', () => ({ persistEvents }))
 import { diagnostics } from '../../apps/functions/src/handlers/diagnostics.ts'
 const req = (events: unknown) => ({ method: 'POST', headers: { 'content-type': 'application/json' }, body: { events } })

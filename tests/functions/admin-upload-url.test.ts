@@ -18,6 +18,7 @@ vi.mock('../../apps/functions/src/lib/storage.ts', () => ({
   }),
 }))
 
+import { AuthenticationError, ForbiddenError } from '../../apps/functions/src/lib/auth-errors.ts'
 const requireAdmin = vi.fn(async () => undefined)
 vi.mock('../../apps/functions/src/lib/auth.ts', () => ({ requireAdmin: () => requireAdmin() }))
 
@@ -104,14 +105,82 @@ describe('POST /api/admin/upload-url', () => {
     expect(privateUpload).not.toHaveBeenCalled()
   })
 
-  it('refuses a gallery upload from a caller who is not an administrator', async () => {
+  it('refuses a gallery upload from a signed-in caller who is not an administrator with 403', async () => {
     requireAdmin.mockImplementation(async () => {
-      throw new Error('Administrator access is required.')
+      throw new ForbiddenError('Administrator access is required.')
+    })
+
+    const response = await post({ recordId: RECORD, fileId: FILE, filename: 'x.jpg', purpose: 'gallery' })
+
+    expect(response.status).toBe(403)
+    expect(publicUpload).not.toHaveBeenCalled()
+  })
+
+  it('refuses an unauthenticated caller with 401', async () => {
+    requireAdmin.mockImplementation(async () => {
+      throw new AuthenticationError('Missing bearer token.')
     })
 
     const response = await post({ recordId: RECORD, fileId: FILE, filename: 'x.jpg', purpose: 'gallery' }, {})
 
     expect(response.status).toBe(401)
     expect(publicUpload).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['gallery', 'page.html'],
+    ['gallery', 'logo.svg'],
+    ['gallery', 'photo.pdf'],
+    ['preview', 'sample.png'],
+    ['preview', 'page.html'],
+    ['purchased', 'run.exe'],
+    ['purchased', 'notes.txt'],
+  ] as const)('rejects a %s upload named %s before reserving any storage', async (purpose, filename) => {
+    const response = await post({ recordId: RECORD, fileId: FILE, filename, purpose })
+    expect(response.status).toBe(400)
+    expect(publicUpload).not.toHaveBeenCalled()
+    expect(privateUpload).not.toHaveBeenCalled()
+  })
+
+  it('judges the file by its final extension, not by a harmless-looking one earlier in the name', async () => {
+    expect((await post({ recordId: RECORD, fileId: FILE, filename: 'cover.png.html', purpose: 'gallery' })).status).toBe(400)
+    expect((await post({ recordId: RECORD, fileId: FILE, filename: 'cover.html.png', purpose: 'gallery' })).status).toBe(200)
+  })
+
+  it.each([
+    ['gallery', 'a.png', 'image/svg+xml'],
+    ['gallery', 'a.png', 'text/html'],
+    ['preview', 'a.pdf', 'image/png'],
+  ] as const)('rejects a declared content type that does not belong in a %s upload (%s as %s)', async (purpose, filename, contentType) => {
+    expect((await post({ recordId: RECORD, fileId: FILE, filename, purpose, contentType })).status).toBe(400)
+    expect(publicUpload).not.toHaveBeenCalled()
+  })
+
+  it('rejects a declared size that is empty or above the 50 MB storage limit, and accepts the limit itself', async () => {
+    const base = { recordId: RECORD, fileId: FILE, filename: 'a.pdf', purpose: 'purchased' as const }
+    expect((await post({ ...base, sizeBytes: 0 })).status).toBe(400)
+    expect((await post({ ...base, sizeBytes: 50 * 1024 * 1024 + 1 })).status).toBe(400)
+    expect((await post({ ...base, sizeBytes: 50 * 1024 * 1024 })).status).toBe(200)
+  })
+
+  it('accepts the types the admin offers for each zone', async () => {
+    for (const [purpose, filename, contentType] of [
+      ['gallery', 'a.webp', 'image/webp'],
+      ['gallery', 'a.JPEG', 'image/jpeg'],
+      ['preview', 'a.pdf', 'application/pdf'],
+      ['purchased', 'a.zip', 'application/x-zip-compressed'],
+      ['purchased', 'a.pdf', 'application/pdf'],
+    ] as const) {
+      expect((await post({ recordId: RECORD, fileId: FILE, filename, purpose, contentType })).status).toBe(200)
+    }
+  })
+
+  it('keeps provider error detail out of the response', async () => {
+    privateUpload.mockRejectedValueOnce(new Error('Bucket "secret-private-bucket" not found at https://internal.host'))
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const response = await post({ recordId: RECORD, fileId: FILE, filename: 'a.pdf' })
+    spy.mockRestore()
+    expect(response.status).toBe(500)
+    expect(JSON.stringify(response.body)).not.toContain('secret-private-bucket')
   })
 })

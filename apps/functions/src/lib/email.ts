@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { withTimeout } from './fetch-timeout.ts'
 
 /* -------------------------------------------------------------------------
    Transactional email via Resend.
@@ -40,6 +41,9 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
+/** Email is best-effort everywhere it is used; give up rather than hang. */
+export const RESEND_TIMEOUT_MS = 8_000
+
 /**
  * Low-level send. Gated on RESEND_API_KEY + RESEND_FROM: returns false (no
  * throw) when Resend is not configured, true when the message was sent, and
@@ -61,14 +65,20 @@ async function sendViaResend(message: {
   }
 
   const resend = new Resend(apiKey)
-  const { error } = await resend.emails.send({
-    from,
-    to: message.to,
-    subject: message.subject,
-    html: message.html,
-    ...(message.replyTo ? { replyTo: message.replyTo } : {}),
-    ...(message.headers ? { headers: message.headers } : {}),
-  })
+  // The SDK offers no abort signal, so the call is raced against a deadline:
+  // a slow Resend can no longer hold the caller open.
+  const { error } = await withTimeout(
+    resend.emails.send({
+      from,
+      to: message.to,
+      subject: message.subject,
+      html: message.html,
+      ...(message.replyTo ? { replyTo: message.replyTo } : {}),
+      ...(message.headers ? { headers: message.headers } : {}),
+    }),
+    RESEND_TIMEOUT_MS,
+    'Resend send',
+  )
   if (error) throw new Error(typeof error === 'string' ? error : (error.message ?? 'Resend send failed.'))
   return true
 }

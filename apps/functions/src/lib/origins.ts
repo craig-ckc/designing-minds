@@ -1,8 +1,14 @@
 /* Public origins used to build the absolute URLs we hand to third parties. */
 
-const normalise = (value: string) => {
+export const normalise = (value: string) => {
   const trimmed = value.trim().replace(/\/+$/, '')
   return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
+}
+
+/** SITE_URL normalised to an absolute origin, or null when it is not configured. */
+export const optionalSiteUrl = (): string | null => {
+  const configured = process.env.SITE_URL
+  return configured ? normalise(configured) : null
 }
 
 // Storefront origin — where PayFast sends the shopper back (return/cancel URLs)

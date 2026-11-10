@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { createClient } from '@supabase/supabase-js'
-import { diagnosticId, sanitizeEvent, type DiagnosticEvent, type DiagnosticEventName } from '../../../../packages/utils/src/diagnostics.ts'
+import { diagnosticId, sanitizeEvent, type DiagnosticEvent, type DiagnosticEventName } from '@designing-minds/utils/diagnostics'
 import { serverError, type Handler, type HandlerRequest, type HandlerResponse } from './http.ts'
 
 interface Context { requestId: string; sessionId: string | null; route: string; events: DiagnosticEvent[] }

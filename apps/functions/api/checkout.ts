@@ -1,4 +1,4 @@
-import { checkout } from '../src/index.ts'
+import { checkout } from '../src/handlers/checkout.ts'
 import { handleVercel } from './_adapter.ts'
 
 export const config = { api: { bodyParser: false } }

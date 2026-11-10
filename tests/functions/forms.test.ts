@@ -5,7 +5,7 @@ import { vi } from 'vitest'
    modules, so mocking the modules (not the network) lets us assert on what
    would have been written/sent without any real side effects. */
 const mocks = vi.hoisted(() => ({
-  insert: vi.fn(async () => ({ error: null as { message: string } | null })),
+  insert: vi.fn(async (_row: Record<string, unknown>) => ({ error: null as { message: string } | null })),
   sendFormNotification: vi.fn(async () => {}),
   sendSubscriptionConfirmation: vi.fn(async () => false),
   upsertContact: vi.fn(async () => false),
@@ -65,7 +65,7 @@ describe('forms handler', () => {
     expect(response.status).toBe(201)
     expect(response.body).toEqual({ ok: true })
     expect(mocks.insert).toHaveBeenCalledTimes(1)
-    const row = mocks.insert.mock.calls[0][0] as Record<string, unknown>
+    const row = mocks.insert.mock.calls[0][0]
     expect(row.name).toBe('Jane Doe')
     expect(row.email).toBe('jane@example.com')
   })
@@ -90,7 +90,7 @@ describe('forms handler', () => {
     expect(response.status).toBe(303)
     expect(response.headers?.location).toBe('https://www.designingminds.co.za/grades/grade-4#newsletter-sent')
     expect(mocks.insert).toHaveBeenCalledTimes(1)
-    expect((mocks.insert.mock.calls[0][0] as Record<string, unknown>).email).toBe('reader@example.com')
+    expect((mocks.insert.mock.calls[0][0]).email).toBe('reader@example.com')
   })
 
   it('redirects a urlencoded contact submission, composing the name and keeping the rest in the data bag', async () => {
@@ -114,7 +114,7 @@ describe('forms handler', () => {
     expect(response.status).toBe(303)
     expect(response.headers?.location).toBe('https://www.designingminds.co.za/contact#contact-sent')
     expect(mocks.insert).toHaveBeenCalledTimes(1)
-    const row = mocks.insert.mock.calls[0][0] as Record<string, unknown>
+    const row = mocks.insert.mock.calls[0][0]
     expect(row.name).toBe('Jane Doe')
     expect(row.data).toMatchObject({
       topic: 'General enquiry',

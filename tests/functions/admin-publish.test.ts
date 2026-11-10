@@ -5,6 +5,7 @@ vi.mock('../../apps/functions/src/lib/diagnostics.ts', () => ({ logEvent: mocks.
 vi.mock('../../apps/functions/src/lib/supabase.ts', () => ({ createServiceClient: mocks.client }))
 vi.mock('../../apps/functions/src/lib/auth.ts', () => ({ requireAdmin: mocks.admin }))
 
+import { AuthenticationError, ForbiddenError } from '../../apps/functions/src/lib/auth-errors.ts'
 import { adminRebuildWeb, resetRebuildCooldown } from '../../apps/functions/src/handlers/admin-rebuild-web.ts'
 import { adminPublishStatus } from '../../apps/functions/src/handlers/admin-publish-status.ts'
 import { fetchDeploymentStatus, mapVercelState } from '../../apps/functions/src/lib/vercel.ts'
@@ -78,11 +79,23 @@ describe('POST /admin/rebuild-web', () => {
     expect(mocks.rpc).not.toHaveBeenCalled()
   })
 
-  it('refuses non-admins before touching the database', async () => {
-    mocks.admin.mockRejectedValue(new Error('Administrator access is required.'))
+  it('refuses a signed-in non-admin with 403 before touching the database', async () => {
+    mocks.admin.mockRejectedValue(new ForbiddenError('Administrator access is required.'))
     const result = await adminRebuildWeb(post())
-    expect(result.status).toBe(401)
+    expect(result.status).toBe(403)
     expect(mocks.client).not.toHaveBeenCalled()
+  })
+
+  it('answers a missing or invalid token with 401', async () => {
+    mocks.admin.mockRejectedValue(new AuthenticationError('Invalid bearer token.'))
+    expect((await adminRebuildWeb(post())).status).toBe(401)
+  })
+
+  it('does not leak an infrastructure error from the role check', async () => {
+    mocks.admin.mockRejectedValue(new Error('connect ECONNREFUSED 10.0.0.1:5432'))
+    const result = await adminRebuildWeb(post())
+    expect(result.status).toBe(500)
+    expect(JSON.stringify(result.body)).not.toContain('ECONNREFUSED')
   })
 })
 
@@ -99,8 +112,8 @@ describe('POST /admin/publish-status', () => {
   })
 
   it('refuses non-admins', async () => {
-    mocks.admin.mockRejectedValue(new Error('nope'))
-    expect((await adminPublishStatus(post({ since: new Date().toISOString() }))).status).toBe(401)
+    mocks.admin.mockRejectedValue(new ForbiddenError('nope'))
+    expect((await adminPublishStatus(post({ since: new Date().toISOString() }))).status).toBe(403)
   })
 })
 

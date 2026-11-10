@@ -1,4 +1,4 @@
-import { unsubscribe } from '../src/index.ts'
+import { unsubscribe } from '../src/handlers/unsubscribe.ts'
 import { handleVercel } from './_adapter.ts'
 
 export const config = { api: { bodyParser: false } }

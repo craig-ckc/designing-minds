@@ -31,7 +31,7 @@ export const unsubscribe: Handler = async (req) => {
 
   // Verify the signed token before touching Mailchimp. A generic message avoids
   // revealing whether an address is on the list.
-  let valid = false
+  let valid: boolean
   try {
     valid = verifyUnsubscribeToken(email, token)
   } catch (error) {

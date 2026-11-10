@@ -1,4 +1,4 @@
-import { issueDownload } from '../src/index.ts'
+import { issueDownload } from '../src/handlers/issue-download.ts'
 import { handleVercel } from './_adapter.ts'
 
 export const config = { api: { bodyParser: false } }

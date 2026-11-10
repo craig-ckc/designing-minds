@@ -1,6 +1,7 @@
 import { logEvent } from '../lib/diagnostics.ts'
-import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
+import { badRequest, ok, serverError, type Handler } from '../lib/http.ts'
 import { requireAdmin } from '../lib/auth.ts'
+import { adminAuthFailure } from '../lib/auth-errors.ts'
 import { createSupabaseStorageProvider } from '../lib/storage.ts'
 
 /**
@@ -27,6 +28,9 @@ interface UploadUrlInput {
   fileId: string
   filename: string
   purpose?: 'purchased' | 'gallery' | 'preview'
+  /** Optional declared MIME type and size; validated when present. */
+  contentType?: string
+  sizeBytes?: number
 }
 
 const isUploadUrlInput = (value: unknown): value is UploadUrlInput => {
@@ -34,7 +38,35 @@ const isUploadUrlInput = (value: unknown): value is UploadUrlInput => {
   if (typeof value !== 'object' || value === null) return false
   if (typeof v.fileId !== 'string' || typeof v.filename !== 'string') return false
   if (typeof v.recordId !== 'string' && typeof v.productId !== 'string') return false
+  if (v.contentType !== undefined && typeof v.contentType !== 'string') return false
+  if (v.sizeBytes !== undefined && (typeof v.sizeBytes !== 'number' || !Number.isFinite(v.sizeBytes))) return false
   return v.purpose === undefined || v.purpose === 'purchased' || v.purpose === 'gallery' || v.purpose === 'preview'
+}
+
+/*
+ * What each bucket may receive, enforced here because the admin's own checks
+ * (apps/admin/src/lib/upload-rules.ts) are a convenience, not a boundary: any
+ * admin session can call this endpoint directly. Mirrors those rules.
+ *
+ * It matters most for the PUBLIC bucket: an HTML or SVG object stored there is
+ * served from the storage domain, so only raster images (gallery) and PDFs
+ * (previews) are allowed. The private bucket takes PDFs and ZIPs.
+ */
+type Purpose = NonNullable<UploadUrlInput['purpose']>
+const UPLOAD_RULES: Record<Purpose, { extensions: string[]; mimes: string[]; kinds: string }> = {
+  purchased: { extensions: ['.pdf', '.zip'], mimes: ['application/pdf', 'application/zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/octet-stream'], kinds: 'PDF or ZIP' },
+  gallery: { extensions: ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif'], mimes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif'], kinds: 'PNG, JPG, WebP, GIF or AVIF' },
+  preview: { extensions: ['.pdf'], mimes: ['application/pdf'], kinds: 'PDF' },
+}
+/** The Supabase project-wide upload ceiling (50 MiB); storage enforces it regardless. */
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+
+const rejectUpload = (purpose: Purpose, name: string, contentType: string | undefined, sizeBytes: number | undefined): string | null => {
+  const rule = UPLOAD_RULES[purpose]
+  if (!rule.extensions.some((extension) => name.toLowerCase().endsWith(extension))) return `This upload only takes ${rule.kinds} files.`
+  if (contentType && !rule.mimes.includes(contentType.toLowerCase().split(';')[0]?.trim() ?? '')) return `This upload only takes ${rule.kinds} files.`
+  if (sizeBytes !== undefined && (sizeBytes <= 0 || sizeBytes > MAX_UPLOAD_BYTES)) return 'This file is empty or larger than the 50 MB storage limit.'
+  return null
 }
 
 const safeFilename = (filename: string) => filename.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'file'
@@ -55,12 +87,16 @@ export const adminUploadUrl: Handler = async (req) => {
   try {
     await requireAdmin(req.headers)
   } catch (error) {
-    return unauthorized(error instanceof Error ? error.message : 'Administrator access is required.')
+    return adminAuthFailure(error)
   }
+
+  const purpose: Purpose = req.body.purpose ?? 'purchased'
+  const name = safeFilename(req.body.filename)
+  const rejection = rejectUpload(purpose, name, req.body.contentType, req.body.sizeBytes)
+  if (rejection) return badRequest(rejection)
 
   try {
     const storage = createSupabaseStorageProvider()
-    const name = safeFilename(req.body.filename)
 
     if (req.body.purpose === 'gallery' || req.body.purpose === 'preview') {
       const prefix = req.body.purpose === 'gallery' ? 'gallery' : 'previews'
@@ -73,13 +109,11 @@ export const adminUploadUrl: Handler = async (req) => {
     const uploadUrl = await storage.getSignedUploadUrl(key)
     return ok({ uploadUrl, storageKey: key })
   } catch (error) {
-    // The reason travels to the caller, not just to the log. This endpoint is
-    // behind requireAdmin, so there is nobody to leak to — and an editor whose
-    // upload dies at the reservation step otherwise sees a bare "unable to
-    // create upload URL" with the actual cause (a missing bucket, a bad key,
-    // a rejected service key) visible only in the function logs.
-    const reason = error instanceof Error ? error.message : String(error)
+    // The cause (a missing bucket, a rejected service key) goes to the function
+    // logs, not the response: provider error text can name buckets and hosts,
+    // and an admin session is still only a session.
+    console.error('[admin-upload-url] reservation failed:', error instanceof Error ? error.message : String(error))
     logEvent('admin.upload.failed', { errorKind: error instanceof Error ? error.name : 'Error' })
-    return serverError(`Unable to reserve storage for this file: ${reason}`)
+    return serverError('Unable to reserve storage for this file. Check the function logs for the cause.')
   }
 }

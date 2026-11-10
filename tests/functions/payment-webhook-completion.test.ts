@@ -48,3 +48,10 @@ it('never invokes completion after provider validation fails', async () => {
   expect(await paymentWebhook(req)).toMatchObject({ status: 200, body: { processed: false } })
   expect(mocks.rpc).not.toHaveBeenCalled()
 })
+it('acknowledges a captured physical payment awaiting stock review without another state write', async () => {
+  mocks.rpc.mockResolvedValue({ data: 'review', error: null })
+  expect(await paymentWebhook(req)).toMatchObject({ status: 200, body: { received: true, processed: true, status: 'payment_review' } })
+  expect(mocks.update).not.toHaveBeenCalled()
+  expect(mocks.rpc).toHaveBeenCalledTimes(1)
+  expect(mocks.log).not.toHaveBeenCalledWith('payment.failed', expect.anything())
+})

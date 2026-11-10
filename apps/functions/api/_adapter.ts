@@ -1,5 +1,6 @@
 import type { Handler } from '../src/lib/http.ts'
 import { observeHandler } from '../src/lib/diagnostics.ts'
+import { BodyTooLargeError, corsOrigin, parseBody, readRawBody } from '../src/lib/request.ts'
 
 interface VercelRequest extends AsyncIterable<Uint8Array> {
   method?: string
@@ -12,43 +13,6 @@ interface VercelResponse {
   status: (code: number) => VercelResponse
   json: (body: unknown) => void
   end: () => void
-}
-
-class BodyTooLargeError extends Error {}
-
-const MAX_BODY_BYTES = 1024 * 1024
-
-const readRawBody = async (req: AsyncIterable<Uint8Array>): Promise<string> => {
-  const chunks: Uint8Array[] = []
-  let total = 0
-  for await (const chunk of req) {
-    total += chunk.byteLength
-    if (total > MAX_BODY_BYTES) throw new BodyTooLargeError('Request body is too large.')
-    chunks.push(chunk)
-  }
-  return Buffer.concat(chunks).toString('utf8')
-}
-
-const parseBody = (raw: string, contentType = ''): unknown => {
-  if (!raw) return undefined
-  if (contentType.includes('application/x-www-form-urlencoded')) {
-    return Object.fromEntries(new URLSearchParams(raw))
-  }
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return undefined
-  }
-}
-
-const corsOrigin = (origin: string | undefined) => {
-  const allowed = (process.env.ALLOWED_ORIGINS ?? '')
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-  if (!origin) return ''
-  if (allowed.includes(origin)) return origin
-  return ''
 }
 
 const setCorsHeaders = (req: VercelRequest, res: VercelResponse) => {

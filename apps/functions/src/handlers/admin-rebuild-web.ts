@@ -1,7 +1,10 @@
 import { logEvent } from '../lib/diagnostics.ts'
-import { badRequest, ok, serverError, unauthorized, type Handler } from '../lib/http.ts'
+import { badRequest, forbidden, ok, serverError, type Handler } from '../lib/http.ts'
 import { requireAdmin } from '../lib/auth.ts'
+import { adminAuthFailure } from '../lib/auth-errors.ts'
+import { fetchWithTimeout } from '../lib/fetch-timeout.ts'
 import { createServiceClient } from '../lib/supabase.ts'
+import { getCommerceContext, simulationEnabled } from './commerce.ts'
 
 /**
  * Admin "Publish": make every Queued record live, then rebuild the website.
@@ -25,12 +28,17 @@ import { createServiceClient } from '../lib/supabase.ts'
 // only collapses bursts hitting the same warm instance; it is not a hard,
 // cross-instance rate limit.
 let lastTriggeredAt = 0
+let localPublishedAt: number | null = null
 const COOLDOWN_MS = 30_000
 
 /** Test seam: the cooldown is module state. */
 export function resetRebuildCooldown() {
   lastTriggeredAt = 0
+  localPublishedAt = null
 }
+
+/** Local content receipt, not a deployment or a claim about production. */
+export const getLocalPublishReceipt = () => localPublishedAt
 
 export const adminRebuildWeb: Handler = async (req) => {
   if (req.method !== 'POST') return badRequest('Use POST.')
@@ -38,7 +46,27 @@ export const adminRebuildWeb: Handler = async (req) => {
   try {
     await requireAdmin(req.headers)
   } catch (error) {
-    return unauthorized(error instanceof Error ? error.message : 'Administrator access is required.')
+    return adminAuthFailure(error)
+  }
+
+  if (process.env.LOCAL_COMMERCE_PREVIEW === 'true') {
+    try {
+      if (!simulationEnabled(await getCommerceContext())) return forbidden('Local preview publishing is unavailable.')
+      const { data, error } = await createServiceClient().rpc('publish_site_content')
+      if (error) throw error
+      const result = (data ?? {}) as { promoted?: number; removed?: number }
+      localPublishedAt = Date.now()
+      return ok({
+        state: 'queued', localPreview: true,
+        requestedAt: new Date(localPublishedAt).toISOString(),
+        promoted: Number(result.promoted ?? 0), removed: Number(result.removed ?? 0),
+        jobId: null,
+        message: 'Local preview content published. Refresh the local storefront to see the changes.',
+      })
+    } catch (error) {
+      logEvent('admin.publish.failed', { errorKind: error instanceof Error ? error.name : 'Error' })
+      return serverError('Unable to publish local preview content.')
+    }
   }
 
   const hookUrl = process.env.VERCEL_WEB_DEPLOY_HOOK_URL
@@ -54,8 +82,8 @@ export const adminRebuildWeb: Handler = async (req) => {
     return ok({ state: 'debounced', message: 'A publish was just started. Give it a moment before trying again.' })
   }
 
-  let promoted = 0
-  let removed = 0
+  let promoted: number
+  let removed: number
   try {
     const { data, error } = await createServiceClient().rpc('publish_site_content')
     if (error) throw new Error(error.message)
@@ -70,7 +98,7 @@ export const adminRebuildWeb: Handler = async (req) => {
   // Taken AFTER the promotion: any deployment created from here on reads it.
   const requestedAt = new Date().toISOString()
   try {
-    const response = await fetch(hookUrl, { method: 'POST' })
+    const response = await fetchWithTimeout(hookUrl, { method: 'POST' })
     const text = await response.text()
     if (!response.ok) {
       logEvent('admin.publish.failed', { status: response.status })

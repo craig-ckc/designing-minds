@@ -61,6 +61,9 @@ export function mapVercelState(raw: string | undefined): DeploymentState {
  */
 const SKEW_MS = 10_000
 
+/** The admin polls this; a stuck Vercel API call must not stack up requests. */
+const VERCEL_API_TIMEOUT_MS = 8_000
+
 /**
  * The newest production deployment of the web project created at or after
  * `since`. 'pending' means the hook was accepted but Vercel hasn't created the
@@ -85,6 +88,7 @@ export async function fetchDeploymentStatus(
 
   const response = await fetchImpl(`https://api.vercel.com/v6/deployments?${params}`, {
     headers: { authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(VERCEL_API_TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`Vercel deployments request failed (${response.status}).`)
 

@@ -3,6 +3,8 @@ import { badRequest, created, serverError, type Handler, type HandlerResponse } 
 import { createServiceClient } from '../lib/supabase.ts'
 import { sendFormNotification, sendSubscriptionConfirmation } from '../lib/email.ts'
 import { unsubscribeToken, upsertContact, type MailchimpStatus } from '../lib/mailchimp.ts'
+import { optionalSiteUrl } from '../lib/origins.ts'
+import { allowedOrigins } from '../lib/request.ts'
 
 /* -------------------------------------------------------------------------
    Public form submissions (contact + newsletter).
@@ -70,21 +72,21 @@ const hasConsent = (value: string | undefined) => value != null && CONSENT_VALUE
 
 // Public origin used to build the one-click unsubscribe link. Null when unset,
 // in which case the confirmation email falls back to reply-to-unsubscribe.
-const siteBase = (): string | null => {
-  const configured = process.env.SITE_URL
-  if (!configured) return null
-  const trimmed = configured.replace(/\/+$/, '')
-  return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
-}
-
 const unsubscribeUrlFor = (email: string): string | undefined => {
-  const base = siteBase()
+  const base = optionalSiteUrl()
   if (!base) return undefined
   return `${base}/unsubscribe?e=${encodeURIComponent(email)}&t=${unsubscribeToken(email)}`
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_FIELD_LENGTH = 5000
+// Abuse caps. Every submission becomes a jsonb row AND an email, so the number
+// of fields and the total payload are bounded, not just each value. A real
+// form posts under ten short fields plus one message.
+const MAX_FIELDS = 30
+const MAX_KEY_LENGTH = 100
+const MAX_TOTAL_LENGTH = 20_000
+const MAX_BODY_BYTES = 64 * 1024
 
 interface FormBody {
   form: string
@@ -155,9 +157,10 @@ function normalizeFormBody(value: unknown): unknown {
 }
 
 // A single-slash-rooted, same-origin path with no query/hash and no
-// protocol-relative trick (`//evil.example`) — anything else falls back to a
-// safe default rather than redirecting off-site.
-const RETURN_PATH_RE = /^\/(?!\/)[^\s?#]*$/
+// protocol-relative trick (`//evil.example`, or `/\evil.example`, which
+// browsers read the same way) — anything else falls back to a safe default
+// rather than redirecting off-site.
+const RETURN_PATH_RE = /^\/(?![/\\])[^\s?#\\]*$/
 
 function resolveReturnPath(value: unknown, fallback: string): string {
   return typeof value === 'string' && RETURN_PATH_RE.test(value) ? value : fallback
@@ -173,20 +176,24 @@ function safeOrigin(value: string | null): string | null {
   }
 }
 
-function normaliseSiteUrl(value: string): string {
-  const trimmed = value.trim().replace(/\/+$/, '')
-  return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
-}
-
+/*
+ * Where a navigation POST is sent back to. The request's Origin/Referer is only
+ * honoured when it names a TRUSTED origin: the storefront (SITE_URL) or one of
+ * ALLOWED_ORIGINS. Anything else is bounced to the storefront, so a header an
+ * attacker controls never decides the redirect target. With neither variable
+ * set (local dev, tests) there is nothing to check against, so the request's
+ * own origin is used as before.
+ */
 function resolveOrigin(headers: Record<string, string | undefined>): string {
-  const fromOrigin = safeOrigin(headerAny(headers, 'origin', 'Origin'))
-  if (fromOrigin) return fromOrigin
+  const requested = [headerAny(headers, 'origin', 'Origin'), headerAny(headers, 'referer', 'Referer')]
+    .map(safeOrigin)
+    .filter((value): value is string => value !== null)
 
-  const fromReferer = safeOrigin(headerAny(headers, 'referer', 'Referer'))
-  if (fromReferer) return fromReferer
+  const site = safeOrigin(optionalSiteUrl())
+  const trusted = [...(site ? [site] : []), ...allowedOrigins().map(safeOrigin).filter((value): value is string => value !== null)]
+  if (trusted.length === 0) return requested[0] ?? ''
 
-  const configured = process.env.SITE_URL
-  return configured ? normaliseSiteUrl(configured) : ''
+  return requested.find((origin) => trusted.includes(origin)) ?? site ?? trusted[0] ?? ''
 }
 
 /*
@@ -212,6 +219,9 @@ function navigationResponse(headers: Record<string, string | undefined>, body: u
 
 const handleForm: Handler = async (req) => {
   if (req.method !== 'POST') return badRequest('Use POST.')
+  if (req.rawBody !== undefined && Buffer.byteLength(req.rawBody) > MAX_BODY_BYTES) {
+    return { status: 413, body: { error: 'That submission is too large.' } }
+  }
   if (!isFormBody(req.body)) return badRequest('Expected { form, fields }.')
 
   const config = FORMS[req.body.form]
@@ -223,13 +233,20 @@ const handleForm: Handler = async (req) => {
     return created({ ok: true })
   }
 
+  const entries = Object.entries(req.body.fields)
+  if (entries.length > MAX_FIELDS) return badRequest('Too many fields.')
+
   // Coerce, trim, and drop empty values.
   const fields: Record<string, string> = {}
-  for (const [key, raw] of Object.entries(req.body.fields)) {
+  let totalLength = 0
+  for (const [key, raw] of entries) {
+    if (key.length > MAX_KEY_LENGTH) return badRequest('A field name is too long.')
     if (raw == null) continue
     const value = String(raw).trim()
     if (!value) continue
     if (value.length > MAX_FIELD_LENGTH) return badRequest(`Field "${key}" is too long.`)
+    totalLength += key.length + value.length
+    if (totalLength > MAX_TOTAL_LENGTH) return badRequest('That submission is too large.')
     fields[key] = value
   }
 
@@ -263,27 +280,31 @@ const handleForm: Handler = async (req) => {
     return serverError('Unable to submit the form.')
   }
 
-  // Best-effort notification: the submission is already persisted, so a Resend
-  // failure must not fail the request.
-  try {
-    await sendFormNotification({
-      subject: config.subject(fields),
-      heading: `New ${config.label}`,
-      fields,
-      submittedAt: new Date().toISOString(),
-      replyTo: fields.email,
-    })
-  } catch (error) {
-    logEvent('forms.notification.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
+  // Everything below is best-effort: the submission is already persisted, so no
+  // failure here may fail the request. The two chains are independent, so they
+  // run concurrently (each is time-limited inside email.ts / mailchimp.ts), and
+  // the response waits only for the slower one rather than for all three calls
+  // in sequence.
+  const notify = async () => {
+    try {
+      await sendFormNotification({
+        subject: config.subject(fields),
+        heading: `New ${config.label}`,
+        fields,
+        submittedAt: new Date().toISOString(),
+        replyTo: fields.email,
+      })
+    } catch (error) {
+      logEvent('forms.notification.failed', { errorKind: error instanceof Error ? error.name : 'Error', code: error && typeof error === 'object' && 'code' in error ? error.code : undefined })
+    }
   }
 
-  // Best-effort audience sync: when the submitter has opted in, add or update
-  // them in Mailchimp and send our own branded confirmation. Like the
-  // notification email, the submission is already persisted so any failure here
-  // must not fail the request.
+  // Audience sync: when the submitter has opted in, add or update them in
+  // Mailchimp and send our own branded confirmation.
   const mc = config.mailchimp
   const optedIn = mc != null && (mc.consentField == null || hasConsent(fields[mc.consentField]))
-  if (mc && optedIn && fields.email) {
+  const subscribe = async () => {
+    if (!mc || !optedIn || !fields.email) return
     const [firstName, ...lastNameParts] = (fields.name ?? '').split(/\s+/).filter(Boolean)
     let synced = false
     try {
@@ -312,6 +333,8 @@ const handleForm: Handler = async (req) => {
       }
     }
   }
+
+  await Promise.all([notify(), subscribe()])
 
   return created({ ok: true })
 }

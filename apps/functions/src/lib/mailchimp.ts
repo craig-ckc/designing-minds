@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
+import { fetchWithTimeout } from './fetch-timeout.ts'
 
 /* -------------------------------------------------------------------------
    Mailchimp audience sync.
@@ -54,6 +55,9 @@ export const mailchimpDatacenter = (apiKey: string): string | null => {
   return dc && dc !== apiKey ? dc : null
 }
 
+/** Mailchimp is best-effort for callers, so it never gets to hold a request open long. */
+export const MAILCHIMP_TIMEOUT_MS = 10_000
+
 // Issues an authenticated request against a single audience member. Centralises
 // the datacenter host, member URL, and Basic auth shared by upsert/unsubscribe.
 const memberRequest = (apiKey: string, audienceId: string, email: string, method: string, body: unknown): Promise<Response> => {
@@ -64,11 +68,11 @@ const memberRequest = (apiKey: string, audienceId: string, email: string, method
   // HTTP Basic auth: the username is ignored by Mailchimp, the API key is the password.
   const authorization = `Basic ${Buffer.from(`anystring:${apiKey}`).toString('base64')}`
 
-  return fetch(url, {
-    method,
-    headers: { authorization, 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  return fetchWithTimeout(
+    url,
+    { method, headers: { authorization, 'content-type': 'application/json' }, body: JSON.stringify(body) },
+    MAILCHIMP_TIMEOUT_MS,
+  )
 }
 
 /**
@@ -149,7 +153,11 @@ export const unsubscribeToken = (email: string): string =>
 
 export const verifyUnsubscribeToken = (email: string, token: string): boolean => {
   if (!token) return false
-  const expected = unsubscribeToken(email)
-  if (expected.length !== token.length) return false
-  return timingSafeEqual(Buffer.from(expected), Buffer.from(token))
+  // Compare BYTES, not string lengths: a token of the right length in UTF-16
+  // units but with multi-byte characters has a different byte length, and
+  // timingSafeEqual throws on unequal lengths (which surfaced as a 500).
+  const expected = Buffer.from(unsubscribeToken(email))
+  const supplied = Buffer.from(token)
+  if (expected.length !== supplied.length) return false
+  return timingSafeEqual(expected, supplied)
 }

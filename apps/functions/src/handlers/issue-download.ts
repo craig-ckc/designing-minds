@@ -30,8 +30,11 @@ function isDownloadInput(value: unknown): value is DownloadInput {
   return typeof value === 'object' && value !== null && typeof v.orderId === 'string' && typeof v.fileId === 'string'
 }
 
+/** The only product columns an entitlement check needs (no descriptions, SEO or gallery). */
+const PRODUCT_COLUMNS = 'slug,purchasedFiles,live'
+
 /** A product row as read with the service key: the working copy plus its live copy. */
-type ProductRow = Product & { live?: { purchasedFiles?: ProductFile[] } | null }
+type ProductRow = Pick<Product, 'slug' | 'purchasedFiles'> & { live?: { purchasedFiles?: ProductFile[] } | null }
 
 /**
  * The files a buyer is served: the PUBLISHED ones. An editor replacing a file
@@ -77,11 +80,11 @@ export const issueDownload: Handler = async (req) => {
     const slugs = [...new Set(order.items.map((item) => item.productSlug))]
 
     const [purchasedProducts, purchasedBundles] = await Promise.all([
-      supabase.from('products').select('*').in('slug', slugs),
+      supabase.from('products').select(PRODUCT_COLUMNS).in('slug', slugs),
       // Membership is embedded, so a bundle's contents come back with it and
       // no full-catalogue scan is needed. Unpublished bundles resolve too:
       // retired Access Plans still owe their buyers downloads.
-      supabase.from('bundles').select('id,slug,bundle_products(products(*))').in('slug', slugs),
+      supabase.from('bundles').select(`id,slug,bundle_products(products(${PRODUCT_COLUMNS}))`).in('slug', slugs),
     ])
     if (purchasedProducts.error) throw new Error(purchasedProducts.error.message)
     if (purchasedBundles.error) throw new Error(purchasedBundles.error.message)

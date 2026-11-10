@@ -1,5 +1,6 @@
 import { logEvent } from '../lib/diagnostics.ts'
 import { ok, type Handler, type HandlerResponse } from '../lib/http.ts'
+import { signedItnFields } from '../lib/itn-fields.ts'
 import { amountMatches } from '../lib/money.ts'
 import {
   explainPayfastSignature,
@@ -20,6 +21,14 @@ const retryLater = (message: string): HandlerResponse => ({ status: 503, body: {
 // canonicalisation PayFast used, passphrase source) without the shopper's
 // name or email. PayFast does not retry an ITN we answer 200 to, so this is
 // the only record of what it sent.
+//
+// This path is reachable by anyone, so it must never print what a valid
+// signature would be: only a short prefix of each signature is logged (enough
+// to tell "close but different canonicalisation" from "unrelated"), and the
+// passphrase's length is not logged at all.
+const SIGNATURE_PREFIX_LENGTH = 6
+const signaturePrefix = (signature: string) => (signature ? signature.slice(0, SIGNATURE_PREFIX_LENGTH) : null)
+
 const logSignatureMismatch = (req: Parameters<Handler>[0], fields: PayfastFields, check: PayfastSignatureCheck) => {
   console.error(
     'PayFast ITN signature mismatch:',
@@ -33,11 +42,10 @@ const logSignatureMismatch = (req: Parameters<Handler>[0], fields: PayfastFields
       payment_status: fields.payment_status ?? null,
       amount_gross: fields.amount_gross ?? null,
       merchant_id: fields.merchant_id ?? null,
-      receivedSignature: check.received || null,
-      expectedSignature: check.expected,
+      receivedSignaturePrefix: signaturePrefix(check.received),
+      expectedSignaturePrefix: signaturePrefix(check.expected),
       matchedVariant: check.matchedVariant,
       passphraseSource: check.passphraseSource,
-      passphraseLength: check.passphraseLength,
     }),
   )
 }
@@ -72,13 +80,16 @@ const markPaymentFailed = async (payment: PaymentRow) => {
 export const paymentWebhook: Handler = async (req) => {
   if (req.method !== 'POST') return ok({ received: true })
 
-  const fields = asFields(req.body)
+  const received = asFields(req.body)
+  // Only what PayFast signed is read from here on: a field appended after
+  // `signature` is unsigned and could otherwise override a signed one.
+  const fields = signedItnFields(received)
   let orderId: string | undefined
   try {
     logEvent('payment.signature')
-    const signature = explainPayfastSignature(fields)
+    const signature = explainPayfastSignature(received)
     if (!signature.accepted) {
-      logSignatureMismatch(req, fields, signature)
+      logSignatureMismatch(req, received, signature)
       throw new PermanentItnRejection('Invalid PayFast signature.')
     }
     if (signature.matchedVariant !== 'received-order') {
@@ -124,6 +135,12 @@ export const paymentWebhook: Handler = async (req) => {
     if (completion === 'duplicate') {
       logEvent('payment.duplicate', { orderId })
       return ok({ received: true, duplicate: true })
+    }
+    if (completion === 'review') {
+      // Capture succeeded; allocation needs review and must not be described
+      // as fulfilled or retried as a failed payment.
+      logEvent('payment.completed', { orderId })
+      return ok({ received: true, processed: true, status: 'payment_review' })
     }
     if (completion !== 'processed' && completion !== 'recovered') throw new Error('Unexpected payment completion result.')
     logEvent(completion === 'recovered' ? 'payment.recovered' : 'payment.completed', { orderId })
