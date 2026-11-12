@@ -1,27 +1,39 @@
-import type { CmsSnapshot } from '@designing-minds/cms'
 import { Button } from '../ui/button'
 import { Icon } from '../ui/icon'
-import { ResourceStack } from '../ui/resource-stack'
 import { Section } from '../ui/section'
 import { CtaBanner } from './cta-banner'
 
 /**
- * The homepage's closing peak: the brand-pink band with real resource covers.
- * Text is ink, not white — white on the logo pink measures ~3.2:1, ink ~5.4:1.
+ * The closing brand-pink band with the painted practice booklets. Text is ink,
+ * not white: white on the logo pink measures ~3.2:1, ink ~5.4:1. One solid-light
+ * button so the action never sits pink on pink.
  */
-export function FinalCtaSection({ snapshot }: { snapshot?: CmsSnapshot | null }) {
+export function FinalCtaSection({
+  id = 'start-shopping',
+  title = 'Ready to help your child practise?',
+  description = 'Browse CAPS-aligned resources by grade, or get a term bundle and save.',
+  actionLabel = 'See all resources',
+  actionTo = '/shop',
+}: {
+  id?: string
+  title?: string
+  description?: string
+  actionLabel?: string
+  actionTo?: string
+}) {
   return (
-    <Section id="start-shopping">
-      <CtaBanner.Root className="text-ink">
+    <Section id={id}>
+      <CtaBanner.Root>
         <CtaBanner.Content>
-          <CtaBanner.Title>Ready to help your child practise?</CtaBanner.Title>
-          <CtaBanner.Description>Browse CAPS-aligned resources by grade, or get a term bundle and save.</CtaBanner.Description>
+          <CtaBanner.Title>{title}</CtaBanner.Title>
+          <CtaBanner.Description>{description}</CtaBanner.Description>
           <CtaBanner.Actions>
-            <Button to="/shop" variant="solid-light">See all resources <Icon name="arrow" size={16} /></Button>
-            <Button to="/packages" variant="text" className="px-0 text-ink hover:text-ink hover:underline hover:underline-offset-4">See all bundles</Button>
+            <Button to={actionTo} variant="solid-light">{actionLabel} <Icon name="arrow" size={16} /></Button>
           </CtaBanner.Actions>
         </CtaBanner.Content>
-        <CtaBanner.Artwork><ResourceStack snapshot={snapshot} /></CtaBanner.Artwork>
+        <CtaBanner.Artwork>
+          <img src="/images/paintings/cta-practice-booklets.avif" alt="" width={907} height={733} loading="lazy" decoding="async" />
+        </CtaBanner.Artwork>
       </CtaBanner.Root>
     </Section>
   )

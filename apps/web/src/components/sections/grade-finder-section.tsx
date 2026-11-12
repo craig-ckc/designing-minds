@@ -24,10 +24,10 @@ export function GradeFinderSection({ snapshot, loadError }: { snapshot: CmsSnaps
         <div className="max-w-xl">
           <h2>Explore our resources</h2>
           <p className="lead mt-4 max-w-[46ch]">
-            CAPS-aligned tests, memos and summaries for Grades 3 to 7 — browse by grade, or explore all resources.
+            CAPS-aligned tests, memos and summaries for Grades 3 to 7. Pick your child’s grade, or browse everything.
           </p>
         </div>
-        <Button to="/shop" variant="text" className="px-0">Browse all resources <Icon name="arrow" size={16} /></Button>
+        <Button to="/shop" variant="outline" size="sm" shape="circle">Browse all resources <Icon name="arrow" size={16} /></Button>
       </div>
 
       <div className="grade-grid grade-grid--compact">

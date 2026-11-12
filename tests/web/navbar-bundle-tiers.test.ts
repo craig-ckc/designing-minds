@@ -47,3 +47,12 @@ test('homepage promotes actual catalogue cards before testimonials while tier of
   assert.match(section, /\/packages\?offer=\$\{encodeURIComponent\(offer\)\}/)
   assert.doesNotMatch(section, /Access Plan|Essential|Premium/)
 })
+
+test('tier description pluralises the grade count', async () => {
+  const { tierDescription } = await import('../../apps/web/src/components/layout/navbar/tier-links.ts')
+  const tier = (gradeCount: number, featured: boolean) => ({ scope: featured ? 'Full Year' : 'Term', title: 't', fromPriceZar: 1, gradeCount, featured }) as Parameters<typeof tierDescription>[0]
+  assert.equal(tierDescription(tier(1, true)), 'Choose from 1 grade.')
+  assert.equal(tierDescription(tier(5, true)), 'Choose from 5 grades.')
+  assert.equal(tierDescription(tier(1, false)), 'Choose from 1 grade, any term.')
+  assert.equal(tierDescription(tier(2, false)), 'Choose from 2 grades, any term.')
+})

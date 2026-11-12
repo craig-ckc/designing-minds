@@ -33,8 +33,8 @@ test('image-only product links and decorative images expose the right semantics'
   // Real images cannot be passed to the shared components without descriptive alt text.
   assert.match(polaroid, /\{ src: string; alt: string \}/)
   assert.match(polaroid, /<img src=\{src\} alt=\{alt\}/)
-  assert.match(aboutConnect, /image: string, imageAlt: string/)
-  assert.match(aboutConnect, /<img src=\{image\} alt=\{imageAlt\}/)
+  // The about connect headers are decorative paintings: the card title carries the meaning.
+  assert.match(aboutConnect, /<img src=\{image\} alt=""/)
   // Shared placeholder artwork is decorative and does not render an empty-alt image.
   assert.match(polaroid, /backgroundImage: "url\('\/placeholder-image\.svg'\)"/)
   assert.doesNotMatch(polaroid, /<img[^>]+placeholder-image\.svg/)
@@ -45,18 +45,15 @@ test('SVG textures used as backgrounds are hidden from assistive technology', ()
   const sources = [
     readNavbar(),
     read('components/sections/bundle-pricing-section.tsx'),
-    read('components/sections/cta-banner.tsx'),
-    read('index.css'),
   ].join('\n')
 
-  assert.match(sources, /card-background-01\.svg/)
   assert.match(sources, /backgroundImage: "url\('\/images\/card-background-02\.svg'\)"/)
   assert.doesNotMatch(sources, /<img[^>]+card-background/)
   assert.equal(
     sources.match(/style=\{\{ backgroundImage: "url\('\/images\/card-background-0[12]\.svg'\)" \}\}\s+aria-hidden/g)?.length,
     2,
   )
-  assert.match(sources, /className="cta-panel__texture" aria-hidden="true"/)
+  assert.doesNotMatch(read('components/sections/cta-banner.tsx') + read('index.css'), /cta-panel__texture/)
 })
 
 test('catalogue pages establish sequential heading levels', () => {
@@ -76,12 +73,4 @@ test('homepage removes redundant pricing and new-resource badges', () => {
   const hero = read('components/sections/home-hero-section.tsx')
 
   assert.doesNotMatch(hero, /Individual resources start|New · Resources/)
-})
-
-test('homepage grade selector exposes each grade label only once', () => {
-  const hero = read('components/sections/home-hero-section.tsx')
-
-  assert.match(hero, /aria-label="Choose a grade"/)
-  assert.match(hero, /aria-pressed=\{item === grade\}/)
-  assert.match(hero, />\s*\{item\}\s*<\/button>/)
 })

@@ -19,12 +19,12 @@ const TIER_CONTENT: Record<
       'Tests and memorandums together',
       'Instant download on your order page',
     ],
-    excludes: ['Other terms — available separately'],
+    excludes: ['Other terms are available separately'],
     cta: 'Browse term bundles',
   },
   'Full Year': {
     label: 'Full year',
-    tagline: 'One grade, all four terms — our best value.',
+    tagline: 'One grade, all four terms in one bundle.',
     includes: [
       'All available tests for one grade',
       'All four school terms',
@@ -54,10 +54,10 @@ function splitPrice(amount: number) {
 export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
   if (tiers.length === 0) return null
   return (
-    <Section id="bundles">
-      <div className="mx-auto mb-9 max-w-prose text-center lg:mb-14">
-        <h2>Save with a term or full-year bundle</h2>
-        <p className="mt-4 lead">
+    <Section id="bundles" aria-labelledby="bundles-heading" className="scroll-mt-[var(--header-h)]">
+      <div className="mb-8 max-w-xl lg:mb-10">
+        <h2 id="bundles-heading">Save with a term or full-year bundle</h2>
+        <p className="mt-4 max-w-[50ch] lead">
           Get all the available tests and memorandums for a grade together in one discounted, once-off purchase.
         </p>
       </div>
@@ -74,7 +74,7 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
               variant="surface"
               pad="none"
               className={cn(
-                'flex flex-col overflow-hidden rounded-panel relative isolate',
+                'flex flex-col overflow-hidden rounded-lg relative isolate',
                 featured ? '[background-image:var(--gradient-primary)]' : 'border border-line',
                 // Featured card leads on mobile; restores its column order from md up.
                 featured && 'order-first md:order-none',
@@ -88,7 +88,7 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
 
               {/* White island — the nested offer/price/CTA card. */}
               <div className="p-3">
-                <div className="flex flex-col gap-5 rounded-card border border-line bg-canvas p-6 lg:p-7">
+                <div className="flex flex-col gap-5 rounded-md border border-line bg-canvas p-6 lg:p-8">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
                       {content.label}
@@ -105,10 +105,11 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
                     <p className="mt-1 text-body text-muted">{content.tagline}</p>
                   </div>
 
-                  <div className="flex items-baseline gap-1.5">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-body text-muted">From</span>
                     <span className="text-body-lg font-bold text-ink-soft">{symbol}</span>
-                    <strong className="text-display text-primary">{number}</strong>
-                    <span className="text-body-sm text-muted">once-off · per {periodLabel(tier.scope)}</span>
+                    <strong className="text-display text-primary-ink">{number}</strong>
+                    <span className="text-body text-muted">once-off · per {periodLabel(tier.scope)}</span>
                   </div>
 
                   <Button
@@ -122,12 +123,12 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
               </div>
 
               {/* Features sit on the outer surface, below the island. */}
-              <div className="grid gap-x-6 gap-y-3.5 px-6 pb-7 sm:grid-cols-2 lg:px-7">
+              <div className="grid gap-x-6 gap-y-4 px-6 pb-8 sm:grid-cols-2 lg:px-8">
                 {content.includes.map((feature) => (
-                  <div key={feature} className={cn('flex gap-2.5 text-body-sm', featured ? 'text-on-primary' : 'text-ink-soft')} >
+                  <div key={feature} className={cn('flex gap-3 text-body', featured ? 'text-on-primary' : 'text-ink-soft')} >
                     <span
                       className={cn(
-                        'mt-px grid h-[20px] w-[20px] flex-none place-items-center rounded-pill',
+                        'mt-px grid size-5 flex-none place-items-center rounded-full',
                         featured ? 'bg-on-primary text-primary' : 'bg-primary text-on-primary',
                       )}
                     >
@@ -141,9 +142,9 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
                 {content.excludes.map((feature) => (
                   <div
                     key={feature}
-                    className={cn('flex gap-2.5 text-body-sm', featured ? 'text-on-primary' : 'text-muted')}
+                    className={cn('flex gap-3 text-body', featured ? 'text-on-primary' : 'text-muted')}
                   >
-                    <span className="mt-px grid h-[20px] w-[20px] flex-none place-items-center">
+                    <span className="mt-px grid size-5 flex-none place-items-center">
                       <Icon name="close" />
                     </span>
                     <span className="decoration-line">{feature}</span>

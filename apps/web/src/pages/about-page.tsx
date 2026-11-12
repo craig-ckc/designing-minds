@@ -1,12 +1,12 @@
 import { useCatalog } from '../lib/catalog'
 import { AboutConnectSection } from '../components/sections/about-connect-section'
-import { AboutCtaSection } from '../components/sections/about-cta-section'
 import { AboutHeroSection } from '../components/sections/about-hero-section'
 import { AboutStorySection } from '../components/sections/about-story-section'
-import { AboutTestimonialsSection } from '../components/sections/about-testimonials-section'
 import { AboutValuesSection } from '../components/sections/about-values-section'
+import { FinalCtaSection } from '../components/sections/final-cta-section'
 import { OurStorySection } from '../components/sections/our-story-section'
-import { TrustStatsSection } from '../components/sections/trust-stats-section'
+import { StatsSection } from '../components/sections/stats-section'
+import { TestimonialsSection } from '../components/sections/testimonials-section'
 
 export function AboutPage() {
   const { state: { snapshot, error: loadError } } = useCatalog()
@@ -14,12 +14,18 @@ export function AboutPage() {
     <>
       <AboutHeroSection />
       <OurStorySection />
-      <TrustStatsSection caption="The difference we’ve made so far" />
+      <StatsSection caption="Designing Minds in numbers" />
       <AboutStorySection />
       <AboutValuesSection />
-      <AboutTestimonialsSection snapshot={snapshot} loadError={loadError} />
+      <TestimonialsSection snapshot={snapshot} loadError={loadError} />
       <AboutConnectSection />
-      <AboutCtaSection snapshot={snapshot} />
+      <FinalCtaSection
+        id="about-cta"
+        title="Ready to find the right practice for your child?"
+        description="Explore our printable CAPS-aligned tests and learning resources."
+        actionLabel="View bundles"
+        actionTo="/packages"
+      />
     </>
   )
 }

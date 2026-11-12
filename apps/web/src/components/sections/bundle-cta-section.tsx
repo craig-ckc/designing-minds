@@ -9,7 +9,7 @@ export function BundleCtaSection({ snapshot }: { snapshot?: CmsSnapshot | null }
     <CtaBanner.Content>
       <CtaBanner.Title>Cover a whole term or the full year in one purchase</CtaBanner.Title>
       <CtaBanner.Description>Bundles group the available tests and memorandums for a grade into one discounted, once-off purchase.</CtaBanner.Description>
-      <CtaBanner.Actions><Button to="/packages" variant="solid-light">Browse bundles</Button><Button to="/about" variant="text" className="text-on-primary hover:text-on-primary">Learn more</Button></CtaBanner.Actions>
+      <CtaBanner.Actions><Button to="/packages" variant="solid-light">Browse bundles</Button><Button to="/about" variant="outline">Learn more</Button></CtaBanner.Actions>
     </CtaBanner.Content>
     <CtaBanner.Artwork><ResourceStack snapshot={snapshot} /></CtaBanner.Artwork>
   </CtaBanner.Root></Section>

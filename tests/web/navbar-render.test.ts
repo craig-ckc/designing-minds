@@ -78,12 +78,12 @@ test('cart link reads its count from the live cart hook (empty during SSR)', () 
   assert.match(source, /useCartSlugs\(\)\.length/)
 })
 
-test('announcement bar uses the AA-safe deep pink including its hover state', () => {
+test('announcement bar uses brand pink (primary-strong) with a primary-ink hover state', () => {
   const html = render(createElement(AnnouncementBar))
   assert.match(html, /href="\/shop"/)
-  assert.match(html, /bg-primary-deep/)
+  assert.match(html, /bg-primary-strong/)
   assert.match(html, /hover:bg-primary-ink/)
-  assert.doesNotMatch(html, /(?<![-\w])bg-primary(?![-\w])|hover:bg-primary-strong/)
+  assert.doesNotMatch(html, /(?<![-\w])bg-primary(?![-\w])|hover:bg-primary-strong|primary-deep/)
 })
 
 test('search submit shows a magnifying glass, not the arrow', () => {

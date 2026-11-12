@@ -13,34 +13,62 @@ test('about page carries the approved Designing Minds story', () => {
   assert.match(sectionSource('about-values-section'), /Detailed memorandums make marking simple/)
 })
 
-test('about values use content-specific icons instead of placeholders', () => {
+test('about values are three plain columns with a pastel colour bar each, under a painted banner, and no icon chips', () => {
   const valuesSource = sectionSource('about-values-section')
-  assert.match(valuesSource, /icon: 'check'/)
-  assert.match(valuesSource, /icon: 'smile'/)
-  assert.match(valuesSource, /icon: 'trend'/)
-  assert.doesNotMatch(valuesSource, /icon: 'shield'|icon: 'download'|icon: 'printer'|icon: 'spark'/)
-  assert.match(valuesSource, /<Icon name=\{value\.icon\} size=\{28\} \/>/)
-  assert.doesNotMatch(valuesSource, /Placeholder/)
+  assert.match(valuesSource, /bar: 'bg-yellow'/)
+  assert.match(valuesSource, /bar: 'bg-green'/)
+  assert.match(valuesSource, /bar: 'bg-blue'/)
+  assert.match(valuesSource, /src="\/images\/paintings\/values-grade-folders\.avif"/)
+  assert.doesNotMatch(valuesSource, /<Icon|icon:|Placeholder/)
 })
 
-test('about introduction is concise and the story pairs one copy column with a visual', () => {
+test('about introduction is concise: one primary button beside the study-corner painting, no photo, chips or badges', () => {
   const heroSource = sectionSource('about-hero-section')
-  const storySource = sectionSource('our-story-section')
+  const splitSource = sectionSource('split-hero')
 
   assert.match(heroSource, /Affordable practice tests aligned with CAPS/)
-  assert.doesNotMatch(heroSource, /At Designing Minds, we believe learning should be simple/)
-  assert.match(storySource, /lg:grid-cols-\[0\.95fr_1\.05fr\]/)
-  assert.match(storySource, /mx-auto max-w-\[58ch\]/)
-  assert.match(storySource, /src="\/images\/image-08\.png"/)
-  assert.doesNotMatch(storySource, /lg:col-start/)
+  assert.doesNotMatch(heroSource, /At Designing Minds, we believe learning should be simple|Get in touch|figcaption|image-07/)
+  assert.match(heroSource, /image="\/images\/paintings\/about-hero-study-corner\.avif"/)
+  assert.equal((splitSource.match(/<Button\b/g) ?? []).length, 1)
+  assert.match(splitSource, /alt=""/)
+  assert.match(splitSource, /width=\{1280\}[\s\S]*height=\{960\}/)
 })
 
-test('the hero uses the existing learning photo and the founder portrait remains in her story', () => {
-  const heroSource = sectionSource('about-hero-section')
+test('the story pairs the sunny-desk painting with one pulled line and a short paragraph', () => {
+  const storySource = sectionSource('our-story-section')
+
+  assert.match(storySource, /lg:grid-cols-\[0\.9fr_1\.1fr\]/)
+  assert.match(storySource, /aspect-\[5\/4\][^"]*rounded-lg[^"]*object-cover/)
+  assert.match(storySource, /<h2 className="text-h1">Why Designing Minds exists<\/h2>/)
+  assert.match(storySource, /src="\/images\/paintings\/our-story-sunny-desk\.avif"/)
+  assert.match(storySource, /<blockquote[\s\S]*every parent deserves easy access to quality learning[\s\S]*<\/blockquote>/)
+  assert.equal((storySource.match(/<p\b/g) ?? []).length, 1)
+  assert.doesNotMatch(storySource, /image-08\.png|lg:col-start|aspect-\[4\/5\]/)
+})
+
+test('Amy\'s story is ruled rows without icon chips and keeps the real founder photos', () => {
   const storySource = sectionSource('about-story-section')
 
-  assert.match(heroSource, /src="\/images\/image-07\.png"/)
-  assert.match(heroSource, /alt="A parent helping a child practise at home"/)
   assert.match(storySource, /src="\/images\/image-06\.png"/)
   assert.match(storySource, /src="\/images\/image-07\.png"/)
+  assert.doesNotMatch(storySource, /<Icon|IconName|rounded-full/)
+})
+
+test('the connect cards use painted headers and the new copy', () => {
+  const source = sectionSource('about-connect-section')
+
+  assert.match(source, /Ask a teacher, or have a look inside/)
+  assert.match(source, /connect-classroom-corner\.avif/)
+  assert.match(source, /connect-printed-pages\.avif/)
+  assert.match(source, /title="Ask a teacher"/)
+  assert.match(source, /title="See what’s inside"/)
+  assert.doesNotMatch(source, /image-0[12]\.png/)
+})
+
+test('values columns are separated by hairline vertical dividers from md up and keep their colour bars', () => {
+  const source = sectionSource('about-values-section')
+
+  assert.match(source, /md:grid-cols-3 md:gap-0/)
+  assert.match(source, /md:border-l md:border-line md:px-8 md:first:border-l-0 md:first:pl-0 md:last:pr-0/)
+  assert.match(source, /h-1 w-8 rounded-full \$\{value\.bar\}/)
 })

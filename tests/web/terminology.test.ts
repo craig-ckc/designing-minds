@@ -9,7 +9,7 @@ test('the storefront calls bundles "bundles" — never "plans" or "packages" in 
   // read as a second, undefined product. The URL /packages is a route, not copy,
   // and stays for links already in the wild.
   assert.match(read('components/layout/footer.tsx'), /<FooterLink to="\/packages">Bundles<\/FooterLink>/)
-  assert.match(read('components/sections/final-cta-section.tsx'), /See all bundles/)
+  assert.match(read('pages/about-page.tsx'), /actionLabel="View bundles"/)
   assert.match(read('pages/account/order-detail-page.tsx'), /Files for bundles resolve from their included resources\./)
 
   for (const path of [

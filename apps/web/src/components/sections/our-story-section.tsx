@@ -2,33 +2,27 @@ import { Section } from '../ui/section'
 
 export function OurStorySection() {
   return (
-    <Section containerClassName="grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
-      <div className="mx-auto max-w-[58ch]">
-        <h2>Where passion for teaching meets a heart for learners</h2>
-        <div className="mt-6 space-y-4 text-body-lg text-ink-soft">
-          <p>
-            Designing Minds was created from a simple idea: every parent deserves easy access to quality learning
-            resources that help their children feel confident and prepared.
-          </p>
-          <p>
-            We design affordable, CAPS-aligned printable tests that make studying stress-free, structured, and
-            engaging. Our resources are crafted by teachers, tested by parents, and loved by learners across South
-            Africa.
-          </p>
-          <p>
-            Each test is created to build confidence, reduce exam anxiety, and familiarise learners with real
-            classroom-style questions, so they walk into every test ready to succeed.
-          </p>
-        </div>
-      </div>
-
+    <Section containerClassName="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
       <img
-        src="/images/image-08.png"
-        alt="A selection of Designing Minds assessment covers"
-        className="mx-auto w-full max-w-[34rem] object-contain"
+        src="/images/paintings/our-story-sunny-desk.avif"
+        alt=""
+        width={1024}
+        height={1280}
         loading="lazy"
         decoding="async"
+        className="aspect-[5/4] w-full rounded-lg object-cover"
       />
+      <div className="max-w-[52ch]">
+        <h2 className="text-h1">Why Designing Minds exists</h2>
+        <blockquote className="mt-6 border-l-2 border-primary pl-5 text-h3 font-semibold leading-[1.35] tracking-[-0.02em]">
+          Designing Minds was created from a simple idea: every parent deserves easy access to quality learning
+          resources that help their children feel confident and prepared.
+        </blockquote>
+        <p className="mt-5 text-body text-ink-soft">
+          We make affordable, CAPS-aligned printable tests. Teachers write them and parents use them at home, so
+          learners walk into the real test knowing what to expect.
+        </p>
+      </div>
     </Section>
   )
 }

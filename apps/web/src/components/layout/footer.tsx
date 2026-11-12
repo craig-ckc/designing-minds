@@ -12,10 +12,23 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
   return (
     <footer className="mt-auto border-t border-line bg-surface">
       <>
-        <Container className="relative z-10 grid grid-cols-2 gap-10 pb-10 pt-12 lg:grid-cols-5">
+        {/* Panorama: decorative painting across the top, fading down into the footer surface. */}
+        <div className="footer-band h-40 lg:h-[300px]">
+          <img
+            src="/images/paintings/footer-coast-mountains.avif"
+            alt=""
+            width={1920}
+            height={640}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        </div>
+
+        <Container className="relative z-10 grid grid-cols-2 gap-10 pb-10 pt-8 lg:grid-cols-5">
           <div className="col-span-2">
             <Wordmark sub={false} />
-            <p className="mt-3.5 max-w-[34ch] text-body text-muted">
+            <p className="mt-4 max-w-[34ch] text-body text-muted">
               Affordable, CAPS-aligned printable tests that help learners across South Africa prepare with confidence.
             </p>
             <NewsletterForm compact source="Footer" />
@@ -23,7 +36,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
 
           <FooterColumn title="Shop by grade">
             {grades.map((grade) => (
-              <FooterLink key={grade} to={`/grades/${gradeToSlug(grade)}`}>
+              <FooterLink key={grade} to={`/shop?grade=${gradeToSlug(grade)}`}>
                 {grade}
               </FooterLink>
             ))}
@@ -55,20 +68,7 @@ export function Footer({ snapshot }: { snapshot: CmsSnapshot | null }) {
           </FooterColumn>
         </Container>
 
-        {/* Decorative illustration: the surrounding copy carries the meaning. */}
-        <div className="h-[clamp(9rem,20vw,18rem)]">
-          <img
-            src="/images/image-03.png"
-            alt=""
-            width={2048}
-            height={412}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover"
-          />
-        </div>
-
-        <div className="bg-cream">
+        <div className="bg-surface">
           <Container className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-t border-line/70 py-5 text-label text-muted">
             <span>© {currentYear} Designing Minds. All rights reserved.</span>
             <span>Made for South African learners</span>
@@ -83,7 +83,7 @@ function FooterColumn({ title, children }: { title: string; children: ReactNode 
   return (
     <div>
       <h2 className="mb-4 text-label font-semibold uppercase tracking-[0.1em] text-muted">{title}</h2>
-      <ul className="grid gap-2.5">{children}</ul>
+      <ul className="grid gap-3">{children}</ul>
     </div>
   )
 }

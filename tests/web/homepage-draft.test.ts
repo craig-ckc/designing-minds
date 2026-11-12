@@ -121,11 +121,11 @@ test('featured selection preserves editorial tie order and leaves catalogue arra
   assert.deepEqual(data, original)
 })
 
-test('homepage follows the agreed discovery story with actual products directly after the unrestricted hero', () => {
+test('homepage places featured products after the hero and bundle offers before testimonials', () => {
   const data = snapshot([product('maths', { featured: true })], [bundle('term', { featured: true })], [testimonial('amy')])
   const html = render(createElement(HomePage), catalogValue(data))
   const sections = [...html.matchAll(/<section\b[^>]*\bid="([^"]+)"/g)].map((match) => match[1])
-  assert.deepEqual(sections, ['home-intro', 'featured-products', 'explore-resources', 'learning-support', 'parent-stories', 'start-shopping'])
+  assert.deepEqual(sections, ['home-intro', 'featured-products', 'explore-resources', 'learning-support', 'bundles', 'parent-stories', 'start-shopping'])
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1)
   assert.match(html, /href="\/shop\/maths"/)
   assert.match(html, /href="\/shop\/term"/)
@@ -135,19 +135,43 @@ test('homepage follows the agreed discovery story with actual products directly 
   assert.doesNotMatch(html.replace(/<[^>]*>/g, ''), /Frequently asked questions|\b360\b/)
 })
 
-test('hero preserves its resource shelf and optional grade chips while its primary shopping CTA stays unrestricted', () => {
+test('hero renders a decorative background and an unrestricted shopping CTA without needing catalogue data', () => {
   for (const data of [snapshot(), null]) {
     const html = render(createElement(Hero, { snapshot: data }))
     assert.match(html, /<h1[^>]*>Practice resources that build confidence at home<\/h1>/)
     assert.match(html, /<a\b[^>]*href="\/shop"[^>]*>Browse resources/)
-    assert.match(html, /resource-stack/)
-    assert.match(html, /aria-label="Choose a grade"/)
-    assert.equal((html.match(/aria-pressed=/g) ?? []).length, 5)
+    assert.match(html, /<img[^>]*src="\/images\/paintings\/home-hero\.avif"[^>]*alt=""[^>]*width="1536"[^>]*height="864"/)
+    assert.doesNotMatch(html, /resource-stack|aria-label="Choose a grade"/)
     assert.doesNotMatch(html, /href="\/packages"/)
     assert.doesNotMatch(html, /href="#parent-stories"/)
   }
   assert.match(render(createElement(Hero, { snapshot: snapshot([], [], [testimonial('real')]) })), /href="#parent-stories"/)
   assert.doesNotMatch(render(createElement(Hero, { snapshot: snapshot([], [], [testimonial('draft', { published: false })]) })), /href="#parent-stories"/)
+})
+
+test('homepage bundle offers show the lowest published price and link to the matching catalogue filter', () => {
+  const data = snapshot([], [
+    bundle('term-cheapest', { priceZar: 195 }),
+    bundle('term-expensive', { priceZar: 350 }),
+    bundle('full-year', { bundleScope: 'Full Year', priceZar: 1200 }),
+    bundle('full-year-draft', { bundleScope: 'Full Year', priceZar: 1, published: false }),
+  ])
+  const html = render(createElement(HomePage), catalogValue(data))
+  const offers = html.match(/<section\b[^>]*id="bundles"[\s\S]*?<\/section>/)?.[0] ?? ''
+  assert.match(offers, /Save with a term or full-year bundle/)
+  assert.match(offers, /From<\/span>[^<]*<span[^>]*>R<\/span>[^<]*<strong[^>]*>195<\/strong>/)
+  assert.match(offers, /<strong[^>]*>1[\s\u00a0]+200<\/strong>/)
+  assert.match(offers, /href="\/packages\?offer=Term%20bundles"[^>]*>Browse term bundles/)
+  assert.match(offers, /href="\/packages\?offer=Full-year%20bundles"[^>]*>Browse full-year bundles/)
+})
+
+test('homepage bundle offers omit unpublished tiers and hide the comparison when no offers exist', () => {
+  const unpublished = bundle('year-draft', { bundleScope: 'Full Year', published: false })
+  const termOnly = snapshot([], [bundle('term'), unpublished])
+  const offers = render(createElement(HomePage), catalogValue(termOnly))
+  assert.match(offers, /Browse term bundles/)
+  assert.doesNotMatch(offers, /Browse full-year bundles/)
+  assert.doesNotMatch(render(createElement(HomePage), catalogValue(snapshot([], [unpublished]))), /id="bundles"/)
 })
 
 test('featured section reuses real catalogue cards and exposes categories only when both published types exist', () => {
@@ -188,27 +212,32 @@ test('the full homepage remains usable when catalogue loading fails', () => {
   assert.match(html, /id="learning-support"/)
   assert.match(html, /id="start-shopping"/)
   assert.match(html, /href="\/shop"/)
+  assert.match(html, /Bundles are unavailable/)
   assert.doesNotMatch(html, /id="parent-stories"|catalog-card|Add .+ to cart/)
 })
 
 test('explore offers optional Grades 3–7 routes and a general catalogue link without duplicate products', () => {
   const html = render(createElement(Explore, { snapshot: snapshot([product('maths')]) }))
   assert.match(html, /Explore our resources/)
+  assert.match(html, /CAPS-aligned tests, memos and summaries for Grades 3 to 7\. Pick your child’s grade, or browse everything\./)
+  assert.match(html, /<a class="(?=[^"]*rounded-full)(?=[^"]*border-\[1\.5px\])[^"]*" href="\/shop"[^>]*>Browse all resources/)
   assert.match(html, /href="\/shop"/)
-  for (let grade = 3; grade <= 7; grade += 1) assert.match(html, new RegExp(`href="/grades/grade-${grade}"`))
+  for (let grade = 3; grade <= 7; grade += 1) assert.match(html, new RegExp(`href="/shop\\?grade=grade-${grade}"`))
   assert.doesNotMatch(html, /catalog-card|Add .+ to cart/)
 })
 
 test('learning support combines benefits and getting started in the established illustrated accordion', () => {
   const html = render(createElement(Support))
   assert.match(html, /id="learning-support"/)
-  assert.match(html, /How Designing Minds helps your child succeed/)
+  assert.match(html, /How Designing Minds works/)
   assert.equal((html.match(/aria-expanded=/g) ?? []).length, 5)
   assert.match(html, /aria-expanded="true"/)
   assert.match(html, /aria-expanded="false"/)
-  assert.match(html, /src="\/images\/image-04\.png"/)
-  assert.match(html, /alt="A parent and child doing schoolwork together at a desk"/)
-  assert.match(html, /CAPS-aligned/)
+  assert.match(html, /<img[^>]*src="\/images\/paintings\/how-it-works-kitchen-table\.avif"[^>]*alt=""/)
+  assert.doesNotMatch(html, /image-04\.png/)
+  assert.match(html, /Find the right test/)
+  assert.match(html, /Download again any time/)
+  assert.match(html, /Everything follows CAPS/)
   assert.match(html, /href="\/about"/)
   assert.doesNotMatch(html, /growth-chart|aria-current="step"/)
 })
@@ -231,8 +260,8 @@ test('testimonials preserve the lead illustration and original carousel using on
   assert.match(html, /Parent carousel-long/)
   assert.match(html, /Parent carousel-short/)
   assert.ok(html.includes(longQuote))
-  assert.match(html, /<button[^>]*aria-expanded="false"[^>]*>Read full story<\/button>/)
-  assert.doesNotMatch(html, /Parent draft|More parent stories|<details\b/)
+  assert.match(html, /<blockquote class="line-clamp-7[^"]*">/)
+  assert.doesNotMatch(html, /Parent draft|More parent stories|Read full story|Show less|<button\b|<details\b/)
 })
 
 test('no testimonials means no invented stories; one real lead retains its illustration without an empty carousel', () => {
@@ -244,6 +273,16 @@ test('no testimonials means no invented stories; one real lead retains its illus
   assert.match(single, /src="\/images\/image-05\.png"/)
   assert.match(single, /Real feedback from only\./)
   assert.doesNotMatch(single, /More parent stories|testimonial-carousel/)
+})
+
+test('a single testimonial in the carousel renders statically, without the duplicated marquee group', async () => {
+  const { TestimonialCarousel } = await server.ssrLoadModule('/src/components/sections/testimonial-carousel.tsx') as { TestimonialCarousel: ComponentType<{ testimonials: Testimonial[] }> }
+  const one = render(createElement(TestimonialCarousel, { testimonials: [testimonial('solo')] }))
+  assert.equal((one.match(/<blockquote\b/g) ?? []).length, 1)
+  assert.doesNotMatch(one, /testimonial-carousel/)
+  const two = render(createElement(TestimonialCarousel, { testimonials: [testimonial('a'), testimonial('b')] }))
+  assert.equal((two.match(/<blockquote\b/g) ?? []).length, 4)
+  assert.match(two, /testimonial-carousel-copy" aria-hidden="true"/)
 })
 
 test('header search submits real catalogue queries from the bar while preserving account and cart routes', () => {
@@ -282,7 +321,7 @@ test('homepage grade tiles are compact on phones while the Grades page keeps the
   assert.match(compact, /line-clamp-2[^"]*hidden sm:block/)
   assert.match(compact, /<span class="hidden sm:inline">Browse<\/span>/)
   assert.match(compact, /12 resources/)
-  assert.match(compact, /href="\/grades\/grade-4"/)
+  assert.match(compact, /href="\/shop\?grade=grade-4"/)
   const full = render(createElement(GradeCard, { grade: 'Grade 4', count: 12 }))
   assert.match(full, /flex min-h-56 flex-col/)
   assert.doesNotMatch(full, /hidden sm:block|hidden sm:inline|min-h-28/)
@@ -294,10 +333,10 @@ test('homepage grade tiles are compact on phones while the Grades page keeps the
 test('learning support introduces its steps from the same column on the story band', () => {
   const html = render(createElement(Support))
   assert.match(html, /<section id="learning-support" class="section bg-surface-alt">/)
-  const heading = html.indexOf('How Designing Minds helps your child succeed')
+  const heading = html.indexOf('How Designing Minds works')
   const firstStep = html.indexOf('aria-expanded=')
   // React hoists a <link rel="preload"> for the image ahead of the section, so match the <img> itself.
-  const illustration = html.indexOf('src="/images/image-04.png"')
+  const illustration = html.indexOf('src="/images/paintings/how-it-works-kitchen-table.avif"')
   assert.ok(heading > -1 && heading < firstStep && firstStep < illustration)
   assert.equal((html.match(/lg:grid-cols-2/g) ?? []).length, 1)
 })
@@ -309,18 +348,13 @@ test('the testimonial illustration is desktop-only so phones reach the quotes fi
   assert.ok(html.indexOf('/images/image-05.png') < html.indexOf('<blockquote'))
 })
 
-test('the homepage opens on a display-scale headline and closes on decorative real-catalogue covers', async () => {
-  const css = (await import('node:fs')).readFileSync(new URL('../../apps/web/src/index.css', import.meta.url), 'utf8')
-  const h1 = css.match(/\.home-hero h1 \{[^}]*\}/)?.[0] ?? ''
-  assert.match(h1, /font-size: clamp\(2\.25rem, 5\.2vw, 4\.25rem\)/)
-  assert.match(h1, /letter-spacing: -0\.04em/)
-  assert.match(h1, /text-wrap: balance/)
+test('the homepage keeps the grade range together and closes on decorative real-catalogue covers', () => {
   const data = snapshot([product('maths', { featured: true })], [], [testimonial('amy')])
   const html = render(createElement(HomePage), catalogValue(data))
   assert.match(html, /<span class="whitespace-nowrap">Grades 3–7<\/span>/)
   const close = html.slice(html.indexOf('id="start-shopping"'))
   assert.match(close, /bg-primary text-ink/)
-  assert.match(close, /class="cta-panel__artwork" aria-hidden="true"><div class="resource-stack">/)
-  // Decorative artwork only: the close keeps exactly its two real routes.
-  assert.equal((close.match(/<a\b/g) ?? []).length, 2)
+  assert.match(close, /class="cta-panel__artwork" aria-hidden="true"><img src="\/images\/paintings\/cta-practice-booklets\.avif"/)
+  // Decorative artwork only: the close keeps exactly one real route.
+  assert.equal((close.match(/<a\b/g) ?? []).length, 1)
 })

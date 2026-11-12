@@ -1,22 +1,18 @@
-import { Icon, type IconName } from '../ui/icon'
 import { Polaroid } from '../ui/polaroid'
 import { Section } from '../ui/section'
 
-const STEPS: { icon: IconName; title: string; body: string }[] = [
+const STEPS: { title: string; body: string }[] = [
   {
-    icon: 'globe',
-    title: 'Meaningful learning, wherever it happens',
-    body: 'After teaching in Vietnam and working with online schools in South Africa, I discovered how powerful accessible learning tools can be.',
+    title: 'Teaching in Vietnam and South Africa',
+    body: 'After teaching in Vietnam and working with online schools in South Africa, I saw how much accessible learning tools can help.',
   },
   {
-    icon: 'pencil',
-    title: 'Experience turned into practical support',
-    body: 'I combined my experience in curriculum development and my love for teaching to create Designing Minds — a platform dedicated to helping learners feel confident, prepared, and supported.',
+    title: 'Curriculum experience, put to use',
+    body: 'I combined my curriculum development experience with my love of teaching and started Designing Minds, to help learners feel confident, prepared and supported.',
   },
   {
-    icon: 'spark',
     title: 'More confidence, less stress',
-    body: 'What excites me most is seeing these resources improve marks, reduce stress, and give learners belief in their abilities.',
+    body: 'What I enjoy most is seeing marks go up and stress come down, and learners start to believe in themselves.',
   },
 ]
 
@@ -25,27 +21,21 @@ export function AboutStorySection() {
     <Section containerClassName="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
       <div>
         <h2 className="max-w-[18ch]">Meet Amy — founder of Designing Minds</h2>
-        <p className="mt-5 max-w-[52ch] text-body-lg text-ink-soft">
-          A teacher with a vision for stress-free learning.
+        <p className="mt-4 max-w-[52ch] text-body-lg text-ink-soft">
+          A teacher who wanted learning to feel less stressful.
         </p>
 
-        <ol className="relative mt-10 grid gap-8">
-          <span aria-hidden className="absolute bottom-6 left-[21px] top-6 w-px bg-line" />
+        <ol className="mt-8 border-t border-line-strong">
           {STEPS.map((step) => (
-            <li key={step.title} className="relative grid grid-cols-[auto_1fr] items-start gap-4">
-              <span className="relative z-10 grid h-11 w-11 place-items-center rounded-pill border border-line bg-surface text-primary shadow-cover">
-                <Icon name={step.icon} size={22} />
-              </span>
-              <div className="pt-1">
-                <h3>{step.title}</h3>
-                <p className="mt-1.5 text-body text-ink-soft">{step.body}</p>
-              </div>
+            <li key={step.title} className="grid gap-2 border-b border-line-strong py-5 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:gap-8">
+              <h3 className="text-body-lg">{step.title}</h3>
+              <p className="text-body text-ink-soft">{step.body}</p>
             </li>
           ))}
         </ol>
       </div>
 
-      {/* Scattered photo cluster with a playful accent. */}
+      {/* Scattered photo cluster. */}
       <div className="relative mx-auto aspect-[5/4] w-full max-w-md lg:mx-0">
         <Polaroid
           src="/images/image-07.png"
@@ -63,9 +53,6 @@ export function AboutStorySection() {
           ratio="4 / 5"
           className="absolute left-0 top-0 w-3/5"
         />
-        <span aria-hidden className="absolute -top-3 right-6 text-butter">
-          <Icon name="spark" size={56} weight="fill" />
-        </span>
       </div>
     </Section>
   )

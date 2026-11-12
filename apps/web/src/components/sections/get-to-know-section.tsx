@@ -4,11 +4,11 @@ import { Button } from '../ui/button'
 import { ArrowAffordance, Icon, type IconName } from '../ui/icon'
 import { Section } from '../ui/section'
 const items: { icon: IconName; title: string; body: string }[] = [
-  { icon: 'doc', title: 'Find focused practice', body: 'Browse tests and summaries by grade, term or subject. CAPS-aligned resources keep practice connected to what your child is learning at school.' },
-  { icon: 'spark', title: 'Choose a resource or bundle', body: 'Pick one resource for a specific topic, or choose a bundle for more of the term’s practice in one purchase.' },
+  { icon: 'doc', title: 'Find the right test', body: 'Browse tests and summaries by grade, term or subject. Everything follows CAPS, so it matches what your child is learning at school.' },
+  { icon: 'check', title: 'Choose a resource or bundle', body: 'Pick one resource for a specific topic, or choose a bundle for more of the term’s practice in one purchase.' },
   { icon: 'download', title: 'Buy & download', body: 'Once payment succeeds, download your learning materials from your order page. Your purchases are also saved in your account.' },
   { icon: 'book', title: 'Print, practise & revise', body: 'Print at home, work through the tests and use the included memos to mark together. Summaries help revisit key concepts before assessments.' },
-  { icon: 'shield', title: 'Come back when you need it', body: 'Re-download purchases from your account, ready for the next practice session.' },
+  { icon: 'shield', title: 'Download again any time', body: 'Re-download purchases from your account, ready for the next practice session.' },
 ]
 
 /** Time each feature stays open before the carousel auto-advances. */
@@ -62,10 +62,10 @@ export function GetToKnowSection() {
     <Section id="learning-support" className="bg-surface-alt">
       <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
         <div>
-          <h2 className="max-w-[18ch]">How Designing Minds helps your child succeed</h2>
+          <h2 className="max-w-[18ch]">How Designing Minds works</h2>
           <p className="lead mt-4 max-w-[46ch]">
-            Support your child’s learning with focused CAPS-aligned practice. Find what they need, purchase once
-            and download ready-to-print materials for the next assessment.
+            Find the tests and summaries your child needs, buy them once and print them at home before the next
+            assessment.
           </p>
           <Button to="/about" variant="text" className="mt-3 px-0">
             Our story
@@ -86,7 +86,7 @@ export function GetToKnowSection() {
               return (
                 <Accordion.Item key={item.title} value={i} className="relative border-b border-line-strong">
                   <Accordion.Header className="m-0">
-                    <Accordion.Trigger className="group flex w-full items-center gap-3.5 py-4 text-left">
+                    <Accordion.Trigger className="group flex w-full items-center gap-4 py-4 text-left">
                       <span className={`h-6 w-6 flex-none transition-colors duration-300 ${isOpen ? 'text-primary' : 'text-muted'}`}>
                         <Icon name={item.icon} />
                       </span>
@@ -108,11 +108,15 @@ export function GetToKnowSection() {
           </Accordion.Root>
         </div>
 
-        <div className="relative hidden lg:block aspect-[4/3]">
-          <img src="/images/image-04.png" alt="A parent and child doing schoolwork together at a desk" className="absolute inset-0 w-full h-full object-contain" />
-        </div>
-
-        {/* <Placeholder ratio="4 / 3" className="bg-surface" /> */}
+        <img
+          src="/images/paintings/how-it-works-kitchen-table.avif"
+          alt=""
+          width={1280}
+          height={960}
+          loading="lazy"
+          decoding="async"
+          className="hidden aspect-[4/3] w-full rounded-md object-cover lg:block"
+        />
       </div>
     </Section>
   )

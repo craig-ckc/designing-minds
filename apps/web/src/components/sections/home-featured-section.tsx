@@ -16,12 +16,12 @@ export function HomeFeaturedSection({ snapshot, loadError }: { snapshot: CmsSnap
 
   return (
     <Section id="featured-products">
-      <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2>Featured products</h2>
           <p className="mt-3 text-body-lg text-ink-soft">Start with these tests, summaries and bundles for Grades 3–7.</p>
         </div>
-        <Button to="/shop" variant="text" className="px-0">Browse the shop <Icon name="arrow" size={16} /></Button>
+        <Button to="/shop" variant="outline" size="sm" shape="circle">Browse the shop <Icon name="arrow" size={16} /></Button>
       </div>
       {hasResources && hasBundles ? (
         <div role="group" aria-label="Featured product categories" className="mb-6 flex flex-wrap gap-2">
