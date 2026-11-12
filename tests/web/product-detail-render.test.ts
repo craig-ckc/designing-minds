@@ -63,7 +63,8 @@ test('both detail views put purchase controls ahead of the collapsible informati
     const firstDisclosure = html.indexOf('<details')
     assert.ok(buy > 0 && buy < firstDisclosure)
     assert.match(html, /<details[^>]*>[\s\S]*<summary/)
-    assert.doesNotMatch(html, /<details[^>]*\sopen(?:=|>)/)
+    // Only the digital product's "Resource details" starts open; every other disclosure is closed.
+    assert.equal((html.match(/<details[^>]*\sopen(?:=|>)/g) ?? []).length, slug === product.slug ? 1 : 0)
     assert.match(html, /order-first/)
   }
 })
@@ -98,6 +99,9 @@ test('placeholder descriptions and missing previews omit their accordions withou
   assert.doesNotMatch(html, /About this resource|Preview before you buy/)
   assert.match(html, /Resource details/)
   assert.match(html, /Add to cart/)
+  // Figma: the details disclosure starts open; the others stay closed.
+  assert.match(html, /<details open="" class="detail-disclosure[^>]*>\s*<summary[^>]*>\s*<h2[^>]*>Resource details/)
+  assert.equal((html.match(/<details open/g) ?? []).length, 1)
 })
 
 test('a bundle with no published members explains the empty contents without claiming savings', () => {

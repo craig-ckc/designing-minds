@@ -91,7 +91,7 @@ function DetailFooterBlocks({ faqs, subject }: { faqs: ReturnType<typeof getFaqs
   return (
     <>
       <DetailDisclosure title="Buying for a class?">
-        <p className="mt-1.5 text-body-sm text-ink-soft">
+        <p className="mt-2 text-body text-ink-soft">
           Classroom and multi-learner licensing is available for every resource and bundle — tell us the grade and
           learner count and we’ll quote you. A standard purchase covers one household or one classroom; the{' '}
           <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
@@ -122,7 +122,7 @@ function DetailFooterBlocks({ faqs, subject }: { faqs: ReturnType<typeof getFaqs
 function PreviewPdfSection({ pdfs, subject }: { pdfs: PreviewPdf[]; subject: string }) {
   return (
     <DetailDisclosure title="Preview before you buy">
-      <p className="mt-1.5 text-body-sm text-ink-soft">Download a free sample PDF of this {subject} before you buy.</p>
+      <p className="mt-2 text-body text-ink-soft">Download a free sample PDF of this {subject} before you buy.</p>
       <div className="mt-4 grid gap-2">
         {pdfs.map((pdf) => (
           // A real cross-origin download, not a route — Button's `href` branch
@@ -134,7 +134,7 @@ function PreviewPdfSection({ pdfs, subject }: { pdfs: PreviewPdf[]; subject: str
             variant="solid-light"
             className="w-full justify-between"
           >
-            <span className="flex items-center gap-2.5 truncate">
+            <span className="flex items-center gap-3 truncate">
               <Icon name="doc" size={18} />
               <span className="truncate">{pdf.label}</span>
             </span>
@@ -172,12 +172,12 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
           {/* min-w-0 on both columns: a grid item's default minimum is its
               min-content, so one non-wrapping row inside a column could widen
               the whole page instead of wrapping or scrolling within it. */}
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-16">
             <div id="product-preview" tabIndex={-1} className="min-w-0 scroll-mt-[var(--sticky-offset)] lg:sticky lg:top-[var(--sticky-offset)]">
               <ProductGallery item={product} images={product.galleryImages ?? []} />
             </div>
 
-            <aside className="order-first grid min-w-0 gap-4 rounded-card border border-line p-5 sm:p-6 lg:order-none lg:p-7">
+            <aside className="order-first grid min-w-0 gap-4 rounded-md border border-line p-5 sm:p-6 lg:order-none lg:p-8">
               <div className="flow-root">
                 <MobileProductPreview item={product} />
                 <div className="flex flex-wrap items-center gap-2">
@@ -196,7 +196,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
               </Button>
               <p className="text-sm text-muted">CAPS-aligned · Download after payment · Print at home</p>
               <div className="border-t border-line">
-                <DetailDisclosure title="Resource details">
+                <DetailDisclosure title="Resource details" defaultOpen>
                   <ul className="grid gap-3">
                     <SpecRow label="Grade" value={product.grade} />
                     <SpecRow label="Term" value={product.term} />
@@ -224,14 +224,14 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
                 <DetailFooterBlocks faqs={faqs} subject="resource" />
               </div>
               {inBundles.length > 0 ? (
-                <div className="rounded-card bg-surface-alt p-4">
+                <div className="rounded-md bg-surface-alt p-4">
                   <span className="block text-label font-semibold text-ink">Also included in</span>
                   <ul className="mt-2 grid gap-2">
                     {inBundles.slice(0, 2).map((entry) => (
                       <li key={entry.id}>
                         <Link
                           to={`/shop/${entry.slug}`}
-                          className="group flex items-baseline justify-between gap-3 text-body-sm hover:text-primary-ink"
+                          className="group flex items-baseline justify-between gap-3 text-body hover:text-primary-ink"
                         >
                           <span className="font-semibold">{entry.title}</span>
                           <span className="whitespace-nowrap text-muted"><CatalogPrice record={entry} /></span>
@@ -292,7 +292,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
             current={bundle.title}
           />
 
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-16">
             <div id="product-preview" tabIndex={-1} className="min-w-0 scroll-mt-[var(--sticky-offset)] lg:sticky lg:top-[var(--sticky-offset)]">
               <ProductGallery
                 item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
@@ -301,7 +301,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
               />
             </div>
 
-            <aside className="order-first grid min-w-0 gap-4 rounded-card border border-line p-5 sm:p-6 lg:order-none lg:p-7">
+            <aside className="order-first grid min-w-0 gap-4 rounded-md border border-line p-5 sm:p-6 lg:order-none lg:p-8">
               <div className="flow-root">
                 <MobileProductPreview item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }} stacked />
                 <div className="flex flex-wrap items-center gap-2">

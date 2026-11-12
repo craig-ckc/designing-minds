@@ -18,6 +18,7 @@ vi.mock('@designing-minds/cms', () => ({
   promotionPrice: (record: { priceZar: number }) => record.priceZar,
   resolveCartItems: (_snapshot: unknown, slugs: string[]) => slugs.map((slug) => ({ kind: 'product', product: { slug, title: slug === 'first' ? 'First resource' : 'Second resource', grade: 'Grade 4', term: 'Term 1', subjects: [], priceZar: 10 } })),
   physicalUnitPriceZar: () => 0,
+  quantityValidation: () => null,
 }))
 
 import { CartPage } from '../../../apps/web/src/pages/cart-page'

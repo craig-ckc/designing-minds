@@ -16,9 +16,9 @@ vi.mock('../../../apps/web/src/lib/physical-cart', () => ({
   updatePhysicalCartLine: vi.fn(),
 }))
 vi.mock('../../../apps/web/src/lib/commerce-label', () => ({ commerceFieldLabel: (key: string) => key }))
-vi.mock('@designing-minds/cms', () => ({ physicalUnitPriceZar: () => 20, priceLabel: (value: number) => `R${value}`, quantityValidation: () => null }))
+vi.mock('@designing-minds/cms', () => ({ physicalUnitPriceZar: () => 20, priceLabel: (value: number) => `R${value}`, quantityValidation: (value: number) => Number.isInteger(value) && value > 0 ? null : 'Quantity must be a positive whole number.' }))
 
-import { PhysicalCartLines } from '../../../apps/web/src/components/physical-cart-lines'
+import { PhysicalCartRow } from '../../../apps/web/src/components/physical-cart-row'
 import { LiveRegionProvider } from '../../../apps/web/src/components/ui/live-region'
 
 const catalogue: PhysicalCatalogProduct[] = [{
@@ -41,7 +41,7 @@ const catalogue: PhysicalCatalogProduct[] = [{
 function Harness() {
   const [, setTick] = useState(0)
   state.rerender = () => setTick((value) => value + 1)
-  return <MemoryRouter><LiveRegionProvider><ul><PhysicalCartLines lines={state.lines} catalogue={catalogue} fallbackFocusSelector="[data-cart-heading]" /></ul></LiveRegionProvider></MemoryRouter>
+  return <MemoryRouter><LiveRegionProvider><ul>{state.lines.map((line) => <PhysicalCartRow key={line.id} line={line} product={catalogue[0]} fallbackFocusSelector="[data-cart-heading]" />)}</ul></LiveRegionProvider></MemoryRouter>
 }
 
 beforeEach(() => {
@@ -59,4 +59,11 @@ it('keeps focus on the next physical line and announces its removal', () => {
   expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Remove Workbook from cart' }))
   act(() => { vi.advanceTimersByTime(50) })
   expect(screen.getByRole('status').textContent).toBe('Workbook removed from cart.')
+})
+
+it('shows the ghost delete, a quantity stepper with the line label, and validates typed quantities', () => {
+  render(<Harness />)
+  expect(screen.getAllByRole('spinbutton', { name: 'Quantity for Workbook' })).toHaveLength(2)
+  fireEvent.click(screen.getAllByRole('button', { name: 'Increase quantity' })[0])
+  expect(screen.queryAllByRole('alert').filter((node) => node.textContent)).toHaveLength(0)
 })

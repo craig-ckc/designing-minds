@@ -15,6 +15,8 @@ import { useNoindex } from '../lib/use-noindex'
 import { usePhysicalCartLines } from '../lib/physical-cart'
 import { CommerceCheckout } from './commerce-checkout'
 import { postToPayment } from '../lib/payment-handoff'
+import { SummaryLine } from '../components/summary-line'
+import { SummaryRow } from '../components/ui/summary-row'
 import { TermsCheckbox } from '../components/checkout/terms-checkbox'
 
 interface PriceQuote {
@@ -183,24 +185,24 @@ function DigitalCheckoutPage() {
     <section className="section">
       <Container>
         <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/cart', label: 'Cart' }]} current="Checkout" />
-        <h1 className="mb-8 text-page-title">Checkout</h1>
+        <h1 className="mb-8 text-h2">Checkout</h1>
 
         <div className="mx-auto grid max-w-xl gap-4">
           {/* Account status first — a slim confirmation, not a whole column. */}
           {customer ? (
-            <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-4">
-              <span className="grid h-10 w-10 flex-none place-items-center rounded-pill bg-primary-tint text-primary">
+            <div className="flex items-center gap-3 rounded-md border border-line bg-surface p-4">
+              <span className="grid h-10 w-10 flex-none place-items-center rounded-full bg-primary-tint text-primary">
                 <span className="h-5 w-5">
                   <Icon name="user" />
                 </span>
               </span>
-              <p className="text-body-sm text-ink-soft">
+              <p className="text-body text-ink-soft">
                 Signed in as <strong className="text-ink">{customer.email}</strong>
               </p>
             </div>
           ) : (
-            <div className="rounded-card border border-line bg-surface p-5">
-              <p className="text-body-sm text-muted">
+            <div className="rounded-md border border-line bg-surface p-5">
+              <p className="text-body text-muted">
                 Checkout requires a Customer Account.{' '}
                 <Link to="/login?redirect=/checkout" className="text-ink underline underline-offset-4">
                   Log in
@@ -216,7 +218,7 @@ function DigitalCheckoutPage() {
 
           {/* Then the order details underneath. */}
           <form
-            className="grid gap-4 rounded-card border border-line bg-surface p-6"
+            className="grid gap-4 rounded-md border border-line bg-surface p-6"
             onSubmit={(event) => {
               event.preventDefault()
               void pay()
@@ -224,33 +226,32 @@ function DigitalCheckoutPage() {
           >
             <h2>Order summary</h2>
             {items.length > 0 ? (
-              <ul className="grid gap-2 text-body-sm">
+              <ul className="grid gap-4">
                 {items.map((item) => {
                   const record = item.kind === 'product' ? item.product : item.bundle
+                  const line = quoteValid ? quote?.items.find((entry) => entry.productSlug === record.slug) : null
                   return (
-                    <li key={record.slug} className="flex justify-between gap-3">
-                      <span className="text-ink-soft">{record.title}</span>
-                      <span>
-                        {(() => {
-                          const line = quoteValid ? quote?.items.find((entry) => entry.productSlug === record.slug) : null
-                          const price = line?.priceZar ?? promotionPrice(record)
-                          const original = line?.originalPriceZar ?? record.priceZar
-                          return <>{price < original ? <s className="mr-2 text-muted">{priceLabel(original)}</s> : null}{priceLabel(price)}</>
-                        })()}
-                      </span>
-                    </li>
+                    <SummaryLine
+                      key={record.slug}
+                      snapshot={snapshot}
+                      slug={record.slug}
+                      title={record.title}
+                      physical={false}
+                      price={line?.priceZar ?? promotionPrice(record)}
+                      originalPriceZar={line?.originalPriceZar ?? record.priceZar}
+                    />
                   )
                 })}
               </ul>
             ) : (
-              <p className="text-body-sm text-muted">Your cart is empty.</p>
+              <p className="text-body text-muted">Your cart is empty.</p>
             )}
             <div className="grid gap-2 border-t border-line pt-3">
-              <label htmlFor="discount-code" className="text-body-sm font-semibold">Discount code</label>
+              <label htmlFor="discount-code" className="text-body font-semibold">Discount code</label>
               <div className="flex flex-wrap gap-2">
                 <input id="discount-code" value={codeInput} maxLength={40} autoComplete="off" spellCheck={false}
                   onChange={(event) => setCodeInput(event.target.value)} disabled={submitting || quoting}
-                  className="min-w-0 flex-1 rounded-control border border-line bg-surface px-3 py-2 text-body-sm" />
+                  className="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 text-body" />
                 <Button type="button" variant="outline" disabled={!customer || !codeInput.trim() || submitting || quoting}
                   onClick={() => {
                     const code = codeInput.trim().toUpperCase()
@@ -264,20 +265,17 @@ function DigitalCheckoutPage() {
             </div>
             {customer && !quoteValid && !quoting ? <Button type="button" variant="outline" disabled={submitting}
               onClick={() => void loadQuote(appliedCode)}>Check prices again</Button> : null}
-            {quoting ? <p role="status" className="text-body-sm text-muted">Checking prices…</p> : null}
+            {quoting ? <p role="status" className="text-body text-muted">Checking prices…</p> : null}
             {quoteValid && quote && quote.discountZar > 0 ? (
-              <div className="grid gap-2 text-body-sm" aria-live="polite">
-                <div className="flex justify-between"><span>Subtotal</span><span>{priceLabel(quote.subtotalZar)}</span></div>
-                <div className="flex justify-between"><span>Discount ({quote.couponCode})</span><span>−{priceLabel(quote.discountZar)}</span></div>
+              <div className="grid gap-3" aria-live="polite">
+                <SummaryRow label="Subtotal" value={priceLabel(quote.subtotalZar)} />
+                <SummaryRow label={`Discount (${quote.couponCode})`} value={`−${priceLabel(quote.discountZar)}`} />
               </div>
             ) : null}
             {quoteValid && quote?.orderId ? <p className="text-label text-muted">This resumes your pending payment at its original total.</p> : null}
-            <div className="flex justify-between border-t border-line pt-3 text-[1.1rem] font-semibold">
-              <span>Total</span>
-              <span>{priceLabel(quoteValid && quote ? quote.totalZar : total)}</span>
-            </div>
+            <SummaryRow label="Total" value={priceLabel(quoteValid && quote ? quote.totalZar : total)} emphasis="total" />
             {error ? (
-              <p role="alert" className="rounded-control border border-line bg-surface-alt px-3 py-2 text-body-sm text-ink-soft">{error}</p>
+              <p role="alert" className="rounded-md border border-line bg-surface-alt px-3 py-2 text-body text-ink-soft">{error}</p>
             ) : null}
             <TermsCheckbox checked={acceptedTerms} onChange={setAcceptedTerms} disabled={submitting}>
               <span className="text-ink-soft">

@@ -30,6 +30,10 @@ without the commerce views continue serving digital products.
   it records `payment_review` and grants neither shipping nor downloads.
 - Stock adjustments compare the expected count with the current value and cannot
   reduce stock below active holds. Ordinary product edits do not overwrite stock.
+- Physical product pages refresh availability from `catalog_physical_products`
+  when opened and when the browser tab becomes visible again. The query uses the
+  existing public view and keeps stock counts private. Shop listings and search
+  metadata use the published snapshot. Checkout still validates inventory.
 - Product type and variant ownership are immutable. Physical lines never grant
   digital files. Order personalisation and item prices are saved snapshots.
 

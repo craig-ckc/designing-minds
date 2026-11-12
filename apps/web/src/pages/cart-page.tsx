@@ -4,7 +4,6 @@ import { bundleContents, priceLabel, promotionPrice, resolveCartItems } from '@d
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
-import { Icon } from '../components/ui/icon'
 import { EmptyState } from '../components/ui/empty-state'
 import { ProductCover } from '../components/ui/product-cover'
 import { useCatalogSnapshot } from '../lib/catalog'
@@ -12,8 +11,10 @@ import { useNoindex } from '../lib/use-noindex'
 import { removeCartSlug } from '../lib/cart'
 import { useCartSlugs } from '../lib/use-cart'
 import { usePhysicalCartLines } from '../lib/physical-cart'
-import { PhysicalCartLines } from '../components/physical-cart-lines'
+import { PhysicalCartRow } from '../components/physical-cart-row'
 import { physicalUnitPriceZar } from '@designing-minds/cms'
+import { CartLine } from '../components/ui/cart-line'
+import { SummaryRow } from '../components/ui/summary-row'
 import { useAnnounce } from '../components/ui/live-region'
 
 export function CartPage() {
@@ -55,7 +56,7 @@ export function CartPage() {
     <section className="section-tight">
       <Container>
         <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Cart" />
-        {lineCount > 0 ? <h1 data-cart-heading tabIndex={-1} className="mb-6 text-page-title">Your cart</h1> : null}
+        {lineCount > 0 ? <h1 data-cart-heading tabIndex={-1} className="mb-6 text-h2">Your cart</h1> : null}
 
         {lineCount === 0 ? (
           <EmptyState as="h1" icon="cart" title="Your cart is empty" description="Add a resource or bundle to get started. Your selections will appear here.">
@@ -78,59 +79,38 @@ export function CartPage() {
                     ? `${record.grade} · ${record.term}`
                     : `Bundle · ${record.grade} · ${record.term}${contents.length > 0 ? ` · ${contents.length} resource${contents.length === 1 ? '' : 's'}` : ''}`
                 return (
-                  <li key={record.slug} className="flex items-center gap-4 rounded-card bg-surface p-4">
-                    <Link to={`/shop/${record.slug}`} className="w-20 flex-none sm:w-[88px]">
+                  <CartLine
+                    key={record.slug}
+                    type="digital"
+                    context="cart"
+                    title={record.title}
+                    href={`/shop/${record.slug}`}
+                    meta={detail}
+                    cover={
                       <ProductCover
                         product={{ title: record.title, grade: record.grade, term: record.term, subjects }}
                         stacked={item.kind === 'bundle'}
                       />
-                    </Link>
-                    <div className="flex flex-1 flex-col gap-1">
-                      <Link
-                        to={`/shop/${record.slug}`}
-                        className="font-bold leading-snug tracking-[-0.01em] transition-colors line-clamp-2 hover:text-primary-ink"
-                      >
-                        {record.title}
-                      </Link>
-                      <span className="text-body-sm text-muted">{detail}</span>
-                      <strong className="mt-0.5 text-[1.15rem] font-extrabold text-primary-ink">
-                        <CatalogPrice record={record} />
-                      </strong>
-                    </div>
-                    <Button
-                      type="button"
-                      size="icon"
-                      shape="circle"
-                      variant="solid-light"
-                      onClick={(event) => remove(record.slug, record.title, event.currentTarget)}
-                      aria-label={`Remove ${record.title} from cart`}
-                      className="flex-none self-start transition-colors hover:border-danger hover:bg-danger hover:text-on-primary"
-                    >
-                      <Icon name="trash" size={16} />
-                    </Button>
-                  </li>
+                    }
+                    price={<CatalogPrice record={record} />}
+                    onRemove={(button) => remove(record.slug, record.title, button)}
+                  />
                 )
               })}
-              <PhysicalCartLines lines={physicalLines} catalogue={physicalCatalogue} fallbackFocusSelector="[data-cart-heading]" />
+              {physicalLines.map((line) => <PhysicalCartRow key={line.id} line={line} product={physicalCatalogue.find((product) => product.slug === line.productSlug)} fallbackFocusSelector="[data-cart-heading]" />)}
             </ul>
 
-            <aside className="grid gap-4 rounded-card border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
+            <aside className="grid gap-4 rounded-md border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
               <h2 className="text-xl">Order summary</h2>
-              <div className="grid gap-2 text-body">
-                <div className="flex justify-between">
-                  <span className="text-muted">Subtotal ({lineCount} items)</span>
-                  <span>{priceLabel(subtotal)}</span>
-                </div>
-                <div className="flex justify-between border-t border-line pt-2 text-[1.1rem] font-semibold">
-                  <span>Total</span>
-                  <span>{priceLabel(subtotal)}</span>
-                </div>
+              <div className="grid gap-3">
+                <SummaryRow label={`Subtotal (${lineCount} items)`} value={priceLabel(subtotal)} />
+                <SummaryRow label="Total" value={priceLabel(subtotal)} emphasis="total" />
               </div>
               <Button to="/checkout" variant="solid" className="w-full">
                 Proceed to checkout
               </Button>
               <p className="text-label text-muted">{physicalLines.length ? 'Delivery is calculated at checkout. Digital downloads unlock after payment.' : 'Digital products · No shipping · Download after payment.'}</p>
-              <Link to="/shop" className="text-body-sm text-ink underline underline-offset-4">
+              <Link to="/shop" className="text-body text-ink underline underline-offset-4">
                 Continue shopping
               </Link>
             </aside>

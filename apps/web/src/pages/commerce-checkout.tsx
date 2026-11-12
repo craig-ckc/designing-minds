@@ -10,7 +10,8 @@ import { usePhysicalCartLines } from '../lib/physical-cart'
 import { useCatalogSnapshot } from '../lib/catalog'
 import { apiUrl } from '../lib/api'
 import { requestJson } from '../lib/request-json'
-import { commerceFieldLabel } from '../lib/commerce-label'
+import { SummaryLine } from '../components/summary-line'
+import { SummaryRow } from '../components/ui/summary-row'
 import { useNoindex } from '../lib/use-noindex'
 import { postToPayment } from '../lib/payment-handoff'
 import { TermsCheckbox } from '../components/checkout/terms-checkbox'
@@ -120,27 +121,27 @@ export function CommerceCheckout() {
 
   return <section className="section-tight"><Container>
     <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/cart', label: 'Cart' }]} current="Checkout" />
-    <h1 className="mb-6 text-page-title">Checkout</h1>
-    {!hasItems ? <div className="rounded-card border border-line bg-surface p-6"><p>Your cart is empty.</p><Button to="/shop" className="mt-4">Continue shopping</Button></div> : <form className="grid items-start gap-8 lg:grid-cols-[1fr_1fr]" onSubmit={(event) => { event.preventDefault(); void submit() }}>
+    <h1 className="mb-6 text-h2">Checkout</h1>
+    {!hasItems ? <div className="rounded-md border border-line bg-surface p-6"><p>Your cart is empty.</p><Button to="/shop" className="mt-4">Continue shopping</Button></div> : <form className="grid items-start gap-8 lg:grid-cols-[1fr_1fr]" onSubmit={(event) => { event.preventDefault(); void submit() }}>
       <div className="grid gap-5">
-        <section className="rounded-card border border-line bg-surface p-5"><h2 className="mb-3 text-heading-sm">Your account</h2>
-          {customer ? <p className="text-body-sm text-ink-soft">Signed in as <strong>{customer.email}</strong></p> : <p className="text-body-sm text-ink-soft">Sign in to continue. <Link to="/login?redirect=/checkout" className="font-semibold underline">Log in</Link> or <Link to="/sign-up?redirect=/checkout" className="underline">create a Customer Account</Link>.</p>}
+        <section className="rounded-md border border-line bg-surface p-5"><h2 className="mb-3 text-h4">Your account</h2>
+          {customer ? <p className="text-body text-ink-soft">Signed in as <strong>{customer.email}</strong></p> : <p className="text-body text-ink-soft">Sign in to continue. <Link to="/login?redirect=/checkout" className="font-semibold underline">Log in</Link> or <Link to="/sign-up?redirect=/checkout" className="underline">create a Customer Account</Link>.</p>}
         </section>
-        {hasPhysical ? <section className="rounded-card border border-line bg-surface p-5"><h2 className="mb-2 text-heading-sm">Delivery details</h2><p className="mb-4 text-body-sm text-muted">Your physical products will be delivered together. Digital resources appear in your account after payment.</p>
-          <div className="grid gap-4 sm:grid-cols-2">{addressFields.map(([key, label, autoComplete]) => <label key={key} className={`grid gap-1 text-body-sm font-semibold ${key === 'addressLine1' || key === 'addressLine2' ? 'sm:col-span-2' : ''}`}>{label}<input className="field w-full" name={key} autoComplete={autoComplete} value={delivery[key] ?? ''} maxLength={200} required={key !== 'addressLine2'} disabled={submitting} inputMode={key === 'phone' ? 'tel' : key === 'postalCode' ? 'numeric' : undefined} onChange={(event) => setDelivery((current) => ({ ...current, [key]: event.target.value }))} /></label>)}</div>
+        {hasPhysical ? <section className="rounded-md border border-line bg-surface p-5"><h2 className="mb-2 text-h4">Delivery details</h2><p className="mb-4 text-body text-muted">Your physical products will be delivered together. Digital resources appear in your account after payment.</p>
+          <div className="grid gap-4 sm:grid-cols-2">{addressFields.map(([key, label, autoComplete]) => <label key={key} className={`grid gap-1 text-body font-semibold ${key === 'addressLine1' || key === 'addressLine2' ? 'sm:col-span-2' : ''}`}>{label}<input className="field w-full" name={key} autoComplete={autoComplete} value={delivery[key] ?? ''} maxLength={200} required={key !== 'addressLine2'} disabled={submitting} inputMode={key === 'phone' ? 'tel' : key === 'postalCode' ? 'numeric' : undefined} onChange={(event) => setDelivery((current) => ({ ...current, [key]: event.target.value }))} /></label>)}</div>
           <p className="mt-4 text-label text-muted">South Africa only.</p>
         </section> : null}
       </div>
-      <section className="grid gap-4 rounded-card border border-line bg-surface p-5 lg:sticky lg:top-[var(--sticky-offset)]"><h2 className="text-heading-sm">Order summary</h2>
-        {quoting ? <p role="status" className="text-body-sm text-muted">Checking prices and availability…</p> : null}
+      <section className="grid gap-4 rounded-md border border-line bg-surface p-5 lg:sticky lg:top-[var(--sticky-offset)]"><h2 className="text-h4">Order summary</h2>
+        {quoting ? <p role="status" className="text-body text-muted">Checking prices and availability…</p> : null}
         {currentQuote ? <>
-          <ul className="grid gap-4">{currentQuote.items.map((item) => <li key={item.cartLineId ?? item.id} className="flex justify-between gap-4 text-body-sm"><div><strong>{item.title}</strong><p className="text-label text-muted">{item.productType === 'physical' ? `Quantity ${item.quantity}` : 'Digital resource'}</p>{Object.entries({ ...item.optionValues, ...item.customizations }).map(([key, value]) => <p key={key} className="break-words text-label text-ink-soft">{commerceFieldLabel(key, snapshot.physicalCatalog?.find((product) => product.slug === item.productSlug))}: {value}</p>)}</div><span className="flex-none">{priceLabel(item.priceZar)}</span></li>)}</ul>
-          <div className="grid gap-2 border-t border-line pt-3 text-body-sm"><SummaryRow label="Subtotal" value={priceLabel(currentQuote.subtotalZar)} />{currentQuote.discountZar > 0 ? <SummaryRow label={`Discount (${currentQuote.couponCode})`} value={`−${priceLabel(currentQuote.discountZar)}`} /> : null}
+          <ul className="grid gap-4">{currentQuote.items.map((item) => <SummaryLine key={item.cartLineId ?? item.id} snapshot={snapshot} slug={item.productSlug} title={item.title} physical={item.productType === 'physical'} quantity={item.quantity} values={{ ...item.optionValues, ...item.customizations }} price={item.priceZar} />)}</ul>
+          <div className="grid gap-3 border-t border-line pt-3"><SummaryRow label="Subtotal" value={priceLabel(currentQuote.subtotalZar)} />{currentQuote.discountZar > 0 ? <SummaryRow label={`Discount (${currentQuote.couponCode})`} value={`−${priceLabel(currentQuote.discountZar)}`} /> : null}
           {currentQuote.shippingOption ? <SummaryRow label={currentQuote.shippingOption.label} value={priceLabel(currentQuote.shippingZar)} /> : <SummaryRow label="Delivery" value="Not required" />}
-          <div className="border-t border-line pt-3 text-body-lg font-bold"><SummaryRow label="Total" value={priceLabel(currentQuote.totalZar)} /></div></div>
-        </> : <p className="text-body-sm text-muted">Your final total appears after you sign in and prices are checked.</p>}
-        <div className="grid gap-2 border-t border-line pt-3"><label htmlFor="commerce-code" className="text-body-sm font-semibold">Discount code</label><div className="flex gap-2"><input id="commerce-code" className="field min-w-0 flex-1" maxLength={40} value={codeInput} disabled={submitting || quoting} onChange={(event) => setCodeInput(event.target.value)} /><Button type="button" variant="outline" disabled={!customer || quoting || submitting || !codeInput.trim()} onClick={() => { setCouponCode(codeInput.trim().toUpperCase()); setRefresh((value) => value + 1) }}>Apply</Button>{couponCode ? <Button type="button" variant="text" disabled={submitting || quoting} onClick={() => { setCodeInput(''); setCouponCode('') }}>Remove</Button> : null}</div><p className="text-label text-muted">Codes apply to eligible digital resources only. Delivery is charged once.</p></div>
-        {error ? <p role="alert" className="rounded-control bg-danger-tint p-3 text-body-sm text-danger">{error}</p> : null}
+          <SummaryRow label="Total" value={priceLabel(currentQuote.totalZar)} emphasis="total" /></div>
+        </> : <p className="text-body text-muted">Your final total appears after you sign in and prices are checked.</p>}
+        <div className="grid gap-2 border-t border-line pt-3"><label htmlFor="commerce-code" className="text-body font-semibold">Discount code</label><div className="flex gap-2"><input id="commerce-code" className="field min-w-0 flex-1" maxLength={40} value={codeInput} disabled={submitting || quoting} onChange={(event) => setCodeInput(event.target.value)} /><Button type="button" variant="outline" disabled={!customer || quoting || submitting || !codeInput.trim()} onClick={() => { setCouponCode(codeInput.trim().toUpperCase()); setRefresh((value) => value + 1) }}>Apply</Button>{couponCode ? <Button type="button" variant="text" disabled={submitting || quoting} onClick={() => { setCodeInput(''); setCouponCode('') }}>Remove</Button> : null}</div><p className="text-label text-muted">Codes apply to eligible digital resources only. Delivery is charged once.</p></div>
+        {error ? <p role="alert" className="rounded-md bg-danger-tint p-3 text-body text-danger">{error}</p> : null}
         {customer && !currentQuote && !quoting ? <Button type="button" variant="outline" onClick={() => setRefresh((value) => value + 1)}>Check prices again</Button> : null}
         <TermsCheckbox checked={terms} onChange={setTerms} disabled={submitting}>I have read and agree to the <Link className="font-semibold underline" to="/terms">Terms of Use</Link>.</TermsCheckbox>
         <Button type="submit" variant="solid" disabled={submitting || quoting || !currentQuote || !terms || !customer}>{submitting ? 'Starting payment…' : snapshot.localCommercePreview ? 'Continue to sample payment' : 'Pay with PayFast'}</Button>
@@ -150,4 +151,3 @@ export function CommerceCheckout() {
   </Container></section>
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) { return <div className="flex justify-between gap-4"><span>{label}</span><span className="text-right tabular-nums">{value}</span></div> }

@@ -6,6 +6,7 @@ import { Button } from './button'
 import { Card } from './card'
 import { Icon } from './icon'
 import { ProductCover } from './product-cover'
+import { ProductMedia } from './product-media'
 import { addCartSlug, removeCartSlug } from '../../lib/cart'
 import { catalogDescription } from '../../lib/product-attributes'
 import { useCartSlugs } from '../../lib/use-cart'
@@ -43,23 +44,29 @@ export function BundleCard({
       variant="surface"
       pad="none"
       className={cn(
-        'catalog-card catalog-card-bundle group flex min-w-0 flex-col',
+        'catalog-card catalog-card-bundle group flex min-w-0 flex-col overflow-hidden',
         className,
       )}
     >
-      <Link to={href} aria-label={`View ${bundle.title}`} className="catalog-card-media">
-        <div className="w-3/5 max-w-64 motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]">
-          <ProductCover
-            product={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
-            stacked
-          />
-        </div>
+      <div className="catalog-card-media">
+        <Link to={href} aria-label={`View ${bundle.title}`} className="block">
+          <ProductMedia alt="" className="rounded-none">
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="w-3/5 max-w-64 motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]">
+                <ProductCover
+                  product={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
+                  stacked
+                />
+              </div>
+            </div>
+          </ProductMedia>
+        </Link>
         {value && value.savingPercent > 0 ? (
-          <span className="absolute left-4 top-4 rounded-pill bg-canvas px-3 py-1 text-caption font-semibold text-primary-ink">
+          <span className="absolute left-4 top-4 rounded-full bg-canvas px-3 py-1 text-caption font-semibold text-primary-ink">
             Save {value.savingPercent}%
           </span>
         ) : null}
-      </Link>
+      </div>
 
       <div className="catalog-card-body">
         <Link to={href} className="inline-flex min-h-6 items-center py-0.5">

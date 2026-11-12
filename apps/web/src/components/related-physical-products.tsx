@@ -2,7 +2,7 @@ import type { PhysicalCatalogProduct } from '@designing-minds/cms'
 import { Button } from './ui/button'
 import { Container } from './ui/container'
 import { ArrowAffordance } from './ui/icon'
-import { PhysicalProductCard } from './ui/physical-product-card'
+import { ProductCard } from './ui/product-card'
 
 export function RelatedPhysicalProducts({ product, catalog }: {
   product: PhysicalCatalogProduct
@@ -30,7 +30,7 @@ export function RelatedPhysicalProducts({ product, catalog }: {
           </Button>
         </div>
         <div className="catalog-grid">
-          {related.map((entry) => <PhysicalProductCard key={entry.id} product={entry} />)}
+          {related.map((entry) => <ProductCard key={entry.id} product={entry} />)}
         </div>
       </Container>
     </section>

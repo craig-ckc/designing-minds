@@ -35,7 +35,7 @@ it('shows conditional recipient/address fields for a physical cart and a simulat
   expect(html).toContain('Recipient name')
   expect(html).toContain('Postal code')
   expect(html).toContain('Continue to sample payment')
-  expect(html).toMatch(/<button(?=[^>]*type="submit")(?=[^>]*class="[^"]*border-primary-edge)[^>]*>Continue to sample payment/)
+  expect(html).toMatch(/<button(?=[^>]*type="submit")(?=[^>]*class="[^"]*border-primary-ink-strong)[^>]*>Continue to sample payment/)
   expect(html).toContain('Delivery is charged once')
 })
 
@@ -55,7 +55,8 @@ it('physical order receipts preserve quantities, names, delivery and no download
   expect(html).toContain('Ava')
   expect(html).toContain('Pink')
   expect(html).toContain('1 Example Road')
-  expect(html).toContain('This item will be delivered. It has no downloadable files.')
+  expect(html).toContain('Awaiting fulfilment')
+  expect(html).toContain('aria-label="Delivery progress"')
   expect(html).not.toContain('>Download<')
 })
 
@@ -80,7 +81,8 @@ it('failed physical-only receipts do not promise dispatch or refer to downloads'
   const purchase = order('failed')
   purchase.items[0].customizations = { teacherName: 'Ms Sample' }
   const html = render(createElement(OrderDetailPage, { snapshot: makeSnapshot({ orders: [purchase] }), onRefresh: async () => {} }), '/account/orders/order', '/account/orders/:orderId')
-  expect(html).toContain('This item will not be dispatched.')
+  expect(html).toContain('No physical products will be dispatched.')
+  expect(html).not.toContain('Delivery progress')
   expect(html).toContain('Teacher name')
   expect(html).not.toContain('teacherName:')
   expect(html).not.toContain('This item will be delivered')

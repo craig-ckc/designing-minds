@@ -14,8 +14,10 @@ import { Container } from './ui/container'
 import { Icon } from './ui/icon'
 import { Markdown } from '../lib/markdown'
 import { addPhysicalCartLine } from '../lib/physical-cart'
+import { usePhysicalAvailability } from '../lib/physical-availability'
 import { physicalSelectionMessage, readPhysicalValue as ownString, selectPhysicalVariant } from '../lib/physical-variants'
-import { PhysicalProductArtwork } from './ui/physical-product-card'
+import { PhysicalProductGallery } from './ui/physical-product-gallery'
+import { QuantityInput } from './ui/quantity-input'
 import { ProductOptionChoices, RequiredMark } from './ui/product-option-choices'
 
 const labelForOption = (key: string) => {
@@ -28,10 +30,15 @@ const visibleCustomizationRules = (
   variantKeys: ReadonlySet<string>,
 ) => rules.filter((rule) => !variantKeys.has(rule.key))
 
-export function PhysicalProductDetail({ product }: { product: PhysicalCatalogProduct }) {
-  const [variantId, setVariantId] = useState(() => product.variants.find((variant) => variant.available)?.id ?? product.variants[0]?.id ?? '')
+export function PhysicalProductDetail({ product: publishedProduct }: { product: PhysicalCatalogProduct }) {
+  const { availableIds, checkFailed, retry } = usePhysicalAvailability(publishedProduct.id)
+  const product = useMemo(() => availableIds ? {
+    ...publishedProduct,
+    variants: publishedProduct.variants.map((variant) => ({ ...variant, available: availableIds.has(variant.id) })),
+  } : publishedProduct, [publishedProduct, availableIds])
+  const [variantId, setVariantId] = useState<string | null>(null)
   const [customizationValues, setCustomizationValues] = useState<Record<string, string>>({})
-  const [quantityText, setQuantityText] = useState('1')
+  const [quantity, setQuantity] = useState(1)
   const [message, setMessage] = useState<{ kind: 'error' | 'success'; text: string } | null>(null)
   const [adding, setAdding] = useState(false)
 
@@ -49,7 +56,6 @@ export function PhysicalProductDetail({ product }: { product: PhysicalCatalogPro
     const value = optionKeySet.has(rule.key) ? ownString(variant?.optionValues, rule.key) : ownString(customizationValues, rule.key)
     return value === undefined || value === '' ? [] : [[rule.key, value]]
   }))
-  const quantity = quantityText === '' ? 0 : Number(quantityText)
   const validationError = variant
     ? physicalSelectionMessage(product, physicalSelectionValidation(product, variant.id, quantity, values))
     : 'No product options are available right now.'
@@ -105,18 +111,17 @@ export function PhysicalProductDetail({ product }: { product: PhysicalCatalogPro
         <Container width="full">
           <Breadcrumb trail={[{ to: '/', label: 'Home' }, { to: '/shop', label: 'Shop' }]} current={product.title} />
 
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-14">
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-16">
             <div className="min-w-0 lg:sticky lg:top-[var(--sticky-offset)]">
-              <PhysicalProductArtwork product={product} detail />
+              <PhysicalProductGallery product={product} />
             </div>
 
-            <form className="order-first grid min-w-0 gap-4 rounded-card border border-line p-5 sm:p-6 lg:order-none lg:p-7" noValidate onSubmit={(event) => { event.preventDefault(); addToCart() }}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-pill bg-surface-sunk px-2.5 py-1 text-caption font-semibold tracking-[0.02em] text-ink-soft">Physical product</span>
-                <span className={`inline-flex items-center rounded-pill px-2.5 py-1 text-caption font-semibold ${available ? 'bg-primary-tint text-primary-ink' : 'bg-surface-sunk text-muted'}`}>
-                  {available ? 'In stock' : 'Out of stock'}
-                </span>
-              </div>
+            <form className="order-first grid min-w-0 gap-4 rounded-md border border-line p-5 sm:p-6 lg:order-none lg:p-8" noValidate onSubmit={(event) => { event.preventDefault(); addToCart() }}>
+              {!available ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span role="status" className="inline-flex items-center rounded-full bg-ink px-3 py-1 text-caption font-semibold text-canvas">Out of stock</span>
+                </div>
+              ) : null}
               <h1 className="text-2xl font-bold leading-snug tracking-[-0.02em]">{product.title}</h1>
               {product.shortDescription.trim() ? <p className="text-sm leading-relaxed text-ink-soft">{product.shortDescription}</p> : null}
 
@@ -124,16 +129,16 @@ export function PhysicalProductDetail({ product }: { product: PhysicalCatalogPro
                 <div className="grid gap-1">
                   <p className="text-[1.75rem] font-semibold leading-snug tracking-[-0.03em]">{priceLabel(basePrice)} per letter</p>
                   {billableCount > 0 ? (
-                    <p className="text-body-sm text-ink-soft">
+                    <p className="text-body text-ink-soft">
                       {billableCount} billable {billableCount === 1 ? 'letter' : 'letters'} × {priceLabel(basePrice)} = <strong className="text-ink">{priceLabel(unitPrice)} per item</strong>
                     </p>
-                  ) : <p className="text-body-sm text-muted">Enter a name to calculate the item price.</p>}
-                  {quantity > 1 && billableCount > 0 ? <p className="text-body-sm text-ink-soft">{quantity} items · {priceLabel(lineTotal)}</p> : null}
+                  ) : <p className="text-body text-muted">Enter a name to calculate the item price.</p>}
+                  {quantity > 1 && billableCount > 0 ? <p className="text-body text-ink-soft">{quantity} items · {priceLabel(lineTotal)}</p> : null}
                 </div>
               ) : (
                 <div className="grid gap-1">
                   <p className="text-[1.75rem] font-semibold leading-snug tracking-[-0.03em]">{priceLabel(unitPrice)}</p>
-                  {quantity > 1 ? <p className="text-body-sm text-ink-soft">{quantity} items · {priceLabel(lineTotal)}</p> : null}
+                  {quantity > 1 ? <p className="text-body text-ink-soft">{quantity} items · {priceLabel(lineTotal)}</p> : null}
                 </div>
               )}
 
@@ -160,7 +165,7 @@ export function PhysicalProductDetail({ product }: { product: PhysicalCatalogPro
                         )
                       }
                       return (
-                        <div key={rule.key} className="grid gap-1.5">
+                        <div key={rule.key} className="grid gap-2">
                           <label htmlFor={`custom-${product.id}-${rule.key}`} className={`text-label font-semibold ${rule.required ? 'text-primary-ink' : 'text-ink'}`}>{rule.label}{rule.required ? <RequiredMark /> : null}</label>
                           <input
                             id={`custom-${product.id}-${rule.key}`}
@@ -176,7 +181,7 @@ export function PhysicalProductDetail({ product }: { product: PhysicalCatalogPro
                             <p id={`custom-help-${product.id}-${rule.key}`} className="text-caption text-muted">Up to {rule.constraints.maxLength} characters.</p>
                           ) : null}
                           {rule.key === perCharacterField && value ? (
-                            <div className="rounded-card bg-surface-alt px-3 py-2 text-body-sm text-ink-soft" aria-live="polite">
+                            <div className="rounded-md bg-surface-alt px-3 py-2 text-body text-ink-soft" aria-live="polite">
                               Name preview: <strong className="text-ink">{value}</strong>
                             </div>
                           ) : null}
@@ -205,24 +210,20 @@ export function PhysicalProductDetail({ product }: { product: PhysicalCatalogPro
                   )
                 })}
 
-                <div className="grid gap-1.5">
+                <div className="grid gap-2">
                   <label htmlFor={`quantity-${product.id}`} className="text-label font-semibold text-ink">Quantity</label>
-                  <input
+                  <QuantityInput
                     id={`quantity-${product.id}`}
-                    className="field max-w-32"
-                    type="number"
-                    min="1"
-                    step="1"
-                    inputMode="numeric"
-                    value={quantityText}
-                    onChange={(event) => { setQuantityText(event.target.value); setMessage(null) }}
+                    label="Quantity"
+                    value={quantity}
+                    onChange={(next) => { setQuantity(next); setMessage(null) }}
                   />
                 </div>
 
-                {message?.kind === 'error' ? <p className="text-body-sm text-danger" role="alert">{message.text}</p> : null}
+                {message?.kind === 'error' ? <p className="text-body text-danger" role="alert">{message.text}</p> : null}
                 {message?.kind === 'success' ? (
                   <div className="grid gap-2" role="status" aria-live="polite">
-                    <p className="text-body-sm text-primary-ink">{message.text}</p>
+                    <p className="text-body text-primary-ink">{message.text}</p>
                     <Button to="/cart" variant="solid-light" className="w-full">View cart <Icon name="cart" size={16} /></Button>
                   </div>
                 ) : null}
@@ -231,25 +232,31 @@ export function PhysicalProductDetail({ product }: { product: PhysicalCatalogPro
                   {unavailable ? 'Out of stock' : 'Add to cart'}
                 </Button>
                 <p className="text-caption text-muted">Your item and options are saved in the cart. Final availability and delivery are confirmed at checkout.</p>
+                {checkFailed ? (
+                  <div className="flex flex-wrap items-center gap-x-2 text-caption text-muted">
+                    <span role="status">Couldn’t refresh stock availability.</span>
+                    <Button type="button" variant="text" size="sm" onClick={retry}>Check stock again</Button>
+                  </div>
+                ) : null}
               </div>
 
               <div className="border-t border-line">
                 <details className="group border-b border-line py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-body-sm font-semibold text-ink marker:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-body font-semibold text-ink marker:hidden">
                     Product details <Icon name="chevron" size={16} className="transition-transform group-open:rotate-180" />
                   </summary>
-                  <div className="mt-3 text-body-sm text-ink-soft">
+                  <div className="mt-3 text-body text-ink-soft">
                     {product.fullDescription.trim() ? <Markdown source={product.fullDescription} /> : <p>See the options above for this product.</p>}
                   </div>
                 </details>
                 <details className="group border-b border-line py-4">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-body-sm font-semibold text-ink marker:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-body font-semibold text-ink marker:hidden">
                     Delivery information <Icon name="chevron" size={16} className="transition-transform group-open:rotate-180" />
                   </summary>
-                  <p className="mt-3 text-body-sm text-ink-soft">Delivery choices and any shipping charge are shown during checkout.</p>
+                  <p className="mt-3 text-body text-ink-soft">Delivery choices and any shipping charge are shown during checkout.</p>
                 </details>
               </div>
-              <Link to="/shop" className="text-body-sm text-ink underline underline-offset-4">Continue browsing</Link>
+              <Link to="/shop" className="text-body text-ink underline underline-offset-4">Continue browsing</Link>
             </form>
           </div>
         </Container>
