@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Field } from '../../components/ui/field'
 import { Button } from '../../components/ui/button'
 import { Notice } from '../../components/ui/notice'
@@ -56,12 +56,9 @@ export function ResetPasswordPage() {
         title="Choose a new password"
         intro="Checking your reset link…"
         footer={
-          <>
-            Need a new link?{' '}
-            <Link to="/forgot-password" className="text-ink underline underline-offset-4">
-              Request another
-            </Link>
-          </>
+          <Button to="/forgot-password" variant="text" className="justify-self-center">
+            Request another link
+          </Button>
         }
       >
         <Notice tone="info">Checking your reset link…</Notice>
@@ -76,11 +73,11 @@ export function ResetPasswordPage() {
         intro="Your link may have expired, is invalid, or was already used."
         footer={
           <>
-            Remembered it?{' '}
-            <Link to="/login" className="text-ink underline underline-offset-4">
-              Back to log in
-            </Link>
-          </>
+          <p className="text-body text-muted">Remembered it?</p>
+          <Button to="/login" variant="outline" className="w-full">
+            Back to log in
+          </Button>
+        </>
         }
       >
         <Notice tone="error">This password-reset link has expired or is invalid.</Notice>
@@ -97,12 +94,9 @@ export function ResetPasswordPage() {
       intro="Enter a new password for your account."
       onSubmit={() => void submit()}
       footer={
-        <>
-          Need a new link?{' '}
-          <Link to="/forgot-password" className="text-ink underline underline-offset-4">
-            Request another
-          </Link>
-        </>
+        <Button to="/forgot-password" variant="text" className="justify-self-center">
+          Request another link
+        </Button>
       }
     >
       {error ? <Notice tone="error">{error}</Notice> : null}

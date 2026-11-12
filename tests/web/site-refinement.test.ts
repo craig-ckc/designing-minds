@@ -110,20 +110,21 @@ test('the shared themed form select retains its native field name and current va
   assert.match(html, /aria-label="Topic"/)
 })
 
-test('auth shares one account/support paragraph and preserves the checkout context and form content', () => {
+test('auth renders the painted backdrop card, one support link, and preserves the checkout context and form content', () => {
   const props = {
     title: 'Log in', intro: 'Access your resources.',
-    footer: createElement('span', null, 'New here? ', createElement(Link, { to: '/sign-up' }, 'Create an account')),
+    footer: createElement('span', null, createElement(Link, { to: '/sign-up' }, 'Create an account')),
     children: createElement('input', { type: 'email', required: true, name: 'email' }),
   }
   for (const route of ['/login', '/login?redirect=%2Fcheckout']) {
     const html = render(createElement(AuthLayout, props), route)
-    const footer = html.match(/<p class="auth-footer[^\"]*">([\s\S]*?)<\/p>/)?.[1]
+    const footer = html.match(/<div class="auth-footer">([\s\S]*?)<\/div><\/div><\/section>/)?.[1]
     assert.ok(footer)
+    assert.match(html, /<img[^>]*class="auth-stage__backdrop"[^>]*auth-hills-wildflowers\.avif/)
     assert.equal((html.match(/Visit support/g) ?? []).length, 1)
     assert.match(footer, /href="\/sign-up"/)
     assert.match(footer, /href="\/help"/)
-    assert.match(footer.replace(/<[^>]*>/g, ''), /Create an account\. Need help\? Visit support\./)
+    assert.match(footer.replace(/<[^>]*>/g, ''), /Create an account\s*Need help\? Visit support/)
     assert.match(html, /<form/)
     assert.match(html, /name="email"/)
     assert.equal(html.includes('Return to checkout'), route.includes('redirect'))
@@ -134,12 +135,11 @@ test('auth shares one account/support paragraph and preserves the checkout conte
 test('home and about heroes use visual assets while the repeated badge, pricing and obsolete graph are retired', () => {
   const home = render(createElement(HomeHero, { snapshot: snapshot() }))
   assert.match(home, /Practice resources that build confidence at home/)
-  assert.match(home, /resource-stack/)
+  assert.match(home, /<img[^>]*class="home-hero__image"/)
   assert.match(home, /Browse resources/)
   assert.match(home, /href="\/shop"/)
-  assert.match(home, /Choose a grade/)
   assert.doesNotMatch(home, /Individual resources start|New · Resources/)
-  assert.match(render(createElement(AboutHero)), /alt="A parent helping a child practise at home/)
+  assert.match(render(createElement(AboutHero)), /<img[^>]*src="\/images\/paintings\/about-hero-study-corner\.avif"[^>]*alt=""/)
   assert.doesNotMatch(home, /hero-doodle|Little minds|Big confidence/)
   assert.doesNotMatch(render(createElement(AboutHero)), /portrait|spark|teacher’s heart/)
   assert.doesNotMatch(read('pages/home-page.tsx'), /HowItWorksSection/)
@@ -148,20 +148,23 @@ test('home and about heroes use visual assets while the repeated badge, pricing 
 
 test('CTA variants share a component; the homepage close is the brand band in ink text', () => {
   const brand = render(createElement(BundleCta))
-  assert.match(brand, /bg-primary text-on-primary/)
+  assert.match(brand, /bg-primary text-ink/)
   assert.match(brand, /resource-stack/)
   assert.match(brand, /Browse bundles/)
   // The final CTA is the page's closing colour peak. Ink replaces white on the
   // logo pink (5.4:1 vs 3.2:1), so the override must win the class merge.
-  const final = render(createElement(FinalCta))
-  assert.match(final, /cta-panel relative isolate rounded-panel bg-primary text-ink/)
+  const final = render(createElement(FinalCta, {}))
+  assert.match(final, /cta-panel relative isolate rounded-lg bg-primary text-ink/)
   // Scoped to the panel: the cover artwork's term ribbons legitimately keep white text.
-  assert.doesNotMatch(final, /rounded-panel[^"]*text-on-primary|cta-panel--inline/)
-  assert.match(final, /cta-panel__texture/)
-  assert.match(final, /resource-stack/)
+  assert.doesNotMatch(final, /rounded-lg[^"]*text-on-primary|cta-panel--inline/)
+  assert.doesNotMatch(final, /cta-panel__texture/)
+  // The closing CTA's artwork is the painted booklets image, not the cover stack, and has one light button.
+  assert.match(final, /<img[^>]*src="\/images\/paintings\/cta-practice-booklets\.avif"[^>]*alt=""[^>]*width="907"[^>]*height="733"/)
+  assert.doesNotMatch(final, /resource-stack/)
   assert.match(final, /Ready to help your child practise/)
   assert.match(final, /href="\/shop"[^>]*>See all resources/)
-  assert.match(final, /href="\/packages"[^>]*>See all bundles/)
+  assert.equal((final.match(/<a\b/g) ?? []).length, 1)
+  assert.match(final, /border-line bg-surface text-ink/)
   for (const html of [brand, final]) {
     assert.match(html, /cta-panel__content/)
     assert.match(html, /cta-panel__actions/)
@@ -176,11 +179,10 @@ test('the cart empty state has one page heading, one next action and no promotio
   assert.doesNotMatch(html, /cta-panel|resource-stack|<h1[^>]*>Your cart<\/h1>/)
 })
 
-test('the existing about connection cards keep their original composition', () => {
+test('the about connection cards are cards with painted headers', () => {
   const source = read('components/sections/about-connect-section.tsx')
   assert.match(source, /<Card as="article"/)
-  assert.match(source, /min-h-\[36rem\]/)
-  assert.doesNotMatch(source, /CtaBanner/)
+  assert.doesNotMatch(source, /CtaBanner|min-h-\[36rem\]/)
 })
 
 test('grade grids share the centred three-plus-two layout and Inter is a real local font', () => {

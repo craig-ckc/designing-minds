@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Field } from '../../components/ui/field'
 import { Button } from '../../components/ui/button'
 import { Notice } from '../../components/ui/notice'
@@ -40,14 +40,14 @@ export function SignUpPage() {
   return (
     <AuthLayout
       title="Create your account"
-      intro="Save your orders and download purchased files anytime from your account."
+      intro="Save your orders and download your resources anytime."
       onSubmit={() => void submit()}
       footer={
         <>
-          Already have an account?{' '}
-          <Link to="/login" className="text-ink underline underline-offset-4">
+          <p className="text-body text-muted">Already have an account?</p>
+          <Button to="/login" variant="outline" className="w-full">
             Log in
-          </Link>
+          </Button>
         </>
       }
     >

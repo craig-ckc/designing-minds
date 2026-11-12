@@ -1,12 +1,14 @@
 import { type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ResourceStack } from '../../components/ui/resource-stack'
-import { Section } from '../../components/ui/section'
 import { Button } from '../../components/ui/button'
 import { Notice } from '../../components/ui/notice'
 import { useNoindex } from '../../lib/use-noindex'
 
-/** Shared Shell for the noindex authentication pages. */
+/**
+ * Shared shell for the noindex authentication pages: a full-width painted
+ * backdrop with one floating white card. `footer` is the "other route" block
+ * (prompt + action) under a divider; the support line is added here.
+ */
 export function AuthLayout({
   title,
   intro,
@@ -25,47 +27,50 @@ export function AuthLayout({
   const fromCheckout = params.get('redirect') === '/checkout'
 
   return (
-    <Section spacing="tight" className="bg-surface" containerClassName="auth-layout">
-      <div className="auth-panel">
-        <aside className="auth-intro" aria-label="Learning with Designing Minds">
-          <p className="hero-eyebrow">A little practice goes a long way.</p>
-          <h2 className="max-w-[20ch]">More confidence starts with a little support.</h2>
-          <p className="mt-3 text-body text-ink-soft">Teacher-made resources, ready whenever your child is.</p>
-          <div aria-hidden="true"><ResourceStack /></div>
-        </aside>
-        <div className="auth-card grid gap-5">
-          <div>
-            <h1 className="text-page-title">{title}</h1>
-            <p className="mt-3 text-muted">{intro}</p>
-          </div>
+    <section className="auth-stage">
+      <img
+        className="auth-stage__backdrop"
+        src="/images/paintings/auth-hills-wildflowers.avif"
+        width={1536}
+        height={864}
+        alt=""
+        decoding="async"
+      />
+      <div className="auth-card">
+        <div>
+          <h1 className="text-h2">{title}</h1>
+          <p className="mt-2 text-body text-muted">{intro}</p>
+        </div>
 
-          {fromCheckout ? (
-            <Notice tone="info">
-              You need an account to complete checkout. Sign in or create one to continue.
-            </Notice>
-          ) : null}
+        {fromCheckout ? (
+          <Notice tone="info">
+            You need an account to complete checkout. Sign in or create one to continue.
+          </Notice>
+        ) : null}
 
-          <form
-            className="grid gap-4"
-            onSubmit={(event) => {
-              event.preventDefault()
-              onSubmit?.()
-            }}
-          >
-            {children}
-          </form>
+        <form
+          className="grid gap-4"
+          onSubmit={(event) => {
+            event.preventDefault()
+            onSubmit?.()
+          }}
+        >
+          {children}
+        </form>
 
-          {fromCheckout ? (
-            <Button to="/checkout" variant="text">
-              Return to checkout
-            </Button>
-          ) : null}
+        {fromCheckout ? (
+          <Button to="/checkout" variant="text">
+            Return to checkout
+          </Button>
+        ) : null}
 
-          <p className="auth-footer border-t border-line pt-4 text-body-sm text-muted">
-            {footer}. Need help? <Link to="/help">Visit support</Link>.
+        <div className="auth-footer">
+          {footer}
+          <p className="text-body text-muted">
+            Need help? <Link to="/help">Visit support</Link>
           </p>
         </div>
       </div>
-    </Section>
+    </section>
   )
 }

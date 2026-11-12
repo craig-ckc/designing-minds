@@ -64,3 +64,11 @@ test('recovery page keeps password mismatch and minimum-length validation', () =
 test('forgot-password keeps privacy-safe reset-email messaging', () => {
   assert.match(forgotSource, /If an account exists for/)
 })
+
+test('reset-password footers read "Remembered it?" with an outline Back to log in button, not a text link', () => {
+  for (const source of [forgotSource, resetSource]) {
+    assert.match(source, /Remembered it\?/)
+    assert.match(source, /<Button to="\/login" variant="outline" className="w-full">\s*Back to log in\s*<\/Button>/)
+    assert.doesNotMatch(source, /variant="text"[^>]*>\s*Back to log in/)
+  }
+})

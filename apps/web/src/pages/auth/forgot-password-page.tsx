@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Field } from '../../components/ui/field'
 import { Button } from '../../components/ui/button'
 import { Notice } from '../../components/ui/notice'
@@ -28,21 +27,21 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthLayout
-      title="Reset your password"
-      intro="Enter your account email and we’ll send you a link to set a new password."
+      title={sent ? 'Check your email' : 'Reset your password'}
+      intro={sent ? 'We’ve sent the next step to your inbox.' : 'Enter your account email and we’ll send you a link to set a new password.'}
       onSubmit={() => void submit()}
       footer={
         <>
-          Remembered it?{' '}
-          <Link to="/login" className="text-ink underline underline-offset-4">
+          <p className="text-body text-muted">Remembered it?</p>
+          <Button to="/login" variant="outline" className="w-full">
             Back to log in
-          </Link>
+          </Button>
         </>
       }
     >
       {sent ? (
         <Notice tone="success">
-          If an account exists for {email}, a password-reset link is on its way. Check your inbox (and spam folder).
+          If an account exists for {email}, a password-reset link is on its way. Check your inbox and spam folder.
         </Notice>
       ) : (
         <>

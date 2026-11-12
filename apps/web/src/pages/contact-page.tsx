@@ -8,7 +8,7 @@ import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Field } from '../components/ui/field'
 import { Select } from '../components/ui/select'
 import { Button } from '../components/ui/button'
-import { Icon, type IconName } from '../components/ui/icon'
+import { ContactDetail } from '../components/ui/contact-detail'
 
 type Status = 'idle' | 'submitting' | 'sent' | 'error'
 
@@ -55,9 +55,9 @@ export function ContactPage() {
   return (
     <Section spacing="tight" containerClassName="contact-layout">
       <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Contact" />
-      <div className="grid items-start gap-7 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
+      <div className="grid items-start gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
         <div>
-          <h1 className="text-page-title">Get in touch</h1>
+          <h1 className="text-h2">Get in touch</h1>
           <p className="mt-4 lead">
             Questions about a resource, a bundle, or{' '}
             <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4">
@@ -65,12 +65,21 @@ export function ContactPage() {
             </Link>
             ? We’d love to help.
           </p>
-          <div className="mt-7">
-            <ContactDetail icon="phone" label="Phone" value={CONTACT.phone} />
-            <ContactDetail icon="mail" label="Email" value={CONTACT.email} />
-            <ContactDetail icon="pin" label="Office" value={CONTACT.location} last />
+          <div className="mt-8 overflow-hidden rounded-md border border-line bg-surface">
+            <ContactDetail label="Phone" value={CONTACT.phone} action={{ label: 'Call', href: `tel:${CONTACT.phone.replace(/[^\d+]/g, '')}` }} />
+            <ContactDetail label="Email" value={CONTACT.email} action={{ label: 'Write', href: `mailto:${CONTACT.email}` }} />
+            <ContactDetail label="Location" value={CONTACT.location} />
           </div>
-          <p className="mt-6 text-body-sm text-muted">
+          <img
+            src="/images/paintings/contact-school-bag.avif"
+            width={1280}
+            height={960}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="mt-6 aspect-[16/7] w-full rounded-md object-cover"
+          />
+          <p className="mt-6 text-body text-muted">
             Looking for download or printing help? Visit the{' '}
             <Link to="/help" className="font-semibold text-primary-ink underline underline-offset-4">
               Help centre
@@ -153,7 +162,7 @@ export function ContactPage() {
             />
           </Field>
           {!sent ? (
-            <label className="flex items-start gap-2.5 text-body-sm text-ink-soft">
+            <label className="flex items-start gap-3 text-body text-ink-soft">
               <input
                 type="checkbox"
                 name="marketing"
@@ -186,21 +195,5 @@ export function ContactPage() {
         </form>
       </div>
     </Section>
-  )
-}
-
-function ContactDetail({ icon, label, value, last }: { icon: IconName; label: string; value: string; last?: boolean }) {
-  return (
-    <div className={`flex items-center gap-3 py-3 ${last ? '' : 'border-b border-line'}`}>
-      <span className="grid h-11 w-11 flex-none place-items-center rounded-lg bg-primary-tint text-primary">
-        <span className="h-5 w-5">
-          <Icon name={icon} />
-        </span>
-      </span>
-      <span className="grid min-w-0 gap-0.5">
-        <span className="text-caption font-bold uppercase tracking-[0.08em] text-muted">{label}</span>
-        <strong className="break-words text-sm font-semibold">{value}</strong>
-      </span>
-    </div>
   )
 }

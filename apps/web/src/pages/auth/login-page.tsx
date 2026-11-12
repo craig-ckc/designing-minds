@@ -30,15 +30,15 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Log in"
-      intro="Access your orders and download your purchased resources."
+      title="Welcome back"
+      intro="Log in to see your orders and download your resources."
       onSubmit={() => void submit()}
       footer={
         <>
-          New here?{' '}
-          <Link to="/sign-up" className="text-ink underline underline-offset-4">
+          <p className="text-body text-muted">New here?</p>
+          <Button to="/sign-up" variant="outline" className="w-full">
             Create an account
-          </Link>
+          </Button>
         </>
       }
     >
@@ -49,8 +49,8 @@ export function LoginPage() {
       <Field label="Password">
         <input className="field" type="password" placeholder="Your password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </Field>
-      <div className="-mt-1 text-label">
-        <Link to="/forgot-password" className="text-ink-soft underline underline-offset-4 hover:text-ink">
+      <div className="-mt-1 text-right text-label">
+        <Link to="/forgot-password" className="text-ink underline underline-offset-4 hover:text-primary-ink">
           Forgot password?
         </Link>
       </div>

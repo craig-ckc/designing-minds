@@ -35,9 +35,8 @@ export function UnsubscribePage() {
     <section className="section">
       <Container>
         <div className="mx-auto max-w-narrow text-center">
-          <p className="text-caption font-semibold uppercase tracking-[0.12em] text-muted">Email preferences</p>
-          <h1 className="mt-2 text-page-title">{content.title}</h1>
-          <p className="mt-3 text-muted">{content.body}</p>
+          <h1 className="text-h2">{content.title}</h1>
+          <p className="mt-3 text-body text-muted">{content.body}</p>
           <div className="mt-6 flex justify-center">
             <Button to="/" variant="solid">
               Back to home
