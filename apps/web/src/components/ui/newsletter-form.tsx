@@ -28,7 +28,7 @@ export function NewsletterForm({ compact, source = 'website' }: { compact?: bool
 
   if (status === 'sent') {
     return (
-      <p className={`max-w-form text-body-sm text-ink-soft ${compact ? 'mt-[18px]' : 'mt-6'}`}>
+      <p className={`max-w-form text-body text-ink-soft ${compact ? 'mt-[18px]' : 'mt-6'}`}>
         Thanks! You’re on the list — look out for your free test in your inbox.
       </p>
     )
@@ -40,16 +40,16 @@ export function NewsletterForm({ compact, source = 'website' }: { compact?: bool
           pseudo-class when the browser lands on the matching fragment after a
           native form POST (no JS ran, or it hadn't hydrated yet). Once JS is
           up, submission is intercepted below and these never come into play. */}
-      <p id="newsletter-sent" className="hidden target:block max-w-form text-body-sm text-ink-soft">
+      <p id="newsletter-sent" className="hidden target:block max-w-form text-body text-ink-soft">
         Thanks! You’re on the list — look out for your free test in your inbox.
       </p>
-      <p id="newsletter-failed" className="hidden target:block max-w-form text-body-sm text-danger">
+      <p id="newsletter-failed" className="hidden target:block max-w-form text-body text-danger">
         Something went wrong and your email wasn’t saved. Please try again.
       </p>
       <form
         action={apiUrl('/api/forms')}
         method="post"
-        className={`flex max-w-form flex-col gap-2.5 sm:flex-row ${compact ? 'mt-[18px]' : 'mt-6'}`}
+        className={`flex max-w-form flex-col gap-3 sm:flex-row ${compact ? 'mt-[18px]' : 'mt-6'}`}
         onSubmit={handleSubmit}
       >
         <input type="hidden" name="form" value="newsletter" />

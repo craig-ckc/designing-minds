@@ -5,7 +5,7 @@ import { useCartSlugs } from '../../../lib/use-cart'
 import { usePhysicalCartLines } from '../../../lib/physical-cart'
 
 const actionLink =
-  'inline-flex items-center gap-2 rounded-pill px-3 py-2 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink'
+  'inline-flex items-center gap-2 rounded-full px-3 py-2 text-body font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink'
 
 /** Cart link with an item-count badge (presentational; see CartLink for the live count). */
 export function CartLinkView({ count: cartCount, onNavigate }: { count: number; onNavigate?: () => void }) {
@@ -16,7 +16,7 @@ export function CartLinkView({ count: cartCount, onNavigate }: { count: number; 
       <span className="relative inline-flex">
         <Icon name="cart" size={16} />
         {cartCount > 0 ? (
-          <span className="absolute -right-2.5 -top-2.5 grid min-h-4 min-w-4 place-items-center rounded-pill bg-primary-deep px-1 text-[0.625rem] font-extrabold leading-none text-on-primary ring-2 ring-canvas">
+          <span className="absolute -right-2.5 -top-2.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-primary-ink px-1 text-[0.625rem] font-extrabold leading-none text-on-primary ring-2 ring-canvas">
             {cartCount > 99 ? '99+' : cartCount}
           </span>
         ) : null}
@@ -43,9 +43,9 @@ export function AccountLink({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
         aria-label={`${customer.name} — Customer account`}
         title={`${customer.name} — Customer Account`}
-        className="flex items-center gap-2 rounded-pill p-1 text-body-sm font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+        className="flex items-center gap-2 rounded-full p-1 text-body font-semibold text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
       >
-        <span className="grid h-8 w-8 flex-none place-items-center rounded-pill bg-primary-deep text-caption font-bold tracking-[0.02em] text-on-primary">
+        <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-primary-ink text-caption font-bold tracking-[0.02em] text-on-primary">
           {initials(customer.name)}
         </span>
       </Link>

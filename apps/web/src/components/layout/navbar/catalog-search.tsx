@@ -11,7 +11,7 @@ export function CatalogSearch({ className, onSubmit }: { className?: string; onS
       aria-label="Search the shop"
       onSubmit={onSubmit}
       className={cn(
-        'items-center gap-1 rounded-control border border-line-strong bg-surface pl-3 focus-within:outline-2 focus-within:outline-primary-ink',
+        'items-center gap-1 rounded-md border border-line-strong bg-surface pl-3 focus-within:outline-2 focus-within:outline-primary-ink',
         className,
       )}
     >
@@ -20,12 +20,12 @@ export function CatalogSearch({ className, onSubmit }: { className?: string; onS
         name="q"
         aria-label="Search resources"
         placeholder="Search resources…"
-        className="min-h-10 w-full min-w-0 bg-transparent text-body outline-none"
+        className="min-h-[var(--control-h)] w-full min-w-0 bg-transparent text-body outline-none"
       />
       <button
         type="submit"
         aria-label="Submit search"
-        className="grid h-10 w-10 flex-none place-items-center rounded-control text-ink-soft hover:bg-surface-sunk"
+        className="grid h-10 w-10 flex-none place-items-center rounded-md text-ink-soft hover:bg-surface-sunk"
       >
         <Icon name="search" size={16} />
       </button>

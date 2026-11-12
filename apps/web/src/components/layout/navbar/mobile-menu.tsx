@@ -39,7 +39,7 @@ export function MobileMenuContent({ tiers, onNavigate }: { tiers: BundleTier[]; 
                 key={link.to}
                 to={link.to}
                 onClick={onNavigate}
-                className="rounded-control px-3 py-2 text-body text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
+                className="rounded-md px-3 py-2 text-body text-ink-soft transition-colors hover:bg-surface-sunk hover:text-ink"
               >
                 {link.label}
               </Link>
@@ -92,7 +92,7 @@ export function MobileMenu({ tiers, anchorRef }: { tiers: BundleTier[]; anchorRe
     >
       <Dialog.Trigger
         aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
-        className="grid h-10 w-10 place-items-center rounded-pill hover:bg-surface-sunk lg:hidden"
+        className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface-sunk lg:hidden"
       >
         <Icon name={open ? 'close' : 'menu'} size={20} />
       </Dialog.Trigger>

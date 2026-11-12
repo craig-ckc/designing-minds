@@ -13,7 +13,7 @@ export function Field({ label, description, error, children }: {
   children: ReactNode
 }) {
   return (
-    <label className="grid gap-2 text-body-sm font-medium">
+    <label className="grid gap-2 text-body font-medium">
       <span>{label}</span>
       {children}
       {description ? <span className="text-label font-normal text-muted">{description}</span> : null}

@@ -4,12 +4,12 @@ import { type VariantOf } from './variants'
 
 /** Inline banner for form errors, confirmations and info. */
 const noticeStyles = cv({
-  base: ['rounded-control border px-4 py-3 text-body-sm'],
+  base: ['rounded-md border px-4 py-3 text-body'],
   variants: {
     tone: {
       info: ['border-primary/30 bg-primary-tint text-ink-soft'],
       error: ['border-danger/30 bg-danger-tint text-danger'],
-      success: ['border-forest/25 bg-meadow/40 text-forest'],
+      success: ['border-on-green/25 bg-green/40 text-on-green'],
     },
   },
   defaultVariants: { tone: 'info' },

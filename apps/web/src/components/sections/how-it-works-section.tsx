@@ -27,7 +27,7 @@ export function HowItWorksSection() {
 
   return (
     <Section>
-      <div className="mx-auto mb-10 max-w-prose text-center lg:mb-14">
+      <div className="mx-auto mb-10 max-w-prose text-center lg:mb-16">
         <h2>From cart to classroom in minutes</h2>
       </div>
       <Card pad="md" className="lg:p-10">
@@ -40,7 +40,7 @@ export function HowItWorksSection() {
                 type="button"
                 onClick={() => setActive(i)}
                 aria-current={isActive ? 'step' : undefined}
-                className={`rounded-control p-5 text-left transition-colors ${isActive ? 'bg-primary-tint' : 'hover:bg-surface-alt'}`}
+                className={`rounded-md p-5 text-left transition-colors ${isActive ? 'bg-primary-tint' : 'hover:bg-surface-alt'}`}
               >
                 <p className={`text-caption font-bold uppercase tracking-[0.08em] ${isActive ? 'text-primary-ink' : 'text-muted'}`}>
                   {s.when}
@@ -49,7 +49,7 @@ export function HowItWorksSection() {
                 <ul className="mt-3 grid gap-4 text-body text-ink-soft">
                   {s.items.map((it) => (
                     <li key={it} className="flex gap-4.5">
-                      <span className="mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center rounded-pill bg-primary text-on-primary">
+                      <span className="mt-0.5 grid h-[18px] w-[18px] flex-none place-items-center rounded-full bg-primary text-on-primary">
                         <span className="h-2.5 w-2.5">
                           <Icon name="check" />
                         </span>
@@ -64,11 +64,11 @@ export function HowItWorksSection() {
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5" aria-hidden>
+          <div className="flex items-center gap-2" aria-hidden>
             {steps.map((s, i) => (
               <span
                 key={s.title}
-                className={`h-2 rounded-pill transition-all duration-300 ${i === active ? 'w-6 bg-primary' : 'w-2 bg-line-strong'}`}
+                className={`h-2 rounded-full transition-all duration-300 ${i === active ? 'w-6 bg-primary' : 'w-2 bg-line-strong'}`}
               />
             ))}
           </div>
@@ -78,7 +78,7 @@ export function HowItWorksSection() {
               aria-label="Previous phase"
               disabled={active === 0}
               onClick={() => go(-1)}
-              className="grid h-10 w-10 place-items-center rounded-pill border border-line-strong text-ink transition-colors hover:border-primary hover:text-primary disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-ink"
+              className="grid h-10 w-10 place-items-center rounded-full border border-line-strong text-ink transition-colors hover:border-primary hover:text-primary disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-ink"
             >
               <span className="h-[18px] w-[18px] rotate-180">
                 <Icon name="arrow" />
@@ -89,7 +89,7 @@ export function HowItWorksSection() {
               aria-label="Next phase"
               disabled={active === steps.length - 1}
               onClick={() => go(1)}
-              className="grid h-10 w-10 place-items-center rounded-pill border border-line-strong text-ink transition-colors hover:border-primary hover:text-primary disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-ink"
+              className="grid h-10 w-10 place-items-center rounded-full border border-line-strong text-ink transition-colors hover:border-primary hover:text-primary disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-ink"
             >
               <span className="h-[18px] w-[18px]">
                 <Icon name="arrow" />

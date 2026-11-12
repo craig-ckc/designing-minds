@@ -42,7 +42,7 @@ export function SectionHeading({
     )
   }
   return (
-    <div className={cn('mx-auto mb-10 max-w-prose text-center lg:mb-14', className)}>
+    <div className={cn('mx-auto mb-10 max-w-prose text-center lg:mb-16', className)}>
       <Heading id={id}>{title}</Heading>
       {lead ? <p className="lead mt-4">{lead}</p> : null}
       {actions ? <div className="mt-6 flex flex-wrap justify-center gap-3">{actions}</div> : null}

@@ -55,10 +55,10 @@ export function HelpPage() {
             </ul>
           </aside>
 
-          <div className="grid gap-10">
+          <div className="grid gap-12">
             {byCategory.map(([category, faqs]) => (
               <div key={category} id={categorySlug(category)}>
-                <h2 className="mb-3 text-xl">{category}</h2>
+                <h2 className="mb-3 text-h6">{category}</h2>
                 <FaqAccordion faqs={faqs} />
               </div>
             ))}

@@ -41,7 +41,7 @@ export function ProductGallery({
 }) {
   if (images.length === 0) {
     return (
-      <div className={`product-gallery-stage flex items-center justify-center overflow-hidden rounded-card bg-surface-alt p-6 sm:p-8 ${className}`}>
+      <div className={`product-gallery-stage flex items-center justify-center overflow-hidden rounded-md bg-surface-alt p-6 sm:p-8 ${className}`}>
         <div className="product-gallery-cover">
           <ProductCover product={item} stacked={stacked} priority />
         </div>
@@ -146,7 +146,7 @@ function GalleryTrack({
             goTo(event.key === 'Home' ? 0 : total - 1)
           }
         }}
-        className="product-gallery-stage relative flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-card bg-surface-alt [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-primary-ink focus-visible:outline-offset-4 [&::-webkit-scrollbar]:hidden"
+        className="product-gallery-stage relative flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-md bg-surface-alt [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-primary-ink focus-visible:outline-offset-4 [&::-webkit-scrollbar]:hidden"
       >
         <div className="flex h-full w-full flex-none snap-center items-center justify-center p-6 sm:p-8">
           <div className="product-gallery-cover">

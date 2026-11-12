@@ -19,7 +19,7 @@ export function Navbar({ snapshot }: { snapshot: CmsSnapshot | null }) {
     <>
       <AnnouncementBar />
       <header ref={headerRef} className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md">
-        <Container className="flex min-h-[var(--header-h)] items-center gap-3 xl:gap-7">
+        <Container className="flex min-h-[var(--header-h)] items-center gap-3 xl:gap-8">
           <Wordmark />
           <DesktopNav tiers={tiers} anchorRef={headerRef} />
           <CatalogSearch className="ml-auto hidden w-40 lg:flex xl:w-64" />

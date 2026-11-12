@@ -20,7 +20,7 @@ export function FaqAccordion({ faqs, keepMounted = false }: { faqs: Faq[]; keepM
               <span className="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full bg-current/15 text-primary transition-colors duration-200 group-data-[panel-open]:text-ink">
                 <PlusMarker className="duration-200" weight="bold" />
               </span>
-              <span className="flex-1 text-body-lg font-semibold leading-snug text-ink transition-colors group-hover:text-primary-ink">
+              <span className="flex-1 text-body-lg font-normal leading-snug text-ink transition-colors group-hover:text-primary-ink">
                 {faq.question}
               </span>
             </Accordion.Trigger>

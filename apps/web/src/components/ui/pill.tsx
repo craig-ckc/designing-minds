@@ -5,18 +5,18 @@ import { type VariantOf } from './variants'
 /** The one pill-shaped label primitive: chips, tags, badges, statuses.
  *  `Badge` is a thin wrapper over it. */
 const pillStyles = cv({
-  base: ['inline-flex items-center rounded-pill font-semibold'],
+  base: ['inline-flex items-center rounded-full font-semibold'],
   variants: {
     tone: {
       neutral: ['bg-surface-sunk text-ink-soft'],
       primary: ['bg-primary-tint text-primary-ink'],
-      solid: ['bg-primary-deep text-on-primary'],
+      solid: ['bg-primary-ink text-on-primary'],
       outline: ['border border-line-strong text-ink-soft'],
       surface: ['border border-line-strong bg-surface text-ink-soft shadow-soft'],
       danger: ['bg-danger-tint text-danger'],
     },
     size: {
-      sm: ['gap-1.5 px-2.5 py-1 text-caption tracking-[0.02em]'],
+      sm: ['gap-2 px-3 py-1 text-caption tracking-[0.02em]'],
       md: ['gap-2 px-4 py-2 text-label font-medium'],
     },
   },
@@ -36,7 +36,7 @@ export type PillProps = {
 export function Pill({ children, tone, size, dot, className, ...rest }: PillProps) {
   return (
     <span {...rest} className={cn(pillStyles({ tone, size }), className)}>
-      {dot ? <span className="h-1.5 w-1.5 rounded-pill bg-primary" aria-hidden /> : null}
+      {dot ? <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden /> : null}
       {children}
     </span>
   )

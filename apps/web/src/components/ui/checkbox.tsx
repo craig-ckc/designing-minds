@@ -26,14 +26,14 @@ export function Checkbox({
   boxClassName?: string
 }) {
   return (
-    <div className={cn('flex items-start gap-3 text-body-sm text-ink-soft', className)}>
+    <div className={cn('flex items-start gap-3 text-body text-ink-soft', className)}>
       <BaseCheckbox.Root
         {...rest}
         id={id}
         nativeButton
         render={<button type="button" />}
         className={cn(
-          'mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-chip border border-line-strong bg-canvas text-on-primary transition',
+          'mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-sm border border-line-strong bg-canvas text-on-primary transition',
           'data-[checked]:border-primary data-[checked]:bg-primary',
           boxClassName,
         )}

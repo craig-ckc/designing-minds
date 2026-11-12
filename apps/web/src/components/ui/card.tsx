@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { cn, cv } from '@designing-minds/utils'
 import { type VariantOf } from './variants'
 
-/** One bordered/raised surface with the canonical --radius-card corner (12px).
+/** One bordered/raised surface with the canonical --radius-md corner (12px).
  *  Renders a router <Link> when `to` is passed, an <a> when `href` is passed,
  *  otherwise the `as` element. Other element props pass through.
  *
@@ -11,7 +11,7 @@ import { type VariantOf } from './variants'
  *  recipe for checkout/cart/summary panels), `interactive` (outline whose
  *  border strengthens on hover). */
 const cardStyles = cv({
-  base: ['rounded-card'],
+  base: ['rounded-md'],
   variants: {
     variant: {
       surface: ['bg-surface'],
@@ -19,7 +19,7 @@ const cardStyles = cv({
       outline: ['border border-line bg-surface'],
       featured: ['border-2 border-primary bg-primary-tint/40'],
       interactive: ['border border-line bg-surface transition-colors hover:border-line-strong'],
-      onPrimary: ['bg-primary-deep text-on-primary'],
+      onPrimary: ['bg-primary-strong text-on-primary'],
     },
     pad: {
       none: [],

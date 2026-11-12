@@ -31,7 +31,7 @@ function ChipRow() {
   return (
     <div className="flex flex-wrap gap-4">
       {FEATURE_SUBJECTS.map((s) => (
-        <span key={s} className="rounded-pill border border-line bg-surface px-3 py-1.5 text-label font-semibold text-ink-soft">
+        <span key={s} className="rounded-full border border-line bg-surface px-3 py-2 text-label font-semibold text-ink-soft">
           {s}
         </span>
       ))}
@@ -43,8 +43,8 @@ function MemoRows() {
   return (
     <div className="grid gap-4">
       {MEMO_ROWS.map((r) => (
-        <div key={r} className="flex items-center gap-4.5 rounded-lg border border-line bg-surface px-3 py-2 text-label">
-          <span className="grid h-5 w-5 flex-none place-items-center rounded-pill bg-meadow text-forest">
+        <div key={r} className="flex items-center gap-4.5 rounded-sm border border-line bg-surface px-3 py-2 text-label">
+          <span className="grid h-5 w-5 flex-none place-items-center rounded-full bg-green text-on-green">
             <span className="h-3 w-3">
               <Icon name="check" />
             </span>
@@ -60,7 +60,7 @@ function DownloadRows() {
   return (
     <div className="grid gap-4">
       {DOWNLOAD_FILES.map((r) => (
-        <div key={r} className="flex items-center justify-between gap-4 rounded-lg border border-line bg-surface px-3 py-2 text-label">
+        <div key={r} className="flex items-center justify-between gap-4 rounded-sm border border-line bg-surface px-3 py-2 text-label">
           <span className="flex items-center gap-4 truncate">
             <span className="h-4 w-4 flex-none text-primary">
               <Icon name="doc" />
@@ -95,12 +95,12 @@ function BentoCard({
     <Card
       as="article"
       pad="none"
-      className={`flex flex-col gap-6 p-7 ${
+      className={`flex flex-col gap-6 p-8 ${
         wide ? 'lg:col-span-2 lg:flex-row lg:items-start lg:gap-8' : ''
       }`}
     >
       <div className={wide ? 'lg:w-1/2' : ''}>
-        <span className={`grid h-11 w-11 place-items-center rounded-lg ${tone}`}>
+        <span className={`grid h-11 w-11 place-items-center rounded-sm ${tone}`}>
           <span className="h-6 w-6">
             <Icon name={icon} />
           </span>
@@ -116,20 +116,20 @@ function BentoCard({
 export function FeatureBentoSection() {
   return (
     <Section>
-      <div className="mx-auto mb-10 max-w-prose text-center lg:mb-14">
+      <div className="mx-auto mb-10 max-w-prose text-center lg:mb-16">
         <h2>Everything you need for the school term</h2>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        <BentoCard wide tone="bg-butter text-amber" icon="doc" title={FEATURES[0].title} body={FEATURES[0].body}>
+        <BentoCard wide tone="bg-yellow text-on-yellow" icon="doc" title={FEATURES[0].title} body={FEATURES[0].body}>
           <ChipRow />
         </BentoCard>
-        <BentoCard tone="bg-blossom text-magenta" icon="check" title={FEATURES[1].title} body={FEATURES[1].body}>
+        <BentoCard tone="bg-magenta text-on-magenta" icon="check" title={FEATURES[1].title} body={FEATURES[1].body}>
           <MemoRows />
         </BentoCard>
-        <BentoCard tone="bg-lagoon text-teal" icon="download" title={FEATURES[2].title} body={FEATURES[2].body}>
+        <BentoCard tone="bg-teal text-on-teal" icon="download" title={FEATURES[2].title} body={FEATURES[2].body}>
           <DownloadRows />
         </BentoCard>
-        <BentoCard wide tone="bg-periwinkle text-navy" icon="spark" title={FEATURES[3].title} body={FEATURES[3].body}>
+        <BentoCard wide tone="bg-blue text-on-blue" icon="spark" title={FEATURES[3].title} body={FEATURES[3].body}>
           <GrowthChart />
         </BentoCard>
       </div>

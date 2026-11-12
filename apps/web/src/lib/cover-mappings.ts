@@ -14,11 +14,11 @@ export type SubjectIllustration =
 type Colorway = { band: string; fg: string; solid: string }
 
 const TERM_COLORWAYS: Record<string, Colorway> = {
-  'Any Term': { band: 'text-lagoon', fg: 'text-teal', solid: 'bg-teal' },
-  'Term 1': { band: 'text-butter', fg: 'text-amber', solid: 'bg-amber' },
-  'Term 2': { band: 'text-blossom', fg: 'text-magenta', solid: 'bg-magenta' },
-  'Term 3': { band: 'text-meadow', fg: 'text-forest', solid: 'bg-forest' },
-  'Term 4': { band: 'text-periwinkle', fg: 'text-navy', solid: 'bg-navy' },
+  'Any Term': { band: 'text-teal', fg: 'text-on-teal', solid: 'bg-on-teal' },
+  'Term 1': { band: 'text-yellow', fg: 'text-on-yellow', solid: 'bg-on-yellow' },
+  'Term 2': { band: 'text-magenta', fg: 'text-on-magenta', solid: 'bg-on-magenta' },
+  'Term 3': { band: 'text-green', fg: 'text-on-green', solid: 'bg-on-green' },
+  'Term 4': { band: 'text-blue', fg: 'text-on-blue', solid: 'bg-on-blue' },
 }
 
 const SUBJECT_ILLUSTRATIONS: Record<string, SubjectIllustration> = {

@@ -31,12 +31,12 @@ test('shared text and background colour pairs meet WCAG AA', () => {
   const pairs = [
     ['primary ink on canvas', token('primary-ink'), token('canvas')],
     ['primary ink on primary tint', token('primary-ink'), token('primary-tint')],
-    ['white on the deep brand surface', token('on-primary'), token('primary-deep')],
+    ['white on the primary-ink badge surface', token('on-primary'), token('primary-ink')],
     ['muted on canvas', token('muted'), token('canvas')],
     ['muted on footer cream', token('muted'), '#fdf6f0'],
-    ['amber on butter', token('amber'), token('butter')],
-    ['amber on paper', token('amber'), token('paper')],
-    ['magenta on blossom', token('magenta'), token('blossom')],
+    ['on-yellow on yellow', token('on-yellow'), token('yellow')],
+    ['on-yellow on canvas', token('on-yellow'), token('canvas')],
+    ['on-magenta on magenta', token('on-magenta'), token('magenta')],
   ] as const
 
   for (const [label, foreground, background] of pairs) {
@@ -52,14 +52,20 @@ test('vivid primary accents meet the 3:1 non-text contrast minimum', () => {
   assert.ok(ratio >= 3, `primary accent on canvas is ${ratio.toFixed(2)}:1; expected at least 3:1`)
 })
 
-test('marketing bands retain the requested bright logo pink with solid white text', () => {
-  // The promo bar's small white text uses the deep pink (AA); see navbar-render.test.ts.
-  assert.match(read('components/layout/navbar/announcement-bar.tsx'), /block bg-primary-deep text-on-primary transition-colors/)
-  assert.match(read('components/sections/cta-banner.tsx'), /brand: 'bg-primary text-on-primary'/)
+test('marketing bands retain the bright logo pink with one shared ink text treatment (white measures ~3.2:1)', () => {
+  assert.match(read('components/sections/cta-banner.tsx'), /brand: 'bg-primary text-ink'/)
   assert.equal(token('on-primary').toLowerCase(), '#ffffff')
-  for (const path of ['components/ui/pill.tsx', 'components/ui/card.tsx']) {
-    assert.match(read(path), /bg-primary-deep text-on-primary/)
-  }
+  // Small white count badges / the solid Pill stay AA on primary-ink (>= 4.5:1, asserted above).
+  assert.match(read('components/ui/pill.tsx'), /bg-primary-ink text-on-primary/)
+})
+
+test('announcement bar and Card onPrimary are deliberate sub-AA exceptions on primary-strong', () => {
+  // EXCEPTION (Craig's decision, 2026-11-11): the announcement bar was brightened and the
+  // onPrimary Card is a CTA surface; white on primary-strong is accepted at >= 3:1 rather than 4.5:1.
+  assert.match(read('components/layout/navbar/announcement-bar.tsx'), /block bg-primary-strong text-on-primary transition-colors hover:bg-primary-ink/)
+  assert.match(read('components/ui/card.tsx'), /onPrimary: \['bg-primary-strong text-on-primary'\]/)
+  const ratio = contrast(token('on-primary'), token('primary-strong'))
+  assert.ok(ratio >= 3, `white on primary-strong is ${ratio.toFixed(2)}:1; expected at least 3:1`)
 })
 
 test('text on primary surfaces and product-cover labels do not reduce contrast with opacity', () => {

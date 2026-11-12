@@ -25,7 +25,7 @@ export function FeaturedTierCard({ tier, onNavigate, className, children }: Tier
       to={tierHref(tier)}
       onClick={onNavigate}
       className={cn(
-        'group relative isolate flex flex-col overflow-hidden rounded-card p-1.5 [background-image:var(--gradient-primary)]',
+        'group relative isolate flex flex-col overflow-hidden rounded-md p-2 [background-image:var(--gradient-primary)]',
         className,
       )}
     >
@@ -36,10 +36,10 @@ export function FeaturedTierCard({ tier, onNavigate, className, children }: Tier
       />
 
       {/* White island holding the offer; radius is concentric with the card. */}
-      <div className="flex flex-col gap-2 rounded-[calc(var(--radius-card)-0.375rem)] bg-canvas p-4">
+      <div className="flex flex-col gap-2 rounded-[calc(var(--radius-md)-0.375rem)] bg-canvas p-4">
         <div className="flex items-center justify-between gap-2">
           <span className="text-caption font-bold uppercase tracking-[0.12em] text-muted">Full year</span>
-          <span className="rounded-pill bg-primary-tint px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.06em] text-primary-ink">
+          <span className="rounded-full bg-primary-tint px-2 py-0.5 text-[0.64rem] font-bold uppercase tracking-[0.06em] text-primary-ink">
             Best value
           </span>
         </div>
@@ -65,7 +65,7 @@ export function TermTierCard({ tier, onNavigate, className, children }: TierCard
       to={tierHref(tier)}
       onClick={onNavigate}
       className={cn(
-        'group flex flex-col gap-3 rounded-card border border-line bg-surface p-5 transition-colors hover:border-primary',
+        'group flex flex-col gap-3 rounded-md border border-line bg-surface p-5 transition-colors hover:border-primary',
         className,
       )}
     >

@@ -13,7 +13,7 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
   return (
     <Section id="parent-stories" className="overflow-x-clip">
       <h2 className="max-w-[20ch]">Real stories from families across South Africa</h2>
-      <p className="mt-3 text-body-sm text-muted">Based on verified customer orders to date.</p>
+      <p className="mt-3 text-body text-muted">Based on verified customer orders to date.</p>
 
       {/* A compact lead row keeps the section from dominating the page: the
           framed illustration is decoration, so it shrinks on desktop and
@@ -30,7 +30,7 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
         </div>
         <div>
           <StarRating value={5} />
-          <blockquote className="mt-4 max-w-[52ch] text-quote font-semibold leading-[1.35] tracking-[-0.02em]">
+          <blockquote className="mt-4 max-w-[52ch] text-h3 font-semibold leading-[1.35] tracking-[-0.02em]">
             “{lead.quote}”
           </blockquote>
           <p className="mt-4 text-body">

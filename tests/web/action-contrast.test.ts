@@ -20,16 +20,33 @@ for (const app of ['web', 'admin']) {
     assert.ok(value, `${app}: missing ${name}`)
     return value
   }
-  test(`${app} primary action gradient keeps normal white labels readable at both stops`, () => {
-    for (const name of ['primary-ink', 'primary-ink-strong']) {
-      const ratio = contrast(color('on-primary'), color(name))
-      assert.ok(ratio >= 4.5, `${app}: white on ${name} = ${ratio.toFixed(2)}:1`)
-    }
-    const gradient = css.match(/--gradient-primary:\s*linear-gradient\(([\s\S]*?)\);/)?.[1]
-    assert.ok(gradient)
-    assert.match(gradient, /var\(--color-primary-ink\) 0%/)
-    assert.match(gradient, /var\(--color-primary-ink-strong\) 100%/)
-  })
+  if (app === 'admin') {
+    test('admin primary action gradient keeps normal white labels readable at both stops', () => {
+      for (const name of ['primary-ink', 'primary-ink-strong']) {
+        const ratio = contrast(color('on-primary'), color(name))
+        assert.ok(ratio >= 4.5, `${app}: white on ${name} = ${ratio.toFixed(2)}:1`)
+      }
+      const gradient = css.match(/--gradient-primary:\s*linear-gradient\(([\s\S]*?)\);/)?.[1]
+      assert.ok(gradient)
+      assert.match(gradient, /var\(--color-primary-ink\) 0%/)
+      assert.match(gradient, /var\(--color-primary-ink-strong\) 100%/)
+    })
+  }
+
+  if (app === 'web') {
+    test('web primary action gradient is the vibrant brand pink (accepted exception: >= 3:1, not 4.5:1)', () => {
+      // EXCEPTION (Craig's decision, 2026-11-11): white labels on the brand-pink gradient sit at
+      // about 3.2-3.5:1. Deliberately below AA for normal text; guarded here at the 3:1 floor.
+      for (const name of ['primary', 'primary-strong']) {
+        const ratio = contrast(color('on-primary'), color(name))
+        assert.ok(ratio >= 3, `${app}: white on ${name} = ${ratio.toFixed(2)}:1`)
+      }
+      const gradient = css.match(/--gradient-primary:\s*linear-gradient\(([\s\S]*?)\);/)?.[1]
+      assert.ok(gradient)
+      assert.match(gradient, /var\(--color-primary\) 0%/)
+      assert.match(gradient, /var\(--color-primary-strong\) 100%/)
+    })
+  }
 
   if (app === 'admin') {
     test('admin secondary and muted text stay readable on neutral workspace surfaces', () => {

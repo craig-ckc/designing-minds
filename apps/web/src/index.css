@@ -30,8 +30,6 @@
   --color-muted: #6d655f; /* tertiary text / captions — AA on light surfaces */
   --color-line: #ece8e1; /* hairline borders */
   --color-line-strong: #ddd7cc; /* stronger borders / inputs */
-  --color-ph: #efeae1; /* placeholder fill */
-  --color-ph-glyph: #b9b0a4; /* placeholder glyph */
 
   /* ---- Brand primary (Designing Minds pink) --------------------------- */
   --color-primary: #f15699;
@@ -39,49 +37,38 @@
   --color-primary-ink: #c12c6c; /* accessible brand text on light surfaces */
   --color-primary-ink-strong: #a9235a; /* accessible text hover / pressed */
   --color-primary-tint: #feeef3; /* soft pink backgrounds & chips */
-  /* Deep pink remains available for small white labels. Marketing bands use
-     the brighter logo pink with ink text. */
-  --color-primary-deep: #c9316f;
-  --color-primary-edge: color-mix(in oklab, var(--color-primary-strong), black 22%); /* hairline edge on the solid button */
+  --color-primary-hover: #d6417f; /* hover gradient end */
 
-  /* Functional action surfaces use the deeper brand tones so small white
-     labels stay readable across the entire gradient. */
-  --gradient-primary: linear-gradient(
-    180deg,
-    var(--color-primary-ink) 0%,
-    var(--color-primary-ink-strong) 100%
-  );
-  --gradient-primary-hover: linear-gradient(
-    180deg,
-    var(--color-primary-ink-strong) 0%,
-    color-mix(in oklab, var(--color-primary-ink-strong), black 12%) 100%
-  );
+  /* Action surfaces use the vibrant brand pink — Craig's decision
+     (2026-11-11). White label contrast is about 3.2-3.5:1, accepted
+     deliberately; small white text on solid pink badges uses primary-ink. */
+  --gradient-primary: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
+  --gradient-primary-hover: linear-gradient(180deg, var(--color-primary-strong) 0%, var(--color-primary-hover) 100%);
 
   /* ---- Semantic colour roles ------------------------------------------ */
   --color-on-primary: #ffffff; /* text / icons on primary & dark surfaces */
-  --color-paper: #ffffff; /* product-cover A4 sheet white */
   --color-danger: #c0362c; /* validation / error text & borders */
   --color-danger-tint: #fbe9e7; /* error banner background */
 
   /* ---- Pastel palette (section + product colour-ways) ----------------- */
-  --color-butter: #fbe08c;
-  --color-blossom: #fbd2ea;
-  --color-meadow: #cdefa4;
-  --color-periwinkle: #cdd6f8;
-  --color-lagoon: #bff0e6;
+  --color-yellow: #fbe08c;
+  --color-magenta: #fbd2ea;
+  --color-green: #cdefa4;
+  --color-blue: #cdd6f8;
+  --color-teal: #bff0e6;
 
   /* ---- Deep supporting shades (paired with the pastels above) ---------
      Each shade is the readable text colour for exactly one pastel band, so the
      five pairings must stay visually distinct — a grade is identified by its
-     colour. forest (on meadow) and teal (on lagoon) were #0e4a39 / #0e3f3c:
-     indistinguishable in use, which collapsed two grades onto one colour. teal
-     now leans cyan to match the aqua lagoon band it always sits on, the same
-     way forest leans green to match meadow. */
-  --color-amber: #934b06;
-  --color-magenta: #a81475;
-  --color-forest: #0e4a39;
-  --color-navy: #17376b;
-  --color-teal: #0b4f57;
+     colour. on-green (on green) and on-teal (on teal) were #0e4a39 / #0e3f3c:
+     indistinguishable in use, which collapsed two grades onto one colour.
+     on-teal now leans cyan to match the aqua teal band it always sits on, the
+     same way on-green leans green to match green. */
+  --color-on-yellow: #934b06;
+  --color-on-magenta: #a81475;
+  --color-on-green: #0e4a39;
+  --color-on-blue: #17376b;
+  --color-on-teal: #0b4f57;
 
   /* ---- Type ----------------------------------------------------------- */
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -98,51 +85,54 @@
      sheet reads as a distinct object lifting off the page. */
   --shadow-cover: 0 2px 6px -2px rgba(41, 25, 10, 0.14), 0 10px 22px -8px rgba(41, 25, 10, 0.18);
 
-  /* ---- Radius (semantic surface scale) --------------------------------
-     One rule per surface. Control and card are both 12px on purpose (a flat,
-     compact system: one corner everywhere). */
-  --radius-control: 0.75rem; /* 12px — buttons, inputs, select, notices */
-  --radius-card: 0.75rem; /* 12px — canonical card / raised surface */
-  --radius-chip: 0.5rem; /* 8px — small inline chrome: icon chips, checkbox, menu items */
-  --radius-panel: 1.5rem; /* 24px — large hero CTA panels */
-  --radius-pill: 9999px; /* pills, tags, badges, icon-buttons, avatars */
+  /* ---- Radius ---------------------------------------------------------
+     sm 8px — small inline chrome: icon chips, checkbox, menu items.
+     md 12px — buttons, inputs, notices, cards.
+     lg 24px — large hero CTA panels. Pills/avatars use rounded-full. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.5rem;
 
-  /* ---- Type scale (below heading level) -------------------------------
-     h1–h4 use the fluid clamp scale in @layer base; these govern the rest.
-     Generates text-caption / text-label / text-body / … utilities. */
+  /* ---- Type scale ------------------------------------------------------
+     display / h1-h6 are headings (h1-h3 fluid); the rest is body copy.
+     Generates text-display / text-h1 / … / text-micro utilities. */
+  --text-display: clamp(2rem, 3.4vw, 2.75rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 800;
+  --text-h1: clamp(1.875rem, 3.1vw, 2.625rem);
+  --text-h1--line-height: 1.12;
+  --text-h1--letter-spacing: -0.035em;
+  --text-h1--font-weight: 700;
+  --text-h2: clamp(1.5rem, 2.3vw, 2rem);
+  --text-h2--line-height: 1.16;
+  --text-h2--letter-spacing: -0.03em;
+  --text-h2--font-weight: 700;
+  --text-h3: clamp(1.125rem, 1.6vw, 1.375rem);
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.02em;
+  --text-h3--font-weight: 600;
+  --text-h4: 1.25rem;
+  --text-h4--line-height: 1.3;
+  --text-h4--letter-spacing: -0.02em;
+  --text-h4--font-weight: 700;
+  --text-h5: 1.125rem;
+  --text-h5--line-height: 1.375;
+  --text-h5--letter-spacing: -0.02em;
+  --text-h5--font-weight: 700;
+  --text-h6: 1rem;
+  --text-h6--line-height: 1.4;
+  --text-h6--letter-spacing: -0.01em;
+  --text-h6--font-weight: 600;
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.55;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.55;
   --text-caption: 0.75rem;
   --text-caption--line-height: 1.4;
   --text-label: 0.8125rem;
   --text-label--line-height: 1.45;
-  --text-body-sm: 0.875rem;
-  --text-body-sm--line-height: 1.5;
-  --text-body: 0.875rem;
-  --text-body--line-height: 1.55;
-  --text-body-lg: 1rem;
-  --text-body-lg--line-height: 1.55;
-  --text-page-title: 1.875rem; /* shell/commerce h1 smaller than the display h1 */
-  --text-page-title--line-height: 1.1;
-  --text-page-title--letter-spacing: -0.03em;
-  --text-page-title--font-weight: 700;
-  --text-display: clamp(2rem, 3.4vw, 2.8rem); /* stat numbers & big prices */
-  --text-display--line-height: 1;
-  --text-display--letter-spacing: -0.04em;
-  --text-display--font-weight: 800;
-  --text-quote: clamp(1.3rem, 2.2vw, 1.6rem); /* pull-quotes / lead testimonial */
-  --text-quote--line-height: 1.3;
-  --text-quote--letter-spacing: -0.02em;
-  /* Named sizes for what used to be one-off text-[…rem] / text-xl / text-2xl
-     values. The scale above is deliberately compact (body = body-sm = 14px);
-     these cover headings and numerals only, and do not change it. */
   --text-micro: 0.625rem; /* 10px — count badges inside icons only */
-  --text-heading-xs: 1.125rem; /* 18px — card / row titles */
-  --text-heading-sm: 1.25rem; /* 20px — sub-section headings */
-  --text-heading-md: 1.5rem; /* 24px — empty/state headings, panel titles */
-  --text-heading-md--line-height: 1.2;
-  --text-stat: 1.5rem; /* 24px — grade tile numerals, account figures */
-  --text-stat--line-height: 1.15;
-  --text-price: 1.75rem; /* 28px — product detail price */
-  --text-price--line-height: 1.1;
 
   /* ---- Content widths (Container + prose columns) ----------------------
      Generates max-w-page / max-w-prose / … utilities. */
@@ -154,8 +144,8 @@
   --container-form: 460px; /* forms / auth */
 
   /* ---- Layout constants (referenced via var() in arbitrary utilities) -- */
-  --control-h: 44px; /* Button md + Select trigger height */
-  --control-h-sm: 36px; /* Button sm */
+  --control-h: 40px; /* Button md + Select trigger height */
+  --control-h-sm: 32px; /* Button sm */
   --header-h: 72px; /* sticky header — mega-menu & filter bars align to it */
   --sticky-offset: 96px; /* sticky sidebars / asides */
   --pad-card: 1.5rem; /* default card interior padding (p-6) */
@@ -189,16 +179,16 @@
 
   /* A restrained heading scale shared across marketing and utility pages. */
   h1 {
-    @apply font-bold leading-[1.12] tracking-[-0.035em] text-[clamp(1.875rem,3.1vw,2.625rem)];
+    @apply text-h1;
   }
   h2 {
-    @apply font-bold leading-[1.16] tracking-[-0.03em] text-[clamp(1.5rem,2.3vw,2rem)];
+    @apply text-h2;
   }
   h3 {
-    @apply font-semibold leading-[1.25] tracking-[-0.02em] text-[clamp(1.125rem,1.6vw,1.375rem)];
+    @apply text-h3;
   }
   h4 {
-    @apply font-bold leading-snug tracking-[-0.02em] text-[1.15rem];
+    @apply text-h4;
   }
 
   /* Native accordion marker reset — the one thing utilities can't express */
@@ -233,18 +223,18 @@
 
   /* Intro / lead paragraph. */
   .lead {
-    @apply text-[clamp(0.9375rem,1.2vw,1.0625rem)] leading-relaxed text-ink-soft;
+    @apply text-body-lg leading-relaxed text-ink-soft;
   }
 
-  /* Bordered surface card — 12px radius (--radius-card). Prefer <Card variant="outline">. */
+  /* Bordered surface card — 12px radius (--radius-md). Prefer <Card variant="outline">. */
   .card {
-    @apply rounded-card border border-line bg-surface;
+    @apply rounded-md border border-line bg-surface;
   }
 
   /* Form control (input / select / textarea) — shares --control-h and
-     --radius-control with Button and the Select trigger. */
+     --radius-md with Button and the Select trigger. */
   .field {
-    @apply w-full min-h-[var(--control-h)] rounded-control border border-line-strong bg-canvas px-3.5 py-2.5 text-body
+    @apply w-full min-h-[var(--control-h)] rounded-md border border-line-strong bg-canvas px-4 py-2 text-body
            transition placeholder:text-muted
            focus:border-primary;
   }
@@ -259,19 +249,19 @@
   .grade-grid > :nth-child(5):last-child { @apply lg:col-start-4; }
 
   .filter-chip {
-    @apply inline-flex min-h-[var(--control-h-sm)] items-center justify-center gap-1 rounded-pill border border-transparent bg-surface-sunk px-2.5 py-1 text-caption font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink;
+    @apply inline-flex min-h-[var(--control-h-sm)] items-center justify-center gap-1 rounded-full border border-transparent bg-surface-sunk px-3 py-1 text-caption font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink;
   }
   .filter-chip[aria-pressed="true"] { @apply border-ink bg-ink text-white; }
   .filter-control {
-    @apply inline-flex min-h-[var(--control-h-sm)] items-center justify-center gap-2 rounded-pill border border-line-strong bg-canvas px-3 py-1 text-caption font-medium text-ink transition-colors hover:bg-surface;
+    @apply inline-flex min-h-[var(--control-h-sm)] items-center justify-center gap-2 rounded-full border border-line-strong bg-canvas px-3 py-1 text-caption font-medium text-ink transition-colors hover:bg-surface;
   }
-  .select-menu { @apply overflow-auto rounded-card border border-line-strong bg-canvas p-1.5 shadow-card; min-width: max(12rem, var(--anchor-width)); max-height: min(18rem, var(--available-height)); }
-  .select-menu__item { @apply flex min-h-9 cursor-default items-center justify-between gap-4 rounded-chip px-3 py-2 text-label text-ink outline-none; }
+  .select-menu { @apply overflow-auto rounded-md border border-line-strong bg-canvas p-2 shadow-card; min-width: max(12rem, var(--anchor-width)); max-height: min(18rem, var(--available-height)); }
+  .select-menu__item { @apply flex min-h-9 cursor-default items-center justify-between gap-4 rounded-sm px-3 py-2 text-label text-ink outline-none; }
   .select-menu__item[data-highlighted] { @apply bg-surface-sunk; }
   .select-menu__item[data-selected] { @apply bg-primary-tint font-semibold text-primary-ink; }
 
   .catalog-card-media {
-    @apply relative flex aspect-square items-center justify-center overflow-hidden bg-surface-alt;
+    @apply relative;
   }
 
   .catalog-card-body {
@@ -283,7 +273,7 @@
   }
 
   .catalog-card-description {
-    @apply mt-2 text-body-sm leading-relaxed text-ink-soft line-clamp-2;
+    @apply mt-2 text-body leading-relaxed text-ink-soft line-clamp-2;
   }
 
   .catalog-card-price {
@@ -300,7 +290,6 @@
 
   .product-detail {
     --text-body: 0.875rem;
-    --text-body-sm: 0.875rem;
     --text-body-lg: 0.875rem;
     --text-label: 0.875rem;
     @apply text-sm;
@@ -395,7 +384,7 @@
 .testimonial-carousel-group {
   display: flex;
   flex-shrink: 0;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 1rem;
   padding-right: 1rem;
 }

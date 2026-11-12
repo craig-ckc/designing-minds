@@ -1,8 +1,8 @@
 import { extendTailwindMerge } from 'tailwind-merge'
 
 // Our design system defines custom font-size utilities via `--text-*` theme
-// tokens (see apps/web src/index.css): text-caption, text-label, text-body-sm,
-// text-body, text-body-lg, text-page-title, text-display, text-quote.
+// tokens (see apps/web src/index.css): text-display, text-h1 … text-h6,
+// text-body-lg, text-body, text-caption, text-label, text-micro.
 //
 // tailwind-merge doesn't know these are sizes, so out of the box it treats e.g.
 // `text-body-sm` as a *text colour* and decides it conflicts with a real colour
@@ -13,7 +13,7 @@ const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
       'font-size': [
-        { text: ['caption', 'label', 'body-sm', 'body', 'body-lg', 'page-title', 'display', 'quote'] },
+        { text: ['display', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body-lg', 'body', 'caption', 'label', 'micro'] },
       ],
     },
   },

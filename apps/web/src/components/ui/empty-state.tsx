@@ -15,7 +15,7 @@ export function EmptyState({ title, description, icon, action, children, as: Hea
   return (
     <div className="empty-state">
       <span className="empty-state__icon" aria-hidden="true"><Icon name={icon} size={28} /></span>
-      <Heading className="text-heading-md">{title}</Heading>
+      <Heading className="text-h3">{title}</Heading>
       <p className="mt-3 max-w-[38ch] text-body text-ink-soft">{description}</p>
       {next ? <div className="mt-5">{next}</div> : null}
     </div>

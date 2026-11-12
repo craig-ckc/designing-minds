@@ -22,7 +22,7 @@ export function GrowthChart({ active = 0 }: { active?: number }) {
   const ease = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
   return (
-    <div className="relative overflow-hidden rounded-card border border-line bg-surface">
+    <div className="relative overflow-hidden rounded-md border border-line bg-surface">
       <svg viewBox="0 0 1000 360" className="block h-auto w-full text-primary" aria-hidden>
         <defs>
           <linearGradient id="growthFill" x1="0" y1="0" x2="0" y2="1">
@@ -51,7 +51,7 @@ export function GrowthChart({ active = 0 }: { active?: number }) {
 
       {/* Caption pill rides along with the dot so progress is easy to follow. */}
       <span
-        className="pointer-events-none absolute z-10 whitespace-nowrap rounded-pill bg-primary-deep px-3 py-1 text-caption font-bold text-on-primary"
+        className="pointer-events-none absolute z-10 whitespace-nowrap rounded-full bg-primary-ink px-3 py-1 text-caption font-bold text-on-primary"
         style={{
           left: `clamp(90px, ${px}%, calc(100% - 90px))`,
           top: `${py}%`,

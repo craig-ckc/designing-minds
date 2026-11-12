@@ -79,7 +79,7 @@ export function PackagesPage() {
       >
         {/* Schools ask about licensing from here; point them at the public answer
             before they have to email. */}
-        <p className="mt-4 max-w-prose text-body-sm text-muted">
+        <p className="mt-4 max-w-prose text-body text-muted">
           Buying for a class, grade or school? A bundle covers one household or one classroom —{' '}
           <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
             see classroom licensing
@@ -126,7 +126,7 @@ export function PackagesPage() {
               ))}
             </div>
           ) : (
-            <Card variant="surface" pad="none" className="p-7 text-center">
+            <Card variant="surface" pad="none" className="p-8 text-center">
               <h2>No matching bundles</h2>
               <p className="mt-2 text-muted">Try clearing a filter or choosing a different grade.</p>
             </Card>

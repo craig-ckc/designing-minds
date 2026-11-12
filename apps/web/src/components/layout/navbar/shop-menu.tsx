@@ -12,7 +12,7 @@ function MegaLink({ to, label, sub, icon, onNavigate }: { to: string; label: str
     <li>
       <NavigationMenu.Link
         render={<Link to={to} onClick={onNavigate} />}
-        className="group flex items-start gap-3 rounded-control p-3 transition-colors hover:bg-surface-alt"
+        className="group flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-surface-alt"
       >
         <span className="mt-0.5 h-5 w-5 flex-none text-primary">
           <Icon name={icon} />
@@ -50,7 +50,7 @@ export function ShopMenuContent({ tiers, onNavigate }: { tiers: BundleTier[]; on
             ))}
           </div>
         ) : (
-          <p className="text-body-sm text-muted">No bundles published yet.</p>
+          <p className="text-body text-muted">No bundles published yet.</p>
         )}
       </div>
     </Container>

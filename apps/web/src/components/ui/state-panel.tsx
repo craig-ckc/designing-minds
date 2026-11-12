@@ -35,7 +35,7 @@ export function StatePanel({
             <Icon name="spinner" className="animate-spin motion-reduce:animate-none" />
           </span>
         ) : null}
-        <Heading className="text-page-title">{title}</Heading>
+        <Heading className="text-h2">{title}</Heading>
         {body ? <p className="lead">{body}</p> : null}
         {action ?? children}
       </div>

@@ -74,7 +74,7 @@ function CoverFace({
   // being fragmented into loose strings by a screen reader.
   return (
     <div aria-hidden className={`[container-type:inline-size] ${className}`}>
-      <div className="relative aspect-[595/842] w-full overflow-hidden rounded-[1.8cqw] bg-paper [box-shadow:0_0.7cqw_2.2cqw_-0.7cqw_rgba(41,25,10,0.14),0_2.8cqw_6.4cqw_-2.2cqw_rgba(41,25,10,0.18)]">
+      <div className="relative aspect-[595/842] w-full overflow-hidden rounded-[1.8cqw] bg-canvas [box-shadow:0_0.7cqw_2.2cqw_-0.7cqw_rgba(41,25,10,0.14),0_2.8cqw_6.4cqw_-2.2cqw_rgba(41,25,10,0.18)]">
         <div className={`absolute inset-x-0 bottom-0 ${band}`}>
           <svg width="100%" viewBox="0 0 595 513" fill="none" xmlns="http://www.w3.org/2000/svg">
             <use href="/icons.svg#cover-band-shape" />

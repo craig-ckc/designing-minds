@@ -22,7 +22,7 @@ const CONTENT: Record<LegalKind, { title: string; sections: string[] }> = {
 
 function TermsOfUse() {
   return (
-    <div className="mx-auto grid max-w-readable gap-9 text-ink-soft">
+    <div className="mx-auto grid max-w-readable gap-10 text-ink-soft">
       <p>
         Thank you for purchasing educational resources from Designing Minds. By purchasing, downloading or using any
         Designing Minds resource, you agree to the following Terms of Use.
@@ -151,7 +151,7 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
         {kind === 'terms' ? (
           <TermsOfUse />
         ) : (
-          <div className="mx-auto grid max-w-readable gap-9">
+          <div className="mx-auto grid max-w-readable gap-10">
             {doc.sections.map((heading, index) => (
               <div key={heading} className="grid gap-3">
                 <h2>

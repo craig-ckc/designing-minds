@@ -5,11 +5,11 @@
 export type Colorway = { band: string; fg: string; solid: string }
 
 const GRADE_COLORWAYS: Colorway[] = [
-  { band: 'bg-butter', fg: 'text-amber', solid: 'bg-amber' },
-  { band: 'bg-blossom', fg: 'text-magenta', solid: 'bg-magenta' },
-  { band: 'bg-meadow', fg: 'text-forest', solid: 'bg-forest' },
-  { band: 'bg-periwinkle', fg: 'text-navy', solid: 'bg-navy' },
-  { band: 'bg-lagoon', fg: 'text-teal', solid: 'bg-teal' },
+  { band: 'bg-yellow', fg: 'text-on-yellow', solid: 'bg-on-yellow' },
+  { band: 'bg-magenta', fg: 'text-on-magenta', solid: 'bg-on-magenta' },
+  { band: 'bg-green', fg: 'text-on-green', solid: 'bg-on-green' },
+  { band: 'bg-blue', fg: 'text-on-blue', solid: 'bg-on-blue' },
+  { band: 'bg-teal', fg: 'text-on-teal', solid: 'bg-on-teal' },
 ]
 
 /** Grade 3 → index 0, Grade 4 → 1, … cycling for any extra grades. */

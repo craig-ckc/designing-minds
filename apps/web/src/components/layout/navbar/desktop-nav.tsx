@@ -47,7 +47,7 @@ export function DesktopNav({ tiers, anchorRef }: { tiers: BundleTier[]; anchorRe
         <NavigationMenu.Item value={SHOP}>
           <NavigationMenu.Trigger
             className={cn(
-              'flex items-center gap-1.5 px-3 py-2 text-body font-semibold text-ink-soft transition-colors hover:text-ink',
+              'flex items-center gap-2 px-3 py-2 text-body font-semibold text-ink-soft transition-colors hover:text-ink',
               'data-[popup-open]:text-primary-ink',
             )}
           >
