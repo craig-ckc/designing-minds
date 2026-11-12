@@ -1,4 +1,5 @@
 import type { SlugRedirect } from '@designing-minds/cms'
+import { gradeToSlug } from './content/site'
 
 /* -------------------------------------------------------------------------
    Convert system-managed slug redirects into Vercel Build Output API routes.
@@ -56,4 +57,24 @@ export function redirectRoutes(redirects: SlugRedirect[]): VercelRoute[] {
     status: redirect.statusCode || 301,
     headers: { Location: redirect.toPath },
   }))
+}
+
+/** Where a retired `/grades/<slug>` detail URL now lands: the shop filtered to that grade, or the whole shop for an unknown slug. */
+export function gradeRedirectTarget(slug: string, grades: readonly string[]): string {
+  const known = grades.map(gradeToSlug).includes(slug.toLowerCase())
+  return known ? `/shop?grade=${slug.toLowerCase()}` : '/shop'
+}
+
+/**
+ * Permanent redirects for the removed grade detail pages: one per grade to the
+ * shop filtered by that grade, then a catch-all so any other `/grades/<x>` lands
+ * on the shop. The Grades index (`/grades`) is not matched. Order matters: the
+ * specific routes must precede the fallback.
+ */
+export function gradeRedirectRoutes(grades: readonly string[]): VercelRoute[] {
+  const specific = grades.map((grade) => {
+    const slug = gradeToSlug(grade)
+    return { src: `^/grades/${slug}/?$`, status: 301, headers: { Location: gradeRedirectTarget(slug, grades) } }
+  })
+  return [...specific, { src: '^/grades/[^/]+/?$', status: 301, headers: { Location: '/shop' } }]
 }

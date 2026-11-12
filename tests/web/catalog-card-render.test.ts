@@ -124,9 +124,9 @@ test('a bundle priced the same as its members has no crossed-out comparison pric
 
 test('grade cards retain their original compact design, description, count and browse action', () => {
   const grade = render(createElement(GradeCard, { grade: 'Grade 4', count: 89 }))
-  assert.match(grade, /href="\/grades\/grade-4"/)
+  assert.match(grade, /href="\/shop\?grade=grade-4"/)
   assert.match(grade, /min-h-56/)
-  assert.match(grade, /bg-blossom/)
+  assert.match(grade, /bg-magenta/)
   assert.match(grade, /89 resources/)
   assert.match(grade, /Intermediate-phase tests across all core subjects/)
   assert.match(grade, /Browse/)

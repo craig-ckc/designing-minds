@@ -22,7 +22,7 @@ test('canonical URL resolution always uses the public storefront origin', () => 
 })
 
 test('representative public route paths build canonicals on the storefront origin', () => {
-  for (const path of ['/', '/contact', '/grades/grade-3', '/packages', '/shop/example-resource']) {
+  for (const path of ['/', '/contact', '/grades', '/packages', '/shop/example-resource']) {
     assert.equal(canonicalUrlForPath(path, 'https://designingminds.vercel.app'), `${CANONICAL_SITE_URL}${path}`)
   }
 })

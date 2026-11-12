@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, type ComponentType } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { useAuth } from './lib/auth'
 import { useCatalog } from './lib/catalog'
+import { gradeRedirectTarget } from './redirects'
 import { CatalogGate } from './lib/catalog-gate'
 import { mergeSignedInCart } from './lib/cart'
 import { mergeSignedInPhysicalCart } from './lib/physical-cart'
@@ -13,7 +14,6 @@ import { StatePanel } from './components/ui/state-panel'
 import { HomePage } from './pages/home-page'
 import { ShopPage } from './pages/shop-page'
 import { GradesPage } from './pages/grades-page'
-import { GradeDetailPage } from './pages/grade-detail-page'
 import { PackagesPage } from './pages/packages-page'
 import { ProductPage } from './pages/product-page'
 import { HelpPage } from './pages/help-page'
@@ -40,6 +40,13 @@ const CheckoutPage = lazyPage(() => import('./pages/checkout-page'), 'CheckoutPa
 const CheckoutReturnPage = lazyPage(() => import('./pages/checkout-return-page'), 'CheckoutReturnPage')
 const CheckoutCancelPage = lazyPage(() => import('./pages/checkout-cancel-page'), 'CheckoutCancelPage')
 const UnsubscribePage = lazyPage(() => import('./pages/unsubscribe-page'), 'UnsubscribePage')
+
+/** The grade detail pages are retired; the old URLs land on the shop filtered by that grade. */
+function GradeRedirect() {
+  const { gradeSlug = '' } = useParams()
+  const { state } = useCatalog()
+  return <Navigate to={gradeRedirectTarget(gradeSlug, state.snapshot?.valueLists.grades ?? [])} replace />
+}
 
 function App() {
   const { customer } = useAuth()
@@ -101,7 +108,7 @@ function App() {
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/shop/:slug" element={<ProductPage />} />
               <Route path="/grades" element={<GradesPage />} />
-              <Route path="/grades/:gradeSlug" element={<GradeDetailPage />} />
+              <Route path="/grades/:gradeSlug" element={<GradeRedirect />} />
               <Route path="/packages" element={<PackagesPage />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/account/*" element={<AccountRoutes />} />

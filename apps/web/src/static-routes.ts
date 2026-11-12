@@ -1,5 +1,4 @@
 import type { CmsSnapshot } from '@designing-minds/cms'
-import { gradeToSlug, slugToGrade } from './content/site'
 import { PASSWORD_RESET_PATH } from './site-url'
 
 /* -------------------------------------------------------------------------
@@ -11,14 +10,12 @@ import { PASSWORD_RESET_PATH } from './site-url'
    robots) and by seo.ts (per-route metadata).
    ------------------------------------------------------------------------- */
 
-export type RouteKind = 'static' | 'grade' | 'product'
+export type RouteKind = 'static' | 'product'
 
 export interface PublicRoute {
-  /** Absolute path, e.g. "/", "/shop", "/grades/grade-4", "/shop/foo". */
+  /** Absolute path, e.g. "/", "/shop", "/shop/foo". */
   path: string
   kind: RouteKind
-  /** Grade label (e.g. "Grade 4") for grade routes. */
-  grade?: string
   /** Product slug for product routes. */
   productSlug?: string
 }
@@ -73,8 +70,7 @@ export const FUNCTIONAL_SPA_PREFIXES = [
 ] as const
 
 /**
- * The full set of routes to prerender for a given snapshot: fixed static pages,
- * one grade detail page per grade value list entry, and one detail page per
+ * The full set of routes to prerender for a given snapshot: fixed static pages and one detail page per
  * published catalogue record.
  *
  * Products and bundles are separate Collections that share the /shop/<slug>
@@ -84,10 +80,6 @@ export const FUNCTIONAL_SPA_PREFIXES = [
  */
 export function getPublicRoutes(snapshot: CmsSnapshot): PublicRoute[] {
   const routes: PublicRoute[] = STATIC_INDEXABLE_PATHS.map((path) => ({ path, kind: 'static' as const }))
-
-  for (const grade of snapshot.valueLists.grades) {
-    routes.push({ path: `/grades/${gradeToSlug(grade)}`, kind: 'grade', grade })
-  }
 
   for (const product of snapshot.products) {
     if (!product.published) continue
@@ -111,7 +103,7 @@ export function getPublicRoutes(snapshot: CmsSnapshot): PublicRoute[] {
  * Reverse of getPublicRoutes for a single URL: classify a live pathname into the
  * PublicRoute it corresponds to, or null for functional/unknown paths. Used by
  * the client head manager to resolve metadata on SPA navigation. Returns null
- * (rather than a route) for a grade/product slug with no matching CMS entry, so
+ * (rather than a route) for a product slug with no matching CMS entry, so
  * callers never build metadata for a page that doesn't exist.
  */
 export function matchPath(pathname: string, snapshot: CmsSnapshot): PublicRoute | null {
@@ -119,12 +111,6 @@ export function matchPath(pathname: string, snapshot: CmsSnapshot): PublicRoute 
 
   if ((STATIC_INDEXABLE_PATHS as readonly string[]).includes(path)) {
     return { path, kind: 'static' }
-  }
-
-  const gradeMatch = path.match(/^\/grades\/([^/]+)$/)
-  if (gradeMatch) {
-    const grade = snapshot.valueLists.grades.find((value) => gradeToSlug(value) === gradeMatch[1])
-    return grade ? { path, kind: 'grade', grade } : null
   }
 
   const productMatch = path.match(/^\/shop\/([^/]+)$/)
@@ -140,4 +126,3 @@ export function matchPath(pathname: string, snapshot: CmsSnapshot): PublicRoute 
   return null
 }
 
-export { gradeToSlug, slugToGrade }

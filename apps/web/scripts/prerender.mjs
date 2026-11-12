@@ -161,6 +161,8 @@ const config = {
   routes: [
     // 1. Permanent slug redirects (before any static/file handling).
     ...server.redirectRoutes(redirects),
+    // The grade detail pages were folded into the shop's grade filter.
+    ...server.gradeRedirectRoutes(snapshot.valueLists.grades),
     // 2. Proxy the API to the functions deployment.
     { src: '/api/(.*)', dest: `${apiOrigin}/api/$1` },
     // 3. build-info.json is polled cross-origin by the admin app to work out

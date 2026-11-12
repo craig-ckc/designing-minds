@@ -22,8 +22,6 @@ test('all catalog grids render a Load more button below the grid', () => {
   for (const page of [
     'pages/shop-page.tsx',
     'pages/packages-page.tsx',
-    'pages/grade-detail-page.tsx',
-    'components/sections/grade-package-section.tsx',
   ]) {
     const source = read(page)
     assert.match(source, /<LoadMoreButton[\s\S]*onLoadMore=\{loadMore\}/, `${page}: Load more button`)
@@ -45,7 +43,6 @@ test('small lists render without a Load more button in the initial DOM', () => {
 test('filter dependencies reset the visible count to the initial limit', () => {
   const shop = read('pages/shop-page.tsx')
   const packages = read('pages/packages-page.tsx')
-  const gradeDetail = read('pages/grade-detail-page.tsx')
 
   // Shop resets on every narrowing/sort change, including the digital/gift category.
   assert.match(shop, /const catalogResetKey = JSON\.stringify\(\[grades, terms, subjects, formats, category, q, sort\]\)/)
@@ -53,8 +50,6 @@ test('filter dependencies reset the visible count to the initial limit', () => {
   // Packages resets on offer, grade, term, and query changes.
   assert.match(packages, /const catalogResetKey = JSON\.stringify\(\[offerSel, grades, terms, q, sort\]\)/)
   assert.match(packages, /useCatalogLoadMore\(visible,\s*CATALOG_INITIAL_LIMIT,\s*catalogResetKey\)/)
-  // Grade detail resets on term changes.
-  assert.match(gradeDetail, /useCatalogLoadMore\(visible,\s*CATALOG_INITIAL_LIMIT,\s*`\$\{term\}:\$\{sort\}`\)/)
 })
 
 test('catalog cards use content-visibility:auto for rendering performance', () => {

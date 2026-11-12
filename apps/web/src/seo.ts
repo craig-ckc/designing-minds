@@ -3,15 +3,12 @@ import {
   promotionPrice,
   getCatalogItemBySlug,
   getFaqsByIds,
-  productsForGrade,
   type CmsSnapshot,
   type Faq,
-  type Product,
   type PhysicalCatalogProduct,
   type Testimonial,
 } from '@designing-minds/cms'
-import { CONTACT, GRADE_BLURB } from './content/site'
-import { gradePageMeta } from './lib/subject-labels'
+import { CONTACT } from './content/site'
 import { canonicalUrlForPath, resolveCanonicalSiteUrl } from './site-url'
 import type { PublicRoute } from './static-routes'
 
@@ -284,41 +281,6 @@ const itemList = (siteUrl: string, name: string, itemPaths: string[]) => ({
   })),
 })
 
-/**
- * ItemList for a grade page, one step richer than {@link itemList}: each entry
- * carries a `Product` with price, sku and category instead of a bare URL, so
- * the structured data itself names what is on sale, not just where it lives.
- */
-const productItemList = (siteUrl: string, name: string, products: Product[]) => ({
-  '@context': 'https://schema.org',
-  '@type': 'ItemList',
-  name,
-  numberOfItems: products.length,
-  itemListElement: products.map((product, index) => {
-    const url = `${siteUrl}/shop/${product.slug}`
-    return {
-      '@type': 'ListItem',
-      position: index + 1,
-      name: product.title,
-      item: {
-        '@type': 'Product',
-        name: product.title,
-        url,
-        sku: product.slug,
-        category: product.subjects.join(', ') || product.resourceFormat,
-        brand: { '@type': 'Brand', name: SITE_NAME },
-        offers: {
-          '@type': 'Offer',
-          price: promotionPrice(product),
-          priceCurrency: 'ZAR',
-          availability: 'https://schema.org/InStock',
-          url,
-        },
-      },
-    }
-  }),
-})
-
 /* --------------------------------- Per route --------------------------- */
 
 /**
@@ -357,16 +319,6 @@ export function pageMetaFor(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: 
 
   if (route.path === '/shop' && (snapshot.physicalCatalog ?? []).some((product) => product.published)) {
     return { title: `Shop resources, gifts & keyrings | ${SITE_NAME}`, description: 'Browse digital learning resources, personalised keyrings and gifts. Choose product options and review delivery at checkout.', canonical, ogType: 'website', image }
-  }
-
-  if (route.kind === 'grade' && route.grade) {
-    const grade = route.grade
-    const { title, description } = gradePageMeta({
-      grade,
-      blurb: GRADE_BLURB[grade] ?? `CAPS-aligned tests and summaries for ${grade}.`,
-      products: productsForGrade(snapshot, grade),
-    })
-    return { title, description, canonical, ogType: 'website', image }
   }
 
   const fallback = STATIC_META[route.path] ?? { title: SITE_NAME, description: DEFAULT_DESCRIPTION }
@@ -435,19 +387,6 @@ export function renderHead(route: PublicRoute, snapshot: CmsSnapshot, siteUrl: s
     const faqs = getFaqsByIds(snapshot, product.faqs)
     if (faqs.length > 0) jsonLd.push(faqPage(faqs))
     }
-  } else if (route.kind === 'grade' && route.grade) {
-    const grade = route.grade
-    const products = productsForGrade(snapshot, grade).filter((product) => product.published)
-    jsonLd.push(
-      breadcrumbList(canonicalSiteUrl, [
-        { name: 'Home', path: '/' },
-        { name: 'Grades', path: '/grades' },
-        { name: grade, path: route.path },
-      ]),
-    )
-    if (products.length > 0) {
-      jsonLd.push(productItemList(canonicalSiteUrl, `${grade} CAPS resources`, products))
-    }
   } else {
     if (route.path === '/') {
       jsonLd.push(organization(canonicalSiteUrl, snapshot.testimonials.filter((testimonial) => testimonial.published)), website(canonicalSiteUrl))
@@ -515,7 +454,6 @@ export function llmsTxt(routes: PublicRoute[], siteUrl: string): string {
   const link = (path: string, label: string) => `- [${label}](${canonicalSiteUrl}${path === '/' ? '/' : path})`
 
   const staticRoutes = routes.filter((route) => route.kind === 'static')
-  const gradeRoutes = routes.filter((route) => route.kind === 'grade')
   const productRoutes = routes.filter((route) => route.kind === 'product')
 
   const staticLabels: Record<string, string> = {
@@ -540,9 +478,6 @@ export function llmsTxt(routes: PublicRoute[], siteUrl: string): string {
     ...staticRoutes.map((route) => link(route.path, staticLabels[route.path] ?? route.path)),
   ]
 
-  if (gradeRoutes.length > 0) {
-    sections.push('', '## Resources by grade', ...gradeRoutes.map((route) => link(route.path, `${route.grade} CAPS resources`)))
-  }
   if (productRoutes.length > 0) {
     sections.push('', '## Products', ...productRoutes.map((route) => link(route.path, route.productSlug ?? route.path)))
   }

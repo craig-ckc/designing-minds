@@ -10,7 +10,6 @@ Indexable public routes:
 /
 /shop/
 /grades/
-/grades/grade-[3-7]/
 /packages/
 /shop/[product-slug]/
 /help/
@@ -20,6 +19,8 @@ Indexable public routes:
 /terms/
 /refund-policy/
 ```
+
+The old `/grades/grade-N/` detail pages are removed. The build emits 301s from `/grades/grade-N/` to `/shop?grade=grade-N`, and any other `/grades/<x>/` to `/shop`; the client route does the same.
 
 Functional noindex routes:
 
@@ -45,7 +46,7 @@ Functional noindex routes:
 | Family | Routes | Purpose | Data |
 | --- | --- | --- | --- |
 | Entry pages | `/`, `/about/`, `/contact/`, `/help/` | Introduce the brand, build trust, answer questions, and send customers into catalogue/support flows. | Featured Products, FAQs, Testimonials where useful. |
-| Browse pages | `/shop/`, `/grades/`, `/grades/grade-[3-7]/`, `/packages/` | Help customers narrow the catalogue before opening a Product Detail. | Products, Subjects, Value Lists, contextual FAQs. |
+| Browse pages | `/shop/` (grade, term, subject, format and product-type filters; `?grade=grade-4` or `?grade=Grade 4`), `/grades/` (marketing page of grade tiles that link into the shop filter), `/packages/` | Help customers narrow the catalogue before opening a Product Detail. | Products, Subjects, Value Lists, contextual FAQs. |
 | Product detail | `/shop/[product-slug]/` | Explain one purchasable Product and let the customer add it to cart. | Product, Subjects, related Products, referenced FAQs. |
 | Legal pages | `/privacy-policy/`, `/terms/`, `/refund-policy/` | Set expectations for privacy, purchases, digital delivery, refunds, licensing, and support. | Static copy for launch. |
 | Auth pages | `/sign-up/`, `/login/`, `/forgot-password/`, `/reset-password/` | Create, access, or recover a Customer Account, including checkout-driven auth. | Supabase Auth session only. |

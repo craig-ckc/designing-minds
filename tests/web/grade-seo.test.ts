@@ -137,9 +137,9 @@ test('no published products falls back to the blurb and a generic title', () => 
 
 /* --------------------------------- seo.ts wiring -------------------------- */
 
-test('seo.ts wires the grade branch through gradePageMeta', () => {
+test('seo.ts no longer builds per-grade page metadata or "Resources by grade" listings', () => {
   const seo = read('seo.ts')
-  assert.match(seo, /gradePageMeta\(\{/)
+  assert.doesNotMatch(seo, /gradePageMeta|route\.kind === 'grade'|Resources by grade|productItemList/)
 })
 
 test('the /packages static meta talks about bundles, not retired plans', () => {
@@ -149,23 +149,9 @@ test('the /packages static meta talks about bundles, not retired plans', () => {
   assert.match(seo, /'\/packages':\s*'Bundles',/)
 })
 
-test('the grade page ItemList carries structured Product entries, not bare URLs', () => {
+test('the /shop ItemList stays the plain URL-list helper', () => {
   const seo = read('seo.ts')
-  assert.match(seo, /const productItemList[\s\S]*?'@type': 'Product'[\s\S]*?priceCurrency: 'ZAR'/)
-  assert.match(seo, /productItemList\(canonicalSiteUrl, `\$\{grade\} CAPS resources`, products\)/)
-  // The /shop ItemList (333 items) is untouched — still the plain URL-list helper.
   assert.match(seo, /itemList\(canonicalSiteUrl, 'CAPS-aligned resources', products\.map/)
-})
-
-/* ----------------------------- grade-detail-page.tsx ---------------------- */
-
-test('the grade page renders a subject nav that links into the filtered shop', () => {
-  const page = read('pages/grade-detail-page.tsx')
-
-  assert.match(page, /aria-label=\{`Subjects in \$\{grade\}`\}/)
-  assert.match(page, /subjectsForGrade\(snapshot, grade\)/)
-  assert.doesNotMatch(page, /subjectAcronymsIn|Personal and Social Well-being/)
-  assert.match(page, /\/shop\?grade=\$\{encodeURIComponent\(grade\)\}&subject=\$\{encodeURIComponent\(subject\)\}/)
 })
 
 /* -------------------------------- grades-page.tsx ------------------------- */
@@ -173,5 +159,5 @@ test('the grade page renders a subject nav that links into the filtered shop', (
 test('grades-page.tsx says bundles, not bundles and plans', () => {
   const page = read('pages/grades-page.tsx')
   assert.doesNotMatch(page, /and plans/)
-  assert.match(page, /resources and bundles/)
+  assert.match(page, /Bundles group a grade’s resources/)
 })
