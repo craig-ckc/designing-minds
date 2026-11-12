@@ -19,6 +19,7 @@ import { FunnelIcon } from '@phosphor-icons/react/dist/ssr/Funnel'
 import { GlobeIcon } from '@phosphor-icons/react/dist/ssr/Globe'
 import { ListIcon } from '@phosphor-icons/react/dist/ssr/List'
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass'
+import { MinusIcon } from '@phosphor-icons/react/dist/ssr/Minus'
 import { PaletteIcon } from '@phosphor-icons/react/dist/ssr/Palette'
 import { PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple'
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus'
@@ -43,6 +44,7 @@ export type IconName =
   | 'download'
   | 'spark'
   | 'plus'
+  | 'minus'
   | 'smile'
   | 'chevron'
   | 'menu'
@@ -73,6 +75,7 @@ const icons: Record<IconName, ComponentType<IconProps>> = {
   download: DownloadSimpleIcon,
   spark: SparkleIcon,
   plus: PlusIcon,
+  minus: MinusIcon,
   smile: SmileyIcon,
   chevron: CaretDownIcon,
   menu: ListIcon,
@@ -96,7 +99,7 @@ const icons: Record<IconName, ComponentType<IconProps>> = {
 
 // Functional UI glyphs read best as simple single-stroke lines; everything else
 // keeps Phosphor's richer duotone. An explicit `weight` prop overrides both.
-const LINE_ICONS = new Set<IconName>(['arrow', 'plus', 'check', 'chevron', 'close', 'menu', 'filter', 'download', 'trash', 'search', 'spinner'])
+const LINE_ICONS = new Set<IconName>(['arrow', 'plus', 'minus', 'check', 'chevron', 'close', 'menu', 'filter', 'download', 'trash', 'search', 'spinner'])
 
 /**
  * Themeable Icon. Picks up `currentColor` from the surrounding text. Defaults to

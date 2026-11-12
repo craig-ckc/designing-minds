@@ -7,17 +7,18 @@ import { type VariantOf } from './variants'
 /** Button styling via the team `cv` variant builder. */
 const buttonStyles = cv({
   base: [
-    'inline-flex items-center justify-center gap-2 rounded-control font-semibold',
+    'inline-flex items-center justify-center gap-2 rounded-md font-semibold',
     'transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.98]',
     'disabled:opacity-50 aria-disabled:opacity-50 data-[loading]:disabled:opacity-100 data-[loading]:aria-disabled:opacity-100',
   ],
   variants: {
     variant: {
       solid: [
-        'border border-primary-edge text-on-primary [background-image:var(--gradient-primary)]',
+        'border border-primary-ink-strong text-on-primary [background-image:var(--gradient-primary)]',
         'hover:[background-image:var(--gradient-primary-hover)]',
       ],
       'solid-light': ['border border-line bg-surface text-ink hover:bg-surface-sunk'],
+      ghost: ['bg-transparent text-ink hover:bg-surface-sunk'],
       soft: ['bg-surface-sunk text-ink hover:bg-line-strong'],
       outline: ['border-[1.5px] border-line-strong text-ink hover:border-primary hover:bg-surface-alt'],
       'outline-light': ['border-[1.5px] border-on-primary/55 text-on-primary hover:bg-on-primary/10'],
@@ -27,14 +28,14 @@ const buttonStyles = cv({
       'text-light': ['min-h-6 font-semibold text-on-primary hover:underline hover:underline-offset-4'],
     },
     size: {
-      md: ['min-h-[var(--control-h)] px-5 text-body-sm'],
-      sm: ['min-h-[var(--control-h-sm)] px-3.5 text-label'],
+      md: ['min-h-[var(--control-h)] px-5 text-body'],
+      sm: ['min-h-[var(--control-h-sm)] px-4 text-label'],
       icon: ['h-10 w-10 shrink-0'],
       'icon-sm': ['h-9 w-9 shrink-0'],
     },
     shape: {
       default: [],
-      circle: ['rounded-pill'],
+      circle: ['rounded-full'],
     },
   },
   defaultVariants: { variant: 'text', size: 'md', shape: 'default' },

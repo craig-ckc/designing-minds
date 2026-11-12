@@ -1,7 +1,8 @@
 import { cn } from '@designing-minds/utils'
+import { Icon } from './icon'
 
-/** Five-star rating: `Math.round(value)` stars are filled, the rest are empty
- *  outlines. Exposed as one image with an aria-label; the glyphs are hidden. */
+/** Five-star rating: `Math.round(value)` soft filled stars, the rest muted.
+ *  Exposed as one image with an aria-label; the glyphs are hidden. */
 export function StarRating({
   value = 5,
   size = 'md',
@@ -11,12 +12,20 @@ export function StarRating({
   size?: 'sm' | 'md'
   className?: string
 }) {
-  const sizeCls = size === 'sm' ? 'text-body tracking-[1.5px]' : 'text-body-lg tracking-[2px]'
+  const px = size === 'sm' ? 16 : 18
   const filled = Math.min(5, Math.max(0, Math.round(value)))
   return (
-    <span role="img" aria-label={`${value} out of 5 stars`} className={cn('text-amber', sizeCls, className)}>
-      <span aria-hidden="true">{'★'.repeat(filled)}</span>
-      <span aria-hidden="true" className="text-line-strong">{'★'.repeat(5 - filled)}</span>
+    <span role="img" aria-label={`${value} out of 5 stars`} className={cn('inline-flex items-center gap-0.5', className)}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          data-filled={i < filled ? '' : undefined}
+          className={cn('inline-flex shrink-0', i < filled ? 'text-on-yellow' : 'text-line-strong')}
+        >
+          <Icon name="star" weight="fill" size={px} />
+        </span>
+      ))}
     </span>
   )
 }

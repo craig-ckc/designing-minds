@@ -4,14 +4,15 @@ import { Icon } from './icon'
 
 /**
  * The `+` that rotates 45° into a `×` when its disclosure opens. Shared by the
- * native `Disclosure` (`group-open`) and the Base UI FAQ accordion
- * (`group-data-[panel-open]`): wrap it in an element with the `group` class.
+ * native `Disclosure` (inside `details[open] > summary`) and the Base UI FAQ
+ * accordion (`group-data-[panel-open]`: wrap it in an element with the `group` class).
+ * The native variant is scoped to the summary so panel content is never matched.
  */
 export function PlusMarker({ className, weight }: { className?: string; weight?: 'regular' | 'bold' }) {
   return (
     <span
       className={cn(
-        'transition-transform motion-reduce:transition-none group-open:rotate-45 group-data-[panel-open]:rotate-45',
+        'transition-transform motion-reduce:transition-none [details[open]>summary_&]:rotate-45 group-data-[panel-open]:rotate-45',
         className,
       )}
       aria-hidden="true"
