@@ -12,6 +12,7 @@ import { ShopPage } from '../../../apps/web/src/pages/shop-page'
 it('gives the combined resource and bundle results one authoritative count', () => {
   render(<MemoryRouter><ShopPage /></MemoryRouter>)
   expect(screen.getByRole('heading', { name: '3 results' })).toBeTruthy()
-  expect(screen.getByText('Find CAPS-aligned tests, summaries and bundles by grade, term, subject and format.')).toBeTruthy()
+  // The header lead is gone: the count and the filter sheet carry the page.
+  expect(screen.queryByText(/Find CAPS-aligned tests, summaries and bundles/)).toBeNull()
   expect(screen.queryByText(/Browse \d+ CAPS-aligned resources/)).toBeNull()
 })

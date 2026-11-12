@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { after, before, test } from 'node:test'
 import { createElement, type ComponentType } from 'react'
@@ -12,7 +13,8 @@ import { makeProduct, makeSnapshot } from '../support/fixtures.ts'
 let server: ViteDevServer
 let ProductPage: ComponentType
 let ShopPage: ComponentType
-let PhysicalProductCard: ComponentType<{ product: PhysicalCatalogProduct }>
+let ProductTypeGroup: ComponentType<{ value: 'all' | 'digital' | 'physical'; onChange: (value: 'all' | 'digital' | 'physical') => void }>
+let ProductCard: ComponentType<{ product: PhysicalCatalogProduct }>
 let CatalogContext: typeof import('../../apps/web/src/lib/catalog.tsx').CatalogContext
 let selectPhysicalVariant: typeof import('../../apps/web/src/lib/physical-variants.ts').selectPhysicalVariant
 let physicalSelectionMessage: typeof import('../../apps/web/src/lib/physical-variants.ts').physicalSelectionMessage
@@ -28,7 +30,8 @@ before(async () => {
   })
   ;({ ProductPage } = await server.ssrLoadModule('/src/pages/product-page.tsx'))
   ;({ ShopPage } = await server.ssrLoadModule('/src/pages/shop-page.tsx'))
-  ;({ PhysicalProductCard } = await server.ssrLoadModule('/src/components/ui/physical-product-card.tsx'))
+  ;({ ProductTypeGroup } = await server.ssrLoadModule('/src/components/ui/filter-drawer.tsx'))
+  ;({ ProductCard } = await server.ssrLoadModule('/src/components/ui/product-card.tsx'))
   ;({ selectPhysicalVariant, physicalSelectionMessage } = await server.ssrLoadModule('/src/lib/physical-variants.ts'))
   ;({ optionColour } = await server.ssrLoadModule('/src/lib/product-option-colours.ts'))
   ;({ CatalogContext } = await server.ssrLoadModule('/src/lib/catalog.tsx'))
@@ -112,19 +115,19 @@ test('product text and gallery alternative text are escaped rather than interpre
 })
 
 test('physical cards show a product preview and per-letter rate without digital cover or stock counts', () => {
-  const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(PhysicalProductCard, { product: keyring() }))).replace(/\u00a0/g, ' ')
+  const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(ProductCard, { product: keyring() }))).replace(/\u00a0/g, ' ')
   assert.match(html, /alt="Local sample keyring illustration"/)
   assert.match(html, /R 30 per letter/)
   assert.match(html, /href="\/shop\/sample-keyring"/)
   assert.doesNotMatch(html, /Grade [0-9]|onHand|stock count/)
 })
 
-test('one shop combines digital and physical entries and offers a visible gift category', () => {
+test('one shop combines digital and physical entries and keeps the type choice inside the filter sheet', () => {
   const snapshot = makeSnapshot({ products: [makeProduct({ slug: 'maths', title: 'Digital Maths resource', priceZar: 60 })], physicalCatalog: [keyring(), bag()] })
   const html = render('/shop', snapshot)
-  assert.match(html, /All products/)
-  assert.match(html, /Digital resources/)
-  assert.match(html, /Gifts &amp; keyrings/)
+  assert.match(html, /<h1[^>]*>All products<\/h1>/)
+  // The category chip row and header lead are gone; the type group lives in the (closed) drawer.
+  assert.doesNotMatch(html, /Product category|Digital resources|Gifts &amp; keyrings|Learning resources, personalised keyrings/)
   assert.match(html, /Digital Maths resource/)
   assert.match(html, /Sample personalised clicker keyring/)
   assert.match(html, /Sample large Christmas gift bag/)
@@ -145,6 +148,38 @@ test('gift category and search use the same shop while educational filters do no
   const grade = render('/shop?grade=Grade+3', snapshot)
   assert.match(grade, /Digital Maths resource/)
   assert.doesNotMatch(grade, /Sample personalised clicker keyring|Sample large Christmas gift bag/)
+})
+
+test('?grade= accepts a slug as well as a label and filters by it', () => {
+  const snapshot = makeSnapshot({ products: [
+    makeProduct({ slug: 'maths-3', title: 'Grade three maths', grade: 'Grade 3' }),
+    makeProduct({ slug: 'maths-4', title: 'Grade four maths', grade: 'Grade 4' }),
+  ] })
+  for (const value of ['grade-4', 'Grade+4', 'GRADE-4']) {
+    const html = render(`/shop?grade=${value}`, snapshot)
+    assert.match(html, /Grade four maths/, value)
+    assert.doesNotMatch(html, /Grade three maths/, value)
+  }
+  // An unknown value is ignored rather than emptying the shop.
+  assert.match(render('/shop?grade=grade-9', snapshot), /Grade three maths/)
+})
+
+test('the product type group is a single choice of three options and reports the picked one', () => {
+  const html = renderToStaticMarkup(createElement(ProductTypeGroup, { value: 'digital', onChange: () => undefined }))
+  assert.match(html, />Product type</)
+  assert.equal((html.match(/<button/g) ?? []).length, 3)
+  assert.match(html, /aria-pressed="false"[^>]*>All products/)
+  assert.match(html, /aria-pressed="true"[^>]*>Digital resources/)
+  assert.match(html, /aria-pressed="false"[^>]*>Gifts &amp; keyrings/)
+})
+
+test('the shop puts product type first in the filter sheet, hides it without a physical catalogue and counts it', () => {
+  const source = readFileSync(new URL('../../apps/web/src/pages/shop-page.tsx', import.meta.url), 'utf8')
+  const typeAt = source.indexOf('<ProductTypeGroup')
+  assert.ok(typeAt > -1 && typeAt < source.indexOf('<ChipGroup label="Grade"'))
+  assert.match(source, /\{hasPhysicalCatalog \? <ProductTypeGroup/)
+  assert.match(source, /\(category === 'all' \? 0 : 1\)/)
+  assert.equal((source.match(/disabled=\{category === 'physical'\}/g) ?? []).length, 4)
 })
 
 test('a database without physical listings retains the digital shop language', () => {
@@ -216,9 +251,50 @@ test('colour swatches support labelled names and exact hex values without invent
 
 test('an out-of-stock card retains the actual variant price rather than reverting to an unrelated base price', () => {
   const product = bag({ priceZar: 100, variants: [{ id: 'large', sku: null, optionValues: {}, unitPriceZar: 235, available: false }] })
-  const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(PhysicalProductCard, { product }))).replace(/\u00a0/g, ' ')
+  const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(ProductCard, { product }))).replace(/\u00a0/g, ' ')
   assert.match(html, /R 235/)
   assert.doesNotMatch(html, /R 100/)
+})
+
+test('the unified card flags only unavailable physical products and never says In stock or Physical', () => {
+  const card = (product: PhysicalCatalogProduct) => renderToStaticMarkup(createElement(MemoryRouter, null, createElement(ProductCard, { product }))).replace(/\u00a0/g, ' ')
+  const available = card(keyring())
+  assert.doesNotMatch(available, /Out of stock|In stock|Physical|View product/)
+  const unavailable = card(keyring({ variants: keyring().variants.map((variant) => ({ ...variant, available: false })) }))
+  assert.match(unavailable, /Out of stock/)
+  assert.doesNotMatch(unavailable, /In stock|Physical|View product/)
+})
+
+test('a physical card links its cart icon to the product page instead of adding to the cart', () => {
+  const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(ProductCard, { product: keyring() })))
+  assert.match(html, /<a[^>]*aria-label="Choose options for Sample personalised clicker keyring"[^>]*href="\/shop\/sample-keyring"|<a[^>]*href="\/shop\/sample-keyring"[^>]*aria-label="Choose options for Sample personalised clicker keyring"/)
+  assert.doesNotMatch(html, /Add Sample personalised clicker keyring to cart|<button/)
+})
+
+test('a physical card without a photo renders the neutral empty frame, and a sale shows the existing discount badge', () => {
+  const empty = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(ProductCard, { product: keyring({ galleryImages: [] }) })))
+  assert.doesNotMatch(empty, /<img/)
+  const sale = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(ProductCard, { product: keyring({ salePriceZar: 24 }) })))
+  assert.match(sale, /Save 20%/)
+  assert.doesNotMatch(empty, /Save \d+%/)
+})
+
+test('physical detail drops the Physical chip and In stock badge, and uses the stepper', () => {
+  const html = render('/shop/sample-keyring', makeSnapshot({ physicalCatalog: [keyring()] }))
+  assert.doesNotMatch(html, /Physical product|In stock/)
+  assert.match(html, /aria-label="Increase quantity"/)
+  assert.match(html, /<input[^>]*type="number"[^>]*aria-label="Quantity"/)
+})
+
+test('physical detail shows thumbnails only when there is more than one image', () => {
+  const one = render('/shop/sample-keyring', makeSnapshot({ physicalCatalog: [keyring()] }))
+  assert.doesNotMatch(one, /Show image \d of \d/)
+  const two = render('/shop/sample-keyring', makeSnapshot({ physicalCatalog: [keyring({ galleryImages: [
+    ...keyring().galleryImages,
+    { id: 'second', storageKey: 'b.svg', url: 'http://127.0.0.1:58012/preview-media/b.svg', filename: 'b.svg', alt: 'Second view' },
+  ] })] }))
+  assert.match(two, /aria-label="Show image 1 of 2"[^>]*aria-current="true"/)
+  assert.match(two, /aria-label="Show image 2 of 2"/)
 })
 
 test('custom field keys matching Object prototype properties still start with an empty input', () => {

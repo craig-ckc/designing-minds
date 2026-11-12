@@ -1,0 +1,49 @@
+import { type RefObject, useRef } from 'react'
+import { Icon } from './icon'
+
+export type ActiveFilter = { key: string; value: string; label: string }
+
+/**
+ * Removable chips for the filters currently applied to the shop. Each chip is
+ * a button named "Remove filter: <label>"; removing one returns focus to its
+ * neighbour (next, else previous) or, when it was the last, to `emptyFocusRef`.
+ */
+export function ActiveFilterChips({
+  filters,
+  onRemove,
+  emptyFocusRef,
+}: {
+  filters: ActiveFilter[]
+  onRemove: (filter: ActiveFilter) => void
+  emptyFocusRef?: RefObject<HTMLElement | null>
+}) {
+  const listRef = useRef<HTMLUListElement>(null)
+  if (filters.length === 0) return null
+
+  const remove = (filter: ActiveFilter, index: number) => {
+    const buttons = listRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? []
+    const neighbour = buttons[index + 1] ?? buttons[index - 1] ?? null
+    onRemove(filter)
+    // Keyed chips persist across the re-render, so the neighbour stays focusable.
+    if (neighbour) neighbour.focus()
+    else emptyFocusRef?.current?.focus()
+  }
+
+  return (
+    <ul ref={listRef} aria-label="Active filters" className="flex flex-wrap items-center gap-2">
+      {filters.map((filter, index) => (
+        <li key={`${filter.key}:${filter.value}`}>
+          <button
+            type="button"
+            aria-label={`Remove filter: ${filter.label}`}
+            onClick={() => remove(filter, index)}
+            className="filter-chip border-line-strong bg-canvas"
+          >
+            {filter.label}
+            <Icon name="close" size={12} />
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
