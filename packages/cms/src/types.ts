@@ -286,6 +286,12 @@ export interface OrderItem {
   variantId?: string
   optionValues?: Record<string, string>
   cartLineId?: string
+  /** Product or bundle id; recorded on lines since 2026-11-12 so entitlements survive slug changes. */
+  productId?: string
+  bundleId?: string
+  /** Question and option labels at purchase, keyed like optionValues/customizations. */
+  fieldLabels?: Record<string, string>
+  inventoryPolicy?: 'tracked' | 'made_to_order'
   priceZar: number
   /**
    * The grade this line item grants — the product's or bundle's own grade.

@@ -25,6 +25,9 @@ const physical = (): PhysicalProduct => ({
   pricingMode: 'fixed',
   pricingFieldKey: null,
   billableCharacters: null,
+  variantOptions: [],
+  leadTimeDays: null,
+  previewTemplate: null,
 })
 
 function writableRepository(error: string | null = null) {

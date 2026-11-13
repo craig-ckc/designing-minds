@@ -1,5 +1,5 @@
 import { promotionValidation } from '../lib/promotions.ts'
-import { customizationRulesValidation, type PhysicalProduct } from '../lib/physical-products.ts'
+import { customizationRulesValidation, physicalConfigurationValidation, type PhysicalProduct } from '../lib/physical-products.ts'
 import { physicalPricingValidation, type PhysicalCatalogProduct, type PhysicalVariantDraft } from '../lib/commerce.ts'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type {
@@ -118,7 +118,10 @@ const numberizePhysicalProduct = (product: PhysicalProduct): PhysicalProduct => 
   pricingMode: product.pricingMode ?? 'fixed',
   pricingFieldKey: product.pricingFieldKey ?? null,
   billableCharacters: product.billableCharacters ?? null,
-  variants: product.variants?.map((variant) => ({ ...variant, _persisted: true })),
+  variantOptions: product.variantOptions ?? [],
+  leadTimeDays: product.leadTimeDays ?? null,
+  previewTemplate: product.previewTemplate ?? null,
+  variants: product.variants?.map((variant) => ({ ...variant, inventoryPolicy: variant.inventoryPolicy ?? 'tracked', _persisted: true, _savedOptionValues: { ...variant.optionValues } })),
 })
 
 interface OptionalRows {
@@ -140,6 +143,9 @@ const numberizePhysicalCatalog = (product: PhysicalCatalogProduct): PhysicalCata
   priceZar: Number(product.priceZar),
   salePriceZar: product.salePriceZar == null ? null : Number(product.salePriceZar),
   variants: (product.variants ?? []).map((variant) => ({ ...variant, unitPriceZar: variant.unitPriceZar == null ? null : Number(variant.unitPriceZar) })),
+  variantOptions: product.variantOptions ?? [],
+  leadTimeDays: product.leadTimeDays ?? null,
+  previewTemplate: product.previewTemplate ?? null,
 })
 const numberizeBundle = (bundle: Bundle): Bundle => ({
   ...bundle,
@@ -303,6 +309,8 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
           variants: variants.filter((variant) => variant.productId === row.id).map((variant) => ({
             ...withoutLive(variant),
             _persisted: true,
+            _savedOptionValues: { ...variant.optionValues },
+            inventoryPolicy: variant.inventoryPolicy ?? 'tracked',
             unitPriceZar: variant.unitPriceZar == null ? null : Number(variant.unitPriceZar),
             onHand: inventory.get(variant.id) ?? 0,
           })),
@@ -376,6 +384,7 @@ export const createSupabaseRepository = ({ url, publishableKey, client: provided
     async savePhysicalProduct(product: PhysicalProduct) {
       if (product.productType !== 'physical') throw new Error('A physical product type is required.')
       const problem = customizationRulesValidation(product.customizationRules)
+        ?? physicalConfigurationValidation(product.variantOptions ?? [], product.customizationRules, product.pricingFieldKey)
         ?? physicalPricingValidation(product)
         ?? promotionValidation('products', product as unknown as Record<string, unknown>)
       if (problem) throw new Error(problem)

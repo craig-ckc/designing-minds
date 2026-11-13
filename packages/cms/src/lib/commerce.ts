@@ -1,14 +1,16 @@
 import type { OrderItem, ProductImage } from '../types'
-import type { CustomizationRule } from './physical-products'
-import { validateCustomizationValues } from './physical-products.ts'
+import type { CustomizationRule, InventoryPolicy, PreviewTemplate, VariantOptionDefinition } from './physical-products'
+import { applicableRules, findChoice, normalizeCustomizations, validateCustomizationValues } from './physical-products.ts'
 import { promotionPrice } from './promotions.ts'
 
 export type PhysicalPricingMode = 'fixed' | 'per_character'
-export type FulfillmentStatus = 'not_required' | 'unfulfilled' | 'shipped' | 'delivered' | 'review'
+export type FulfillmentStatus = 'not_required' | 'unfulfilled' | 'shipped' | 'delivered' | 'review' | 'cancelled'
 
 export interface PhysicalVariantDraft {
   /** Editor-only marker; never used for authorization or persisted as content. */
   _persisted?: boolean
+  /** Editor-only: the option values the server holds, so unsaved edits can be undone. */
+  _savedOptionValues?: Record<string, string>
   id: string
   productId: string
   sku: string | null
@@ -16,6 +18,8 @@ export interface PhysicalVariantDraft {
   unitPriceZar: number | null
   active: boolean
   sortOrder: number
+  /** 'made_to_order' variants are never stock-counted. Defaults to 'tracked'. */
+  inventoryPolicy?: InventoryPolicy
   onHand: number
   /** Present only when an operator intentionally changes an existing stock count. */
   stockAdjustment?: { expectedOnHand: number; newOnHand: number }
@@ -32,6 +36,8 @@ export interface PhysicalCatalogVariant {
   optionValues: Record<string, string>
   unitPriceZar: number | null
   available: boolean
+  /** Made to order: always available, never stock-counted. */
+  madeToOrder?: boolean
 }
 
 export interface PhysicalCatalogProduct {
@@ -53,6 +59,10 @@ export interface PhysicalCatalogProduct {
   customizationRules: CustomizationRule[]
   galleryImages: ProductImage[]
   variants: PhysicalCatalogVariant[]
+  /** Declared stocked options; absent on catalogues published before 2026-11-12. */
+  variantOptions?: VariantOptionDefinition[]
+  leadTimeDays?: number | null
+  previewTemplate?: PreviewTemplate | null
   published: true
 }
 
@@ -91,6 +101,9 @@ export interface CommerceOrderItem extends OrderItem {
   variantId?: string
   optionValues?: Record<string, string>
   cartLineId?: string
+  /** Question and option labels at purchase, keyed like the values. */
+  fieldLabels?: Record<string, string>
+  inventoryPolicy?: InventoryPolicy
 }
 
 /** Customer id and all prices are supplied by the authenticated server. */
@@ -142,17 +155,24 @@ export function physicalSelectionValidation(product: PhysicalCatalogProduct, var
   if (quantityError) return quantityError
   const variant = product.variants.find((entry) => entry.id === variantId)
   if (!variant || !variant.available) return 'This option is out of stock. Please choose another option.'
+  const normalized = normalizeCustomizations(product.customizationRules, values, variant.optionValues)
   if (product.customizationRules.length > 0) {
-    const error = validateCustomizationValues(product.customizationRules, values)
+    const error = validateCustomizationValues(product.customizationRules, normalized, variant.optionValues)
     if (error) return error
   } else if (Object.keys(values).length > 0) return 'This product does not accept personalisation.'
   if (product.pricingMode === 'per_character') {
     if (!product.pricingFieldKey || !product.billableCharacters) return 'Name pricing is not configured for this product.'
-    const value = values[product.pricingFieldKey]
-    const billable = new Set(Array.from(product.billableCharacters))
-    if (typeof value !== 'string' || !Array.from(value).some((character) => billable.has(character))) return 'Enter a name containing a billable letter.'
+    if (billableLetterCount(product, normalized) < 1) return 'Enter a name containing a billable letter.'
   }
   return null
+}
+
+/** Letters charged in the per-letter field. Matching ignores letter case, like checkout. */
+export function billableLetterCount(product: Pick<PhysicalCatalogProduct, 'pricingFieldKey' | 'billableCharacters'>, values: Record<string, string>): number {
+  if (!product.pricingFieldKey || !product.billableCharacters) return 0
+  const billable = new Set(Array.from(product.billableCharacters.toUpperCase()))
+  const value = Object.hasOwn(values, product.pricingFieldKey) ? values[product.pricingFieldKey] : ''
+  return Array.from(value ?? '').filter((character) => billable.has(character.toUpperCase())).length
 }
 
 export function physicalPricingValidation(product: Pick<PhysicalCatalogProduct, 'pricingMode' | 'pricingFieldKey' | 'billableCharacters' | 'customizationRules'>): string | null {
@@ -161,18 +181,35 @@ export function physicalPricingValidation(product: Pick<PhysicalCatalogProduct, 
   }
   if (product.pricingMode !== 'per_character') return 'Choose a supported pricing method.'
   const rule = product.customizationRules.find((entry) => entry.key === product.pricingFieldKey)
-  if (!rule || rule.type !== 'text' || !rule.required || !product.billableCharacters) return 'Name pricing requires a required text field and configured billable characters.'
+  if (!rule || rule.type !== 'text' || !rule.required || !product.billableCharacters) return 'Name pricing requires a required text question with “Charge per letter” turned on.'
   return null
 }
 
-/** Display estimate only; checkout always recalculates in the database. */
+/** Price added by chosen paid options (e.g. a premium letter style), per item. */
+export function choiceSurchargeZar(product: Pick<PhysicalCatalogProduct, 'customizationRules'>, variant: Pick<PhysicalCatalogVariant, 'optionValues'>, values: Record<string, string>): number {
+  let cents = 0
+  for (const rule of applicableRules(product.customizationRules, variant.optionValues)) {
+    if (rule.type !== 'select') continue
+    const chosen = findChoice(rule, Object.hasOwn(values, rule.key) ? values[rule.key] : undefined)
+    if (chosen?.priceDeltaZar) cents += Math.round(chosen.priceDeltaZar * 100)
+  }
+  return cents / 100
+}
+
+/**
+ * Display estimate only; checkout always recalculates in the database
+ * (private.physical_unit_price). Base (variant price or the sale-aware product
+ * price) × billable letters when priced per letter, plus chosen surcharges.
+ */
 export function physicalUnitPriceZar(product: PhysicalCatalogProduct, variant: PhysicalCatalogVariant, values: Record<string, string>): number {
+  const normalized = normalizeCustomizations(product.customizationRules, values, variant.optionValues)
   const base = variant.unitPriceZar == null ? promotionPrice(product) : variant.unitPriceZar
-  if (product.pricingMode === 'fixed') return base
-  if (!product.pricingFieldKey || !product.billableCharacters) return 0
-  const billable = new Set(Array.from(product.billableCharacters))
-  const letters = Array.from(values[product.pricingFieldKey] ?? '').filter((character) => billable.has(character)).length
-  return Math.round(base * 100) * letters / 100
+  let cents = Math.round(base * 100)
+  if (product.pricingMode === 'per_character') {
+    if (!product.pricingFieldKey || !product.billableCharacters) return 0
+    cents *= billableLetterCount(product, normalized)
+  }
+  return (cents + Math.round(choiceSurchargeZar(product, variant, normalized) * 100)) / 100
 }
 
 export const normalizeDeliveryPhone = (value: string): string => value.replace(/[\s()-]/g, '')
