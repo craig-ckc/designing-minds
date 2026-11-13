@@ -23,7 +23,7 @@ export function Select({
   className?: string
 }) {
   return (
-    <BaseSelect.Root value={value} onValueChange={(next) => onValueChange((next ?? '') as string)} disabled={disabled}>
+    <BaseSelect.Root items={options} value={value} onValueChange={(next) => onValueChange((next ?? '') as string)} disabled={disabled}>
       <BaseSelect.Trigger
         id={id}
         className={cn(FIELD, 'flex items-center justify-between gap-2 text-left disabled:opacity-50', className)}
