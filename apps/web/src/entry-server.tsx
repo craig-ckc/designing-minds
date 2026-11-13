@@ -2,10 +2,10 @@
 import { StrictMode } from 'react'
 import { renderToString } from 'react-dom/server'
 import { StaticRouter } from 'react-router'
-import type { CmsSnapshot } from '@designing-minds/cms'
 import App from './app.tsx'
 import { AuthProvider } from './lib/auth.tsx'
 import { CatalogProvider } from './lib/catalog.tsx'
+import type { WebCatalogSnapshot } from './lib/cover-assets'
 
 /* -------------------------------------------------------------------------
    Server render entry for the prerender build.
@@ -17,7 +17,7 @@ import { CatalogProvider } from './lib/catalog.tsx'
    compiled bundle without executing TypeScript itself.
    ------------------------------------------------------------------------- */
 
-export function render({ url, snapshot }: { url: string; snapshot: CmsSnapshot }): { appHtml: string } {
+export function render({ url, snapshot }: { url: string; snapshot: WebCatalogSnapshot }): { appHtml: string } {
   const appHtml = renderToString(
     <StrictMode>
       <StaticRouter location={url}>
@@ -33,6 +33,8 @@ export function render({ url, snapshot }: { url: string; snapshot: CmsSnapshot }
 }
 
 export { loadPublicBuildData } from './build/load-public-data.ts'
+export { renderCoverJobs } from './build/render-cover-jobs.tsx'
+export { COVER_IMAGE_WIDTH, COVER_IMAGE_HEIGHT, COVER_THUMBNAIL_WIDTH } from './lib/cover-assets.ts'
 export { getPublicRoutes, FUNCTIONAL_NOINDEX_PATHS, FUNCTIONAL_SPA_PREFIXES } from './static-routes.ts'
 export { renderHead, sitemapXml, robotsTxt, llmsTxt } from './seo.ts'
 export { CANONICAL_SITE_URL, resolveCanonicalSiteUrl } from './site-url.ts'

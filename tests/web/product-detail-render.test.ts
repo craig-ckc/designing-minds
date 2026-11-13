@@ -6,11 +6,14 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { createServer, type ViteDevServer } from 'vite'
 import type { Bundle, CmsSnapshot, Product, ProductImage } from '../../packages/cms/src/types.ts'
+import type { CoverAssets } from '../../apps/web/src/lib/cover-assets.ts'
 
 let server: ViteDevServer
 let ProductPage: ComponentType
 let ProductGallery: ComponentType<{ item: Product; images: ProductImage[]; stacked?: boolean }>
 let CatalogContext: typeof import('../../apps/web/src/lib/catalog.tsx').CatalogContext
+let CoverAssetsContext: typeof import('../../apps/web/src/lib/cover-assets.ts').CoverAssetsContext
+let renderCoverJobs: typeof import('../../apps/web/src/build/render-cover-jobs.tsx').renderCoverJobs
 
 before(async () => {
   server = await createServer({
@@ -22,6 +25,8 @@ before(async () => {
   ;({ ProductPage } = await server.ssrLoadModule('/src/pages/product-page.tsx'))
   ;({ ProductGallery } = await server.ssrLoadModule('/src/components/ui/product-gallery.tsx'))
   ;({ CatalogContext } = await server.ssrLoadModule('/src/lib/catalog.tsx'))
+  ;({ CoverAssetsContext } = await server.ssrLoadModule('/src/lib/cover-assets.ts'))
+  ;({ renderCoverJobs } = await server.ssrLoadModule('/src/build/render-cover-jobs.tsx'))
 })
 after(async () => { await server?.close() })
 
@@ -44,15 +49,37 @@ const snapshot = (resource = product, pack = bundle) => ({
   products: [resource], bundles: [pack],
   faqs: [{ id: 'download', question: 'Where do I download?', answer: 'Open Order Detail after payment.', published: true }],
 }) as CmsSnapshot
-const renderPage = (slug: string, data = snapshot()) => renderToStaticMarkup(
+const renderPage = (slug: string, data = snapshot(), coverAssets: CoverAssets | null = null) => renderToStaticMarkup(
   createElement(CatalogContext.Provider, {
     value: { state: { snapshot: data, status: 'ready', error: null }, actions: { retry: () => {} }, meta: { now: Date.UTC(2026, 0, 1) } },
-  }, createElement(MemoryRouter, { initialEntries: [`/shop/${slug}`] },
+  }, createElement(CoverAssetsContext.Provider, { value: coverAssets }, createElement(MemoryRouter, { initialEntries: [`/shop/${slug}`] },
     createElement(Routes, null,
       createElement(Route, { path: '/shop/:slug', element: createElement(ProductPage) }),
     ),
-  )),
+  ))),
 ).replace(/\u00a0/g, ' ')
+
+test('the build renders published resources as singles and bundles as stacked covers', () => {
+  const data = snapshot()
+  data.products.push({ ...product, id: 'draft', slug: 'draft', published: false })
+  const jobs = renderCoverJobs(data)
+  assert.deepEqual(jobs.map(({ key }) => key), ['resource', 'bundle', 'resource:english', 'bundle:bundle'])
+  assert.equal(jobs[2].stacked, false)
+  assert.equal(jobs[3].stacked, true)
+  assert.equal((jobs[2].html.match(/<img\b/g) ?? []).length, 1)
+  assert.equal((jobs[3].html.match(/<img\b/g) ?? []).length, 3)
+  assert.match(jobs[3].html, /\/subjects\/english\.avif/)
+})
+
+test('built detail pages render responsive AVIFs for the correct resource and bundle', () => {
+  const image = (id: string) => ({ thumbnail: `/covers/${id}-small.avif`, full: `/covers/${id}-full.avif` })
+  const assets = { 'resource:english': image('english'), 'bundle:bundle': image('bundle') }
+  for (const id of ['english', 'bundle']) {
+    const html = renderPage(id, snapshot(), assets)
+    assert.ok(html.includes(`srcSet="/covers/${id}-small.avif 320w, /covers/${id}-full.avif 720w"`))
+    assert.doesNotMatch(html, /cover-source\.svg|\/subjects\//)
+  }
+})
 
 test('both detail views put purchase controls ahead of the collapsible information in a full-width layout', () => {
   for (const slug of [product.slug, bundle.slug]) {
@@ -74,7 +101,7 @@ test('resource information, preview downloads, FAQs and complete licence terms r
   assert.match(html, /A complete <strong>assessment<\/strong> with a memo/)
   assert.match(html, /30 marks/)
   assert.match(html, /HL = Home Language/)
-  assert.match(html, /Instant download on Order Detail/)
+  assert.match(html, /Instant download on your order page/)
   assert.match(html, /sample.pdf\?download=Sample.pdf/)
   assert.match(html, /Open Order Detail after payment/)
   assert.match(html, /Each additional user\/classroom must purchase their own copy or licence/)

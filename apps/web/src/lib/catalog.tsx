@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
 import { withPricingTime, type CmsSnapshot } from '@designing-minds/cms'
 import { buildClock, usePricingClock } from './pricing-clock'
+import { CoverAssetsContext, type WebCatalogSnapshot } from './cover-assets'
 
 /* -------------------------------------------------------------------------
    Catalogue provider.
@@ -95,7 +96,7 @@ export function CatalogProvider({
   children,
 }: {
   /** The build-time public snapshot (prerender or `window.__DM_PUBLIC_SNAPSHOT__`). */
-  initialSnapshot?: CmsSnapshot | null
+  initialSnapshot?: WebCatalogSnapshot | null
   /** Fetches a snapshot when none was supplied. Absent in production. */
   load?: () => Promise<CmsSnapshot>
   /** What `retry` does when there is nothing to refetch. */
@@ -128,7 +129,11 @@ export function CatalogProvider({
     () => ({ state: { snapshot, status: loaded.status, error: loaded.error }, actions: { retry }, meta: { now } }),
     [snapshot, loaded.status, loaded.error, retry, now],
   )
-  return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>
+  return (
+    <CatalogContext.Provider value={value}>
+      <CoverAssetsContext.Provider value={initialSnapshot?.coverAssets ?? null}>{children}</CoverAssetsContext.Provider>
+    </CatalogContext.Provider>
+  )
 }
 
 /* ----------------------------------- Hooks --------------------------------- */

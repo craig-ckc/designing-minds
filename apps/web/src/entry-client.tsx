@@ -1,11 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import type { CmsSnapshot } from '@designing-minds/cms'
 import './index.css'
 import App from './app.tsx'
 import { AuthProvider } from './lib/auth.tsx'
 import { CatalogProvider } from './lib/catalog.tsx'
+import type { WebCatalogSnapshot } from './lib/cover-assets'
 import { installDiagnostics, reportRuntimeError } from './lib/diagnostics.ts'
 import { AppErrorBoundary } from './components/app-error-boundary.tsx'
 
@@ -14,7 +14,7 @@ installDiagnostics()
 declare global {
   interface Window {
     /** Build-time public snapshot loaded by the prerendered page. */
-    __DM_PUBLIC_SNAPSHOT__?: CmsSnapshot
+    __DM_PUBLIC_SNAPSHOT__?: WebCatalogSnapshot
   }
 }
 

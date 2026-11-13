@@ -10,6 +10,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { buildHtml, buildShellHtml, createSnapshotAsset } from './prerender-html.mjs'
+import { renderCoverImages } from './render-cover-images.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const webRoot = path.resolve(here, '..')
@@ -89,6 +90,15 @@ if (template.includes('__DM_PUBLIC_SNAPSHOT__') || !template.includes('<div id="
 
 const routeToFile = (routePath) =>
   routePath === '/' ? path.join(distDir, 'index.html') : path.join(distDir, routePath, 'index.html')
+
+snapshot.coverAssets = await renderCoverImages({
+  jobs: server.renderCoverJobs(snapshot),
+  distDir,
+  template,
+  width: server.COVER_IMAGE_WIDTH,
+  height: server.COVER_IMAGE_HEIGHT,
+  thumbnailWidth: server.COVER_THUMBNAIL_WIDTH,
+})
 
 const routes = server.getPublicRoutes(snapshot)
 const snapshotAsset = createSnapshotAsset(snapshot)

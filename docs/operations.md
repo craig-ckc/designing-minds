@@ -141,6 +141,8 @@ npm run build --workspace @designing-minds/web
 
 The prerender step loads `.env`, `.env.production` and `.env.local` from `apps/web`, so a local build may read whichever Supabase project those point at. Set `ALLOW_EMPTY_PRERENDER=true` only when an offline build should tolerate an empty snapshot (CI and `npm run build:ci` do this; never set it on a deploy).
 
+Prerendering captures published digital covers as transparent AVIFs at 320 and 720 pixels wide. Each file is capped at 100 KB and named by its content for caching. Local builds use installed Chrome, and Linux x64 builds use bundled Chromium. Set `COVER_CHROMIUM_EXECUTABLE` to use a specific Chromium binary.
+
 ## Launch Checklist
 
 Supabase:

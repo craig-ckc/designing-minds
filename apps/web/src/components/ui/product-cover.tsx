@@ -1,4 +1,6 @@
+import { useContext } from 'react'
 import { subjectIllustration, termColorway, type SubjectIllustration } from '../../lib/cover-mappings'
+import { COVER_IMAGE_HEIGHT, COVER_IMAGE_WIDTH, COVER_THUMBNAIL_WIDTH, CoverAssetsContext, coverAssetKey } from '../../lib/cover-assets'
 
 /**
  * Catalogue "book cover" thumbnail, rebuilt from the Figma A4 frame (595×842).
@@ -16,6 +18,7 @@ import { subjectIllustration, termColorway, type SubjectIllustration } from '../
  * the subjects of its members.
  */
 export interface CoverItem {
+  id?: string
   title: string
   grade: string
   term: string
@@ -77,10 +80,10 @@ function CoverFace({
       <div className="relative aspect-[595/842] w-full overflow-hidden rounded-[1.8cqw] bg-canvas [box-shadow:0_0.7cqw_2.2cqw_-0.7cqw_rgba(41,25,10,0.14),0_2.8cqw_6.4cqw_-2.2cqw_rgba(41,25,10,0.18)]">
         <div className={`absolute inset-x-0 bottom-0 ${band}`}>
           <svg width="100%" viewBox="0 0 595 513" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <use href="/icons.svg#cover-band-shape" />
+            <use href="/cover-source.svg#cover-band-shape" />
           </svg>
           <svg width="100%"  viewBox="0 0 595 339" fill="none" xmlns="http://www.w3.org/2000/svg" className={`absolute left-0 bottom-0 ${fg}`}>
-            <use href="/icons.svg#cover-band-accent" />
+            <use href="/cover-source.svg#cover-band-accent" />
           </svg>
         </div>
 
@@ -111,7 +114,7 @@ function CoverFace({
           </div>
         </div>
         <img
-          src={`/${illustration}`}
+          src={illustration.startsWith('covers/') ? '/placeholder-image.svg' : `/${illustration}`}
           alt={`${illustrationLabel(illustration)} illustration`}
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
@@ -135,6 +138,25 @@ export function ProductCover({
   className?: string
   priority?: boolean
 }) {
+  const assets = useContext(CoverAssetsContext)
+  if (assets) {
+    const asset = assets[coverAssetKey(product.id, stacked)] ?? assets[coverAssetKey(undefined, stacked)]
+    return (
+      <img
+        className={`block h-auto w-full ${className}`}
+        src={asset.thumbnail}
+        srcSet={`${asset.thumbnail} ${COVER_THUMBNAIL_WIDTH}w, ${asset.full} ${COVER_IMAGE_WIDTH}w`}
+        sizes={priority ? '(min-width: 1024px) 400px, 75vw' : 'auto, 256px'}
+        width={COVER_IMAGE_WIDTH}
+        height={COVER_IMAGE_HEIGHT}
+        alt={product.title}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'auto'}
+        decoding="async"
+      />
+    )
+  }
+
   if (!stacked) {
     return (
       <div role="img" aria-label={product.title} className="relative aspect-[595/842] w-full flex items-center justify-center">
