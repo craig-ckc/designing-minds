@@ -36,7 +36,9 @@ it('shows conditional recipient/address fields for a physical cart and a simulat
   expect(html).toContain('Postal code')
   expect(html).toContain('Continue to sample payment')
   expect(html).toMatch(/<button(?=[^>]*type="submit")(?=[^>]*class="[^"]*border-primary-ink-strong)[^>]*>Continue to sample payment/)
-  expect(html).toContain('Delivery is charged once')
+  expect(html).toContain('Delivery is charged once and is never discounted.')
+  // Discount codes now cover physical items too, so the note must not limit them to digital resources.
+  expect(html).not.toContain('digital resources only')
 })
 
 it('does not require delivery for a digital-only sample checkout', () => {
@@ -51,7 +53,7 @@ it('physical order receipts preserve quantities, names, delivery and no download
   const purchase = order('paid')
   const snapshot = makeSnapshot({ orders: [purchase] })
   const html = render(createElement(OrderDetailPage, { snapshot, onRefresh: async () => {} }), '/account/orders/order', '/account/orders/:orderId')
-  expect(html).toContain('Quantity 2')
+  expect(html).toMatch(/Qty 2 × R\s?90/)
   expect(html).toContain('Ava')
   expect(html).toContain('Pink')
   expect(html).toContain('1 Example Road')
@@ -60,15 +62,21 @@ it('physical order receipts preserve quantities, names, delivery and no download
   expect(html).not.toContain('>Download<')
 })
 
-it('review orders keep digital downloads locked and show payment review honestly', () => {
+it('review orders unlock the paid-for digital lines while physical stock is reviewed', () => {
+  // A stock review concerns physical items only; the payment succeeded, so
+  // digital resources in the same order are already paid for.
   const purchase = order('payment_review')
   const digital = makeProduct({ slug: 'maths', purchasedFiles: [{ id: 'file', label: 'Assessment', filename: 'maths.pdf' }] })
   purchase.items.push({ id: 'digital', productSlug: 'maths', productKind: 'Single', priceZar: 60, title: 'Maths resource', productType: 'digital' })
   const snapshot = makeSnapshot({ orders: [purchase], products: [digital] })
   const html = render(createElement(OrderDetailPage, { snapshot, onRefresh: async () => {} }), '/account/orders/order', '/account/orders/:orderId')
   expect(html).toContain('Payment under review')
-  expect(html).toContain('Downloads remain locked')
-  expect(html).toMatch(/disabled=""[^>]*>[^<]*[\s\S]*?Download/)
+  expect(html).toContain('needs a stock review')
+  expect(html).toContain('Your downloads are ready above.')
+  expect(html).not.toContain('Downloads unlock here once payment succeeds')
+  const downloadButton = html.match(/<button[^>]*aria-label="Download[^"]*"[^>]*>/)?.[0]
+  expect(downloadButton).toBeDefined()
+  expect(downloadButton).not.toMatch(/\sdisabled=""/)
 })
 
 it('does not render unsafe tracking URLs', () => {

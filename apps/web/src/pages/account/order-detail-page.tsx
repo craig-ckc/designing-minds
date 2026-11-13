@@ -23,6 +23,7 @@ import { useAuth } from '../../lib/auth'
 import { apiUrl } from '../../lib/api'
 import { fetchOrderStatus } from '../../lib/account-data'
 import { consumePurchasedPhysicalCart } from '../../lib/physical-cart'
+import { useOrderFiles } from '../../lib/order-files'
 import { AccountShell, SignedOut } from './account-shell'
 import { OrderStatusBadge } from './order-status-badge'
 import { OrderRecoveryNotice } from './order-recovery-notice'
@@ -54,6 +55,11 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
   useEffect(() => {
     if (order && isDownloadable) consumePurchasedPhysicalCart(order.id, order.items)
   }, [order, isDownloadable])
+  // A stock review only concerns physical items: the payment succeeded, so the
+  // digital lines are already paid for.
+  const filesUnlocked = isDownloadable || order?.status === 'payment_review'
+  const orderHasDigital = Boolean(order?.items.some((item) => !isPhysicalItem(item)))
+  const serverFiles = useOrderFiles(order?.id, filesUnlocked && orderHasDigital, getAccessToken)
 
   // While an order is still pending, poll only its status (cheap) rather than
   // refetching account records; refresh those once it flips to a downloadable
@@ -89,8 +95,8 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
   }
 
   const payment = paymentForOrder(snapshot, order)
-  const downloadable = order.status === 'paid' || order.status === 'fulfilled'
-  const hasDigital = order.items.some((item) => !isPhysicalItem(item))
+  const downloadable = filesUnlocked
+  const hasDigital = orderHasDigital
 
   const download = async (fileId: string) => {
     setDownloadError(null)
@@ -147,14 +153,17 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                 <h2 id="order-downloads" className="text-h4">Downloads</h2>
                 {!downloadable ? (
                   <Notice tone="info">
-                    {order.status === 'payment_review' ? 'Your payment is under review. Downloads will unlock after your order is confirmed.' : <>Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.</>}
+                    Downloads unlock here once payment succeeds. This order is currently <strong>{order.status}</strong>.
                   </Notice>
                 ) : null}
                 {downloadError ? <Notice tone="error">{downloadError}</Notice> : null}
                 <ul className="grid gap-4">
                   {digitalItems.map((item) => {
-                    const products = downloadProductsForItem(snapshot, item)
-                    const files = products.flatMap((product) => product.purchasedFiles.map((file) => ({ ...file, productTitle: product.title })))
+                    // The server's listing follows renamed, archived and
+                    // unpublished resources; the catalogue match is the fallback.
+                    const listed = serverFiles?.get(order.items.indexOf(item))
+                    const files = listed ?? downloadProductsForItem(snapshot, item)
+                      .flatMap((product) => product.purchasedFiles.map((file) => ({ id: file.id, label: file.label, productTitle: product.title })))
                     return (
                       <li key={item.id}>
                         <Card variant="surface" pad="md" as="article" className="grid gap-4">
@@ -171,7 +180,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                               ))}
                             </ul>
                           ) : (
-                            <p className="border-t border-line pt-3 text-label text-muted">Files for bundles resolve from their included resources.</p>
+                            <p className="border-t border-line pt-3 text-label text-muted">{downloadable && serverFiles ? 'No files are attached to this item yet. Contact us if you expected a download.' : 'Files for bundles resolve from their included resources.'}</p>
                           )}
                         </Card>
                       </li>
@@ -188,7 +197,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                   {showTracker ? (
                     <DeliveryTracker fulfillment={order.fulfillmentStatus as 'unfulfilled' | 'shipped' | 'delivered'} />
                   ) : order.status === 'payment_review' || order.fulfillmentStatus === 'review' ? (
-                    <Notice tone="info">Payment was received, but this order needs a stock review. We will confirm fulfilment before dispatch.{hasDigital ? ' Downloads remain locked while the order is under review.' : ''}</Notice>
+                    <Notice tone="info">Payment was received, but this order needs a stock review. We will confirm fulfilment before dispatch.{hasDigital ? ' Your downloads are ready above.' : ''}</Notice>
                   ) : (
                     <p className="text-body text-ink-soft">{order.status === 'failed' ? 'Payment was not completed. No physical products will be dispatched.' : order.status === 'refunded' ? 'This order has been refunded.' : order.status === 'pending' ? 'Physical products will be prepared after payment succeeds.' : null}</p>
                   )}

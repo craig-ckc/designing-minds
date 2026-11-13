@@ -77,7 +77,8 @@ test('a keyring uses the existing product URL with required name, colour options
   assert.match(html, /R 30 per letter/)
   assert.match(html, /Child’s name<span[^>]*aria-hidden="true"[^>]*>\*<\/span>/)
   assert.match(html, /id="custom-keyring-name"[^>]*required=""/)
-  assert.match(html, /Up to 12 characters/)
+  assert.match(html, /Letters A–Z, no spaces, up to 12 characters\./)
+  assert.match(html, /maxLength="12"|maxlength="12"/)
   assert.match(html, /<legend[^>]*>Colour<\/legend>/)
   assert.match(html, /<input(?=[^>]*type="radio")(?=[^>]*name="variant-keyring-colour")(?=[^>]*value="Pink")(?=[^>]*checked="")[^>]*>/)
   assert.match(html, /<input(?=[^>]*type="radio")(?=[^>]*value="Blue")(?=[^>]*disabled="")[^>]*>/)
@@ -128,6 +129,7 @@ test('one shop combines digital and physical entries and keeps the type choice i
   assert.match(html, /<h1[^>]*>All products<\/h1>/)
   // The category chip row and header lead are gone; the type group lives in the (closed) drawer.
   assert.doesNotMatch(html, /Product category|Digital resources|Gifts &amp; keyrings|Learning resources, personalised keyrings/)
+  assert.doesNotMatch(html, /Browse \d+ CAPS-aligned resources?/)
   assert.match(html, /Digital Maths resource/)
   assert.match(html, /Sample personalised clicker keyring/)
   assert.match(html, /Sample large Christmas gift bag/)
@@ -310,4 +312,49 @@ test('customer validation uses question labels and useful constraints rather tha
   assert.equal(physicalSelectionMessage(keyring(), 'Customization value "name" is longer than maxLength.'), 'Use no more than 12 characters for Child’s name.')
   assert.equal(physicalSelectionMessage(keyring(), 'Customization value "name" contains a character that is not allowed.'), 'Use the allowed characters for Child’s name.')
   assert.equal(physicalSelectionMessage(keyring(), 'Quantity must be a positive whole number.'), 'Quantity must be a positive whole number.')
+})
+
+test('declared options use configured swatches, paid styles show their price, and a letter-tile preview renders', () => {
+  const product = keyring({
+    billableCharacters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    previewTemplate: 'letter-tiles',
+    leadTimeDays: 5,
+    variantOptions: [{ key: 'colour', label: 'Colour', display: 'swatches', values: [{ value: 'Pink', swatch: '#e91e8c' }, { value: 'Blue', swatch: '#2f6fdf' }] }],
+    customizationRules: [
+      { key: 'name', label: 'Child’s name', type: 'text', required: true, transform: 'uppercase', constraints: { minLength: 1, maxLength: 12, allowedCharacters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' } },
+      { key: 'font', label: 'Letter style', type: 'select', required: false, options: [{ value: 'Classic' }, { value: 'Rounded', label: 'Rounded letters', priceDeltaZar: 10 }] },
+    ],
+    variants: [
+      { id: 'pink', sku: null, optionValues: { colour: 'Pink' }, unitPriceZar: null, available: true, madeToOrder: true },
+      { id: 'blue', sku: null, optionValues: { colour: 'Blue' }, unitPriceZar: null, available: true },
+    ],
+  })
+  const html = render('/shop/sample-keyring', makeSnapshot({ physicalCatalog: [product] }))
+  assert.match(html, /background-color:#e91e8c/)
+  assert.match(html, /Rounded letters<\/span><span[^>]*>\+ R 10<\/span>/)
+  assert.match(html, /Made to order · ships within 5 working days\./)
+  assert.match(html, /<svg role="img" aria-label="Keyring preview\. Type a name to see it on the tiles\."/)
+  assert.match(html, /autoCapitalize="characters"|autocapitalize="characters"/i)
+  assert.ok(html.indexOf('id="custom-keyring-name"') < html.indexOf('name="variant-keyring-colour"'))
+})
+
+test('a gift bag offers sizes and asks the teacher’s name only where that size needs it, below the size choice', () => {
+  const sized = (available: { small: boolean }) => bag({
+    priceZar: 165,
+    variantOptions: [{ key: 'size', label: 'Bag size', values: [{ value: 'Small' }, { value: 'Large' }] }],
+    customizationRules: [{ key: 'teacherName', label: 'Teacher’s name', type: 'text', required: true, appliesWhen: { size: ['Large'] }, constraints: { maxLength: 60, allowSpaces: true } }],
+    variants: [
+      { id: 'small', sku: null, optionValues: { size: 'Small' }, unitPriceZar: null, available: available.small },
+      { id: 'large', sku: null, optionValues: { size: 'Large' }, unitPriceZar: 235, available: true, madeToOrder: true },
+    ],
+  })
+  const small = render('/shop/sample-large-bag', makeSnapshot({ physicalCatalog: [sized({ small: true })] }))
+  assert.match(small, /<legend[^>]*>Bag size<\/legend>/)
+  assert.match(small, /R 165/)
+  assert.doesNotMatch(small, /Teacher’s name/)
+  // With Small sold out the page opens on Large, which asks for the name.
+  const large = render('/shop/sample-large-bag', makeSnapshot({ physicalCatalog: [sized({ small: false })] }))
+  assert.match(large, /R 235/)
+  assert.match(large, /Teacher’s name<span[^>]*aria-hidden="true"[^>]*>\*<\/span>/)
+  assert.ok(large.indexOf('Bag size') < large.indexOf('Teacher’s name'))
 })
