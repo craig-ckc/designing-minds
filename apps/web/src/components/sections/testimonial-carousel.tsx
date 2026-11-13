@@ -8,7 +8,7 @@ function TestimonialCard({ item }: { item: Testimonial }) {
       as="figure"
       variant="surface"
       pad="md"
-      className="flex min-h-80 w-[min(82vw,25rem)] shrink-0 flex-col gap-4 border border-line-strong sm:p-8"
+      className="flex min-h-80 w-[min(82vw,24rem)] shrink-0 flex-col gap-4 border border-line-strong sm:p-8"
     >
       <StarRating value={5} size="sm" />
       <blockquote className="line-clamp-7 shrink-0 break-words text-[1.08rem] font-medium leading-[1.55] tracking-[-0.01em]">

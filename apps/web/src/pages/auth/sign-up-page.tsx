@@ -40,7 +40,7 @@ export function SignUpPage() {
   return (
     <AuthLayout
       title="Create your account"
-      intro="Save your orders and download your resources anytime."
+      intro="Save your orders and download purchased files anytime from your account."
       onSubmit={() => void submit()}
       footer={
         <>
@@ -61,7 +61,7 @@ export function SignUpPage() {
       <Field label="Password">
         <input className="field" type="password" placeholder="Create a password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </Field>
-      <Button type="submit" variant="solid" className="w-full" disabled={submitting}>
+      <Button type="submit" variant="solid" className="mt-2 w-full" disabled={submitting}>
         {submitting ? 'Creating…' : 'Create account'}
       </Button>
     </AuthLayout>

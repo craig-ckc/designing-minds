@@ -204,7 +204,7 @@ function ResourceDetail({ product, snapshot }: { product: Product; snapshot: Cms
                     <SpecRow label="Subjects" value={product.subjects.join(', ') || '—'} />
                     <SpecRow label="Format" value={product.resourceFormat} />
                     <SpecRow label="Marks" value={product.marks ? `${product.marks} marks` : 'Not applicable'} />
-                    <SpecRow label="Delivery" value="Instant download on Order Detail" last />
+                    <SpecRow label="Delivery" value="Instant download on your order page" last />
                   </ul>
                   {acronyms.length > 0 ? (
                     <p className="mt-3 text-sm text-muted">
@@ -295,7 +295,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10 xl:gap-16">
             <div id="product-preview" tabIndex={-1} className="min-w-0 scroll-mt-[var(--sticky-offset)] lg:sticky lg:top-[var(--sticky-offset)]">
               <ProductGallery
-                item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
+                item={{ id: bundle.id, title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
                 images={bundle.galleryImages ?? []}
                 stacked
               />
@@ -303,7 +303,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
 
             <aside className="order-first grid min-w-0 gap-4 rounded-md border border-line p-5 sm:p-6 lg:order-none lg:p-8">
               <div className="flow-root">
-                <MobileProductPreview item={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }} stacked />
+                <MobileProductPreview item={{ id: bundle.id, title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }} stacked />
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone="solid">Bundle</Badge>
                   <span className="text-caption font-semibold uppercase tracking-[0.14em] text-muted">
@@ -332,7 +332,7 @@ function BundleDetail({ bundle, snapshot }: { bundle: Bundle; snapshot: CmsSnaps
                     <SpecRow label="Year" value={bundle.year} />
                     <SpecRow label="Resources" value={contents.length > 0 ? String(contents.length) : '—'} />
                     <SpecRow label="Subjects" value={subjects.join(', ') || '—'} />
-                    <SpecRow label="Delivery" value="Instant download on Order Detail" last />
+                    <SpecRow label="Delivery" value="Instant download on your order page" last />
                   </ul>
                 </DetailDisclosure>
                 {hasRealCopy(bundle.fullDescription) ? (

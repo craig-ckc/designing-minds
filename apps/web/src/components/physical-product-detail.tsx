@@ -217,6 +217,7 @@ export function PhysicalProductDetail({ product: publishedProduct }: { product: 
                     label="Quantity"
                     value={quantity}
                     onChange={(next) => { setQuantity(next); setMessage(null) }}
+                    className="justify-self-start"
                   />
                 </div>
 

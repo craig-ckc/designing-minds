@@ -16,6 +16,10 @@ function optionsLine(
  * Read-only CartLine for checkout and order receipts. Media is looked up from
  * the live snapshot by slug (first gallery photo for physical lines, the live
  * cover for digital ones) and falls back to the empty frame.
+ *
+ * Meta reads "Grade 4 · Term 1" for a single resource ("Single · Grade 4 ·
+ * Term 1" with `showKind`), "Bundle · Grade 4 · Term 3 · 4 resources" for a
+ * bundle and "Qty 2" (or "Qty 2 × R 89" with `unitPriceZar`) for a physical line.
  */
 export function SummaryLine({
   snapshot,
@@ -27,6 +31,7 @@ export function SummaryLine({
   values = {},
   price,
   originalPriceZar,
+  showKind = false,
 }: {
   snapshot: Pick<CmsSnapshot, 'products' | 'bundles' | 'physicalCatalog'>
   slug: string
@@ -38,6 +43,8 @@ export function SummaryLine({
   values?: Record<string, string>
   price: number
   originalPriceZar?: number
+  /** Prefix single resources with "Single" as well as bundles with "Bundle" (receipts list both kinds). */
+  showKind?: boolean
 }) {
   const catalogProduct = physical ? snapshot.physicalCatalog?.find((entry) => entry.slug === slug) : undefined
   let cover = null
@@ -50,10 +57,15 @@ export function SummaryLine({
       const subjects = product
         ? product.subjects
         : [...new Set((snapshot.products ?? []).filter((entry) => bundle?.includedProductSlugs.includes(entry.slug)).flatMap((entry) => entry.subjects))]
-      cover = <ProductCover product={{ title: record.title, grade: record.grade, term: record.term, subjects }} stacked={Boolean(bundle)} />
-      meta = bundle ? `Bundle · ${record.grade} · ${record.term}` : `${record.grade} · ${record.term}`
+      cover = <ProductCover product={{ id: record.id, title: record.title, grade: record.grade, term: record.term, subjects }} stacked={Boolean(bundle)} />
+      // Count published members only, like the cart's bundle line (bundleContents).
+      const resourceCount = bundle ? (snapshot.products ?? []).filter((entry) => entry.published && bundle.includedProductSlugs.includes(entry.slug)).length : 0
+      const kind = bundle ? 'Bundle · ' : showKind ? 'Single · ' : ''
+      const count = resourceCount > 0 ? ` · ${resourceCount} resource${resourceCount === 1 ? '' : 's'}` : ''
+      meta = `${kind}${record.grade} · ${record.term}${count}`
     } else meta = 'Digital resource'
-  } else meta = `Quantity ${quantity}${unitPriceZar != null ? ` × ${priceLabel(unitPriceZar)}` : ''}`
+  } else meta = `Qty ${quantity}${unitPriceZar != null ? ` × ${priceLabel(unitPriceZar)}` : ''}`
+  const struck = originalPriceZar !== undefined && originalPriceZar > price
   const image = catalogProduct?.galleryImages[0]
   return (
     <CartLine
@@ -65,8 +77,8 @@ export function SummaryLine({
       image={image}
       cover={cover}
       price={<>
-        {originalPriceZar !== undefined && originalPriceZar > price ? <s className="mr-2 text-muted">{priceLabel(originalPriceZar)}</s> : null}
-        {priceLabel(price)}
+        {struck ? <span className="text-caption font-normal text-muted"><span className="sr-only">Original price </span><s>{priceLabel(originalPriceZar)}</s></span> : null}
+        <span>{struck ? <span className="sr-only">Sale price </span> : null}{priceLabel(price)}</span>
       </>}
     />
   )

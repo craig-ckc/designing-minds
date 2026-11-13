@@ -148,21 +148,20 @@ test('home and about heroes use visual assets while the repeated badge, pricing 
 
 test('CTA variants share a component; the homepage close is the brand band in ink text', () => {
   const brand = render(createElement(BundleCta))
-  assert.match(brand, /bg-primary text-ink/)
+  assert.match(brand, /bg-primary text-on-primary/)
   assert.match(brand, /resource-stack/)
   assert.match(brand, /Browse bundles/)
-  // The final CTA is the page's closing colour peak. Ink replaces white on the
-  // logo pink (5.4:1 vs 3.2:1), so the override must win the class merge.
+  // The final CTA is the page's closing colour peak: white on the logo pink, as drawn
+  // in Figma (an accepted sub-AA exception, see color-contrast.test.ts).
   const final = render(createElement(FinalCta, {}))
-  assert.match(final, /cta-panel relative isolate rounded-lg bg-primary text-ink/)
-  // Scoped to the panel: the cover artwork's term ribbons legitimately keep white text.
-  assert.doesNotMatch(final, /rounded-lg[^"]*text-on-primary|cta-panel--inline/)
+  assert.match(final, /cta-panel relative isolate rounded-lg bg-primary text-on-primary/)
+  assert.doesNotMatch(final, /cta-panel--inline/)
   assert.doesNotMatch(final, /cta-panel__texture/)
-  // The closing CTA's artwork is the painted booklets image, not the cover stack, and has one light button.
-  assert.match(final, /<img[^>]*src="\/images\/paintings\/cta-practice-booklets\.avif"[^>]*alt=""[^>]*width="907"[^>]*height="733"/)
+  // The closing CTA's artwork is the painted pastel binders, not the cover stack, and has one light button with no icon.
+  assert.match(final, /<img[^>]*src="\/images\/paintings\/cta-practice-binders\.avif"[^>]*alt=""[^>]*width="888"[^>]*height="570"/)
   assert.doesNotMatch(final, /resource-stack/)
   assert.match(final, /Ready to help your child practise/)
-  assert.match(final, /href="\/shop"[^>]*>See all resources/)
+  assert.match(final, /href="\/packages"[^>]*>View bundles<\/a>/)
   assert.equal((final.match(/<a\b/g) ?? []).length, 1)
   assert.match(final, /border-line bg-surface text-ink/)
   for (const html of [brand, final]) {
@@ -185,13 +184,13 @@ test('the about connection cards are cards with painted headers', () => {
   assert.doesNotMatch(source, /CtaBanner|min-h-\[36rem\]/)
 })
 
-test('grade grids share the centred three-plus-two layout and Inter is a real local font', () => {
+test('grade grids share the three-plus-two layout with a full-width last row, and Inter is a real local font', () => {
   const css = read('index.css')
-  assert.match(read('pages/grades-page.tsx'), /className="grade-grid"/)
-  // The homepage adds a phone-only compact modifier on top of the shared grid.
-  assert.match(read('components/sections/grade-finder-section.tsx'), /className="grade-grid grade-grid--compact"/)
-  assert.match(css, /nth-child\(4\):nth-last-child\(2\).*lg:col-start-2/)
-  assert.match(css, /nth-child\(5\):last-child.*lg:col-start-4/)
+  // Home and Grades both render the shared GradeFinderSection grid (Figma GradeFinderSection).
+  assert.match(read('pages/grades-page.tsx'), /<GradeFinderSection/)
+  assert.match(read('components/sections/grade-finder-section.tsx'), /grade-grid/)
+  assert.match(css, /nth-child\(4\):nth-last-child\(2\),\s*\.grade-grid > :nth-child\(5\):last-child \{ @apply lg:col-span-3; \}/)
+  assert.doesNotMatch(css, /lg:col-start-[24]/)
   const font = new URL('../../apps/web/public/fonts/inter-latin-variable.woff2', import.meta.url)
   assert.ok(existsSync(font))
   assert.equal(readFileSync(font).subarray(0, 4).toString(), 'wOF2')

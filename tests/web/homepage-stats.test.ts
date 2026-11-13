@@ -14,7 +14,7 @@ test('the shared trust stats retain Amy’s curated brand figures', () => {
   assert.match(section, /value: SOCIAL_PROOF\.customers, label: 'Customers'/)
   assert.match(section, /value: '360', label: 'Resources'/)
   assert.match(section, /value: '11', label: 'Subjects covered'/)
-  assert.match(section, /value: '5', label: 'Grades currently supported'/)
+  assert.match(section, /value: '5', label: 'Grades supported'/)
 
   // The old snapshot-derived / hardcoded claims are gone.
   assert.doesNotMatch(section, /snapshot\.stats/)

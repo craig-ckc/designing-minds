@@ -12,7 +12,8 @@ export function HomeTestimonialsSection({ snapshot }: { snapshot: CmsSnapshot | 
 
   return (
     <Section id="parent-stories" className="overflow-x-clip">
-      <h2 className="max-w-[20ch]">Real stories from families across South Africa</h2>
+      {/* Figma (Home/Grades): a 400px heading box that breaks after "families". About's centred version is one line. */}
+      <h2 className="max-w-[400px]">Real stories from families across South Africa</h2>
       <p className="mt-3 text-body text-muted">Based on verified customer orders to date.</p>
 
       {/* A compact lead row keeps the section from dominating the page: the

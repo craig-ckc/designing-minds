@@ -52,7 +52,7 @@ export function FilterDrawer({
           </ScrollArea.Root>
 
           <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-4">
-            <Button type="button" variant="text" onClick={onReset}>
+            <Button type="button" variant="text" onClick={onReset} className="text-body-lg">
               Reset all
             </Button>
             <Button type="button" variant="solid" onClick={() => onOpenChange(false)}>

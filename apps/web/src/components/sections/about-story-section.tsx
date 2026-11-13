@@ -20,23 +20,24 @@ export function AboutStorySection() {
   return (
     <Section containerClassName="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
       <div>
-        <h2 className="max-w-[18ch]">Meet Amy — founder of Designing Minds</h2>
-        <p className="mt-4 max-w-[52ch] text-body-lg text-ink-soft">
+        <h2 className="max-w-[18ch]">Meet Amy, founder of Designing Minds</h2>
+        <p className="mt-5 max-w-[52ch] text-body-lg text-ink-soft">
           A teacher who wanted learning to feel less stressful.
         </p>
 
-        <ol className="mt-8 border-t border-line-strong">
+        {/* Figma: ruled rows (24px padding, 32px gap), a 220px bold title beside a 437px body. */}
+        <ol className="mt-10 border-b border-line">
           {STEPS.map((step) => (
-            <li key={step.title} className="grid gap-2 border-b border-line-strong py-5 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:gap-8">
-              <h3 className="text-body-lg">{step.title}</h3>
-              <p className="text-body text-ink-soft">{step.body}</p>
+            <li key={step.title} className="grid gap-2 border-t border-line py-6 sm:grid-cols-[minmax(0,220px)_minmax(0,437px)] sm:items-center sm:gap-8">
+              <h3 className="text-h4">{step.title}</h3>
+              <p className="text-body-lg text-ink-soft">{step.body}</p>
             </li>
           ))}
         </ol>
       </div>
 
       {/* Scattered photo cluster. */}
-      <div className="relative mx-auto aspect-[5/4] w-full max-w-md lg:mx-0">
+      <div className="relative mx-auto aspect-[5/4] w-full max-w-[600px] lg:mx-0">
         <Polaroid
           src="/images/image-07.png"
           alt="An adult helping a child draw"

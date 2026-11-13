@@ -4,16 +4,27 @@ import test from 'node:test'
 
 const read = (path: string) => readFileSync(new URL(`../../apps/web/src/${path}`, import.meta.url), 'utf8')
 
-test('affected pages define CAPS and identify the South African national curriculum in readable text', () => {
-  const pages = [
-    read('components/sections/home-hero-section.tsx'),
-    read('components/sections/about-hero-section.tsx'),
-    read('pages/grades-page.tsx'),
-  ]
+test('the home hero defines CAPS and identifies the South African national curriculum in readable text', () => {
+  const home = read('components/sections/home-hero-section.tsx')
 
-  for (const page of pages) {
-    assert.match(page, /Curriculum and Assessment Policy/)
-    assert.match(page, /South Africa/)
+  assert.match(home, /Aligned with CAPS, South Africa’s\s+Curriculum and Assessment Policy Statement\./)
+  assert.doesNotMatch(home, /<CapsAbbr/)
+})
+
+test('about and grades heroes expand CAPS through the shared abbreviation', () => {
+  const abbr = read('components/ui/caps-abbr.tsx')
+
+  // One expansion, carried in the title so assistive tech and hover both expose it.
+  assert.match(
+    abbr,
+    /<abbr title="Curriculum and Assessment Policy Statement, South Africa’s national curriculum"[^>]*>\s*CAPS\s*<\/abbr>/,
+  )
+
+  for (const path of ['components/sections/about-hero-section.tsx', 'pages/grades-page.tsx']) {
+    const source = read(path)
+    assert.match(source, /import \{ CapsAbbr \} from '[./]+(components\/)?ui\/caps-abbr'/, path)
+    // The lead uses the abbreviation rather than a bare, undefined "CAPS".
+    assert.match(source, /lead=\{[\s\S]*?<CapsAbbr \/>[\s\S]*?\}/, path)
   }
 })
 

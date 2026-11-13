@@ -1,7 +1,7 @@
 import { Button } from './button'
 import { Icon } from './icon'
 
-/** One purchased file: document icon, file name, and a Download button. */
+/** One purchased file: document icon, file name, and a Download button, below a hairline. */
 export function DownloadFileRow({
   label,
   onDownload,
@@ -12,10 +12,10 @@ export function DownloadFileRow({
   disabled?: boolean
 }) {
   return (
-    <li className="flex items-center justify-between gap-3 py-3">
+    <li className="flex items-center justify-between gap-3 border-t border-line pt-3">
       <span className="flex min-w-0 items-center gap-3 text-body text-ink">
-        <Icon name="doc" size={18} className="flex-none text-ink-soft" />
-        <span className="truncate">{label}</span>
+        <Icon name="doc" size={24} className="flex-none text-ink" />
+        <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
       </span>
       <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={onDownload} aria-label={`Download ${label}`}>
         <Icon name="download" size={16} />

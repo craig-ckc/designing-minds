@@ -94,8 +94,8 @@ const products: AdminCollection = {
     { title: 'Basic info', fields: ['productType', 'title', 'slug', 'shortDescription', 'fullDescription'] },
     /* `status` is deliberately absent from every section below: the editor
        header owns it — every save picks one. */
-    { title: 'Pricing & visibility', fields: ['priceZar', 'salePriceZar', 'saleStartsAt', 'saleEndsAt', 'sortOrder', 'featured'] },
-    { title: 'Product details', fields: ['resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects', 'pricingMode', 'pricingFieldKey', 'billableCharacters', 'weightGrams', 'lengthMm', 'widthMm', 'heightMm', 'customizationRules', 'variants'] },
+    { title: 'Pricing & visibility', fields: ['pricingMode', 'priceZar', 'pricingFieldKey', 'billableCharacters', 'salePriceZar', 'saleStartsAt', 'saleEndsAt', 'sortOrder', 'featured'] },
+    { title: 'Product details', fields: ['resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects', 'weightGrams', 'lengthMm', 'widthMm', 'heightMm', 'customizationRules', 'variants'] },
     {
       title: 'Files',
       hint: 'Files buyers receive after purchasing this resource.',

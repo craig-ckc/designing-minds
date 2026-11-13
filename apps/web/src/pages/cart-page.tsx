@@ -1,6 +1,6 @@
 import { CatalogPrice } from '../components/ui/catalog-price'
 import { Link } from 'react-router-dom'
-import { bundleContents, priceLabel, promotionPrice, resolveCartItems } from '@designing-minds/cms'
+import { bundleContents, bundleValue, priceLabel, promotionPrice, resolveCartItems } from '@designing-minds/cms'
 import { Container } from '../components/ui/container'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { Button } from '../components/ui/button'
@@ -74,6 +74,8 @@ export function CartPage() {
                     ? item.product.subjects
                     : [...new Set(contents.flatMap((entry) => entry.subjects))]
                 const record = item.kind === 'product' ? item.product : item.bundle
+                // Bundles compare against buying their resources one by one, like the bundle card.
+                const compareAtPriceZar = item.kind === 'bundle' ? bundleValue(snapshot, item.bundle)?.singlesTotalZar : undefined
                 const detail =
                   item.kind === 'product'
                     ? `${record.grade} · ${record.term}`
@@ -88,11 +90,11 @@ export function CartPage() {
                     meta={detail}
                     cover={
                       <ProductCover
-                        product={{ title: record.title, grade: record.grade, term: record.term, subjects }}
+                        product={{ id: record.id, title: record.title, grade: record.grade, term: record.term, subjects }}
                         stacked={item.kind === 'bundle'}
                       />
                     }
-                    price={<CatalogPrice record={record} />}
+                    price={<CatalogPrice record={record} compareAtPriceZar={compareAtPriceZar} />}
                     onRemove={(button) => remove(record.slug, record.title, button)}
                   />
                 )
@@ -102,7 +104,7 @@ export function CartPage() {
 
             <aside className="grid gap-4 rounded-md border border-line p-6 lg:sticky lg:top-[var(--sticky-offset)]">
               <h2 className="text-xl">Order summary</h2>
-              <div className="grid gap-3">
+              <div className="grid gap-2">
                 <SummaryRow label={`Subtotal (${lineCount} items)`} value={priceLabel(subtotal)} />
                 <SummaryRow label="Total" value={priceLabel(subtotal)} emphasis="total" />
               </div>
@@ -110,7 +112,7 @@ export function CartPage() {
                 Proceed to checkout
               </Button>
               <p className="text-label text-muted">{physicalLines.length ? 'Delivery is calculated at checkout. Digital downloads unlock after payment.' : 'Digital products · No shipping · Download after payment.'}</p>
-              <Link to="/shop" className="text-body text-ink underline underline-offset-4">
+              <Link to="/shop" className="inline-flex min-h-6 items-center justify-self-start text-body text-ink transition-colors hover:text-primary-ink">
                 Continue shopping
               </Link>
             </aside>

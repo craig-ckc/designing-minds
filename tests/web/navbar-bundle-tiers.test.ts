@@ -23,16 +23,29 @@ test('navbar bundle tiers come only from published bundles with an actual bundle
   ]))
 
   assert.deepEqual(tiers, [
-    { scope: 'Term', title: 'Term bundles', fromPriceZar: 200, gradeCount: 2, featured: false },
-    { scope: 'Full Year', title: 'Full-year bundles', fromPriceZar: 1200, gradeCount: 1, featured: true },
+    { scope: 'Term', title: 'Term bundles', fromPriceZar: 200, maxPriceZar: 350, gradeCount: 2, featured: false },
+    { scope: 'Full Year', title: 'Full-year bundles', fromPriceZar: 1200, maxPriceZar: 1200, gradeCount: 1, featured: true },
   ])
+})
+
+test('bundle tiers report the dearest bundle so a uniform price can drop the "From" prefix', () => {
+  const [uniform] = bundleTiers(snapshot([
+    product({ slug: 'g3', bundleScope: 'Term', priceZar: 195 }),
+    product({ slug: 'g4', grade: 'Grade 4', bundleScope: 'Term', priceZar: 195 }),
+  ]))
+  assert.equal(uniform.fromPriceZar, uniform.maxPriceZar)
+  const [varied] = bundleTiers(snapshot([
+    product({ slug: 'g3', bundleScope: 'Term', priceZar: 195 }),
+    product({ slug: 'g4', grade: 'Grade 4', bundleScope: 'Term', priceZar: 250 }),
+  ]))
+  assert.deepEqual([varied.fromPriceZar, varied.maxPriceZar], [195, 250])
 })
 
 test('navbar omits a bundle tier when no matching published bundle exists', () => {
   assert.deepEqual(bundleTiers(snapshot([
     product({ slug: 'term', bundleScope: 'Term', priceZar: 350 }),
   ])), [
-    { scope: 'Term', title: 'Term bundles', fromPriceZar: 350, gradeCount: 1, featured: false },
+    { scope: 'Term', title: 'Term bundles', fromPriceZar: 350, maxPriceZar: 350, gradeCount: 1, featured: false },
   ])
 })
 
@@ -50,7 +63,7 @@ test('homepage promotes actual catalogue cards before testimonials while tier of
 
 test('tier description pluralises the grade count', async () => {
   const { tierDescription } = await import('../../apps/web/src/components/layout/navbar/tier-links.ts')
-  const tier = (gradeCount: number, featured: boolean) => ({ scope: featured ? 'Full Year' : 'Term', title: 't', fromPriceZar: 1, gradeCount, featured }) as Parameters<typeof tierDescription>[0]
+  const tier = (gradeCount: number, featured: boolean) => ({ scope: featured ? 'Full Year' : 'Term', title: 't', fromPriceZar: 1, maxPriceZar: 1, gradeCount, featured }) as Parameters<typeof tierDescription>[0]
   assert.equal(tierDescription(tier(1, true)), 'Choose from 1 grade.')
   assert.equal(tierDescription(tier(5, true)), 'Choose from 5 grades.')
   assert.equal(tierDescription(tier(1, false)), 'Choose from 1 grade, any term.')

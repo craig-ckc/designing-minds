@@ -72,3 +72,27 @@ test('reset-password footers read "Remembered it?" with an outline Back to log i
     assert.doesNotMatch(source, /variant="text"[^>]*>\s*Back to log in/)
   }
 })
+
+test('choose-new-password footer offers "Need a new link?" with a full-width outline Request another button', () => {
+  assert.match(resetSource, /<p className="text-body text-muted">Need a new link\?<\/p>/)
+  assert.match(resetSource, /<Button to="\/forgot-password" variant="outline" className="w-full">\s*Request another\s*<\/Button>/)
+  // The checking and new-password states share that footer; no flush text link remains.
+  assert.equal((resetSource.match(/footer=\{requestAnotherFooter\}/g) ?? []).length, 2)
+  assert.doesNotMatch(resetSource, /variant="text"/)
+  assert.doesNotMatch(resetSource, /Request another link/)
+})
+
+test('the email-sent state drops the intro line but keeps the privacy-safe notice', () => {
+  assert.match(forgotSource, /intro=\{sent \? undefined : 'Enter your account email/)
+  assert.doesNotMatch(forgotSource, /sent the next step/)
+  assert.match(forgotSource, /If an account exists for \{email\}, a password-reset link is on its way\./)
+})
+
+test('auth submit buttons sit 24px below the last field (form gap 16 + mt-2)', () => {
+  const pages = ['login-page', 'sign-up-page', 'forgot-password-page', 'reset-password-page'].map((name) =>
+    readFileSync(new URL(`../../apps/web/src/pages/auth/${name}.tsx`, import.meta.url), 'utf8'),
+  )
+  for (const source of pages) {
+    assert.match(source, /<Button type="submit" variant="solid" className="mt-2 w-full"/)
+  }
+})

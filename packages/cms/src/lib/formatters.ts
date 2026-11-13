@@ -112,6 +112,9 @@ export interface BundleTier {
   scope: BundleTierScope
   title: string
   fromPriceZar: number
+  /** The dearest bundle in the tier. Equal to `fromPriceZar` when every bundle costs the same,
+   *  which is when a "From" prefix would mislead (the pricing cards drop it then). */
+  maxPriceZar: number
   gradeCount: number
   featured: boolean
 }
@@ -129,6 +132,7 @@ export const bundleTiers = (snapshot: CmsSnapshot): BundleTier[] => {
       // The real cheapest, not a hardcoded marketing number — the fallback
       // only covers a tier whose bundles are all unpriced.
       fromPriceZar: Math.min(...subset.map((bundle) => promotionPrice(bundle))) || fallbackPriceZar,
+      maxPriceZar: Math.max(...subset.map((bundle) => promotionPrice(bundle))) || fallbackPriceZar,
       gradeCount: new Set(subset.map((bundle) => bundle.grade)).size,
       featured: scope === 'Full Year',
     })

@@ -56,7 +56,14 @@ export function clearQueryValues(params: URLSearchParams, keys: readonly string[
   return next
 }
 
-/** Subtitle for a shop filtered to exactly one grade; no subtitle otherwise. */
-export function shopSubtitle(grades: readonly string[]): string | undefined {
-  return grades.length === 1 ? `CAPS-aligned tests, memos and bundles for ${grades[0]}.` : undefined
+/**
+ * Lead under the shop heading. Exactly one grade selected gets a grade-specific
+ * line; otherwise a resources-only catalogue states how many published resources
+ * it holds. Pass no `resourceCount` (the mixed digital + physical shop) for no lead.
+ */
+export function shopSubtitle(grades: readonly string[], resourceCount?: number): string | undefined {
+  if (grades.length === 1) return `CAPS-aligned tests, memos and bundles for ${grades[0]}.`
+  if (!resourceCount || resourceCount < 1) return undefined
+  const noun = resourceCount === 1 ? 'resource' : 'resources'
+  return `Browse ${resourceCount} CAPS-aligned ${noun} across grades, terms, subjects and formats, or start with a bundle.`
 }

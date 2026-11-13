@@ -40,4 +40,12 @@ describe('TermsCheckbox', () => {
     fireEvent.click(disabledCheckbox)
     expect(onChange).toHaveBeenCalledTimes(1)
   })
+
+  it('draws the 8px-radius box on the cream terms row', () => {
+    render(<TermsCheckbox checked={false} onChange={() => {}} disabled={false}>I agree to Terms of Use</TermsCheckbox>)
+    const checkbox = screen.getByRole('checkbox', { name: 'I agree to Terms of Use' })
+    expect(checkbox.className).toContain('rounded-sm')
+    expect(checkbox.className).not.toContain('rounded-[')
+    expect(checkbox.parentElement?.className).toContain('bg-surface-alt')
+  })
 })

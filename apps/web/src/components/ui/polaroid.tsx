@@ -12,7 +12,7 @@ type PolaroidProps = PolaroidImage & {
 }
 
 /** A tilted "photo print" — white frame around the shared placeholder image
- *  (or a real `src`), with an optional handwritten-style caption. Uses the
+ *  (or a real `src`), with an optional sentence-case caption. Uses the
  *  sanctioned `shadow-cover` so it reads as a physical object lifting off the
  *  page (same treatment as product covers). Rotation is passed as a CSS angle
  *  so callers can scatter a cluster. */
@@ -25,8 +25,8 @@ export function Polaroid({
   className,
 }: PolaroidProps) {
   return (
-    <figure className={cn('rounded-[8px] border border-line/70 bg-surface p-3 shadow-cover', className)} style={{ transform: `rotate(${rotate})` }} >
-      <div className="overflow-hidden rounded-[4px] bg-surface-sunk" style={{ aspectRatio: ratio }}>
+    <figure className={cn('rounded-sm border border-line/70 bg-surface p-3 shadow-cover', className)} style={{ transform: `rotate(${rotate})` }} >
+      <div className="overflow-hidden rounded-sm bg-surface-sunk" style={{ aspectRatio: ratio }}>
         {src ? (
           <img src={src} alt={alt} className="h-full w-full object-cover" loading="lazy" />
         ) : (
@@ -38,7 +38,7 @@ export function Polaroid({
         )}
       </div>
       {caption ? (
-        <figcaption className="pt-3 pb-0.5 text-center text-caption font-bold uppercase tracking-[0.12em] text-muted">
+        <figcaption className="pt-3 pb-0.5 text-center text-body-lg text-muted">
           {caption}
         </figcaption>
       ) : null}

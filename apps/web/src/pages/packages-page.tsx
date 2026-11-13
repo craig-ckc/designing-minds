@@ -75,14 +75,14 @@ export function PackagesPage() {
       <PageHeader
         width="full"
         title="Buy more, save more"
-        lead="Bundles group the resources for a grade into one discounted, once-off purchase. Nothing renews automatically — you own what you buy."
+        lead="Bundles group the resources for a grade into one discounted, once-off purchase. Nothing renews automatically. You own what you buy."
       >
         {/* Schools ask about licensing from here; point them at the public answer
             before they have to email. */}
         <p className="mt-4 max-w-prose text-body text-muted">
-          Buying for a class, grade or school? A bundle covers one household or one classroom —{' '}
+          Buying for a class, grade or school? A bundle covers one household or one classroom.{' '}
           <Link to="/help#licensing" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
-            see classroom licensing
+            See classroom licensing
           </Link>
           .
         </p>
@@ -115,10 +115,9 @@ export function PackagesPage() {
 
       <section className="section-tight">
         <Container width="full">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-body-lg font-semibold tracking-normal">{visible.length} results</h2>
-            <span className="text-label text-muted">{sort === 'recommended' ? 'Curated for you' : 'Sorted by your choice'}</span>
-          </div>
+          <h2 className="mb-6 text-body-lg font-semibold tracking-normal">
+            {visible.length} {visible.length === 1 ? 'bundle' : 'bundles'}
+          </h2>
           {visible.length > 0 ? (
             <div className="catalog-grid">
               {renderedPackages.map((bundle) => (

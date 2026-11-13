@@ -38,7 +38,9 @@ const buttonStyles = cv({
       circle: ['rounded-full'],
     },
   },
-  defaultVariants: { variant: 'text', size: 'md', shape: 'default' },
+  // No default size: `splitOwn` always passes one for boxed variants and passes
+  // none for text variants, which must stay flush (no padding, no control height).
+  defaultVariants: { variant: 'text', shape: 'default' },
 })
 
 export type ButtonVariant = VariantOf<typeof buttonStyles, 'variant'>

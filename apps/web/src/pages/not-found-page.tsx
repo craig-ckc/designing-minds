@@ -15,13 +15,13 @@ const NOT_FOUND_SUGGESTIONS = [
 export function NotFoundPage() {
   return (
     <Section>
-      <div className="mx-auto max-w-narrow text-center">
-        <h1 className="text-h2">Page not found</h1>
-        <p className="mt-3 text-body text-muted">
+      <div className="mx-auto max-w-prose text-center">
+        <h1 className="mt-3 text-h1">Page not found</h1>
+        <p className="mt-4 lead">
           The page you’re looking for doesn’t exist or may have moved. Check the address, or pick up from one of these
           instead.
         </p>
-        <div className="mt-6 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <Button to="/" variant="solid">
             Back to home
           </Button>

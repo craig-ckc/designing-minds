@@ -1,27 +1,23 @@
-import { productsForGrade } from '@designing-minds/cms'
 import { useCatalogSnapshot } from '../lib/catalog'
 import { FinalCtaSection } from '../components/sections/final-cta-section'
+import { GradeFinderSection } from '../components/sections/grade-finder-section'
 import { HomeTestimonialsSection } from '../components/sections/home-testimonials-section'
-import { SplitHero } from '../components/sections/split-hero'
+import { PageHero } from '../components/sections/page-hero'
 import { ValuesBanner, type ValueItem } from '../components/sections/about-values-section'
-import { GradeCard } from '../components/ui/grade-card'
-import { Section } from '../components/ui/section'
+import { CapsAbbr } from '../components/ui/caps-abbr'
 
 const GRADE_INCLUDES: ValueItem[] = [
   {
     title: 'CAPS-aligned',
     body: 'Suitable for learners in every South African province and aligned with the CAPS curriculum.',
-    bar: 'bg-yellow',
   },
   {
     title: 'Memos included',
     body: 'Each test comes with a detailed memorandum, so marking together is simple.',
-    bar: 'bg-green',
   },
   {
     title: 'Term by term',
     body: 'Choose practice for the term your child is on, or a bundle for the whole term.',
-    bar: 'bg-blue',
   },
 ]
 
@@ -29,22 +25,17 @@ export function GradesPage() {
   const snapshot = useCatalogSnapshot()
   return (
     <>
-      <SplitHero
+      <PageHero
         title="Find the right practice for your child’s grade"
-        lead="CAPS-aligned tests and memos for Grades 3 to 7, ready to print at home. CAPS stands for Curriculum and Assessment Policy Statement, South Africa’s national curriculum policy."
+        lead={<><CapsAbbr />-aligned tests and memos for Grades 3 to 7, ready to print at home.</>}
         actionLabel="Browse all resources"
         actionTo="/shop"
         image="/images/paintings/grades-hero-classroom-jacarandas.avif"
       />
 
-      <Section spacing="tight">
-        <h2 className="sr-only">Browse resources by grade</h2>
-        <div className="grade-grid">
-          {snapshot.valueLists.grades.map((grade) => (
-            <GradeCard key={grade} grade={grade} count={productsForGrade(snapshot, grade).length} />
-          ))}
-        </div>
-      </Section>
+      {/* The hero already offers "Browse all resources", so the finder drops its own link and
+          keeps the full tile on phones (Home compacts it). */}
+      <GradeFinderSection snapshot={snapshot} showBrowseAll={false} compactTiles={false} />
 
       <ValuesBanner heading="What every grade includes" values={GRADE_INCLUDES} />
       <HomeTestimonialsSection snapshot={snapshot} />

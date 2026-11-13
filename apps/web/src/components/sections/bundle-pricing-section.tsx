@@ -39,6 +39,10 @@ const TIER_CONTENT: Record<
 
 const periodLabel = (scope: BundleTier['scope']) => (scope === 'Full Year' ? 'full year' : 'term')
 
+/** "From" shows only when the bundles behind a plan differ in price, so an equal-price plan reads
+ *  as one exact price, as in Figma, and a mixed one stays truthful. */
+const pricesVary = (tier: BundleTier) => tier.maxPriceZar !== tier.fromPriceZar
+
 /** Split the localised price ("R 1 200") into its currency symbol and number so
  *  the amount can read large with a small leading symbol. */
 function splitPrice(amount: number) {
@@ -50,7 +54,8 @@ function splitPrice(amount: number) {
 
 /** Published bundle comparison. Each card deep-links to its matching package filter.
  *  Depth comes from a white "island" holding the offer, nested in the outer card —
- *  no shadows, in keeping with the flat, border-led design system. */
+ *  no shadows, in keeping with the flat, border-led design system. The featured (full-year)
+ *  card is flat brand pink; the term card keeps the soft swirl texture. */
 export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
   if (tiers.length === 0) return null
   return (
@@ -74,21 +79,23 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
               variant="surface"
               pad="none"
               className={cn(
-                'flex flex-col overflow-hidden rounded-lg relative isolate',
-                featured ? '[background-image:var(--gradient-primary)]' : 'border border-line',
+                'flex flex-col overflow-hidden rounded-2xl relative isolate',
+                featured ? 'bg-primary' : 'border border-line',
                 // Featured card leads on mobile; restores its column order from md up.
                 featured && 'order-first md:order-none',
               )}
             >
-              <div
-                className="absolute inset-0 -z-1 bg-cover bg-center opacity-50 mix-blend-soft-light"
-                style={{ backgroundImage: "url('/images/card-background-02.svg')" }}
-                aria-hidden
-              />
+              {featured ? null : (
+                <div
+                  className="absolute inset-0 -z-1 bg-cover bg-center opacity-50 mix-blend-soft-light"
+                  style={{ backgroundImage: "url('/images/card-background-02.svg')" }}
+                  aria-hidden
+                />
+              )}
 
               {/* White island — the nested offer/price/CTA card. */}
-              <div className="p-3">
-                <div className="flex flex-col gap-5 rounded-md border border-line bg-canvas p-6 lg:p-8">
+              <div className="p-2">
+                <div className="flex flex-col gap-5 rounded-sm border border-line bg-canvas p-6">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-caption font-bold uppercase tracking-[0.12em] text-muted">
                       {content.label}
@@ -106,9 +113,9 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
                   </div>
 
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <span className="text-body text-muted">From</span>
-                    <span className="text-body-lg font-bold text-ink-soft">{symbol}</span>
-                    <strong className="text-display text-primary-ink">{number}</strong>
+                    {pricesVary(tier) ? <span className="text-body text-muted">From</span> : null}
+                    <span className="text-body-lg font-semibold text-ink-soft">{symbol}</span>
+                    <strong className="text-display text-primary">{number}</strong>
                     <span className="text-body text-muted">once-off · per {periodLabel(tier.scope)}</span>
                   </div>
 
@@ -123,9 +130,9 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
               </div>
 
               {/* Features sit on the outer surface, below the island. */}
-              <div className="grid gap-x-6 gap-y-4 px-6 pb-8 sm:grid-cols-2 lg:px-8">
+              <div className="grid gap-x-6 gap-y-3 px-4 pb-6 sm:grid-cols-2">
                 {content.includes.map((feature) => (
-                  <div key={feature} className={cn('flex gap-3 text-body', featured ? 'text-on-primary' : 'text-ink-soft')} >
+                  <div key={feature} className={cn('flex gap-2 text-body', featured ? 'text-on-primary' : 'text-ink-soft')} >
                     <span
                       className={cn(
                         'mt-px grid size-5 flex-none place-items-center rounded-full',
@@ -142,7 +149,7 @@ export function BundlePricingSection({ tiers }: { tiers: BundleTier[] }) {
                 {content.excludes.map((feature) => (
                   <div
                     key={feature}
-                    className={cn('flex gap-3 text-body', featured ? 'text-on-primary' : 'text-muted')}
+                    className={cn('flex gap-2 text-body', featured ? 'text-on-primary' : 'text-muted')}
                   >
                     <span className="mt-px grid size-5 flex-none place-items-center">
                       <Icon name="close" />

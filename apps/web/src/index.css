@@ -245,18 +245,19 @@
 
   .grade-grid { @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6; }
   .grade-grid > * { @apply lg:col-span-2; }
-  .grade-grid > :nth-child(4):nth-last-child(2) { @apply lg:col-start-2; }
-  .grade-grid > :nth-child(5):last-child { @apply lg:col-start-4; }
+  /* Figma GradeFinderSection: a 3 + 2 grid whose last row stretches to the full width. */
+  .grade-grid > :nth-child(4):nth-last-child(2),
+  .grade-grid > :nth-child(5):last-child { @apply lg:col-span-3; }
 
   .filter-chip {
-    @apply inline-flex min-h-[var(--control-h-sm)] items-center justify-center gap-1 rounded-full border border-transparent bg-surface-sunk px-3 py-1 text-caption font-medium text-ink-soft transition-colors hover:border-line-strong hover:text-ink;
+    @apply inline-flex min-h-[var(--control-h-sm)] items-center justify-center gap-1 rounded-full border border-line-strong bg-surface-sunk px-3 py-1 text-caption font-medium text-ink-soft transition-colors hover:border-ink-soft hover:text-ink;
   }
   .filter-chip[aria-pressed="true"] { @apply border-ink bg-ink text-white; }
   .filter-control {
     @apply inline-flex min-h-[var(--control-h-sm)] items-center justify-center gap-2 rounded-full border border-line-strong bg-canvas px-3 py-1 text-caption font-medium text-ink transition-colors hover:bg-surface;
   }
-  .select-menu { @apply overflow-auto rounded-md border border-line-strong bg-canvas p-2 shadow-card; min-width: max(12rem, var(--anchor-width)); max-height: min(18rem, var(--available-height)); }
-  .select-menu__item { @apply flex min-h-9 cursor-default items-center justify-between gap-4 rounded-sm px-3 py-2 text-label text-ink outline-none; }
+  .select-menu { @apply overflow-auto rounded-md border border-line-strong bg-canvas p-2 shadow-card; min-width: max(12rem, var(--anchor-width)); max-height: min(19rem, var(--available-height)); }
+  .select-menu__item { @apply flex min-h-10 cursor-default items-center justify-between gap-4 rounded-sm px-3 py-2 text-label text-ink outline-none; }
   .select-menu__item[data-highlighted] { @apply bg-surface-sunk; }
   .select-menu__item[data-selected] { @apply bg-primary-tint font-semibold text-primary-ink; }
 
@@ -461,8 +462,11 @@ a.resource-stack__book:focus-visible { outline: 3px solid var(--color-primary-in
   -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent);
   mask-image: linear-gradient(180deg, #000 45%, transparent);
 }
-/* Auth pages already sit on a full painted stage (Figma Sign in / Create account / Reset password): don't stack a second painting under it. */
-body:has(.auth-stage) .footer-band { display: none; }
+/* Auth pages are one focused, full-height painted stage (Figma Sign in / Create account /
+   Reset password hide the whole footer; Craig, 2026-11-12). Main becomes a grid so the
+   stage stretches to fill the viewport under the header. */
+body:has(.auth-stage) #main ~ footer { display: none; }
+body:has(.auth-stage) #main { display: grid; }
 .home-hero {
   position: relative;
   isolation: isolate;
@@ -492,29 +496,27 @@ body:has(.auth-stage) .footer-band { display: none; }
 .resource-stack--shelf .resource-stack__book:nth-child(3) { left: 65%; top: 3%; right: auto; transform: rotate(7deg); }
 .resource-stack--shelf a.resource-stack__book:hover { transform: translateY(-6px); }
 .hero-eyebrow { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; font-size: 12px; font-weight: 600; }
-.split-hero { background: var(--color-surface-alt); border-bottom: 1px solid var(--color-line); }
-.split-hero__layout { display: grid; align-items: center; gap: 32px; }
-.split-hero__copy { max-width: 54ch; }
-.split-hero h1 { max-width: 23ch; }
-.split-hero__art { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: var(--radius-lg); object-fit: cover; }
 .empty-state { display: flex; min-height: 360px; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; text-align: center; }
 .empty-state__icon { display: grid; width: 64px; height: 64px; place-items: center; margin-bottom: 20px; border: 1px solid var(--color-line); border-radius: 50%; background: var(--color-surface); color: var(--color-ink-soft); }
 .contact-layout { max-width: 1120px; }
 .auth-stage { position: relative; display: grid; min-height: 640px; place-items: center; overflow: hidden; padding: 48px 16px; background: var(--color-cream); }
 .auth-stage__backdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.auth-card { position: relative; display: grid; width: 100%; max-width: 480px; gap: 20px; padding: 28px 24px; border: 1px solid var(--color-line); border-radius: var(--radius-lg, 16px); background: var(--color-canvas); }
-.auth-footer { display: grid; gap: 12px; border-top: 1px solid var(--color-line); padding-top: 20px; }
-.auth-footer a:not([class]) { color: var(--color-ink); text-decoration: underline; text-underline-offset: 4px; }
+.auth-card { position: relative; display: grid; width: 100%; max-width: 480px; gap: 24px; padding: 28px 24px; border: 1px solid var(--color-line); border-radius: var(--radius-lg, 16px); background: var(--color-canvas); }
+.auth-footer { display: grid; gap: 12px; border-top: 1px solid var(--color-line); padding-top: 24px; }
 @media (min-width: 768px) {
+  .auth-stage { padding: 64px 32px; }
   .cta-panel { padding: 32px 40px; }
-  .cta-panel:has(.cta-panel__artwork) { grid-template-columns: minmax(0, 1.3fr) minmax(200px, .7fr); min-height: 280px; }
-  .cta-panel__artwork { max-width: 340px; margin-top: -56px; margin-bottom: -40px; transform: translateY(-30px); }
-  .split-hero__layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; }
+  .cta-panel:has(.cta-panel__artwork) { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); min-height: 306px; }
+  /* The artwork column stretches to the panel's content box; the painted object is
+     placed against it and rises ~28px above the panel (Figma CtaPanel Artwork=with). */
+  .cta-panel__artwork { align-self: stretch; max-width: none; margin: 0; }
+  .cta-panel__artwork img { position: absolute; top: -71px; right: 10px; width: 107.4%; max-width: none; }
   .cta-panel--inline { grid-template-columns: minmax(0, 1fr) auto; }
   .cta-panel--inline > .cta-panel__actions { max-width: 380px; justify-content: flex-end; }
 }
 @media (min-width: 1024px) {
   .auth-card { padding: 40px; }
+  .cta-panel:has(.cta-panel__artwork) { grid-template-columns: minmax(0, 1fr) minmax(0, 446px); }
 }
 @media (max-width: 767px) {
   .home-hero h1 { text-wrap: balance; }
@@ -523,8 +525,14 @@ body:has(.auth-stage) .footer-band { display: none; }
   .resource-stack--shelf .resource-stack__book:nth-child(1) { left: 0; }
   .resource-stack--shelf .resource-stack__book:nth-child(2) { left: 30%; }
   .resource-stack--shelf .resource-stack__book:nth-child(3) { left: 60%; }
-  .split-hero__layout { gap: 28px; }
   .empty-state { min-height: 320px; }
   .cta-panel__artwork { max-width: 230px; }
 }
 @media (prefers-reduced-motion: reduce) { .resource-stack__book { transition: none; } }
+
+/* Tailwind's built-in max-w-prose emits `max-width: 65ch` (about 656px) after the theme value, so the
+   680px design token (--container-prose, Figma section headings and prose) never applied. This later
+   rule in the same layer wins; no element pairs max-w-prose with a responsive max-w-* variant. */
+@layer utilities {
+  .max-w-prose { max-width: var(--container-prose); }
+}

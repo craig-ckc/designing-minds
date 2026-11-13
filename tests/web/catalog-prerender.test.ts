@@ -31,13 +31,15 @@ test('all catalog views reset the visible count when filter inputs change', () =
   assert.match(packages, /useCatalogLoadMore\(visible,\s*CATALOG_INITIAL_LIMIT,\s*catalogResetKey\)/)
 })
 
-test('product covers reuse external artwork instead of repeating path payloads', () => {
+test('the live cover renderer uses a separate sprite from the storefront icons', () => {
   const component = readFileSync(new URL('../../apps/web/src/components/ui/product-cover.tsx', import.meta.url), 'utf8')
-  const sprite = readFileSync(new URL('../../apps/web/public/icons.svg', import.meta.url), 'utf8')
+  const sprite = readFileSync(new URL('../../apps/web/public/cover-source.svg', import.meta.url), 'utf8')
+  const icons = readFileSync(new URL('../../apps/web/public/icons.svg', import.meta.url), 'utf8')
 
-  assert.match(component, /<use href="\/icons\.svg#cover-band-shape" \/>/)
-  assert.match(component, /<use href="\/icons\.svg#cover-band-accent" \/>/)
+  assert.match(component, /<use href="\/cover-source\.svg#cover-band-shape" \/>/)
+  assert.match(component, /<use href="\/cover-source\.svg#cover-band-accent" \/>/)
   assert.doesNotMatch(component, /<path\b/)
+  assert.doesNotMatch(icons, /id="cover-band-/)
   assert.match(sprite, /<symbol id="cover-band-shape" viewBox="0 0 595 513">/)
   assert.match(sprite, /<symbol id="cover-band-accent" viewBox="0 0 595 339">/)
 })

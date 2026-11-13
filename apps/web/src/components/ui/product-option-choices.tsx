@@ -42,14 +42,14 @@ export function ProductOptionChoices({ id, label, options, value, onChange, requ
                   <span
                     aria-hidden="true"
                     style={{ backgroundColor: swatch }}
-                    className={`flex size-12 items-center justify-center rounded-md border border-ink/20 peer-focus-visible:ring-2 peer-focus-visible:ring-ink peer-focus-visible:ring-offset-4 ${selected ? 'outline-2 outline-offset-2 outline-primary-ink' : ''}`}
+                    className={`flex size-10 items-center justify-center rounded-sm border border-ink/20 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-ink ${selected ? 'ring-3 ring-primary/40' : ''}`}
                   >
                     {selected ? <span className="flex size-6 items-center justify-center rounded-full bg-canvas text-primary-ink"><Icon name="check" size={17} /></span> : null}
                   </span>
                   <span className={`max-w-24 break-words text-center text-caption ${selected ? 'font-semibold text-primary-ink' : 'text-ink-soft'}`}>{option.label ?? option.value}</span>
                 </>
               ) : (
-                <span className={`flex min-h-12 min-w-12 max-w-full items-center justify-center gap-2 rounded-md border px-4 py-2 text-body peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-ink ${selected ? 'border-primary-ink bg-primary-tint font-semibold text-primary-ink' : 'border-line-strong bg-canvas text-ink'}`}>
+                <span className={`flex min-h-10 min-w-12 max-w-full items-center justify-center gap-2 rounded-sm border px-4 py-2 text-body peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-ink ${selected ? 'border-primary-ink bg-primary-tint font-semibold text-primary-ink' : 'border-line-strong bg-canvas text-ink'}`}>
                   {selected ? <Icon name="check" size={15} className="shrink-0" /> : null}
                   <span className="min-w-0 [overflow-wrap:anywhere]">{option.label ?? option.value}</span>
                 </span>

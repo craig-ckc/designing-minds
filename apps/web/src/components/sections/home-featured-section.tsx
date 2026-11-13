@@ -3,7 +3,6 @@ import { publishedBundles, publishedProducts, type CmsSnapshot } from '@designin
 import { featuredCatalog, type FeaturedCategory } from '../../lib/featured-catalog'
 import { BundleCard } from '../ui/bundle-card'
 import { Button } from '../ui/button'
-import { Icon } from '../ui/icon'
 import { ProductCard } from '../ui/product-card'
 import { Section, SectionNotice } from '../ui/section'
 
@@ -21,7 +20,7 @@ export function HomeFeaturedSection({ snapshot, loadError }: { snapshot: CmsSnap
           <h2>Featured products</h2>
           <p className="mt-3 text-body-lg text-ink-soft">Start with these tests, summaries and bundles for Grades 3–7.</p>
         </div>
-        <Button to="/shop" variant="outline" size="sm" shape="circle">Browse the shop <Icon name="arrow" size={16} /></Button>
+        <Button to="/shop" variant="solid-light">Browse the shop</Button>
       </div>
       {hasResources && hasBundles ? (
         <div role="group" aria-label="Featured product categories" className="mb-6 flex flex-wrap gap-2">

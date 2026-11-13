@@ -17,7 +17,7 @@ test('a record with no uploads renders the cover in its media frame without navi
   assert.doesNotMatch(emptyBranch, /aria-current/)
 })
 
-test('the cover is the first slide and is drawn, never fetched', () => {
+test('the cover is the first slide before uploaded images', () => {
   const track = gallerySource.slice(gallerySource.indexOf('function GalleryTrack'))
   // The cover slide precedes the uploaded ones in the DOM, which is also the
   // order the prerendered HTML carries.

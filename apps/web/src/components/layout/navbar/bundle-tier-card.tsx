@@ -14,7 +14,7 @@ type TierCardProps = {
 }
 
 function TierDescription({ children }: { children?: ReactNode }) {
-  return children ? <span className="mt-0.5 block text-label text-muted">{children}</span> : null
+  return children ? <span className="mt-0.5 block text-label font-semibold text-muted">{children}</span> : null
 }
 
 /** Featured (full-year) tier: a white island over the brand gradient and its
@@ -44,7 +44,7 @@ export function FeaturedTierCard({ tier, onNavigate, className, children }: Tier
           </span>
         </div>
         <div>
-          <span className="block font-bold text-ink">{tier.title}</span>
+          <span className="block text-body font-bold text-ink">{tier.title}</span>
           <TierDescription>{children}</TierDescription>
         </div>
       </div>
@@ -72,7 +72,7 @@ export function TermTierCard({ tier, onNavigate, className, children }: TierCard
       <span className="text-caption font-bold uppercase tracking-[0.12em] text-muted">One term</span>
 
       <div>
-        <span className="block font-bold text-ink">{tier.title}</span>
+        <span className="block text-body font-bold text-ink">{tier.title}</span>
         <TierDescription>{children}</TierDescription>
       </div>
 
@@ -95,7 +95,7 @@ function TierPrice({ tier, tone = 'inherit' }: { tier: BundleTier; tone?: 'inher
       <span className={cn('text-label font-semibold', tone === 'accent' ? 'text-muted' : 'text-on-primary')}>from</span>
       <span
         className={cn(
-          'text-[1.5rem] font-extrabold leading-none tracking-[-0.02em]',
+          'text-[1.375rem] font-extrabold leading-none tracking-[-0.02em]',
           tone === 'accent' && 'text-primary',
         )}
       >

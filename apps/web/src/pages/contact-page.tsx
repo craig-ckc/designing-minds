@@ -65,7 +65,7 @@ export function ContactPage() {
             </Link>
             ? We’d love to help.
           </p>
-          <div className="mt-8 overflow-hidden rounded-md border border-line bg-surface">
+          <div className="mt-8 rounded-md border border-line bg-surface px-5 py-2">
             <ContactDetail label="Phone" value={CONTACT.phone} action={{ label: 'Call', href: `tel:${CONTACT.phone.replace(/[^\d+]/g, '')}` }} />
             <ContactDetail label="Email" value={CONTACT.email} action={{ label: 'Write', href: `mailto:${CONTACT.email}` }} />
             <ContactDetail label="Location" value={CONTACT.location} />
@@ -88,7 +88,7 @@ export function ContactPage() {
           </p>
         </div>
 
-        <form action={apiUrl('/api/forms')} method="post" className="card grid gap-4 p-5 sm:p-6" onSubmit={handleSubmit}>
+        <form action={apiUrl('/api/forms')} method="post" className="grid gap-4 rounded-md bg-surface p-5 sm:p-6" onSubmit={handleSubmit}>
           <h2 className="text-xl">Send us a message</h2>
           {/* Progressive-enhancement fallback: CSS-only, shown via the
               :target pseudo-class when the browser lands on the matching
@@ -152,7 +152,7 @@ export function ContactPage() {
           <Select label="What can we help with?" name="topic" value={topic} options={TOPICS} onChange={setTopic} />
           <Field label="Message">
             <textarea
-              className="field min-h-[130px] resize-y"
+              className="field min-h-30 resize-y py-3"
               name="message"
               placeholder="How can we help?"
               value={message}
@@ -190,7 +190,7 @@ export function ContactPage() {
           ) : error ? (
             <p className="text-label text-danger">{error}</p>
           ) : (
-            <p className="text-label text-muted">We usually reply within one business day.</p>
+            <p className="text-label font-semibold text-muted">We usually reply within one business day.</p>
           )}
         </form>
       </div>

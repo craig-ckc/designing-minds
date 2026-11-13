@@ -14,7 +14,7 @@ export function PhysicalProductGallery({ product }: { product: Pick<PhysicalCata
   const image = images[Math.min(selected, images.length - 1)]
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-4">
       <ProductMedia
         src={image?.url}
         alt={image?.alt || product.title}
@@ -28,7 +28,7 @@ export function PhysicalProductGallery({ product }: { product: Pick<PhysicalCata
         {!image ? <div role="img" aria-label={`${product.title} product preview not available`} className="absolute inset-0" /> : null}
       </ProductMedia>
       {images.length > 1 ? (
-        <ul className="flex flex-wrap gap-2" aria-label="Product images">
+        <ul className="grid grid-cols-4 gap-3 sm:flex sm:flex-wrap" aria-label="Product images">
           {images.map((entry, index) => (
             <li key={entry.id ?? entry.url}>
               <button
@@ -37,8 +37,9 @@ export function PhysicalProductGallery({ product }: { product: Pick<PhysicalCata
                 aria-current={index === selected ? 'true' : undefined}
                 onClick={() => setSelected(index)}
                 className={cn(
-                  'block h-16 w-16 overflow-hidden rounded-md bg-surface-alt ring-offset-2 transition',
-                  index === selected ? 'ring-2 ring-primary' : 'opacity-80 hover:opacity-100',
+                  // Phones share the row four-up (96px thumbs wrapped 3 + 1 at 375); from sm they are Figma's 96×72.
+                  'block aspect-[4/3] w-full overflow-hidden rounded-sm border-2 bg-surface-alt p-0.5 transition-colors sm:aspect-auto sm:h-18 sm:w-24',
+                  index === selected ? 'border-primary-ink' : 'border-transparent hover:border-line-strong',
                 )}
               >
                 <img src={entry.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />

@@ -48,8 +48,8 @@ const inMenu = (node: ReturnType<typeof createElement>) =>
   createElement(NavigationMenu.Root, null, createElement(NavigationMenu.List, null, createElement(NavigationMenu.Item, null, node)))
 
 const tiers: BundleTier[] = [
-  { scope: 'Term', title: 'Term bundles', fromPriceZar: 200, gradeCount: 2, featured: false },
-  { scope: 'Full Year', title: 'Full-year bundles', fromPriceZar: 1200, gradeCount: 5, featured: true },
+  { scope: 'Term', title: 'Term bundles', fromPriceZar: 200, maxPriceZar: 350, gradeCount: 2, featured: false },
+  { scope: 'Full Year', title: 'Full-year bundles', fromPriceZar: 1200, maxPriceZar: 1200, gradeCount: 5, featured: true },
 ]
 
 test('cart link shows an accessible item-count badge, capped at 99+, and hides it when empty', () => {
@@ -112,6 +112,17 @@ test('shop menu lists Browse links and bundle tiers with their filtered offers; 
 
   const none = render(inMenu(createElement(ShopMenuContent, { tiers: [], onNavigate: () => {} })))
   assert.match(none, /No bundles published yet\./)
+})
+
+test('shop menu follows the Figma type scale for links and tier cards', () => {
+  const html = render(inMenu(createElement(ShopMenuContent, { tiers, onNavigate: () => {} })))
+  // Browse link: 14px semibold label over a 13px semibold muted sub-line.
+  assert.match(html, /<span class="block text-body font-semibold text-ink[^"]*">All resources<\/span><span class="block text-label font-semibold text-muted">/)
+  // Tier card: 14px bold title, 13px semibold muted description, 22px extrabold price.
+  assert.match(html, /<span class="block text-body font-bold text-ink">[^<]+<\/span><span class="mt-0\.5 block text-label font-semibold text-muted">Choose from/)
+  const prices = [...html.matchAll(/<span class="([^"]*)">R [\d ]+<\/span>/g)].map((match) => match[1])
+  assert.equal(prices.length, 2)
+  for (const cls of prices) assert.match(cls, /text-\[1\.375rem\] font-extrabold leading-none tracking-\[-0\.02em\]/)
 })
 
 test('mobile menu content has search, every route, and compact tier cards without the description line', () => {

@@ -18,8 +18,8 @@ function MegaLink({ to, label, sub, icon, onNavigate }: { to: string; label: str
           <Icon name={icon} />
         </span>
         <span>
-          <span className="block font-semibold text-ink transition-colors group-hover:text-primary-ink">{label}</span>
-          <span className="block text-label text-muted">{sub}</span>
+          <span className="block text-body font-semibold text-ink transition-colors group-hover:text-primary-ink">{label}</span>
+          <span className="block text-label font-semibold text-muted">{sub}</span>
         </span>
       </NavigationMenu.Link>
     </li>

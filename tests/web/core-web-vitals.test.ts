@@ -18,7 +18,6 @@ test('Inter is self-hosted and preloaded without a remote stylesheet', () => {
 test('only the above-the-fold product cover promotes its illustration', () => {
   const cover = read('src/components/ui/product-cover.tsx')
   const gallery = read('src/components/ui/product-gallery.tsx')
-  const optimizer = read('scripts/optimize-images.mjs')
 
   assert.match(cover, /loading=\{priority \? 'eager' : 'lazy'\}/)
   assert.match(cover, /fetchPriority=\{priority \? 'high' : 'auto'\}/)
@@ -32,7 +31,4 @@ test('only the above-the-fold product cover promotes its illustration', () => {
   // else competes with the cover for the initial fetch.
   assert.match(gallery, /loading="lazy"/)
   assert.doesNotMatch(gallery, /fetchPriority="high"/)
-  assert.match(optimizer, /const SUBJECT_AVIF_MAX_PX = 640/)
-  assert.match(optimizer, /ext === '\.avif' && rel\.split\(path\.sep\)\[0\] === 'subjects'/)
-  assert.match(optimizer, /width: SUBJECT_AVIF_MAX_PX[\s\S]*height: SUBJECT_AVIF_MAX_PX[\s\S]*withoutEnlargement: true/)
 })

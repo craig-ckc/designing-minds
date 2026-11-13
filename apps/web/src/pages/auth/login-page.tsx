@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Field } from '../../components/ui/field'
 import { Button } from '../../components/ui/button'
 import { Notice } from '../../components/ui/notice'
+import { TextLink } from '../../components/ui/text-link'
 import { useAuth } from '../../lib/auth'
 import { AuthLayout } from './auth-layout'
 
@@ -49,12 +50,10 @@ export function LoginPage() {
       <Field label="Password">
         <input className="field" type="password" placeholder="Your password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </Field>
-      <div className="-mt-1 text-right text-label">
-        <Link to="/forgot-password" className="text-ink underline underline-offset-4 hover:text-primary-ink">
-          Forgot password?
-        </Link>
-      </div>
-      <Button type="submit" variant="solid" className="w-full" disabled={submitting}>
+      <p className="text-right text-body">
+        <TextLink to="/forgot-password" className="inline-flex min-h-6 items-center">Forgot password?</TextLink>
+      </p>
+      <Button type="submit" variant="solid" className="mt-2 w-full" disabled={submitting}>
         {submitting ? 'Logging in…' : 'Log in'}
       </Button>
     </AuthLayout>

@@ -15,9 +15,10 @@ test('footer uses the Panorama style: painting band at the top, then content, th
   assert.doesNotMatch(footerSource, /footer-veld-acacia|image-03\.png/)
 })
 
-test('auth pages hide the footer painting so it never stacks under the painted auth stage', () => {
+test('auth pages hide the whole footer so the painted auth stage fills the viewport', () => {
   const css = readFileSync(new URL('../../apps/web/src/index.css', import.meta.url), 'utf8')
-  assert.match(css, /body:has\(\.auth-stage\) \.footer-band \{ display: none; \}/)
+  assert.match(css, /body:has\(\.auth-stage\) #main ~ footer \{ display: none; \}/)
+  assert.match(css, /body:has\(\.auth-stage\) #main \{ display: grid; \}/)
   const authLayout = readFileSync(new URL('../../apps/web/src/pages/auth/auth-layout.tsx', import.meta.url), 'utf8')
   assert.match(authLayout, /auth-stage/)
 })

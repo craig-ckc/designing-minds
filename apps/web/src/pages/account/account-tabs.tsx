@@ -10,7 +10,7 @@ const TABS = [
 /** Account section tabs (code twin of Figma's AccountTabs). The active tab is underlined in `primary`. */
 export function AccountTabs() {
   return (
-    <nav aria-label="Account" className="flex gap-6 overflow-x-auto border-b border-line">
+    <nav aria-label="Account" className="flex gap-8 overflow-x-auto border-b border-line">
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}
@@ -18,7 +18,7 @@ export function AccountTabs() {
           end={tab.end}
           className={({ isActive }) =>
             cn(
-              '-mb-px whitespace-nowrap border-b-2 py-3 text-label font-semibold transition-colors',
+              '-mb-px whitespace-nowrap border-b-2 py-3 text-body font-semibold transition-colors',
               isActive ? 'border-primary text-ink' : 'border-transparent text-muted hover:text-ink',
             )
           }

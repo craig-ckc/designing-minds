@@ -15,13 +15,14 @@ const BRAND_STATS: Stat[] = [
   { value: SOCIAL_PROOF.customers, label: 'Customers', icon: 'user' },
   { value: '360', label: 'Resources', icon: 'doc' },
   { value: '11', label: 'Subjects covered', icon: 'palette' },
-  { value: '5', label: 'Grades currently supported', icon: 'book' },
+  { value: '5', label: 'Grades supported', icon: 'book' },
 ]
 
 /**
- * The single trust-stats band. Each stat is a white circle holding the
- * accent-coloured icon, sitting on a hairline that runs through the row, with a
- * big number and a muted label underneath. Only the caption is page-specific.
+ * The single trust-stats band (Figma `StatItem`). Each stat is a white circle holding the
+ * accent-coloured icon beside a big number over a muted label; on desktop the four sit in one
+ * centred row split by hairline dividers. Phones stack each stat in a two-up grid. Only the
+ * caption is page-specific.
  */
 export function StatsSection({
   stats = BRAND_STATS,
@@ -37,20 +38,21 @@ export function StatsSection({
   return (
     <Section className={className} spacing={spacing}>
       {caption ? <p className="mb-12 text-center text-body font-medium text-muted">{caption}</p> : null}
-      <div className="relative mx-auto">
-        {/* Hairline threaded through the icon chips (single row from md up). */}
-        <span aria-hidden className="absolute inset-x-8 top-8 hidden h-px bg-line md:block" />
-        <div className="relative grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center text-center">
-              <span className="grid h-16 w-16 place-items-center rounded-full border border-line bg-surface text-primary shadow-cover">
-                <Icon name={stat.icon} size={30} />
-              </span>
-              <strong className="mt-5 block text-display text-primary">{stat.value}</strong>
-              <span className="mt-1 text-body font-medium text-muted">{stat.label}</span>
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:flex lg:justify-center lg:gap-6">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="flex flex-col items-center text-center lg:max-w-[280px] lg:flex-row lg:items-start lg:gap-4 lg:border-line lg:px-6 lg:text-left lg:not-first:border-l"
+          >
+            <span className="grid h-16 w-16 flex-none place-items-center rounded-full border border-line bg-surface text-primary shadow-cover">
+              <Icon name={stat.icon} size={30} />
+            </span>
+            <span className="mt-5 flex flex-col lg:mt-0 lg:pt-1">
+              <strong className="block text-display text-primary">{stat.value}</strong>
+              <span className="mt-1 text-body font-medium text-muted lg:mt-0">{stat.label}</span>
+            </span>
+          </div>
+        ))}
       </div>
     </Section>
   )

@@ -1,13 +1,14 @@
-import { SplitHero } from './split-hero'
+import { CapsAbbr } from '../ui/caps-abbr'
+import { PageHero } from './page-hero'
 
 export function AboutHeroSection() {
   return (
-    <SplitHero
-      title="Shaping confident learners, one test at a time"
+    <PageHero
+      title="Practice tests that help learners feel ready"
       lead={
         <>
-          Affordable practice tests aligned with CAPS, South Africa’s Curriculum and Assessment Policy Statement,
-          help learners prepare with confidence and give parents simple support at home.
+          Affordable practice tests aligned with <CapsAbbr /> that help learners prepare and give parents simple
+          support at home.
         </>
       }
       actionLabel="Browse resources"

@@ -220,7 +220,10 @@ test('explore offers optional Grades 3–7 routes and a general catalogue link w
   const html = render(createElement(Explore, { snapshot: snapshot([product('maths')]) }))
   assert.match(html, /Explore our resources/)
   assert.match(html, /CAPS-aligned tests, memos and summaries for Grades 3 to 7\. Pick your child’s grade, or browse everything\./)
-  assert.match(html, /<a class="(?=[^"]*rounded-full)(?=[^"]*border-\[1\.5px\])[^"]*" href="\/shop"[^>]*>Browse all resources/)
+  // Figma "Button / Text": a flush 16px text link with an arrow, not a boxed outline button.
+  assert.match(html, /<a class="(?=[^"]*text-primary-ink)(?=[^"]*text-body-lg)(?![^"]*border)[^"]*" href="\/shop"[^>]*>Browse all resources <svg/)
+  // Home compacts the tiles on phones.
+  assert.match(html, /class="grade-grid grade-grid--compact"/)
   assert.match(html, /href="\/shop"/)
   for (let grade = 3; grade <= 7; grade += 1) assert.match(html, new RegExp(`href="/shop\\?grade=grade-${grade}"`))
   assert.doesNotMatch(html, /catalog-card|Add .+ to cart/)
@@ -252,6 +255,8 @@ test('testimonials preserve the lead illustration and original carousel using on
   ])
   const html = render(createElement(Testimonials, { snapshot: data }))
   assert.match(html, /src="\/images\/image-05\.png"/)
+  // Figma (Home/Grades) sets the heading in a 400px box that breaks after "families".
+  assert.match(html, /<h2 class="max-w-\[400px\]">Real stories from families across South Africa<\/h2>/)
   assert.match(html, /The first real parent story\./)
   assert.match(html, /Parent lead/)
   assert.ok(html.indexOf('Parent lead') < html.indexOf('testimonial-carousel'))
@@ -353,8 +358,8 @@ test('the homepage keeps the grade range together and closes on decorative real-
   const html = render(createElement(HomePage), catalogValue(data))
   assert.match(html, /<span class="whitespace-nowrap">Grades 3–7<\/span>/)
   const close = html.slice(html.indexOf('id="start-shopping"'))
-  assert.match(close, /bg-primary text-ink/)
-  assert.match(close, /class="cta-panel__artwork" aria-hidden="true"><img src="\/images\/paintings\/cta-practice-booklets\.avif"/)
+  assert.match(close, /bg-primary text-on-primary/)
+  assert.match(close, /class="cta-panel__artwork" aria-hidden="true"><img src="\/images\/paintings\/cta-practice-binders\.avif"/)
   // Decorative artwork only: the close keeps exactly one real route.
   assert.equal((close.match(/<a\b/g) ?? []).length, 1)
 })

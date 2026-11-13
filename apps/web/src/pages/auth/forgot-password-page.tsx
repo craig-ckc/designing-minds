@@ -28,7 +28,7 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout
       title={sent ? 'Check your email' : 'Reset your password'}
-      intro={sent ? 'We’ve sent the next step to your inbox.' : 'Enter your account email and we’ll send you a link to set a new password.'}
+      intro={sent ? undefined : 'Enter your account email and we’ll send you a link to set a new password.'}
       onSubmit={() => void submit()}
       footer={
         <>
@@ -57,7 +57,7 @@ export function ForgotPasswordPage() {
               required
             />
           </Field>
-          <Button type="submit" variant="solid" className="w-full" disabled={submitting}>
+          <Button type="submit" variant="solid" className="mt-2 w-full" disabled={submitting}>
             {submitting ? 'Sending…' : 'Send reset link'}
           </Button>
         </>

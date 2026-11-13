@@ -33,8 +33,11 @@ test('testimonial cards show a star rating alongside the named customer, without
   assert.match(carousel, /testimonial-carousel-track/)
   assert.match(carousel, /aria-hidden="true"/)
   assert.match(carousel, /testimonials\.length \* 12/)
+  // Craig (2026-11-12): no "Read full story" — quotes clamp at seven lines with no expand control.
   assert.doesNotMatch(carousel, /scrollBy|carousel controls|Show previous|Show next|Read full story|Show less/)
   assert.match(carousel, /line-clamp-7/)
+  // Figma TestimonialCard is 384px wide.
+  assert.match(carousel, /w-\[min\(82vw,24rem\)\]/)
   assert.match(styles, /@keyframes testimonial-scroll/)
   assert.match(styles, /animation: testimonial-scroll linear infinite/)
   assert.match(styles, /width: 100vw/)

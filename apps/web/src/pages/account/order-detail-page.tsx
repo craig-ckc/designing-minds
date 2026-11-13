@@ -124,18 +124,24 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
   const showTracker = (order.status === 'paid' || order.status === 'fulfilled')
     && (order.fulfillmentStatus === 'unfulfilled' || order.fulfillmentStatus === 'shipped' || order.fulfillmentStatus === 'delivered')
   const trackingUrl = order.trackingUrl && safeTrackingUrl(order.trackingUrl, snapshot.localCommercePreview) ? order.trackingUrl : null
+  // "Courier delivery · R 99": only when the order recorded both the method and its fee.
+  const courierLine = order.hasPhysical && order.shippingMethod && order.shippingZar != null ? `${order.shippingMethod} · ${priceLabel(order.shippingZar)}` : null
+  const subtotal = order.subtotalZar ?? order.totalZar + (order.discountZar ?? 0) - (order.shippingZar ?? 0)
 
   return (
-    <AccountShell title={`Order ${order.reference}`}>
+    <AccountShell
+      title={`Order ${order.reference}`}
+      breadcrumb={{ trail: [{ to: '/account', label: 'Account' }, { to: '/account/orders', label: 'Order history' }], current: order.reference }}
+      meta={<>
+        <OrderStatusBadge status={order.status} />
+        <p className="text-body-lg text-muted">Placed {formatDisplayDate(order.placedAt)}</p>
+      </>}
+    >
       <div className="grid gap-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <OrderStatusBadge status={order.status} />
-          <p className="text-body text-ink-soft">Placed {formatDisplayDate(order.placedAt)}</p>
-        </div>
         <OrderRecoveryNotice status={order.status} />
 
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="grid min-w-0 gap-8">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+          <div className="grid min-w-0 gap-8 lg:gap-10">
             {hasDigital ? (
               <section aria-labelledby="order-downloads" className="grid gap-4">
                 <h2 id="order-downloads" className="text-h4">Downloads</h2>
@@ -151,10 +157,10 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                     const files = products.flatMap((product) => product.purchasedFiles.map((file) => ({ ...file, productTitle: product.title })))
                     return (
                       <li key={item.id}>
-                        <Card variant="surface" pad="md" as="article" className="grid gap-3">
-                          <ul className="grid"><SummaryLine snapshot={snapshot} slug={item.productSlug} title={item.title} physical={false} price={item.priceZar} /></ul>
+                        <Card variant="surface" pad="md" as="article" className="grid gap-4">
+                          <ul className="grid"><SummaryLine snapshot={snapshot} slug={item.productSlug} title={item.title} physical={false} price={item.priceZar} showKind /></ul>
                           {files.length > 0 ? (
-                            <ul className="grid divide-y divide-line border-t border-line">
+                            <ul className="grid gap-4">
                               {files.map((file) => (
                                 <DownloadFileRow
                                   key={file.id}
@@ -186,7 +192,7 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                   ) : (
                     <p className="text-body text-ink-soft">{order.status === 'failed' ? 'Payment was not completed. No physical products will be dispatched.' : order.status === 'refunded' ? 'This order has been refunded.' : order.status === 'pending' ? 'Physical products will be prepared after payment succeeds.' : null}</p>
                   )}
-                  <ul className="grid gap-4 border-t border-line pt-5">
+                  <ul className="grid gap-2 border-t border-line pt-5">
                     {physicalItems.map((item) => (
                       <SummaryLine
                         key={item.id}
@@ -201,15 +207,16 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
                       />
                     ))}
                   </ul>
-                  {order.delivery || order.trackingNumber || trackingUrl ? (
+                  {order.delivery || courierLine || order.trackingNumber || trackingUrl ? (
                     <div className="flex flex-wrap items-start justify-between gap-4 border-t border-line pt-5">
                       {order.delivery ? (
                         <div className="grid gap-1">
-                          <h3 className="text-label font-semibold text-ink-soft">Delivering to</h3>
-                          <address className="text-body not-italic text-ink">{order.delivery.recipientName}<br />{order.delivery.addressLine1}<br />{order.delivery.addressLine2 ? <>{order.delivery.addressLine2}<br /></> : null}{order.delivery.suburb}, {order.delivery.city}<br />{order.delivery.province} {order.delivery.postalCode}<br />{order.delivery.phone}</address>
+                          <h3 className="text-label font-semibold text-muted">Delivering to</h3>
+                          <address className="text-body not-italic text-ink-soft">{order.delivery.recipientName}<br />{order.delivery.addressLine1}<br />{order.delivery.addressLine2 ? <>{order.delivery.addressLine2}<br /></> : null}{order.delivery.suburb}, {order.delivery.city}<br />{order.delivery.province} {order.delivery.postalCode}<br />{order.delivery.phone}</address>
                         </div>
                       ) : null}
-                      <div className="grid justify-items-start gap-2 sm:justify-items-end">
+                      <div className="grid justify-items-start gap-3 sm:justify-items-end">
+                        {courierLine ? <p className="text-body text-ink-soft">{courierLine}</p> : null}
                         {order.trackingNumber ? <p className="text-body text-ink-soft">Tracking number: <strong className="text-ink">{order.trackingNumber}</strong></p> : null}
                         {trackingUrl ? <Button href={trackingUrl} target="_blank" rel="noreferrer" variant="outline" size="sm">Track your delivery <Icon name="arrow" size={16} /></Button> : null}
                       </div>
@@ -220,25 +227,23 @@ export function OrderDetailPage({ snapshot, onRefresh }: { snapshot: CmsSnapshot
             ) : null}
           </div>
 
-          <aside className="grid gap-4">
-            <Card variant="surface" pad="md" className="grid gap-4">
+          <aside className="grid gap-6">
+            <Card variant="outline" pad="md" className="grid gap-3">
               <h2 className="text-h5">Receipt</h2>
               <ul className="grid gap-3">
                 <SpecRow label="Reference" value={order.reference} />
                 <SpecRow label="Account" value={order.customerName} />
                 <SpecRow label="Email" value={order.customerEmail} />
-                {payment ? <SpecRow label="Payment" value={`${payment.provider} · ${payment.reference} · ${payment.status}`} /> : null}
-                {order.couponCode ? <>
-                  <SpecRow label="Subtotal" value={priceLabel(order.subtotalZar ?? order.totalZar + (order.discountZar ?? 0))} />
-                  <SpecRow label={`Discount (${order.couponCode})`} value={`−${priceLabel(order.discountZar ?? 0)}`} />
-                </> : null}
-                {order.hasPhysical ? <SpecRow label={order.shippingMethod ?? 'Delivery'} value={priceLabel(order.shippingZar ?? 0)} last /> : null}
+                {payment ? <SpecRow label="Payment" value={`${payment.provider} · ${payment.reference}`} /> : null}
+                <SpecRow label="Subtotal" value={priceLabel(subtotal)} />
+                {order.couponCode ? <SpecRow label={`Discount (${order.couponCode})`} value={`−${priceLabel(order.discountZar ?? 0)}`} /> : null}
+                {order.hasPhysical ? <SpecRow label={order.shippingMethod ?? 'Delivery'} value={priceLabel(order.shippingZar ?? 0)} /> : null}
               </ul>
               <SummaryRow label="Total" value={priceLabel(order.totalZar)} emphasis="total" />
             </Card>
             <p className="text-body text-muted">
               {hasDigital ? 'Problem with a download?' : 'Question about your order?'}{' '}
-              <Link to="/contact" className="text-ink underline underline-offset-4">Contact support</Link>.
+              <Link to="/contact" className="text-ink underline underline-offset-4">Contact support</Link>
             </p>
           </aside>
         </div>
@@ -255,11 +260,12 @@ const TRACKER_STEPS = [
   { key: 'delivered', label: 'Delivered' },
 ] as const
 
-/** Three-step progress for paid physical orders. Position only: the data holds no timestamps. */
+/** Three-step progress for paid physical orders. Position only: the data holds no timestamps.
+ *  A row with connectors from `sm`; a plain stacked list on phones, where three labels don't fit. */
 function DeliveryTracker({ fulfillment }: { fulfillment: 'unfulfilled' | 'shipped' | 'delivered' }) {
   const current = TRACKER_STEPS.findIndex((step) => step.key === fulfillment)
   return (
-    <ol aria-label="Delivery progress" className="flex items-center gap-3 text-label">
+    <ol aria-label="Delivery progress" className="grid gap-2 text-body sm:flex sm:items-center sm:gap-3">
       {TRACKER_STEPS.map((step, index) => {
         const state = index < current ? 'complete' : index === current ? 'current' : 'upcoming'
         return (
@@ -267,12 +273,14 @@ function DeliveryTracker({ fulfillment }: { fulfillment: 'unfulfilled' | 'shippe
             key={step.key}
             data-state={state}
             aria-current={state === 'current' ? 'step' : undefined}
-            className={`flex items-center gap-2 ${index > 0 ? 'flex-1' : ''} ${state === 'upcoming' ? 'text-muted' : 'font-semibold text-ink'}`}
+            className={`flex items-center gap-3 ${index > 0 ? 'sm:flex-1' : ''} ${state === 'complete' ? 'text-ink-soft' : state === 'current' ? 'font-semibold text-ink' : 'text-muted'}`}
           >
-            {index > 0 ? <span aria-hidden="true" className={`h-px flex-1 ${state === 'upcoming' ? 'bg-line-strong' : 'bg-primary'}`} /> : null}
-            <span aria-hidden="true" className={`h-2.5 w-2.5 flex-none rounded-full ${state === 'upcoming' ? 'border border-line-strong' : 'bg-primary'}`} />
-            <span>{step.label}</span>
-            <span className="sr-only">{state === 'complete' ? ' (done)' : state === 'current' ? ' (current step)' : ''}</span>
+            {index > 0 ? <span aria-hidden="true" className={`hidden h-0.5 flex-1 sm:block ${state === 'upcoming' ? 'bg-line-strong' : 'bg-primary'}`} /> : null}
+            <span className="flex items-center gap-2">
+              <span aria-hidden="true" className={`size-3 flex-none rounded-full ${state === 'upcoming' ? 'border-[1.5px] border-line-strong' : 'bg-primary'}`} />
+              <span>{step.label}</span>
+              <span className="sr-only">{state === 'complete' ? ' (done)' : state === 'current' ? ' (current step)' : ''}</span>
+            </span>
           </li>
         )
       })}

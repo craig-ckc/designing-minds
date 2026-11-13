@@ -5,8 +5,7 @@ import { Section } from '../components/ui/section'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { PageHeader } from '../components/ui/headings'
 import { FaqAccordion } from '../components/ui/faq-accordion'
-import { CtaBanner } from '../components/sections/cta-banner'
-import { Button } from '../components/ui/button'
+import { FinalCtaSection } from '../components/sections/final-cta-section'
 
 const categorySlug = (category: string) =>
   category
@@ -41,7 +40,7 @@ export function HelpPage() {
         <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
           <aside className="lg:sticky lg:top-[var(--sticky-offset)] lg:self-start">
             <h2 className="mb-3 text-base font-semibold tracking-normal">Topics</h2>
-            <ul className="flex flex-wrap gap-x-4 gap-y-2 text-ink-soft lg:grid lg:gap-2">
+            <ul className="flex flex-wrap gap-x-4 gap-y-2 text-body text-ink-soft lg:grid lg:gap-2">
               {byCategory.map(([category]) => (
                 <li key={category}>
                   {/* inline-flex + min-h-6: topic jump links are a nav list, so they
@@ -56,27 +55,25 @@ export function HelpPage() {
           </aside>
 
           <div className="grid gap-12">
-            {byCategory.map(([category, faqs]) => (
+            {byCategory.map(([category, faqs], index) => (
               <div key={category} id={categorySlug(category)}>
-                <h2 className="mb-3 text-h6">{category}</h2>
-                <FaqAccordion faqs={faqs} />
+                <h2 className="mb-2 text-h6">{category}</h2>
+                {/* The first question on the page starts open, as in the Figma Help screen. */}
+                <FaqAccordion faqs={faqs} defaultOpenFirst={index === 0} />
               </div>
             ))}
           </div>
         </div>
-
-        {/* Only once every topic has been exhausted. */}
-        <div className="mt-10">
-          <CtaBanner.Root tone="neutral">
-            <CtaBanner.Content>
-              <CtaBanner.Title>Still have a question?</CtaBanner.Title>
-              <CtaBanner.Description>We’re a real team, and we’re happy to help you find the right resource or sort out a download.</CtaBanner.Description>
-              <CtaBanner.Actions><Button to="/contact" variant="solid">Contact support</Button></CtaBanner.Actions>
-            </CtaBanner.Content>
-            <CtaBanner.Artwork><img src="/images/image-01.png" alt="" loading="lazy" className="max-h-64 w-full object-contain" /></CtaBanner.Artwork>
-          </CtaBanner.Root>
-        </div>
       </Section>
+
+      {/* Only once every topic has been exhausted: its own section after the FAQ. */}
+      <FinalCtaSection
+        id="help-cta"
+        title="Still have a question?"
+        description="We’re a real team, and we’re happy to help you find the right resource or sort out a download."
+        actionLabel="Contact support"
+        actionTo="/contact"
+      />
     </>
   )
 }

@@ -116,10 +116,13 @@ export function ShopPage() {
 
   const bundleCount = visible.filter((entry) => entry.kind === 'bundle').length
   const physicalCount = visible.filter((entry) => entry.kind === 'physical').length
+  // The resource count lead describes a resources-only catalogue; the mixed shop has none.
+  const resourceCount = useMemo(() => publishedProducts(snapshot).length, [snapshot])
+  const lead = shopSubtitle(grades, hasPhysicalCatalog ? undefined : resourceCount)
 
   return (
     <>
-      <PageHeader width="full" title={hasPhysicalCatalog ? 'All products' : 'All resources'} lead={shopSubtitle(grades)}>
+      <PageHeader width="full" title={hasPhysicalCatalog ? 'All products' : 'All resources'} lead={lead}>
         <div className="mt-6">
           <Breadcrumb trail={[{ to: '/', label: 'Home' }]} current="Shop" />
         </div>
@@ -155,7 +158,7 @@ export function ShopPage() {
         <Container width="full">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h2 className="text-body-lg font-semibold tracking-normal">{visible.length} results</h2>
-            {bundleCount > 0 && sort === 'recommended' ? <span className="text-muted">Bundles first</span> : null}
+            {bundleCount > 0 && sort === 'recommended' ? <span className="text-body text-muted">Bundles first</span> : null}
           </div>
           {visible.length > 0 ? (
             <div className="catalog-grid">

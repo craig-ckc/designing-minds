@@ -18,6 +18,7 @@ import { postToPayment } from '../lib/payment-handoff'
 import { SummaryLine } from '../components/summary-line'
 import { SummaryRow } from '../components/ui/summary-row'
 import { TermsCheckbox } from '../components/checkout/terms-checkbox'
+import { TextLink } from '../components/ui/text-link'
 
 interface PriceQuote {
   items: { productSlug: string; title: string; priceZar: number; originalPriceZar: number; onSale: boolean }[]
@@ -226,7 +227,7 @@ function DigitalCheckoutPage() {
           >
             <h2>Order summary</h2>
             {items.length > 0 ? (
-              <ul className="grid gap-4">
+              <ul className="grid gap-2">
                 {items.map((item) => {
                   const record = item.kind === 'product' ? item.product : item.bundle
                   const line = quoteValid ? quote?.items.find((entry) => entry.productSlug === record.slug) : null
@@ -251,7 +252,7 @@ function DigitalCheckoutPage() {
               <div className="flex flex-wrap gap-2">
                 <input id="discount-code" value={codeInput} maxLength={40} autoComplete="off" spellCheck={false}
                   onChange={(event) => setCodeInput(event.target.value)} disabled={submitting || quoting}
-                  className="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 text-body" />
+                  className="min-h-[var(--control-h)] min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 text-body" />
                 <Button type="button" variant="outline" disabled={!customer || !codeInput.trim() || submitting || quoting}
                   onClick={() => {
                     const code = codeInput.trim().toUpperCase()
@@ -267,7 +268,7 @@ function DigitalCheckoutPage() {
               onClick={() => void loadQuote(appliedCode)}>Check prices again</Button> : null}
             {quoting ? <p role="status" className="text-body text-muted">Checking prices…</p> : null}
             {quoteValid && quote && quote.discountZar > 0 ? (
-              <div className="grid gap-3" aria-live="polite">
+              <div className="grid gap-2" aria-live="polite">
                 <SummaryRow label="Subtotal" value={priceLabel(quote.subtotalZar)} />
                 <SummaryRow label={`Discount (${quote.couponCode})`} value={`−${priceLabel(quote.discountZar)}`} />
               </div>
@@ -280,9 +281,9 @@ function DigitalCheckoutPage() {
             <TermsCheckbox checked={acceptedTerms} onChange={setAcceptedTerms} disabled={submitting}>
               <span className="text-ink-soft">
                 I have read and agree to the{' '}
-                <Link to="/terms" className="font-semibold text-primary-ink underline underline-offset-4 hover:text-primary-ink-strong">
+                <TextLink to="/terms" tone="soft" className="font-semibold">
                   Terms of Use
-                </Link>.
+                </TextLink>.
               </span>
             </TermsCheckbox>
             <Button

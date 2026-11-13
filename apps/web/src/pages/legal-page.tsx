@@ -2,6 +2,7 @@ import { Section } from '../components/ui/section'
 import { Breadcrumb } from '../components/ui/breadcrumb'
 import { PageHeader } from '../components/ui/headings'
 import { Button } from '../components/ui/button'
+import { Card } from '../components/ui/card'
 
 type LegalKind = 'privacy' | 'terms' | 'refund'
 
@@ -22,7 +23,7 @@ const CONTENT: Record<LegalKind, { title: string; sections: string[] }> = {
 
 function TermsOfUse() {
   return (
-    <div className="mx-auto grid max-w-readable gap-10 text-ink-soft">
+    <div className="mx-auto grid max-w-readable gap-10 text-body text-ink-soft [&_h2]:text-ink">
       <p>
         Thank you for purchasing educational resources from Designing Minds. By purchasing, downloading or using any
         Designing Minds resource, you agree to the following Terms of Use.
@@ -127,12 +128,12 @@ function TermsOfUse() {
         <p className="font-semibold text-ink">© Designing Minds. All rights reserved.</p>
       </div>
 
-      <div className="card flex flex-wrap items-center justify-between gap-4 p-6">
+      <Card variant="surfaceAlt" className="flex flex-wrap items-center justify-between gap-4">
         <span className="text-muted">Questions about these terms?</span>
         <Button to="/contact" variant="solid" size="sm">
           Contact support
         </Button>
-      </div>
+      </Card>
     </div>
   )
 }
@@ -151,7 +152,7 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
         {kind === 'terms' ? (
           <TermsOfUse />
         ) : (
-          <div className="mx-auto grid max-w-readable gap-10">
+          <div className="mx-auto grid max-w-readable gap-10 text-body">
             {doc.sections.map((heading, index) => (
               <div key={heading} className="grid gap-3">
                 <h2>
@@ -160,17 +161,17 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
                 <p className="text-ink-soft">
                   Placeholder policy copy for “{heading}”. Final legal wording will be supplied before launch.
                 </p>
-                <p className="text-muted">
-                  This wireframe shows section structure only — plain-language paragraphs go here.
+                <p className="text-ink-soft">
+                  This wireframe shows section structure only: plain-language paragraphs go here.
                 </p>
               </div>
             ))}
-            <div className="card flex flex-wrap items-center justify-between gap-4 p-6">
+            <Card variant="surfaceAlt" className="flex flex-wrap items-center justify-between gap-4">
               <span className="text-muted">Questions about this policy?</span>
               <Button to="/contact" variant="solid" size="sm">
                 Contact support
               </Button>
-            </div>
+            </Card>
           </div>
         )}
       </Section>

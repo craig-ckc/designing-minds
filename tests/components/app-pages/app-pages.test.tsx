@@ -28,6 +28,19 @@ describe('AuthLayout', () => {
     expect(container.querySelector('form input[name="email"]')).toBeTruthy()
     expect(screen.queryByText('Return to checkout')).toBeNull()
   })
+  it('sets the intro in 16px muted and the support link as a soft TextLink (not a bare link)', () => {
+    at('/login', <AuthLayout title="Welcome back" intro="Log in to see your orders." footer={null}><span /></AuthLayout>)
+    expect(screen.getByText('Log in to see your orders.').className).toMatch(/\btext-body-lg\b.*\btext-muted\b/)
+    const support = screen.getByRole('link', { name: 'Visit support' })
+    expect(support.className).toContain('text-ink-soft')
+    expect(support.className).toContain('underline')
+  })
+  it('drops the intro paragraph when no intro is given (email-sent state)', () => {
+    const { container } = at('/forgot-password', <AuthLayout title="Check your email" footer={null}><span /></AuthLayout>)
+    const header = screen.getByRole('heading', { level: 1 }).parentElement!
+    expect(header.children).toHaveLength(1)
+    expect(container.querySelector('.auth-card > div:first-child > p')).toBeNull()
+  })
   it('keeps the checkout context', () => {
     at('/login?redirect=%2Fcheckout', <AuthLayout title="t" intro="i" footer={null}><span /></AuthLayout>)
     expect(screen.getByText(/You need an account to complete checkout/)).toBeTruthy()
@@ -93,8 +106,15 @@ describe('ContactDetail', () => {
     expect(screen.getByRole('link', { name: 'Write' }).getAttribute('href')).toBe('mailto:a@b.co')
     expect(screen.getAllByRole('link')).toHaveLength(2)
     expect(screen.getByText('Port Elizabeth').className).toContain('text-h6')
-    // Figma sets the label as an uppercase micro label (same treatment as the footer column titles).
-    expect(screen.getByText('Location').className).toMatch(/\buppercase\b.*tracking-\[0\.1em\]/)
+    // Figma sets the label as a 12px uppercase micro label with no extra tracking.
+    const label = screen.getByText('Location').className
+    expect(label).toMatch(/\btext-caption\b.*\buppercase\b.*\btext-muted\b/)
+    expect(label).not.toMatch(/tracking-/)
+    // Actions are 14px semibold underlined brand links.
+    const call = screen.getByRole('link', { name: 'Call' }).className
+    for (const cls of ['text-body', 'font-semibold', 'text-primary-ink', 'underline']) expect(call).toContain(cls)
+    // Rows carry no side padding: the panel's padding insets the dividers.
+    expect(screen.getByText('Phone').closest('.border-b')!.className).not.toMatch(/\bpx-/)
   })
 })
 
@@ -108,6 +128,23 @@ describe('FaqAccordion', () => {
     expect(q.className).not.toContain('font-semibold')
     expect(screen.getByText('Yes.').className).toContain('text-body')
   })
+  const two = [
+    { id: 'f1', question: 'First?', answer: 'First answer.', category: 'x', sortOrder: 1, published: true },
+    { id: 'f2', question: 'Second?', answer: 'Second answer.', category: 'x', sortOrder: 2, published: true },
+  ] as unknown as Faq[]
+  it('starts fully collapsed by default', () => {
+    render(<FaqAccordion faqs={two} />)
+    expect(screen.queryByText('First answer.')).toBeNull()
+    expect(screen.queryByText('Second answer.')).toBeNull()
+    for (const trigger of screen.getAllByRole('button')) expect(trigger.getAttribute('aria-expanded')).toBe('false')
+  })
+  it('opens only the first question with defaultOpenFirst', () => {
+    render(<FaqAccordion faqs={two} defaultOpenFirst />)
+    expect(screen.getByText('First answer.')).toBeTruthy()
+    expect(screen.queryByText('Second answer.')).toBeNull()
+    expect(screen.getByRole('button', { name: 'First?' }).getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Second?' }).getAttribute('aria-expanded')).toBe('false')
+  })
 })
 
 describe('NotFoundPage', () => {
@@ -117,5 +154,13 @@ describe('NotFoundPage', () => {
     for (const href of hrefs) expect(document.querySelector(`a[href="${href}"]`)).toBeTruthy()
     expect(screen.getByText('Browse the full CAPS-aligned catalogue')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Back to home' }).getAttribute('href')).toBe('/')
+  })
+  it('uses the H1 title, the lead paragraph and outline-only suggestion links', () => {
+    at('/nope', <NotFoundPage />)
+    expect(screen.getByRole('heading', { level: 1 }).className).toContain('text-h1')
+    expect(screen.getByText(/doesn’t exist or may have moved/).className).toContain('lead')
+    const suggestion = document.querySelector('a[href="/shop"]')!
+    expect(suggestion.className).toContain('border-line')
+    expect(suggestion.className).not.toMatch(/\bbg-/)
   })
 })

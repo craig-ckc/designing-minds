@@ -1,12 +1,13 @@
 import { type RefObject, useRef } from 'react'
-import { Icon } from './icon'
+import { Pill } from './pill'
 
 export type ActiveFilter = { key: string; value: string; label: string }
 
 /**
- * Removable chips for the filters currently applied to the shop. Each chip is
- * a button named "Remove filter: <label>"; removing one returns focus to its
- * neighbour (next, else previous) or, when it was the last, to `emptyFocusRef`.
+ * Removable chips for the filters currently applied to the shop: a primary md
+ * `Pill` inside a button named "Remove filter: <label>". Removing one returns
+ * focus to its neighbour (next, else previous) or, when it was the last, to
+ * `emptyFocusRef`.
  */
 export function ActiveFilterChips({
   filters,
@@ -37,10 +38,12 @@ export function ActiveFilterChips({
             type="button"
             aria-label={`Remove filter: ${filter.label}`}
             onClick={() => remove(filter, index)}
-            className="filter-chip border-line-strong bg-canvas"
+            className="group rounded-full"
           >
-            {filter.label}
-            <Icon name="close" size={12} />
+            <Pill tone="primary" size="md" className="transition-colors group-hover:text-primary-ink-strong">
+              {filter.label}
+              <span aria-hidden="true">×</span>
+            </Pill>
           </button>
         </li>
       ))}

@@ -61,7 +61,7 @@ it('keeps focus on the next physical line and announces its removal', () => {
   expect(screen.getByRole('status').textContent).toBe('Workbook removed from cart.')
 })
 
-it('shows the ghost delete, a quantity stepper with the line label, and validates typed quantities', () => {
+it('shows the delete, a quantity stepper with the line label, and validates typed quantities', () => {
   render(<Harness />)
   expect(screen.getAllByRole('spinbutton', { name: 'Quantity for Workbook' })).toHaveLength(2)
   fireEvent.click(screen.getAllByRole('button', { name: 'Increase quantity' })[0])

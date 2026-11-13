@@ -52,11 +52,25 @@ test('vivid primary accents meet the 3:1 non-text contrast minimum', () => {
   assert.ok(ratio >= 3, `primary accent on canvas is ${ratio.toFixed(2)}:1; expected at least 3:1`)
 })
 
-test('marketing bands retain the bright logo pink with one shared ink text treatment (white measures ~3.2:1)', () => {
-  assert.match(read('components/sections/cta-banner.tsx'), /brand: 'bg-primary text-ink'/)
+test('marketing CTA bands use white on the logo pink as a deliberate sub-AA exception', () => {
+  // EXCEPTION (Craig's decision, 2026-11-12): Figma's CtaSection draws the title and
+  // description in white on primary. White on #f15699 measures ~3.2:1: it clears 3:1 for
+  // the large title but not 4.5:1 for the 14px description, and is accepted instead of ink.
+  assert.match(read('components/sections/cta-banner.tsx'), /brand: 'bg-primary text-on-primary'/)
   assert.equal(token('on-primary').toLowerCase(), '#ffffff')
+  const ratio = contrast(token('on-primary'), token('primary'))
+  assert.ok(ratio >= 3, `white on primary is ${ratio.toFixed(2)}:1; expected at least 3:1`)
   // Small white count badges / the solid Pill stay AA on primary-ink (>= 4.5:1, asserted above).
   assert.match(read('components/ui/pill.tsx'), /bg-primary-ink text-on-primary/)
+})
+
+test('the full-year pricing card is flat logo pink with white feature text, the same accepted exception as the CTA bands', () => {
+  // EXCEPTION (follows Craig's 2026-11-12 CTA decision): Figma's Card / Bundle pricing Plan=Year is a flat
+  // color/primary fill with white feature text (~3.2:1), replacing the old primary→primary-strong gradient.
+  const pricing = read('components/sections/bundle-pricing-section.tsx')
+  assert.match(pricing, /featured \? 'bg-primary' : 'border border-line'/)
+  assert.match(pricing, /featured \? 'text-on-primary' : 'text-ink-soft'/)
+  assert.ok(contrast(token('on-primary'), token('primary')) >= 3)
 })
 
 test('announcement bar and Card onPrimary are deliberate sub-AA exceptions on primary-strong', () => {

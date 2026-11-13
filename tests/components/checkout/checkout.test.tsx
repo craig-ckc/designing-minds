@@ -58,6 +58,37 @@ beforeEach(() => {
   requestJson.mockImplementation(async (url: string) => url.includes('commerce/quote') ? quoteCommerce : quoteDigital)
 })
 
+describe('checkout presentation', () => {
+  it('links the digital Terms of Use in the sentence colour, semibold and underlined', async () => {
+    mount(); await settleQuote()
+    const terms = screen.getByRole('link', { name: 'Terms of Use' })
+    expect(terms.className).toContain('font-semibold')
+    expect(terms.className).toContain('underline')
+    expect(terms.className).not.toContain('text-primary-ink')
+    expect((await screen.findByText('Resource')).closest('ul')?.className).toContain('gap-2')
+  })
+
+  it('sets delivery labels in medium weight above regular-weight inputs and matches the digital discount input', async () => {
+    physical = true
+    mount(); await settleQuote()
+    const recipient = screen.getByRole('textbox', { name: 'Recipient name' })
+    const label = recipient.closest('label')!
+    expect(label.className).toContain('font-medium')
+    expect(label.className).toContain('gap-2')
+    expect(label.className).not.toContain('font-semibold')
+    expect(recipient.className).toContain('font-normal')
+    const code = screen.getByLabelText('Discount code')
+    expect(code.className).toContain('bg-surface')
+    expect(code.className).toContain('border-line')
+    expect(code.className).toContain('px-3')
+    expect(code.className).toContain('min-h-[var(--control-h)]')
+    const terms = screen.getByRole('link', { name: 'Terms of Use' })
+    expect(terms.className).toContain('font-semibold')
+    expect(terms.className).not.toContain('text-primary-ink')
+    expect(screen.getByText('Subtotal').closest('[data-emphasis]')?.parentElement?.className).toContain('gap-2')
+  })
+})
+
 describe('checkout behavior', () => {
   it('requires terms and keeps a successful digital PayFast handoff locked against repeat clicks', async () => {
     mount(); await settleQuote()

@@ -1,13 +1,15 @@
 import { type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Button } from '../../components/ui/button'
 import { Notice } from '../../components/ui/notice'
+import { TextLink } from '../../components/ui/text-link'
 import { useNoindex } from '../../lib/use-noindex'
 
 /**
  * Shared shell for the noindex authentication pages: a full-width painted
  * backdrop with one floating white card. `footer` is the "other route" block
- * (prompt + action) under a divider; the support line is added here.
+ * (prompt + action) under a divider; the support line is added here. `intro`
+ * is optional: a confirmation state (e.g. "Check your email") drops it.
  */
 export function AuthLayout({
   title,
@@ -17,7 +19,7 @@ export function AuthLayout({
   onSubmit,
 }: {
   title: string
-  intro: string
+  intro?: string
   children: ReactNode
   footer: ReactNode
   onSubmit?: () => void
@@ -39,7 +41,7 @@ export function AuthLayout({
       <div className="auth-card">
         <div>
           <h1 className="text-h2">{title}</h1>
-          <p className="mt-2 text-body text-muted">{intro}</p>
+          {intro ? <p className="mt-2 text-body-lg text-muted">{intro}</p> : null}
         </div>
 
         {fromCheckout ? (
@@ -67,7 +69,10 @@ export function AuthLayout({
         <div className="auth-footer">
           {footer}
           <p className="text-body text-muted">
-            Need help? <Link to="/help">Visit support</Link>
+            Need help?{' '}
+            <TextLink to="/help" tone="soft">
+              Visit support
+            </TextLink>
           </p>
         </div>
       </div>

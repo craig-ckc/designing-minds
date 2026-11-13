@@ -7,10 +7,10 @@ import { Section } from '../ui/section'
 function ConnectCard({ title, body, image, children }: { title: string; body: string; image: string; children: ReactNode }) {
   return (
     <Card as="article" pad="none" className="flex flex-col overflow-hidden">
-      <img src={image} alt="" width={1280} height={853} loading="lazy" decoding="async" className="aspect-[3/2] w-full object-cover" />
+      <img src={image} alt="" width={1280} height={853} loading="lazy" decoding="async" className="aspect-[34/15] w-full object-cover" />
       <div className="p-6 sm:p-8">
         <h3>{title}</h3>
-        <p className="mt-2 max-w-[44ch] text-body text-muted">{body}</p>
+        <p className="mt-2 max-w-[420px] text-body text-muted">{body}</p>
         <div className="mt-6">{children}</div>
       </div>
     </Card>
@@ -20,7 +20,7 @@ function ConnectCard({ title, body, image, children }: { title: string; body: st
 export function AboutConnectSection() {
   return (
     <Section>
-      <h2 className="mb-8 lg:mb-10">Ask a teacher, or have a look inside</h2>
+      <h2 className="mb-8 lg:mb-16">Ask a teacher, or have a look inside</h2>
       <div className="grid gap-4 md:grid-cols-2">
         <ConnectCard
           title="Ask a teacher"

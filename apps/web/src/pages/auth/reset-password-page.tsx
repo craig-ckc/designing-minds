@@ -6,6 +6,16 @@ import { Notice } from '../../components/ui/notice'
 import { useAuth } from '../../lib/auth'
 import { AuthLayout } from './auth-layout'
 
+// Footer for the checking and new-password states: the way back to a fresh email link.
+const requestAnotherFooter = (
+  <>
+    <p className="text-body text-muted">Need a new link?</p>
+    <Button to="/forgot-password" variant="outline" className="w-full">
+      Request another
+    </Button>
+  </>
+)
+
 /**
  * Landing page for the password-reset email link. Supabase parses the recovery
  * token from the URL on load and establishes a temporary session, so
@@ -55,11 +65,7 @@ export function ResetPasswordPage() {
       <AuthLayout
         title="Choose a new password"
         intro="Checking your reset link…"
-        footer={
-          <Button to="/forgot-password" variant="text" className="justify-self-center">
-            Request another link
-          </Button>
-        }
+        footer={requestAnotherFooter}
       >
         <Notice tone="info">Checking your reset link…</Notice>
       </AuthLayout>
@@ -93,11 +99,7 @@ export function ResetPasswordPage() {
       title="Choose a new password"
       intro="Enter a new password for your account."
       onSubmit={() => void submit()}
-      footer={
-        <Button to="/forgot-password" variant="text" className="justify-self-center">
-          Request another link
-        </Button>
-      }
+      footer={requestAnotherFooter}
     >
       {error ? <Notice tone="error">{error}</Notice> : null}
       <Field label="New password">
@@ -122,7 +124,7 @@ export function ResetPasswordPage() {
           required
         />
       </Field>
-      <Button type="submit" variant="solid" className="w-full" disabled={submitting}>
+      <Button type="submit" variant="solid" className="mt-2 w-full" disabled={submitting}>
         {submitting ? 'Saving…' : 'Update password'}
       </Button>
     </AuthLayout>

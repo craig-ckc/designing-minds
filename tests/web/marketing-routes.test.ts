@@ -107,11 +107,15 @@ test('the announcement bar reads "New: CAPS resources for Grades 3–7 are here"
   assert.match(read('components/layout/navbar/announcement-bar.tsx'), /New: CAPS resources for Grades 3–7 are here/)
 })
 
-test('the grades page is marketing-forward: split hero, tiles, inclusions, testimonials and a bundles CTA', () => {
+test('the grades page is marketing-forward: page hero, tiles, inclusions, testimonials and a bundles CTA', () => {
   const page = read('pages/grades-page.tsx')
+  assert.match(page, /<PageHero\b/)
+  assert.doesNotMatch(page, /SplitHero/)
   assert.match(page, /title="Find the right practice for your child’s grade"/)
-  assert.match(page, /Curriculum and Assessment Policy Statement, South Africa’s national curriculum/)
+  assert.match(page, /lead=\{<><CapsAbbr \/>-aligned tests and memos for Grades 3 to 7, ready to print at home\.<\/>\}/)
   assert.match(page, /actionLabel="Browse all resources"[\s\S]*actionTo="\/shop"/)
+  // The hero already links to the shop, so the finder drops its own link and keeps full tiles.
+  assert.match(page, /<GradeFinderSection snapshot=\{snapshot\} showBrowseAll=\{false\} compactTiles=\{false\} \/>/)
   assert.match(page, /grades-hero-classroom-jacarandas\.avif/)
   assert.match(page, /What every grade includes/)
   assert.match(page, /<HomeTestimonialsSection/)

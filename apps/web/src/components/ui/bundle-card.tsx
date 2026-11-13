@@ -54,7 +54,7 @@ export function BundleCard({
             <div className="absolute inset-0 grid place-items-center">
               <div className="w-3/5 max-w-64 motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]">
                 <ProductCover
-                  product={{ title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
+                  product={{ id: bundle.id, title: bundle.title, grade: bundle.grade, term: bundle.term, subjects }}
                   stacked
                 />
               </div>

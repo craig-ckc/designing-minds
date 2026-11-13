@@ -60,7 +60,15 @@ test('catalogue pages establish sequential heading levels', () => {
   const grades = read('pages/grades-page.tsx')
   const product = read('pages/product-page.tsx')
 
-  assert.match(grades, /<h2 className="sr-only">Browse resources by grade<\/h2>/)
+  const finder = read('components/sections/grade-finder-section.tsx')
+  const pageHero = read('components/sections/page-hero.tsx')
+
+  // h1 from the page hero, then the grade finder's visible h2: no hidden stand-in heading.
+  assert.match(grades, /<PageHero\b/)
+  assert.match(pageHero, /<h1\b/)
+  assert.match(grades, /<GradeFinderSection\b/)
+  assert.match(finder, /<h2>Explore our resources<\/h2>/)
+  assert.doesNotMatch(grades, /sr-only|<h[1-6]\b/)
   assert.match(product, /<h1 className="text-2xl[^"]*">\{product\.title\}<\/h1>/)
   assert.match(product, /<DetailDisclosure title="About this/)
   const disclosure = read('components/ui/disclosure.tsx')

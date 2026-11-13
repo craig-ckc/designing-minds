@@ -6,13 +6,24 @@ import { PlusMarker } from './disclosure'
  * FAQ list as an accessible Base UI accordion. Deliberately flat: hairline
  * dividers instead of per-item cards, and a leading marker that is a `+` when
  * closed and rotates 45° into a `×` when open — no right-hand chevron.
+ * `defaultOpenFirst` starts with the first question expanded (Help page);
+ * everything else starts collapsed.
  */
-export function FaqAccordion({ faqs, keepMounted = false }: { faqs: Faq[]; keepMounted?: boolean }) {
+export function FaqAccordion({
+  faqs,
+  keepMounted = false,
+  defaultOpenFirst = false,
+}: {
+  faqs: Faq[]
+  keepMounted?: boolean
+  defaultOpenFirst?: boolean
+}) {
   if (faqs.length === 0) {
     return <p className="text-muted">No questions have been added yet.</p>
   }
+  const defaultValue = defaultOpenFirst ? [faqs[0].id] : []
   return (
-    <Accordion.Root multiple defaultValue={[]} className="border-t border-line">
+    <Accordion.Root multiple defaultValue={defaultValue} className="border-t border-line">
       {faqs.map((faq) => (
         <Accordion.Item key={faq.id} value={faq.id} className="border-b border-line">
           <Accordion.Header className="m-0">

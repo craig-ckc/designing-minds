@@ -115,7 +115,7 @@ export function GetToKnowSection() {
           height={960}
           loading="lazy"
           decoding="async"
-          className="hidden aspect-[4/3] w-full rounded-md object-cover lg:block"
+          className="hidden aspect-[656/538] w-full rounded-lg object-cover lg:block"
         />
       </div>
     </Section>

@@ -9,5 +9,5 @@ export function TermsCheckbox({ checked, onChange, disabled, children }: {
 }) {
   return <Checkbox id="accepted-terms" name="acceptedTerms" required checked={checked}
     onCheckedChange={(value) => onChange(value === true)} disabled={disabled}
-    className="rounded-md bg-surface-alt p-4 text-body" boxClassName="rounded-[0.35rem]" label={children} />
+    className="rounded-md bg-surface-alt p-4 text-body" boxClassName="rounded-sm" label={children} />
 }
