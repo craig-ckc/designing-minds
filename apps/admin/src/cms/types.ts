@@ -40,6 +40,7 @@ export type FieldType =
   | 'previewPdfList'
   | 'customizationRules'
   | 'physicalVariants'
+  | 'variantOptions'
 
 /** Collections that a Reference Field can point at. */
 export type ReferenceCollection = 'faqs' | 'products'
@@ -107,7 +108,7 @@ export type ImageGalleryField = FieldBase & { type: 'imageGallery' }
 export type PreviewPdfListField = FieldBase & { type: 'previewPdfList' }
 
 /** Structured physical product forms; these persist the commerce JSON shapes. */
-export type PhysicalField = FieldBase & { type: 'customizationRules' | 'physicalVariants' }
+export type PhysicalField = FieldBase & { type: 'customizationRules' | 'physicalVariants' | 'variantOptions' }
 
 export type AdminField =
   | PrimitiveField

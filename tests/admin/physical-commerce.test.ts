@@ -39,6 +39,7 @@ const physical = (): PhysicalProduct => ({
   grade: null, term: null, year: null, resourceFormat: null, subjects: [], purchasedFiles: [],
   weightGrams: null, lengthMm: null, widthMm: null, heightMm: null, customizationRules: [],
   pricingMode: 'fixed', pricingFieldKey: null, billableCharacters: null,
+  variantOptions: [{ key: 'size', label: 'Size', values: [{ value: 'Small' }, { value: 'Large' }] }], leadTimeDays: null, previewTemplate: null,
   variants: [{ id: 'small', productId: 'gift-bag', sku: 'small', optionValues: { size: 'Small' }, unitPriceZar: null, active: true, sortOrder: 1, onHand: 17 }],
 })
 const asRecord = (product: PhysicalProduct) => product as unknown as AdminRecord
@@ -101,14 +102,14 @@ test('duplicating a physical record creates new variant identities and never cop
 
 test('physical questions and options render actual forms without exposing a JSON editor', () => {
   const rules = renderToStaticMarkup(createElement(rulesField.CustomizationRulesField, { value: [{ key: 'teacher', label: 'Teacher name', type: 'text', required: true }], onChange: () => {} }))
-  assert.match(rules, /Shopper-facing label/)
+  assert.match(rules, /Question shoppers see/)
   assert.match(rules, /value="Teacher name"/)
-  assert.match(rules, /Answer required/)
+  assert.match(rules, /Required/)
   assert.doesNotMatch(rules, /JSON/)
   const variants = renderToStaticMarkup(createElement(variantsField.PhysicalVariantsField, { value: physical().variants, productId: 'gift-bag', onChange: () => {} }))
-  assert.match(variants, /Stock on hand/)
+  assert.match(variants, />Stock</)
   assert.match(variants, /value="17"/)
-  assert.match(variants, /Price override/)
+  assert.match(variants, /Price \(ZAR\)/)
 })
 
 test('physical order summaries preserve quantities, personalisation, delivery and shipping', () => {
@@ -142,4 +143,22 @@ test('the Products registry keeps digital fields conditional and exposes a physi
   assert.equal(config.fields.find((field) => field.key === 'grade')?.visibleWhen?.(record), false)
   assert.equal(config.fields.find((field) => field.key === 'variants')?.visibleWhen?.(record), true)
   assert.ok(config.fields.some((field) => field.key === 'productType' && field.type === 'select'))
+})
+
+test('physical pricing controls are grouped under Pricing & visibility and stay hidden for digital products', () => {
+  const config = collectionRegistry.find((collection) => collection.id === 'products')!
+  const physicalRecord = asRecord(physical())
+  const perLetter = { ...physicalRecord, pricingMode: 'per_character' }
+  // The charged question and its letters are chosen on the question itself
+  // ("Charge per letter"), so only the pricing method sits in this section.
+  assert.deepEqual(config.sections.filter((section) => section.fields.includes('pricingMode')).map((section) => section.title), ['Pricing & visibility'])
+  for (const key of ['pricingFieldKey', 'billableCharacters']) {
+    assert.deepEqual(config.sections.filter((section) => section.fields.includes(key)), [])
+  }
+  for (const key of ['pricingMode', 'pricingFieldKey', 'billableCharacters']) {
+    const field = config.fields.find((entry) => entry.key === key)!
+    assert.equal(field.visibleWhen?.({ ...perLetter, productType: 'digital' }), false)
+    assert.equal(field.visibleWhen?.(physicalRecord), key === 'pricingMode')
+    assert.equal(field.visibleWhen?.(perLetter), true)
+  }
 })

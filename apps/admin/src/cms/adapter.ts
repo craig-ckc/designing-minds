@@ -47,8 +47,9 @@ function mapOrder(snapshot: CmsSnapshot, order: CmsSnapshot['orders'][number]): 
   const itemsSummary = order.items.length
     ? order.items.map((item) => [
       `${item.quantity ?? 1} × ${item.title} — ${item.productKind} — ${formatCurrency(item.priceZar)}`,
-      ...Object.entries(item.optionValues ?? {}).map(([key, value]) => `${key}: ${value}`),
-      ...Object.entries(item.customizations ?? {}).map(([key, value]) => `${key}: ${value}`),
+      ...Object.entries(item.optionValues ?? {}).map(([key, value]) => `${item.fieldLabels?.[key] ?? key}: ${value}`),
+      ...Object.entries(item.customizations ?? {}).map(([key, value]) => `${item.fieldLabels?.[key] ?? key}: ${value}`),
+      ...(item.inventoryPolicy === 'made_to_order' ? ['Made to order'] : []),
     ].join('\n')).join('\n\n')
     : 'No items.'
   const paymentSummary = payment
@@ -69,6 +70,7 @@ function mapOrder(snapshot: CmsSnapshot, order: CmsSnapshot['orders'][number]): 
     itemsSummary,
     paymentSummary,
     hasPhysical: order.hasPhysical === true,
+    hasDigital: order.items.some((item) => item.productType !== 'physical' && item.productKind !== 'Physical'),
     fulfillmentStatus: order.fulfillmentStatus ?? 'not_required',
     shippingLabel: formatCurrency(order.shippingZar ?? 0),
     shippingMethod: order.shippingMethod ?? '—',

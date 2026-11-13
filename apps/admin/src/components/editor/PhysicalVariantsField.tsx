@@ -1,204 +1,233 @@
-import { useCallback, useId, useRef, useState } from 'react'
-import type { PhysicalVariantDraft } from '@designing-minds/cms'
-import { cn, CARD, FIELD_HELP, FIELD_LABEL } from '../../design'
-import { Button, Input, Switch } from '../primitives'
-import { Icon } from '../ui'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { sameOptionValues, variantConforms, type PhysicalVariantDraft, type VariantOptionDefinition } from '@designing-minds/cms'
+import { savedOptionValues, syncVariants, usableOptions as usable } from '../../cms/physical-product-edit'
+import { cn, FIELD_HELP, FIELD_LABEL } from '../../design'
+import { Button, Input, Select, Switch } from '../primitives'
 
-export function PhysicalVariantsField({ value, productId, disabled, onChange }: {
+/**
+ * The sellable versions of a physical product as compact rows — modelled on
+ * Webflow's variants table and Shopify's variant list: price, stock (or made to
+ * order) and availability per row; SKU under "More"; one bar to apply a price,
+ * a stock count or made-to-order to every variant at once.
+ */
+export function PhysicalVariantsField({ value, options: declared, productId, basePrice, perLetter = false, disabled, onChange }: {
   value: unknown
+  options?: unknown
   productId: string
+  /** The product price, shown as each row's default. */
+  basePrice?: unknown
+  /** Per-letter pricing: prices are per letter. */
+  perLetter?: boolean
   disabled?: boolean
   onChange: (variants: PhysicalVariantDraft[]) => void
 }) {
   const variants = Array.isArray(value) ? value as PhysicalVariantDraft[] : []
-  const focusAddedOption = useRef(false)
-  const focusOptionHeading = useCallback((heading: HTMLHeadingElement | null) => {
-    if (!heading || !focusAddedOption.current) return
-    focusAddedOption.current = false
-    heading.focus()
-  }, [])
+  const options = Array.isArray(declared) ? declared as VariantOptionDefinition[] : []
+  const signature = JSON.stringify(usable(options).map((option) => [option.key, option.values.map((entry) => entry.value)]))
+  const lastSignature = useRef<string | null>(null)
 
-  function addOption() {
-    focusAddedOption.current = true
-    onChange([...variants, {
-      id: crypto.randomUUID(),
-      productId,
-      sku: null,
-      optionValues: {},
-      unitPriceZar: null,
-      active: true,
-      sortOrder: variants.length + 1,
-      onHand: 0,
-    }])
-  }
+  useEffect(() => {
+    if (disabled) return
+    const first = lastSignature.current === null
+    lastSignature.current = signature
+    // On open, only fill an empty product; afterwards, follow option edits.
+    if (first && variants.length > 0) return
+    const next = syncVariants(variants, options, productId)
+    if (next.length !== variants.length || next.some((variant, index) => variant.id !== variants[index]?.id)) onChange(next)
+  }, [signature]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const update = (id: string, next: PhysicalVariantDraft) => onChange(variants.map((current) => current.id === id ? next : current))
+  // Combinations without a variant (e.g. an older product) are offered, not added silently on open.
+  const synced = syncVariants(variants, options, productId)
+  const missing = synced.filter((variant) => !variants.some((current) => current.id === variant.id))
+  const price = typeof basePrice === 'number' && Number.isFinite(basePrice) ? basePrice : null
+  const single = usable(options).length === 0
+  const priceHeading = perLetter ? 'Price per letter (ZAR)' : 'Price (ZAR)'
+  // Saved variants that picked up a new option's first value in this draft.
+  const adopted = variants.filter((variant) => {
+    const saved = savedOptionValues(variant)
+    return saved && usable(options).some((option) => !Object.hasOwn(saved, option.key))
+  })
 
   return (
-    <div className="grid max-w-6xl gap-3">
+    <div className="@container grid max-w-6xl gap-3">
       <p className={FIELD_HELP}>
-        {variants.length === 0
-          ? 'Add one option for each version you sell. A product without variations still needs one option.'
-          : 'Turn off availability to stop selling a saved option.'}
+        {single
+          ? 'Sold in one version. Add product options above to sell several.'
+          : 'One row per combination, created from the options above. Turn off “Available” for any you don’t sell.'}
+        {' '}Leave a price blank to use the product price{perLetter ? ' per letter' : ''}.
       </p>
-      {variants.map((variant, index) => (
-        <VariantCard
-          key={variant.id}
-          variant={variant}
-          number={index + 1}
-          disabled={disabled}
-          headingRef={index === variants.length - 1 ? focusOptionHeading : undefined}
-          onChange={(next) => onChange(variants.map((current) => current.id === variant.id ? next : current))}
-          onRemove={() => onChange(variants.filter((current) => current.id !== variant.id))}
-        />
-      ))}
-      {!disabled ? (
-        <Button type="button" variant="outline" className="w-fit" onClick={addOption}>
-          <span className="size-3.5"><Icon name="plus" /></span>
-          Add product option
-        </Button>
+      {!disabled && adopted.length > 0 ? (
+        <p role="status" className="rounded-control border border-line bg-surface-alt px-3 py-2 text-ui">
+          Your saved {adopted.length === 1 ? 'variant was' : 'variants were'} given the first value of the new option ({adopted.map((variant) => Object.values(variant.optionValues).join(' · ')).join(', ')}), keeping {adopted.length === 1 ? 'its' : 'their'} stock. Change it under More if that’s wrong.
+        </p>
       ) : null}
+      {!disabled && missing.length > 0 && variants.length > 0 ? (
+        <div role="status" className="flex flex-wrap items-center gap-2 rounded-control border border-line bg-surface-alt px-3 py-2 text-ui">
+          <span>{missing.length === 1 ? 'One combination has' : `${missing.length} combinations have`} no variant yet: {missing.map((variant) => Object.values(variant.optionValues).join(' · ')).join(', ')}.</span>
+          <Button type="button" variant="outline" size="sm" onClick={() => onChange(synced)}>Add {missing.length === 1 ? 'it' : 'them'}</Button>
+        </div>
+      ) : null}
+      {!disabled && variants.length > 1 ? <ApplyToAll variants={variants} perLetter={perLetter} onChange={onChange} /> : null}
+      <div role="table" aria-label="Variants" className="grid rounded-control border border-line">
+        <div role="row" className="hidden gap-3 border-b border-line bg-surface-alt px-3 py-1.5 text-ui text-ink-soft @min-[44rem]:grid @min-[44rem]:grid-cols-[minmax(0,1.5fr)_8rem_10rem_auto_auto]">
+          <span role="columnheader">Variant</span>
+          <span role="columnheader">{priceHeading}</span>
+          <span role="columnheader">Stock</span>
+          <span role="columnheader">Available</span>
+          <span role="columnheader"><span className="sr-only">More</span></span>
+        </div>
+        {variants.length === 0 && !disabled ? (
+          <div role="row" className="px-3 py-2"><span role="cell"><Button type="button" variant="outline" size="sm" onClick={() => onChange(syncVariants([], options, productId))}>Add variant</Button></span></div>
+        ) : null}
+        {variants.map((variant, index) => (
+          <VariantRow
+            key={variant.id}
+            variant={variant}
+            options={options}
+            single={single}
+            basePrice={price}
+            priceLabel={priceHeading}
+            duplicate={variant.active && variants.slice(0, index).some((earlier) => earlier.active && sameOptionValues(earlier.optionValues ?? {}, variant.optionValues ?? {}))}
+            disabled={disabled}
+            onChange={(next) => update(variant.id, next)}
+          />
+        ))}
+      </div>
     </div>
   )
 }
 
-function VariantCard({ variant, number, disabled, headingRef, onChange, onRemove }: {
+function ApplyToAll({ variants, perLetter, onChange }: { variants: PhysicalVariantDraft[]; perLetter: boolean; onChange: (variants: PhysicalVariantDraft[]) => void }) {
+  const [price, setPrice] = useState('')
+  const [stock, setStock] = useState('')
+  const priceInput = useRef<HTMLInputElement>(null)
+  const stockInput = useRef<HTMLInputElement>(null)
+  const allMadeToOrder = variants.every((variant) => variant.inventoryPolicy === 'made_to_order')
+  // Focus stays in the field after applying, so keyboard users keep their place.
+  const applyPrice = () => { if (price === '') return; onChange(variants.map((variant) => ({ ...variant, unitPriceZar: Number(price) }))); setPrice(''); priceInput.current?.focus() }
+  const applyStock = () => { if (stock === '') return; onChange(variants.map((variant) => withStock({ ...variant, inventoryPolicy: 'tracked' }, Number(stock)))); setStock(''); stockInput.current?.focus() }
+  return (
+    <div className="flex flex-wrap items-end gap-2 rounded-control bg-surface-alt p-2">
+      <span className={cn(FIELD_LABEL, 'self-center')}>Apply to all variants:</span>
+      <div className="flex items-end gap-1">
+        <Input ref={priceInput} aria-label={perLetter ? 'Price per letter for all variants (ZAR)' : 'Price for all variants (ZAR)'} type="number" min="0" step="0.01" placeholder={perLetter ? 'Per letter' : 'Price'} className="w-24" value={price} onChange={(event) => setPrice(event.target.value)} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === 'Enter') { event.preventDefault(); applyPrice() } }} />
+        <Button type="button" variant="outline" size="sm" disabled={price === ''} onClick={applyPrice}>Set price</Button>
+      </div>
+      <div className="flex items-end gap-1">
+        <Input ref={stockInput} aria-label="Stock for all variants" type="number" min="0" step="1" placeholder="Stock" className="w-24" value={stock} onChange={(event) => setStock(event.target.value)} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === 'Enter') { event.preventDefault(); applyStock() } }} />
+        <Button type="button" variant="outline" size="sm" disabled={stock === ''} onClick={applyStock}>Set stock</Button>
+      </div>
+      <Button type="button" variant="outline" size="sm" onClick={() => onChange(variants.map((variant) => ({ ...variant, inventoryPolicy: allMadeToOrder ? 'tracked' : 'made_to_order' })))}>
+        {allMadeToOrder ? 'Count stock for all' : 'Make all made to order'}
+      </Button>
+    </div>
+  )
+}
+
+/** Saved variants record an explicit adjustment the database checks; new ones set the count. */
+function withStock(variant: PhysicalVariantDraft, newOnHand: number): PhysicalVariantDraft {
+  if (!variant._persisted) return { ...variant, onHand: newOnHand }
+  const original = Number(variant.onHand ?? 0)
+  return { ...variant, stockAdjustment: newOnHand === original ? undefined : { expectedOnHand: original, newOnHand } }
+}
+
+function VariantRow({ variant, options, single, basePrice, priceLabel, duplicate, disabled, onChange }: {
   variant: PhysicalVariantDraft
-  number: number
+  options: VariantOptionDefinition[]
+  single: boolean
+  basePrice: number | null
+  priceLabel: string
+  duplicate?: boolean
   disabled?: boolean
-  headingRef?: (heading: HTMLHeadingElement | null) => void
   onChange: (variant: PhysicalVariantDraft) => void
-  onRemove: () => void
 }) {
   const id = useId()
-  const [duplicateChoice, setDuplicateChoice] = useState<{ index: number; input: string | null } | null>(null)
-  const focusAddedChoice = useRef(false)
-  const focusChoiceName = useCallback((input: HTMLInputElement | null) => {
-    if (!input || !focusAddedChoice.current) return
-    focusAddedChoice.current = false
-    input.focus()
-  }, [])
-  const choices = Object.entries(variant.optionValues ?? {})
-  const completeChoices = choices.every(([name, value]) => name.trim() && value.trim())
-  const choiceSummary = choices.map(([, value]) => value.trim()).filter(Boolean).join(' / ')
+  const [open, setOpen] = useState(false)
+  const values = variant.optionValues ?? {}
+  const declared = usable(options)
+  const name = single ? 'This product' : declared.map((option) => values[option.key]).filter(Boolean).join(' · ') || 'Unnamed variant'
+  const swatch = declared.find((option) => option.display === 'swatches')
+  const swatchColour = swatch ? swatch.values.find((entry) => entry.value === values[swatch.key])?.swatch : undefined
+  const offered = single ? Object.keys(values).length === 0 : variantConforms(declared, values)
+  const madeToOrder = variant.inventoryPolicy === 'made_to_order'
   const originalCount = Number(variant.onHand ?? 0)
   const shownCount = variant.stockAdjustment?.newOnHand ?? originalCount
-
-  function writeChoices(entries: [string, string][]) {
-    setDuplicateChoice(null)
-    onChange({ ...variant, optionValues: Object.fromEntries(entries) })
-  }
-
-  function editChoice(index: number, name: string, value: string) {
-    if (choices.some(([other], i) => i !== index && other === name)) {
-      setDuplicateChoice({ index, input: name })
-      return
-    }
-    writeChoices(choices.map((choice, i) => i === index ? [name, value] : choice))
-  }
-
-  function addChoice() {
-    focusAddedChoice.current = true
-    writeChoices([...choices, ['', '']])
-  }
-
-  function changeStock(value: string) {
-    const newOnHand = value === '' ? Number.NaN : Number(value)
-    if (!variant._persisted) {
-      onChange({ ...variant, onHand: newOnHand })
-      return
-    }
-    onChange({
-      ...variant,
-      stockAdjustment: newOnHand === originalCount ? undefined : { expectedOnHand: originalCount, newOnHand },
-    })
-  }
+  const cell = 'grid gap-1 @min-[44rem]:block'
+  const label = cn(FIELD_LABEL, '@min-[44rem]:sr-only')
 
   return (
-    <article aria-labelledby={`${id}-heading`} className={cn(CARD, '@container min-w-0')}>
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-t-card border-b border-line bg-surface-alt px-3 py-2">
-        <h4 id={`${id}-heading`} ref={headingRef} tabIndex={-1} className="min-w-0 wrap-anywhere text-ui font-semibold">
-          Option {number}
-          {choiceSummary ? <span className="font-normal text-ink-soft"> · {choiceSummary}</span> : null}
-        </h4>
-        <label htmlFor={`${id}-active`} className={cn('flex min-h-field items-center gap-2', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
-          <Switch id={`${id}-active`} checked={variant.active} disabled={disabled} onCheckedChange={(active) => onChange({ ...variant, active })} />
-          <span className={FIELD_LABEL}>Available to shoppers</span>
-          <span className="sr-only">for {variant.sku ? `SKU ${variant.sku}` : `option ${number}`}</span>
-        </label>
-      </header>
-      <div className="grid items-start gap-4 p-3 @min-[40rem]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <fieldset className="grid min-w-0 gap-2">
-          <legend className="mb-2 text-ui font-semibold">Choices</legend>
-          {choices.length === 0 ? <p className={FIELD_HELP}>Add a choice such as colour or size if shoppers need to select one.</p> : null}
-          {choices.map(([name, value], index) => (
-            <div key={index} className="grid gap-1">
-              <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2">
-                <label className="grid min-w-0 gap-1">
-                  <span className={FIELD_LABEL}>Option name</span>
-                  <Input
-                    ref={index === choices.length - 1 ? focusChoiceName : undefined}
-                    placeholder="e.g. Colour"
-                    value={duplicateChoice?.index === index ? duplicateChoice.input ?? name : name}
-                    disabled={disabled}
-                    aria-invalid={duplicateChoice?.index === index && duplicateChoice.input !== null ? true : undefined}
-                    aria-describedby={duplicateChoice?.index === index ? `${id}-choice-error` : undefined}
-                    onChange={(e) => editChoice(index, e.target.value, value)}
-                    onBlur={() => {
-                      if (duplicateChoice?.index === index) setDuplicateChoice({ index, input: null })
-                    }}
-                  />
-                </label>
-                <label className="grid min-w-0 gap-1">
-                  <span className={FIELD_LABEL}>Option value</span>
-                  <Input placeholder="e.g. Blue" value={value} disabled={disabled} onChange={(e) => editChoice(index, name, e.target.value)} />
-                </label>
-                {!disabled ? (
-                  <Button type="button" variant="ghost" size="icon" title="Remove choice" aria-label={`Remove choice ${index + 1}`} onClick={() => writeChoices(choices.filter((_, i) => i !== index))}>
-                    <span className="size-3.5"><Icon name="trash" /></span>
-                  </Button>
-                ) : null}
-              </div>
-              {duplicateChoice?.index === index ? (
-                <p id={`${id}-choice-error`} role="status" className="text-ui text-danger">
-                  That choice name is already used in this option.{duplicateChoice.input === null ? ' The previous name was kept.' : ''}
-                </p>
-              ) : null}
-            </div>
-          ))}
-          {!disabled ? (
-            <div className="grid gap-1">
-              <Button type="button" variant="outline" className="w-fit" disabled={!completeChoices} onClick={addChoice}>
-                <span className="size-3.5"><Icon name="plus" /></span>
-                Add choice
-              </Button>
-              {!completeChoices ? <p className={FIELD_HELP}>Complete the name and value before adding another choice.</p> : null}
-            </div>
-          ) : null}
-        </fieldset>
-        <div className="grid min-w-0 content-start gap-3 border-t border-line pt-3 @min-[40rem]:border-t-0 @min-[40rem]:border-l @min-[40rem]:pl-4 @min-[40rem]:pt-0">
-          <div className="grid gap-1">
-            <label htmlFor={`${id}-stock`} className={FIELD_LABEL}>Stock on hand</label>
-            <Input id={`${id}-stock`} type="number" min="0" step="1" className="max-w-40" value={Number.isFinite(shownCount) ? shownCount : ''} disabled={disabled} aria-describedby={variant._persisted ? `${id}-stock-help` : undefined} onChange={(e) => changeStock(e.target.value)} />
-            {variant._persisted ? (
-              <p id={`${id}-stock-help`} className={FIELD_HELP}>Saved stock: {originalCount}.{variant.stockAdjustment ? ' Save the product to update stock.' : ''}</p>
-            ) : null}
-          </div>
-          <div className="grid gap-3 @min-[52rem]:grid-cols-2">
-            <label className="grid min-w-0 gap-1">
-              <span className={FIELD_LABEL}>SKU <span className="text-muted">(optional)</span></span>
-              <Input value={variant.sku ?? ''} disabled={disabled} onChange={(e) => onChange({ ...variant, sku: e.target.value || null })} />
-            </label>
-            <label className="grid min-w-0 gap-1">
-              <span className={FIELD_LABEL}>Price override (ZAR)</span>
-              <Input type="number" min="0" step="0.01" placeholder="Use product price" value={variant.unitPriceZar ?? ''} disabled={disabled} onChange={(e) => onChange({ ...variant, unitPriceZar: e.target.value === '' ? null : Number(e.target.value) })} />
-            </label>
-          </div>
+    <div role="row" aria-labelledby={`${id}-name`} className={cn('grid gap-3 border-b border-line px-3 py-2 last:border-b-0 @min-[44rem]:grid-cols-[minmax(0,1.5fr)_8rem_10rem_auto_auto] @min-[44rem]:items-center', !variant.active && 'bg-surface-alt/60')}>
+      <div role="cell" className="flex min-w-0 items-center gap-2">
+        {swatch ? <span aria-hidden="true" className="size-4 flex-none rounded-full border border-ink/20" style={{ backgroundColor: swatchColour ?? 'transparent' }} /> : null}
+        <span id={`${id}-name`} className="min-w-0 wrap-anywhere text-ui font-medium">{name}</span>
+        {!offered && variant.active ? <span className="text-ui text-warn">No longer offered — turn off</span> : null}
+        {duplicate ? <span className="text-ui text-warn">Same choices as another variant — turn one off</span> : null}
+      </div>
+      <label role="cell" className={cell}>
+        <span className={label}>{priceLabel}</span>
+        <Input
+          aria-label={`Price for ${name}`}
+          type="number" min="0" step="0.01"
+          placeholder={basePrice != null ? String(basePrice) : 'Product price'}
+          value={variant.unitPriceZar ?? ''}
+          disabled={disabled}
+          onChange={(event) => onChange({ ...variant, unitPriceZar: event.target.value === '' ? null : Number(event.target.value) })}
+        />
+      </label>
+      <div role="cell" className={cell}>
+        <span className={label}>Stock</span>
+        <div className="flex items-center gap-2">
+          {madeToOrder ? (
+            <span className="text-ui text-ink-soft">Made to order</span>
+          ) : (
+            <Input
+              aria-label={`Stock for ${name}`}
+              type="number" min="0" step="1" className="w-20"
+              value={Number.isFinite(shownCount) ? shownCount : ''}
+              disabled={disabled}
+              onChange={(event) => onChange(withStock(variant, event.target.value === '' ? Number.NaN : Number(event.target.value)))}
+            />
+          )}
         </div>
       </div>
-      {!variant._persisted && !disabled ? (
-        <footer className="flex justify-end border-t border-line px-3 py-2">
-          <Button type="button" variant="ghost" className="text-danger" onClick={onRemove}>Remove product option</Button>
-        </footer>
+      <label role="cell" htmlFor={`${id}-active`} className={cn('flex items-center gap-2', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
+        <Switch id={`${id}-active`} checked={variant.active} disabled={disabled} onCheckedChange={(active) => onChange({ ...variant, active })} />
+        <span className={label}>Available</span>
+        <span className="sr-only">Available to shoppers: {name}</span>
+      </label>
+      <div role="cell">
+        <Button type="button" variant="ghost" size="sm" aria-expanded={open} aria-controls={`${id}-more`} onClick={() => setOpen(!open)}>
+          {open ? 'Less' : 'More'}<span className="sr-only"> for {name}</span>
+        </Button>
+      </div>
+      {open ? (
+        <div id={`${id}-more`} className="grid gap-3 rounded-control bg-surface-alt p-3 @min-[44rem]:col-span-5 @min-[30rem]:grid-cols-2">
+          {declared.map((option) => (
+            <label key={option.key} className="grid gap-1">
+              <span className={FIELD_LABEL}>{option.label}</span>
+              <Select
+                value={option.values.some((entry) => entry.value === values[option.key]) ? values[option.key] : ''}
+                disabled={disabled}
+                options={[
+                  ...(option.values.some((entry) => entry.value === values[option.key]) ? [] : [{ label: values[option.key] ? `${values[option.key]} (no longer offered)` : 'Choose…', value: '' }]),
+                  ...option.values.map((entry) => ({ label: entry.value, value: entry.value })),
+                ]}
+                onValueChange={(next) => onChange({ ...variant, optionValues: { ...values, [option.key]: next } })}
+              />
+            </label>
+          ))}
+          <label htmlFor={`${id}-made`} className={cn('flex min-h-field items-center gap-2', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
+            <Switch id={`${id}-made`} checked={madeToOrder} disabled={disabled} onCheckedChange={(on) => onChange({ ...variant, inventoryPolicy: on ? 'made_to_order' : 'tracked' })} />
+            <span className={FIELD_LABEL}>Made to order (don’t count stock)</span>
+          </label>
+          <label className="grid gap-1">
+            <span className={FIELD_LABEL}>SKU <span className="text-muted">(optional)</span></span>
+            <Input value={variant.sku ?? ''} disabled={disabled} onChange={(event) => onChange({ ...variant, sku: event.target.value || null })} />
+          </label>
+          {variant._persisted && !madeToOrder ? <p className={FIELD_HELP}>Saved stock: {originalCount}.{variant.stockAdjustment ? ' Save the product to update stock.' : ''}</p> : null}
+        </div>
       ) : null}
-    </article>
+    </div>
   )
 }

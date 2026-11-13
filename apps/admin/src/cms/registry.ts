@@ -57,7 +57,7 @@ const products: AdminCollection = {
     { key: 'shortDescription', label: 'Short description', type: 'textarea' },
     { key: 'fullDescription', label: 'Full description', type: 'richText', helpText: 'Rich text, stored as Markdown and rendered on the product page.' },
 
-    { key: 'priceZar', label: 'Price (ZAR)', type: 'number' },
+    { key: 'priceZar', label: 'Price (ZAR)', type: 'number', helpText: 'For a product priced per letter, this is the price of one letter.' },
     { key: 'salePriceZar', label: 'Sale price (ZAR)', type: 'number', nullable: true, helpText: 'Leave empty for no sale. Must be lower than the regular price.' },
     { key: 'saleStartsAt', label: 'Sale starts (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg', helpText: 'Optional. Leave empty to start when published.' },
     { key: 'saleEndsAt', label: 'Sale ends (South African time)', type: 'datetime', timezone: 'Africa/Johannesburg', helpText: 'Optional. The regular price returns at this time.' },
@@ -71,15 +71,18 @@ const products: AdminCollection = {
     { key: 'year', label: 'Year', type: 'select', valueList: 'years', required: true, visibleWhen: (r) => r.productType !== 'physical' },
     { key: 'marks', label: 'Marks', type: 'number', nullable: true, visibleWhen: (r) => r.productType !== 'physical' },
     { key: 'subjects', label: 'Subject', type: 'multiReference', valueList: 'subjects', required: true, maxSelected: 1, visibleWhen: (r) => r.productType !== 'physical' },
-    { key: 'pricingMode', label: 'Pricing method', type: 'select', options: [{ label: 'One price per item', value: 'fixed' }, { label: 'Price per letter', value: 'per_character' }], required: true, visibleWhen: (r) => r.productType === 'physical' },
-    { key: 'pricingFieldKey', label: 'Personalization field key', type: 'text', required: true, helpText: 'Must match the key of the text personalization question charged by letter, for example “name”.', visibleWhen: (r) => r.productType === 'physical' && r.pricingMode === 'per_character' },
+    { key: 'pricingMode', label: 'Pricing method', type: 'select', options: [{ label: 'One price per item', value: 'fixed' }, { label: 'Price per letter', value: 'per_character' }], required: true, helpText: 'For a price per letter, turn on “Charge per letter” on the name question below; the price is then charged once per letter.', visibleWhen: (r) => r.productType === 'physical' },
+    { key: 'pricingFieldKey', label: 'Personalisation field key', type: 'text', required: true, helpText: 'Must match the key of the text personalization question charged by letter, for example “name”.', visibleWhen: (r) => r.productType === 'physical' && r.pricingMode === 'per_character' },
     { key: 'billableCharacters', label: 'Letters that add to the price', type: 'textarea', required: true, helpText: 'Enter the exact letters that are charged. Other characters remain free.', visibleWhen: (r) => r.productType === 'physical' && r.pricingMode === 'per_character' },
     { key: 'weightGrams', label: 'Weight (grams)', type: 'number', nullable: true, visibleWhen: (r) => r.productType === 'physical' },
     { key: 'lengthMm', label: 'Length (mm)', type: 'number', nullable: true, visibleWhen: (r) => r.productType === 'physical' },
     { key: 'widthMm', label: 'Width (mm)', type: 'number', nullable: true, visibleWhen: (r) => r.productType === 'physical' },
     { key: 'heightMm', label: 'Height (mm)', type: 'number', nullable: true, visibleWhen: (r) => r.productType === 'physical' },
-    { key: 'customizationRules', label: 'Personalization questions', type: 'customizationRules', visibleWhen: (r) => r.productType === 'physical' },
-    { key: 'variants', label: 'Product options and stock', type: 'physicalVariants', required: true, visibleWhen: (r) => r.productType === 'physical' },
+    { key: 'variantOptions', label: 'Product options', type: 'variantOptions', helpText: 'Choices you stock separately, such as Colour or Size.', visibleWhen: (r) => r.productType === 'physical' },
+    { key: 'variants', label: 'Variants and stock', type: 'physicalVariants', required: true, visibleWhen: (r) => r.productType === 'physical' },
+    { key: 'customizationRules', label: 'Personalisation questions', type: 'customizationRules', visibleWhen: (r) => r.productType === 'physical' },
+    { key: 'leadTimeDays', label: 'Made-to-order time (working days)', type: 'number', nullable: true, helpText: 'Shown to shoppers on made-to-order variants, e.g. “ships within 5 working days”. Leave empty to hide.', visibleWhen: (r) => r.productType === 'physical' },
+    { key: 'previewTemplate', label: 'Live preview', type: 'select', options: [{ label: 'Letter tiles (clicker keyring)', value: 'letter-tiles' }], allowEmpty: true, emptyLabel: 'No preview', emptyValue: null, helpText: 'Draws the shopper’s text on the product as they type. Letter tiles use the per-letter text question and the colour option.', visibleWhen: (r) => r.productType === 'physical' },
 
     { key: 'purchasedFiles', label: 'Purchased files', type: 'fileList' },
     { key: 'galleryImages', label: 'Preview images', type: 'imageGallery' },
@@ -94,8 +97,8 @@ const products: AdminCollection = {
     { title: 'Basic info', fields: ['productType', 'title', 'slug', 'shortDescription', 'fullDescription'] },
     /* `status` is deliberately absent from every section below: the editor
        header owns it — every save picks one. */
-    { title: 'Pricing & visibility', fields: ['pricingMode', 'priceZar', 'pricingFieldKey', 'billableCharacters', 'salePriceZar', 'saleStartsAt', 'saleEndsAt', 'sortOrder', 'featured'] },
-    { title: 'Product details', fields: ['resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects', 'weightGrams', 'lengthMm', 'widthMm', 'heightMm', 'customizationRules', 'variants'] },
+    { title: 'Pricing & visibility', fields: ['pricingMode', 'priceZar', 'salePriceZar', 'saleStartsAt', 'saleEndsAt', 'sortOrder', 'featured'] },
+    { title: 'Product details', fields: ['resourceFormat', 'grade', 'term', 'year', 'marks', 'subjects', 'variantOptions', 'variants', 'customizationRules', 'leadTimeDays', 'previewTemplate', 'weightGrams', 'lengthMm', 'widthMm', 'heightMm'] },
     {
       title: 'Files',
       hint: 'Files buyers receive after purchasing this resource.',
@@ -321,7 +324,7 @@ const orders: AdminCollection = {
   subtitleField: 'customerName',
   readOnly: true,
   searchFields: ['reference'],
-  filters: [{ key: 'status', label: 'Status', options: literalOptions(['pending', 'paid', 'fulfilled', 'refunded', 'failed']) }],
+  filters: [{ key: 'status', label: 'Status', options: literalOptions(['pending', 'paid', 'fulfilled', 'payment_review', 'refunded', 'failed']) }],
   fields: [
     { key: 'reference', label: 'Reference', type: 'readonly' },
     { key: 'status', label: 'Status', type: 'readonly' },

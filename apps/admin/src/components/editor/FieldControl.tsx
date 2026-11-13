@@ -12,6 +12,8 @@ import { PreviewPdfField } from './PreviewPdfField'
 import { DeferredRichTextEditor } from './DeferredRichTextEditor'
 import { CustomizationRulesField } from './CustomizationRulesField'
 import { PhysicalVariantsField } from './PhysicalVariantsField'
+import { VariantOptionsField } from './VariantOptionsField'
+import { BILLABLE_LETTERS } from '../../cms/physical-product-edit'
 
 type Props = {
   field: AdminField
@@ -149,10 +151,29 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
         return renderPreviewPdfList()
 
       case 'customizationRules':
-        return <CustomizationRulesField value={value} disabled={disabled} onChange={(rules) => onUpdate(field.key, rules)} />
+        return (
+          <CustomizationRulesField
+            value={value}
+            variantOptions={record.variantOptions}
+            pricingFieldKey={record.pricingMode === 'per_character' ? (record.pricingFieldKey as string | null) : null}
+            billableCharacters={record.billableCharacters as string | null}
+            disabled={disabled}
+            onChange={(rules) => onUpdate(field.key, rules)}
+            onPricingChange={(key, billable) => {
+              // "Charge per letter" on a question drives the product's pricing method.
+              if (!key) return onUpdate('pricingMode', 'fixed')
+              onUpdate('pricingMode', 'per_character')
+              onUpdate('pricingFieldKey', key)
+              onUpdate('billableCharacters', billable || record.billableCharacters || BILLABLE_LETTERS)
+            }}
+          />
+        )
+
+      case 'variantOptions':
+        return <VariantOptionsField value={value} variants={record.variants} disabled={disabled} onChange={(options) => onUpdate(field.key, options)} />
 
       case 'physicalVariants':
-        return <PhysicalVariantsField value={value} productId={record.id} disabled={disabled} onChange={(variants) => onUpdate(field.key, variants)} />
+        return <PhysicalVariantsField value={value} options={record.variantOptions} productId={record.id} basePrice={record.priceZar} perLetter={record.pricingMode === 'per_character'} disabled={disabled} onChange={(variants) => onUpdate(field.key, variants)} />
 
       default:
         return <Input id={inputId} value={String(value ?? '')} disabled={disabled} onChange={(e) => onUpdate(field.key, e.target.value)} />
@@ -286,7 +307,7 @@ export function FieldControl({ field, record, collectionId, ctx, onUpdate, disab
    controls, not one input, so their caption is a plain label referenced by
    aria-labelledby rather than a <label htmlFor> pointing at something that
    can't take focus. */
-const GROUP_FIELDS = new Set<AdminField['type']>(['fileList', 'imageGallery', 'previewPdfList', 'richText', 'customizationRules', 'physicalVariants'])
+const GROUP_FIELDS = new Set<AdminField['type']>(['fileList', 'imageGallery', 'previewPdfList', 'richText', 'customizationRules', 'physicalVariants', 'variantOptions'])
 
 function FieldShell({ field, inputId, children }: { field: AdminField; inputId: string; children: ReactNode }) {
   const isGroup = GROUP_FIELDS.has(field.type)

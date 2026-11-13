@@ -6,13 +6,13 @@ vi.mock('../../../apps/admin/src/lib/supabase', () => ({ supabase: {} }))
 import { FieldControl } from '../../../apps/admin/src/components/editor/FieldControl'
 
 const ctx: FieldContext = { valueLists: makeSnapshot().valueLists, optionsForSelect: () => [], optionsForReference: () => [] }
-it.each<AdminField['type']>(['customizationRules', 'physicalVariants'])('names the %s controls as a group rather than labeling a nonexistent input', (type) => {
+it.each<AdminField['type']>(['customizationRules', 'physicalVariants', 'variantOptions'])('names the %s controls as a group rather than labeling a nonexistent input', (type) => {
   render(<FieldControl field={{ key: 'configuration', label: 'Product configuration', type } as AdminField}
     record={{ id: 'product', configuration: [] }} collectionId="products" ctx={ctx} onUpdate={vi.fn()} />)
   const group = screen.getByRole('group', { name: 'Product configuration' })
   expect(group.querySelector('[id="product:configuration:label"]')?.tagName).toBe('SPAN')
   expect(group.querySelector('label[for="product:configuration"]')).toBeNull()
-  expect(screen.getByRole('button', { name: /Add / })).toBeTruthy()
+  expect(screen.getAllByRole('button', { name: /^Add / }).length).toBeGreaterThan(0)
 })
 
 it('makes the boolean state caption activate its named switch', () => {
