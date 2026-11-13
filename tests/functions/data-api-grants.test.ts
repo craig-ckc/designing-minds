@@ -114,6 +114,8 @@ const functionExecuteAllowlist: Record<string, { authenticated: boolean; service
   'public.complete_commerce_payment(uuid,text,numeric)': { authenticated: false, service_role: true },
   'public.set_order_fulfillment(uuid,text,text,text)': { authenticated: true, service_role: false },
   'public.save_physical_product(jsonb,jsonb)': { authenticated: true, service_role: false },
+  // Admin-only (checked inside): resolve an order held for a stock review.
+  'public.resolve_payment_review(uuid,text)': { authenticated: true, service_role: false },
 }
 
 const snapshot = async (db: PGlite, selectedRelations = relations) => {
@@ -197,8 +199,8 @@ const seedCommerce = async (db: PGlite) => {
     update public.user_roles set role = 'admin' where "userId" = '${ADMIN}';
     insert into public.products (id, slug, title, grade, term, year, "resourceFormat", status)
       values ('${PRODUCT}', 'grant-audit-product', 'Grant audit', 'Grade 4', 'Term 1', '2026', 'Worksheet', 'queued');
-    insert into public.products (id, slug, title, "productType", status)
-      values ('${PHYSICAL_PRODUCT}', 'grant-audit-physical', 'Physical grant audit', 'physical', 'queued');
+    insert into public.products (id, slug, title, "productType", status, "variantOptions")
+      values ('${PHYSICAL_PRODUCT}', 'grant-audit-physical', 'Physical grant audit', 'physical', 'queued', '[{"key":"Size","label":"Size","values":[{"value":"One"}]}]');
     insert into public.product_variants (id, "productId", sku, "optionValues", "unitPriceZar")
       values ('${PHYSICAL_VARIANT}', '${PHYSICAL_PRODUCT}', 'GRANT-AUDIT-VARIANT', '{"Size":"One"}', 25);
     insert into public.physical_cart_items (id, "userId", "productSlug", "variantId", quantity) values

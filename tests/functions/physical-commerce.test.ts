@@ -7,6 +7,8 @@ const read = (name: string) => readFileSync(new URL(`../../supabase/${name}`, im
 const schema = read('schema.sql')
 const previousSchema = schema.split('-- BEGIN physical commerce journey')[0]
 const patch = read('patch/2026-11-10-physical-commerce.sql')
+// Later patches reshape the same functions; the journey is proven against the final state.
+const laterPatches = [read('patch/2026-11-12-order-line-identity.sql'), read('patch/2026-11-12-physical-options.sql')]
 const db = new PGlite()
 const A = '10000000-0000-4000-8000-000000000001'
 const B = '10000000-0000-4000-8000-000000000002'
@@ -56,6 +58,7 @@ beforeAll(async () => {
   await db.exec(previousSchema.replace('create extension if not exists pgcrypto;', ''))
   await db.exec(patch)
   await db.exec(patch)
+  for (const later of laterPatches) await db.exec(later)
   await db.exec(`insert into auth.users(id,email) values ('${A}','a@example.test'),('${B}','b@example.test'),('${ADMIN}','admin@example.test');
     update public.user_roles set role='admin' where "userId"='${ADMIN}';
     insert into public.products(id,slug,title,"priceZar",grade,term,year,"resourceFormat",subjects,"purchasedFiles",status)
@@ -66,6 +69,9 @@ beforeAll(async () => {
       ('${SMALL}','small-bag','Small gift bag',165,'physical','queued');`)
   await db.query(`update public.products set "pricingMode"='per_character',"pricingFieldKey"='name',"billableCharacters"='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',"customizationRules"=$1 where id=$2`, [nameRule, KEYRING])
   await db.query('update public.products set "customizationRules"=$1 where id=$2', [teacherRule, LARGE])
+  await db.exec(`update public.products set "variantOptions"='[{"key":"colour","label":"Colour","display":"swatches","values":[{"value":"Pink","swatch":"#f3a0c2"}]}]' where id='${KEYRING}';
+    update public.products set "variantOptions"='[{"key":"size","label":"Size","values":[{"value":"Large"}]}]' where id='${LARGE}';
+    update public.products set "variantOptions"='[{"key":"size","label":"Size","values":[{"value":"Small"}]}]' where id='${SMALL}';`)
   await db.exec(`insert into public.product_variants(id,"productId",sku,"optionValues") values
     ('${PINK}','${KEYRING}','PINK','{"colour":"Pink"}'),('${BIG_BAG}','${LARGE}','LARGE','{"size":"Large"}'),('${LITTLE_BAG}','${SMALL}','SMALL','{"size":"Small"}');
     insert into public.coupons(code,"discountType",value,enabled,"allowSaleItems") values('SAMPLE10','percentage',10,true,true);
@@ -93,8 +99,10 @@ describe('physical commerce pricing and access', () => {
         create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
         grant usage on schema auth to anon,authenticated,service_role;`)
       await fresh.exec(schema.replace('create extension if not exists pgcrypto;', ''))
-      // The full schema already includes the journey; replay remains safe.
+      // The full schema already includes the journey; replaying it and the
+      // later patches, in order, remains safe.
       await fresh.exec(patch)
+      for (const later of laterPatches) await fresh.exec(later)
       const settings = await fresh.query<{ mode: string; latePaymentPolicy: string | null }>('select mode,"latePaymentPolicy" from private.commerce_settings')
       expect(settings.rows).toEqual([{ mode: 'disabled', latePaymentPolicy: null }])
       const acl = await fresh.query<{ anon_stock: boolean; customer_holds: boolean; customer_cart: boolean }>(`select

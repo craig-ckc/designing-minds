@@ -204,7 +204,9 @@ revoke all on function private.valid_customization_values(jsonb,jsonb) from publ
 
 -- Public physical rows have an explicit direct-column contract. Variants only
 -- expose availability, never on-hand counts or active reservation totals.
-create or replace function private.published_physical_products()
+-- Later patches widen this row; drop + create keeps every replay order valid.
+drop function if exists private.published_physical_products() cascade;
+create function private.published_physical_products()
 returns table (
   id uuid, slug text, title text, "shortDescription" text, "fullDescription" text,
   "productType" text, "priceZar" numeric(10,2), "salePriceZar" numeric(10,2),
