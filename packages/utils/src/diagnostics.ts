@@ -35,7 +35,7 @@ export const diagnosticId = (value: unknown): string | null =>
 
 const paths = new Set(['/', '/shop', '/cart', '/checkout', '/checkout/return', '/checkout/cancel', '/login', '/sign-up',
   '/forgot-password', '/reset-password', '/contact', '/help', '/about', '/terms', '/privacy', '/unsubscribe', '/account',
-  '/account/orders', '/grades', '/packages', '/api/checkout', '/api/forms', '/api/issue-download', '/api/payment-webhook',
+  '/account/orders', '/grades', '/packages', '/api/checkout', '/api/forms', '/api/issue-download', '/api/order-files', '/api/payment-webhook',
   '/api/unsubscribe', '/api/admin/upload-url', '/api/admin/rebuild-web', '/api/diagnostics'])
 export function diagnosticRoute(value: unknown): string {
   if (typeof value !== 'string') return '/other'

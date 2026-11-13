@@ -4,6 +4,7 @@ import { checkout, checkoutQuote } from './handlers/checkout.ts'
 import { paymentWebhook } from './handlers/payment-webhook.ts'
 import { adminOrderFulfillment, commerceCancel, commerceCheckout, commercePaymentSimulate, commerceQuote } from './handlers/commerce.ts'
 import { issueDownload } from './handlers/issue-download.ts'
+import { orderFiles } from './handlers/order-files.ts'
 import { adminUploadUrl } from './handlers/admin-upload-url.ts'
 import { adminRebuildWeb } from './handlers/admin-rebuild-web.ts'
 import { adminPublishStatus } from './handlers/admin-publish-status.ts'
@@ -27,6 +28,7 @@ export const handlers: Record<string, Handler> = {
   '/cron/promotions': promotionsCron,
   '/payment-webhook': paymentWebhook,
   '/issue-download': issueDownload,
+  '/order-files': orderFiles,
   '/forms': forms,
   '/unsubscribe': unsubscribe,
   '/admin/upload-url': adminUploadUrl,
@@ -35,5 +37,5 @@ export const handlers: Record<string, Handler> = {
   '/admin/order-fulfillment': adminOrderFulfillment,
 }
 
-export { checkout, paymentWebhook, issueDownload, forms, unsubscribe, adminUploadUrl, adminRebuildWeb, adminPublishStatus, commerceQuote, commerceCheckout, commerceCancel, commercePaymentSimulate, adminOrderFulfillment }
+export { checkout, paymentWebhook, issueDownload, orderFiles, forms, unsubscribe, adminUploadUrl, adminRebuildWeb, adminPublishStatus, commerceQuote, commerceCheckout, commerceCancel, commercePaymentSimulate, adminOrderFulfillment }
 export type { Handler, HandlerRequest, HandlerResponse } from './lib/http.ts'
